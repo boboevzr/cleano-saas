@@ -990,7 +990,7 @@
         const ogTitle = document.getElementById('metaOgTitle');
         if (ogTitle) ogTitle.setAttribute('content', lang === 'uz' ? titleUz : titleRu);
       }
-      const safeLogo = _safeUrl(d.logo_url);
+      const safeLogo = _safeImgUrl(d.logo_url);
       if (safeLogo) {
         document.querySelectorAll('.logo-mark').forEach(el => {
           el.innerHTML = '';
@@ -2610,6 +2610,14 @@
       return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
     } catch (_) { return ''; }
   }
+  // Для <img src> — то же самое + data:image/... (логотип компании хранится как
+  // base64 data URI, см. /api/company/upload-logo). Только image/*, никогда text/html
+  // и подобное — иначе как _safeUrl, но для картинок это безопасно.
+  function _safeImgUrl(raw) {
+    if (!raw) return '';
+    if (/^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,/i.test(String(raw))) return raw;
+    return _safeUrl(raw);
+  }
 
   const _TG_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.393c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.94z"/></svg>';
 
@@ -2669,6 +2677,19 @@
     const dGroup = document.getElementById('branchGroup');
     if (sGroup) sGroup.innerHTML = html;
     if (dGroup) dGroup.innerHTML = html;
+
+    // Один филиал у компании — выбираем его по умолчанию, поле выбора скрываем
+    // (клик по единственной кнопке переиспользует существующие обработчики,
+    // которые уже проставляют selectedBranch/selectedSimpleBranch + sBranch).
+    const single = (branches || []).length === 1;
+    [sGroup, dGroup].forEach(group => {
+      const field = group && group.closest('.field');
+      if (field) field.style.display = single ? 'none' : '';
+    });
+    if (single) {
+      sGroup?.querySelector('.pill-btn')?.click();
+      dGroup?.querySelector('.pill-btn')?.click();
+    }
   }
 
   // Загружаем филиалы компании (произвольное число) один раз при загрузке страницы
