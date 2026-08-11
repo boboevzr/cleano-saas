@@ -17,10 +17,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="config.js"></script>
 <script>
-  // company_slug из URL (?company_slug=...) переопределяет config.js — для ссылок вида index.html?company_slug=X из суперадмина
+  // slug из поддомена (pokiza.cleano.uz -> "pokiza") переопределяет config.js
   (function(){
-    var qs = new URLSearchParams(location.search).get('company_slug');
-    if (qs) window.APP_COMPANY_SLUG = qs;
+    var m = location.hostname.match(/^([a-z0-9-]+)\.cleano\.uz$/i);
+    if (m && m[1].toLowerCase() !== 'www') window.APP_COMPANY_SLUG = m[1];
   })();
 </script>
 <style>

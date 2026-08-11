@@ -3,3 +3,9 @@
   Header set Pragma "no-cache"
   Header set Expires "0"
 </FilesMatch>
+
+RewriteEngine On
+RewriteCond %{HTTP_HOST} !^(www\.)?cleano\.uz$ [NC]
+RewriteRule ^index\.html$ /company-site.html [L]
+RewriteCond %{HTTP_HOST} !^(www\.)?cleano\.uz$ [NC]
+RewriteRule ^$ /company-site.html [L]
