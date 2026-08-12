@@ -1380,6 +1380,12 @@ const _i18n = {
     'wf.confirm':'✅ Подтвердить заказ','wf.to_pickup':'🚗 Передать на вывоз','wf.to_workshop':'📥 Передать в мастерскую',
     'wf.to_washing':'🧼 Передать на мойку','wf.to_ready':'✅ Передать в готовые',
     'wf.to_client':'👤 Выдать клиенту','wf.to_delivery':'🚚 Заказ готов к доставке',
+    'wf.postpone':'⏸ Отложить доставку','wf.postpone_edit':'⏸ Изменить отсрочку','wf.postponed_until':'Отложено до',
+    'wf.postpone.until':'Отложить до даты','wf.postpone.reason':'Причина',
+    'wf.postpone.reason_ph':'Например: ремонт, переезд, отпуск…',
+    'wf.postpone.reason_repair':'🔧 Ремонт','wf.postpone.reason_move':'📦 Переезд','wf.postpone.reason_vacation':'🏖 Отпуск',
+    'wf.postpone.submit':'⏸ Отложить','wf.postpone.date_required':'Укажите дату','wf.postpone.saved':'Доставка отложена',
+    'sms.cancel':'Отмена',
     'wf.save':'Сохранить','wf.measure_warn':'⚠️ Замерьте все позиции (осталось: {n}) — затем можно начать мойку',
     'src.staff':'Сотрудник','src.site':'Сайт','src.bot':'Бот',
     'dash.title':'Разделы','dash.recent':'Последние заявки','dash.empty':'Нет заявок',
@@ -1621,6 +1627,12 @@ const _i18n = {
     'wf.confirm':`✅ Buyurtmani tasdiqlash`,'wf.to_pickup':`🚗 Olib ketishga topshirish`,'wf.to_workshop':`📥 Ustaxonaga topshirish`,
     'wf.to_washing':`🧼 Yuvishga topshirish`,'wf.to_ready':`✅ Tayyorga topshirish`,
     'wf.to_client':`👤 Mijozga berish`,'wf.to_delivery':`🚚 Buyurtma yetkazishga tayyor`,
+    'wf.postpone':'⏸ Yetkazishni kechiktirish','wf.postpone_edit':'⏸ Kechiktirishni oʻzgartirish','wf.postponed_until':'Kechiktirilgan',
+    'wf.postpone.until':'Qaysi sanagacha kechiktirish','wf.postpone.reason':'Sabab',
+    'wf.postpone.reason_ph':'Masalan: ta’mirlash, koʻchish, ta’til…',
+    'wf.postpone.reason_repair':'🔧 Ta’mirlash','wf.postpone.reason_move':'📦 Koʻchish','wf.postpone.reason_vacation':'🏖 Ta’til',
+    'wf.postpone.submit':'⏸ Kechiktirish','wf.postpone.date_required':'Sanani koʻrsating','wf.postpone.saved':'Yetkazish kechiktirildi',
+    'sms.cancel':'Bekor qilish',
     'wf.save':'Saqlash','wf.measure_warn':`⚠️ Barcha pozitsiyalarni oʻlchang (qoldi: {n}) — keyin yuvishni boshlash mumkin`,
     'src.staff':'Xodim','src.site':'Sayt','src.bot':'Bot',
     'dash.title':`Boʻlimlar`,'dash.recent':`Soʻnggi buyurtmalar`,'dash.empty':`Buyurtma yoʻq`,
@@ -8985,8 +8997,11 @@ async function staffOpenOrder(orderId) {
     ? `<span style="background:#ede9fe;color:#6d28d9;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:600;margin-left:4px">${t('so.selfdelivery')}</span>`
     : '';
   const _promoBadge = o.promo_id ? `<span class="li-badge-promo" style="margin-left:4px">${t('promo.badge')}</span>` : '';
+  const _postponeBadge = (o.status === 'ready' && o.postponed_until)
+    ? `<span data-postpone-badge="1" style="background:#fef3c7;color:#92400e;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:600;margin-left:4px">⏸ ${t('wf.postponed_until')} ${_fmtDateDMY(new Date(o.postponed_until))}</span>`
+    : '';
   document.getElementById('so_status').innerHTML   =
-    `<span style="background:#e8f1ff;color:#007aff;border-radius:8px;padding:2px 10px;font-size:12px;font-weight:600">${statusLabel(o.status)}</span>${_pickupBadge}${_deliveryBadge}${_promoBadge}`;
+    `<span style="background:#e8f1ff;color:#007aff;border-radius:8px;padding:2px 10px;font-size:12px;font-weight:600">${statusLabel(o.status)}</span>${_pickupBadge}${_deliveryBadge}${_promoBadge}${_postponeBadge}`;
   document.getElementById('so_client').textContent = [o.client_first_name,o.client_last_name].filter(Boolean).join(' ') || '—';
   document.getElementById('so_phone').textContent  = o.client_phone || '';
   document.getElementById('so_phone').href         = `tel:${o.client_phone}`;
@@ -10988,6 +11003,10 @@ function staffRenderWorkflow(currentStatus, permissions, rowId) {
       ? _wfBtn("staffChangeStatus('delivered')", '#7c3aed', t('wf.to_client'))
       : _wfBtn("staffChangeStatus('delivery')",  '#0ea5e9', t('wf.to_delivery'))
     : '';
+  const isPostponed  = isReady && !!_sOrderCache?.postponed_until;
+  const postponeBtn  = isReady && canStatus && !isSelfDelivery
+    ? _wfBtn("openPostponeModal()", isPostponed ? '#64748b' : '#f59e0b', isPostponed ? t('wf.postpone_edit') : t('wf.postpone'))
+    : '';
   const RECEIPT_ACCESS_ROLES = ['admin','manager','logistics','packer','washer','callcenter','driver'];
   const canReceipt = RECEIPT_ACCESS_ROLES.includes(currentStaff?.role);
   const showReceiptBtns = canReceipt &&
@@ -11030,7 +11049,7 @@ function staffRenderWorkflow(currentStatus, permissions, rowId) {
     else if (isWashing)   { row.innerHTML = dryingBtn; }
     else if (isDrying)    { row.innerHTML = packingBtn; }
     else if (isPacking)   { row.innerHTML = readyBtn; }
-    else if (isReady)     { row.innerHTML = deliveryBtn; }
+    else if (isReady)     { row.innerHTML = deliveryBtn + postponeBtn; }
     else if (currentStatus === 'delivery') {
       const role = currentStaff?.role;
       const canDeliver = role === 'admin' || role === 'manager' || currentStaff?.can_approve_debt;
@@ -11259,6 +11278,73 @@ let _ocmNewStatus = null;
 
 function staffMarkOrderReady() {
   staffChangeStatus('ready');
+}
+
+// ── Отложить доставку (статус "Готов") — портировано из прода ──────────────
+let _postponeReasonPreset = '';
+function openPostponeModal() {
+  document.getElementById('postponeModal')?.remove();
+  const cur = _sOrderCache || {};
+  const minDate = new Date(Date.now() + 86400000).toISOString().slice(0,10); // не раньше завтра
+  const curDate = cur.postponed_until ? String(cur.postponed_until).slice(0,10) : minDate;
+  _postponeReasonPreset = '';
+  const div = document.createElement('div');
+  div.id = 'postponeModal';
+  div.style.cssText = 'position:fixed;inset:0;z-index:10020;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px';
+  const presets = [t('wf.postpone.reason_repair'), t('wf.postpone.reason_move'), t('wf.postpone.reason_vacation')];
+  div.innerHTML = `
+    <div style="background:#fff;border-radius:20px;padding:24px;width:100%;max-width:440px">
+      <div style="font-size:17px;font-weight:800;color:#1c1c1e;margin-bottom:12px">⏸ ${t('wf.postpone')}</div>
+      <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:6px">${t('wf.postpone.until')}</label>
+      <input id="postpone_date" type="date" min="${minDate}" value="${curDate}"
+        style="width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;margin-bottom:14px;box-sizing:border-box">
+      <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:6px">${t('wf.postpone.reason')}</label>
+      <div class="filter-chips" id="postpone_presets" style="margin-bottom:8px">
+        ${presets.map(p => `<button type="button" class="fchip" onclick="_postponeSetPreset('${_escJs(p)}', this)">${p}</button>`).join('')}
+      </div>
+      <textarea id="postpone_reason" rows="2" placeholder="${t('wf.postpone.reason_ph')}"
+        style="width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;margin-bottom:16px;box-sizing:border-box;resize:vertical">${_esc(cur.postpone_reason || '')}</textarea>
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('postponeModal')?.remove()" style="flex:1;padding:12px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;color:#888;font-size:14px;font-weight:600;cursor:pointer">${t('sms.cancel')}</button>
+        <button id="postponeSubmitBtn" onclick="submitPostpone()" style="flex:2;padding:12px;background:#f59e0b;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">${t('wf.postpone.submit')}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(div);
+}
+function _escJs(s) { return String(s).replace(/'/g, "\\'"); }
+function _postponeSetPreset(text, btn) {
+  document.getElementById('postpone_reason').value = text;
+  document.querySelectorAll('#postpone_presets .fchip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+async function submitPostpone() {
+  const until = document.getElementById('postpone_date')?.value;
+  const reason = document.getElementById('postpone_reason')?.value.trim() || '';
+  if (!until) { showToast(t('wf.postpone.date_required'), 'error'); return; }
+  const btn = document.getElementById('postponeSubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = t('common.pleaseWait') || '…'; }
+  try {
+    const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/postpone`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', Authorization:`Bearer ${_staffToken()}` },
+      body: JSON.stringify({ until_date: until, reason }),
+    });
+    const d = await res.json().catch(()=>({}));
+    if (!res.ok) throw new Error(d.detail || 'Ошибка');
+    if (_sOrderCache) { _sOrderCache.postponed_until = until; _sOrderCache.postpone_reason = reason; }
+    document.getElementById('postponeModal')?.remove();
+    const statusEl = document.getElementById('so_status');
+    const badge = document.createElement('span');
+    badge.style.cssText = 'background:#fef3c7;color:#92400e;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:600;margin-left:4px';
+    badge.textContent = `⏸ ${t('wf.postponed_until')} ${_fmtDateDMY(new Date(until))}`;
+    if (statusEl) { statusEl.querySelector('[data-postpone-badge]')?.remove(); badge.dataset.postponeBadge = '1'; statusEl.appendChild(badge); }
+    staffRenderWorkflow(_sOrderStatus, currentStaff?.permissions || []);
+    showToast(t('wf.postpone.saved'), 'success');
+  } catch(e) {
+    showToast('⚠️ ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = t('wf.postpone.submit'); }
+  }
 }
 
 async function staffMarkDelivered() {
