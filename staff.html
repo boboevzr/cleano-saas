@@ -2845,7 +2845,9 @@ async function submitOrder() {
         showToast(`✅ Заявка ${data.order_num} создана`, 'success');
         await loadOrders();
       }
-      if (data.id && data.item_count > 0) _orOpenSmsConfirm(data.id);
+      if (data.id && data.item_count > 0) {
+        _isSmsKindEnabled('pickup').then(enabled => { if (enabled) _orOpenSmsConfirm(data.id, 'pickup'); });
+      }
     } else {
       alert(data.detail || `Ошибка сервера (${res.status})`);
     }
@@ -9175,30 +9177,48 @@ async function soSendSms(lang) {
 // Раньше SMS уходило молча бэкендом на язык, выбранный ДО сохранения — теперь
 // явный вопрос после, с выбором языка, тот же эндпоинт что и ручная отправка
 // из вкладки «Уведомления» (см. запрос пользователя 2026-08-05).
-function _orOpenSmsConfirm(orderId) {
+// Тоглы "Включить SMS при заборе/Готово" — кэш на сессию модалки, чтобы не спрашивать
+// сервер на каждый чих. Портировано из прода (запрос 2026-08-07): раньше эта модалка
+// лезла всегда при создании заявки с позициями, даже если тогл выключен.
+let _smsTogglesCache = null;
+async function _getSmsToggles() {
+  if (_smsTogglesCache) return _smsTogglesCache;
+  try {
+    const r = await apiFetch('/staff/settings/sms-toggles');
+    _smsTogglesCache = r.ok ? await r.json() : {};
+  } catch(e) { _smsTogglesCache = {}; }
+  return _smsTogglesCache;
+}
+async function _isSmsKindEnabled(kind) {
+  const tg = await _getSmsToggles();
+  return kind === 'ready' ? !!tg.sms_ready_enabled : !!tg.sms_pickup_enabled;
+}
+
+function _orOpenSmsConfirm(orderId, kind = 'pickup') {
   document.getElementById('orSmsConfirmModal')?.remove();
   const div = document.createElement('div');
   div.id = 'orSmsConfirmModal';
   div.style.cssText = 'position:fixed;inset:0;z-index:10020;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px';
+  const desc = kind === 'ready' ? 'Заказ готов — выберите язык, на котором говорит клиент' : 'Заявка создана с позициями — выберите язык, на котором говорит клиент';
   div.innerHTML = `
     <div style="background:#fff;border-radius:20px;padding:24px;width:100%;max-width:440px">
       <div style="font-size:17px;font-weight:800;color:#1c1c1e;margin-bottom:6px">📲 Отправить SMS клиенту?</div>
-      <div style="font-size:13px;color:#8e8e93;margin-bottom:14px">Заявка создана с позициями — выберите язык, на котором говорит клиент</div>
-      <button onclick="_orSendSmsConfirm(${orderId},'ru')" style="width:100%;padding:14px;background:#163E3B;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">🇷🇺 Отправить на русском</button>
-      <button onclick="_orSendSmsConfirm(${orderId},'uz')" style="width:100%;padding:14px;background:#163E3B;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">🇺🇿 O'zbek tilida yuborish</button>
+      <div style="font-size:13px;color:#8e8e93;margin-bottom:14px">${desc}</div>
+      <button onclick="_orSendSmsConfirm(${orderId},'ru','${kind}')" style="width:100%;padding:14px;background:#163E3B;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">🇷🇺 Отправить на русском</button>
+      <button onclick="_orSendSmsConfirm(${orderId},'uz','${kind}')" style="width:100%;padding:14px;background:#163E3B;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">🇺🇿 O'zbek tilida yuborish</button>
       <button onclick="document.getElementById('orSmsConfirmModal')?.remove()" style="width:100%;padding:11px;border:1.5px solid #e5e5ea;border-radius:12px;background:none;color:#8e8e93;font-size:14px;font-weight:600;cursor:pointer">Не отправлять</button>
     </div>`;
   document.body.appendChild(div);
 }
 
-async function _orSendSmsConfirm(orderId, lang) {
+async function _orSendSmsConfirm(orderId, lang, kind = 'pickup') {
   document.getElementById('orSmsConfirmModal')?.remove();
   try {
     const token = localStorage.getItem(TOKEN_KEY);
     const r = await fetch(`${API_BASE}/admin/orders/${orderId}/send-sms`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ lang, kind: 'pickup' }),
+      body: JSON.stringify({ lang, kind }),
     });
     const d = await r.json();
     if (d.sent) showToast('✅ SMS отправлен');
@@ -11225,6 +11245,9 @@ async function staffChangeStatus(newStatus, packerLogin) {
     document.getElementById('ocm_btn2').onclick = () => { m.style.display='none'; setOrdersFilter(cfg.filter2); };
     m.style.display = 'flex';
     loadOrders();
+    if (newStatus === 'ready') {
+      _isSmsKindEnabled('ready').then(enabled => { if (enabled) _orOpenSmsConfirm(_sOrderId, 'ready'); });
+    }
   } else {
     showToast('Статус обновлён', 'success');
     loadOrders();
