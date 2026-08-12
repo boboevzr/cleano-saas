@@ -7564,8 +7564,6 @@ function _drvStopCard(stop, si, route) {
          <button onclick="drvShowReturned(${ordId})" style="${_drvBtnStyle('warn')}">${t('drv.btn.returned')}</button>
          <button onclick="drvUndoDelivery(${ordId})" style="${_drvBtnStyle('secondary')}">${t('drv.btn.undo')}</button>`;
     }
-  } else if (st === 'done') {
-    buttons = `<button onclick="drvUndoDelivered(${ordId})" style="${_drvBtnStyle('secondary')}">${t('drv.btn.undo_delivered')}</button>`;
   }
 
   const infoBtns = `
@@ -7704,17 +7702,6 @@ async function drvUndoDelivery(orderId) {
     showToast(t('drv.toast.undo'), 'success');
     await loadDelivery(true);
   } catch(e) { showToast('Ошибка сети: ' + e.message, 'error'); }
-}
-
-function drvUndoDelivered(orderId) {
-  _drvConfirm(t('drv.confirm.undo_delivered_title'), t('drv.confirm.undo_delivered_body'), t('drv.confirm.yes_cancel'), async () => {
-    try {
-      const r = await apiFetch(`/api/staff/my-route/stops/${orderId}/undo-delivered`, { method:'POST' });
-      if (!r.ok) { const e = await r.json().catch(()=>({})); showToast(e.detail||'Ошибка', 'error'); return; }
-      showToast(t('drv.toast.undo_delivered'), 'success');
-      await loadDelivery(true);
-    } catch(e) { showToast('Ошибка сети: ' + e.message, 'error'); }
-  });
 }
 
 let _drvConfirmCb = null;
