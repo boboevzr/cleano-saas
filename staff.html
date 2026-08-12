@@ -8759,12 +8759,16 @@ document.addEventListener('click', e => {
 const STAFF_SVC_NAMES  = { carpet:'Чистка ковра', carpet_home:'Чистка ковра на дому', sofa:'Диван, кресло', mattress:'Матрас, одеяло', curtains:'Шторы' };
 const STAFF_TYPE_NAMES = { standard:'Стандарт', express:'Экспресс' };
 let _svcApiData = {};  // ключ → {name_ru, name_uz, emoji}
-function _svcName(k) {
+function _svcName(k, lang) {
+  lang = lang || _lang;
   const d = _svcApiData[k];
-  if (d) return `${d.emoji || ''} ${_lang === 'uz' ? d.name_uz : d.name_ru}`.trim();
-  return t('svc.'+k) || STAFF_SVC_NAMES[k] || k;
+  if (d) return `${d.emoji || ''} ${lang === 'uz' ? d.name_uz : d.name_ru}`.trim();
+  return (_i18n[lang]||{})['svc.'+k] || (_i18n.ru||{})['svc.'+k] || STAFF_SVC_NAMES[k] || k;
 }
-function _typeName(k) { return t('svc.type.'+k)   || STAFF_TYPE_NAMES[k] || k; }
+function _typeName(k, lang) {
+  lang = lang || _lang;
+  return (_i18n[lang]||{})['svc.type.'+k] || (_i18n.ru||{})['svc.type.'+k] || STAFF_TYPE_NAMES[k] || k;
+}
 
 let _sOrderId       = null;
 let _sItemEdit      = null;
@@ -10436,18 +10440,32 @@ function staffRenderItems(items, containerEl) {
   const canManageWasher   = !['delivered','cancelled'].includes(_sOrderStatus);
   const needsMeasure      = (canMeasure || canApproveMeasure) && isWashingPhase;
 
+  // Название услуги на текущем языке интерфейса. Новые позиции хранят готовые service_ru/
+  // service_uz (заполняются при сохранении из справочника — см. smcGetServiceBilingual) —
+  // используем их напрямую. Старые позиции (до этого фикса) реконструируем через
+  // sifFindPriceMatch, как раньше.
+  const _svcLabel = it => {
+    if (!it.service) return '';
+    const bilingual = _lang === 'uz' ? it.service_uz : it.service_ru;
+    if (bilingual) return bilingual;
+    const m = sifFindPriceMatch(it.service);
+    return m ? `${_svcName(m.svcKey)} — ${_typeName(m.typeKey)}` : it.service;
+  };
+
   // Разбивка по услугам — сумма площади (если замерена) или количество позиций (шт).
   const _svcGroups = {};
   items.forEach(it => {
     if (!it.service) return;
-    if (!_svcGroups[it.service]) _svcGroups[it.service] = { count: 0, sqm: 0 };
-    _svcGroups[it.service].count++;
-    _svcGroups[it.service].sqm += parseFloat(it.sqm || 0);
+    const m = sifFindPriceMatch(it.service);
+    const gKey = it.service_ru || (m ? `${m.svcKey}::${m.typeKey}` : it.service);
+    if (!_svcGroups[gKey]) _svcGroups[gKey] = { label: _svcLabel(it), count: 0, sqm: 0 };
+    _svcGroups[gKey].count++;
+    _svcGroups[gKey].sqm += parseFloat(it.sqm || 0);
   });
-  const _svcBreakdownHtml = Object.entries(_svcGroups).map(([name, g]) => {
+  const _svcBreakdownHtml = Object.values(_svcGroups).map(g => {
     const label = g.sqm > 0 ? `${g.sqm.toFixed(2)} м²` : `${g.count} шт`;
     return `<div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;padding:2px 0">
-      <span>${_esc(name)}</span><span>${label}</span>
+      <span>${_esc(g.label)}</span><span>${label}</span>
     </div>`;
   }).join('');
 
@@ -10554,7 +10572,7 @@ function staffRenderItems(items, containerEl) {
       <div style="width:26px;height:26px;background:${isMine&&ms!=='pending'?'#007aff':'#e5e5e5'};border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${isMine&&ms!=='pending'?'#fff':'#888'};flex-shrink:0;margin-top:2px">${i+1}</div>
       <div style="flex:1;min-width:0">
         ${it.service
-          ? `<div style="font-weight:600;font-size:14px;color:#1a1a1a">${it.service}</div>`
+          ? `<div style="font-weight:600;font-size:14px;color:#1a1a1a">${_esc(_svcLabel(it))}</div>`
           : `<div style="font-weight:600;font-size:14px;color:#bbb;font-style:italic">${t('item.empty')}</div>`}
         ${parseFloat(it.price_per_sqm||0) > 0
           ? `<div style="font-size:11px;color:#888;margin-top:1px">${Number(it.price_per_sqm).toLocaleString('ru')} сум/м²</div>`
@@ -10882,8 +10900,9 @@ function sifFindPriceMatch(serviceName) {
   const prices = _sPrices || {};
   for (const [svcKey, types] of Object.entries(prices)) {
     for (const [typeKey, info] of Object.entries(types)) {
-      const name = `${_svcName(svcKey)} — ${_typeName(typeKey)}`;
-      if (name === serviceName) return { svcKey, typeKey, price: info.price || 0 };
+      const nameRu = `${_svcName(svcKey,'ru')} — ${_typeName(typeKey,'ru')}`;
+      const nameUz = `${_svcName(svcKey,'uz')} — ${_typeName(typeKey,'uz')}`;
+      if (serviceName === nameRu || serviceName === nameUz) return { svcKey, typeKey, price: info.price || 0 };
     }
   }
   return null;
@@ -11441,6 +11460,24 @@ function smcGetService() {
     : (document.getElementById('smc_service_name')?.value.trim() || '');
 }
 
+// Название на обоих языках сразу — справочник (_svcApiData/i18n типов) уже двуязычный.
+// "Своя услуга" не переводится — service_ru/uz остаются пустыми, рендер фолбэкается на service.
+function smcGetServiceBilingual() {
+  const isCustom = document.getElementById('smc-panel-custom')?.style.display !== 'none';
+  if (isCustom) {
+    return { service: document.getElementById('smc_custom_name')?.value.trim() || '', service_ru: null, service_uz: null };
+  }
+  const service = document.getElementById('smc_service_name')?.value.trim() || '';
+  const svcKey  = document.getElementById('smc_svc_select')?.value || '';
+  const typeKey = document.getElementById('smc_type_select')?.value || '';
+  if (!svcKey || !typeKey) return { service, service_ru: null, service_uz: null };
+  return {
+    service,
+    service_ru: `${_svcName(svcKey,'ru')} — ${_typeName(typeKey,'ru')}`,
+    service_uz: `${_svcName(svcKey,'uz')} — ${_typeName(typeKey,'uz')}`,
+  };
+}
+
 async function smcFillFromItem(item) {
   await _loadStaffPrices();
   const svcSel = document.getElementById('smc_svc_select');
@@ -11474,7 +11511,7 @@ async function smcFillFromItem(item) {
 }
 
 async function smSaveItemInfo() {
-  const service = smcGetService();
+  const { service, service_ru, service_uz } = smcGetServiceBilingual();
   if (!service) { showToast('Выберите услугу', 'warning'); return false; }
   const price = parseFloat(document.getElementById('smc_price')?.value) || 0;
   const cur   = _sItemsCache.find(i => i.id === _measureItemId) || {};
@@ -11484,12 +11521,12 @@ async function smSaveItemInfo() {
   const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items/${_measureItemId}`, {
     method: 'PUT',
     headers: { 'Content-Type':'application/json', Authorization:`Bearer ${_staffToken()}` },
-    body: JSON.stringify({ service, price_per_sqm: price, sqm, width_cm: w, length_cm: l })
+    body: JSON.stringify({ service, service_ru, service_uz, price_per_sqm: price, sqm, width_cm: w, length_cm: l })
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); if (await _reloadItemsOnNotFound(e.detail)) return false; showToast(e.detail||'Ошибка', 'error'); return false; }
   const d = await res.json().catch(()=>({}));
   const idx = _sItemsCache.findIndex(i => i.id === _measureItemId);
-  if (idx >= 0) _sItemsCache[idx] = d.item ? { ..._sItemsCache[idx], ...d.item } : { ..._sItemsCache[idx], service, price_per_sqm: price, sqm: sqm||cur.sqm, width_cm: w||cur.width_cm, length_cm: l||cur.length_cm, total_sum: (sqm||cur.sqm||0) * price };
+  if (idx >= 0) _sItemsCache[idx] = d.item ? { ..._sItemsCache[idx], ...d.item } : { ..._sItemsCache[idx], service, service_ru, service_uz, price_per_sqm: price, sqm: sqm||cur.sqm, width_cm: w||cur.width_cm, length_cm: l||cur.length_cm, total_sum: (sqm||cur.sqm||0) * price };
   return true;
 }
 
