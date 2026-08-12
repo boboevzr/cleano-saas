@@ -1292,6 +1292,11 @@ const _i18n = {
     'drv.btn.took':'✅ Забрал','drv.btn.not_taken':'❌ Не забрал','drv.btn.delivered':'🏠 Доставил',
     'drv.btn.payment':'💳 Оплата','drv.btn.returned':'🔙 Вернул','drv.btn.undo':'↩️ Отменить',
     'drv.btn.undo_delivered':'↩️ Отменить «Доставлен»',
+    'drv.btn.take_delivery':'🚗 Везу клиенту','drv.btn.handoff':'🏭 Сдал в мастерскую','drv.btn.undo_pickup':'↩️ Не забирал',
+    'drv.st.picked_up':'Забрал','drv.st.handed_off':'Сдано',
+    'drv.pkp.title':'Сколько забираете?','drv.pkp.count_mode':'Общее число','drv.pkp.svc_mode':'По услугам',
+    'drv.pkp.svc_placeholder':'Услуга (ковёр, диван…)','drv.pkp.add_svc':'+ Добавить услугу',
+    'drv.pkp.lang_title':'Язык SMS клиенту','drv.pkp.submit':'✅ Забрал','drv.pkp.svc_required':'Укажите хотя бы одну услугу',
     'drv.btn.positions':'📦 Позиции','drv.btn.history':'📋 История','drv.btn.refresh':'🔄 Обновить',
     'drv.st.pending':'Ожидает','drv.st.done':'Доставлен','drv.st.skipped':'Пропущен',
     'drv.sheet.loading':'Загрузка…','drv.sheet.items_empty':'Позиции не найдены',
@@ -1528,6 +1533,11 @@ const _i18n = {
     'drv.btn.took':'✅ Oldim','drv.btn.not_taken':'❌ Olmadim','drv.btn.delivered':'🏠 Yetkazdim',
     'drv.btn.payment':'💳 Toʻlov','drv.btn.returned':'🔙 Qaytardim','drv.btn.undo':'↩️ Bekor qilish',
     'drv.btn.undo_delivered':'↩️ «Yetkazildi»ni bekor qilish',
+    'drv.btn.take_delivery':'🚗 Mijozga olib ketyapman','drv.btn.handoff':'🏭 Ustaxonaga topshirdim','drv.btn.undo_pickup':'↩️ Olmadim',
+    'drv.st.picked_up':'Oldim','drv.st.handed_off':'Topshirildi',
+    'drv.pkp.title':'Nechta pozitsiya olib ketyapsiz?','drv.pkp.count_mode':'Umumiy son','drv.pkp.svc_mode':'Xizmat boʻyicha',
+    'drv.pkp.svc_placeholder':'Xizmat (gilam, divan…)','drv.pkp.add_svc':'+ Xizmat qoʻshish',
+    'drv.pkp.lang_title':'Mijozga SMS tili','drv.pkp.submit':'✅ Oldim','drv.pkp.svc_required':'Kamida bitta xizmat kiriting',
     'drv.btn.positions':'📦 Pozitsiyalar','drv.btn.history':'📋 Tarix','drv.btn.refresh':'🔄 Yangilash',
     'drv.st.pending':'Kutilmoqda','drv.st.done':'Yetkazildi','drv.st.skipped':'Oʻtkazib yuborildi',
     'drv.sheet.loading':'Yuklanmoqda…','drv.sheet.items_empty':'Pozitsiyalar topilmadi',
@@ -7523,10 +7533,7 @@ function _drvRouteCard(route, ri) {
 function _drvStopCard(stop, si, route) {
   // order_status is authoritative — stop_status may lag behind manager edits
   const ost = stop.order_status;
-  const st = ost === 'delivered' ? 'done'
-           : ost === 'cancelled' ? 'skipped'
-           : stop.stop_status === 'skipped' ? 'skipped'
-           : 'pending';
+  const isPickupRoute = route?.type === 'pickup';
   const ordId = stop.order_id;
   const itemCount = stop.item_count || 0;
   const rawNum = (stop.order_num || '').replace('ARTEZ-', '');
@@ -7537,34 +7544,65 @@ function _drvStopCard(stop, si, route) {
   const loc = stop.location || '';
   let mapUrl = '';
   if (loc) { try { const [la,lo]=loc.split(',').map(s=>s.trim()); mapUrl=`https://yandex.uz/maps/?pt=${lo},${la}&z=16`; } catch(e){} }
-  const orderTotal = Math.max(0, (stop.items_total || 0) - (stop.total_discount || 0));
+  const orderTotalRaw = Math.max(0, (stop.items_total || 0) - (stop.total_discount || 0));
+  const orderTotal = orderTotalRaw - (orderTotalRaw % 1000); // округление вниз до 1000, портировано из прода
   const paid = stop.paid_amount || 0;
   const debt = Math.max(0, orderTotal - paid);
   const confirmed = stop.driver_confirmed;
 
-  const stColor = st === 'done' ? 'var(--success,#22c55e)' : st === 'skipped' ? 'var(--text3,#888)' : 'var(--accent)';
-  const stLabel = _drvStatusLabel(st);
-
   // Маршрут закрыт (выполнен целиком) — прячем кнопки действий, оставляем
   // только статус (как в TG-канале водителей после закрытия маршрута).
   const routeClosed = route?.status === 'done';
-  let buttons = '';
-  if (routeClosed) {
-    // без кнопок — только статус выше (stLabel/stColor)
-  } else if (st === 'pending') {
-    if (!confirmed) {
-      buttons = `
-        <button onclick="drvTake(${ordId})" style="${_drvBtnStyle('accent')}">${t('drv.btn.took')}</button>
-        <button onclick="drvShowNotTaken(${ordId})" style="${_drvBtnStyle('warn')}">${t('drv.btn.not_taken')}</button>`;
-    } else {
-      const payBtn = `<button onclick="drvShowPay(${ordId},${orderTotal},${paid})" style="${_drvBtnStyle('secondary')}">${t('drv.btn.payment')}</button>`;
-      buttons =
-        `<button onclick="drvConfirmDeliver(${ordId},${orderTotal},${paid})" style="${_drvBtnStyle('success')}">${t('drv.btn.delivered')}</button>
-         ${payBtn}
-         <button onclick="drvShowReturned(${ordId})" style="${_drvBtnStyle('warn')}">${t('drv.btn.returned')}</button>
-         <button onclick="drvUndoDelivery(${ordId})" style="${_drvBtnStyle('secondary')}">${t('drv.btn.undo')}</button>`;
+  let st, stLabel, buttons = '';
+
+  if (isPickupRoute) {
+    // Маршрут «Забор»: confirmed/new (ждём забора у клиента) → pickup (забрали,
+    // ждём сдачи в мастерскую) → received+ (готово). Портировано из прода.
+    const stage = (ost === 'cancelled' || stop.stop_status === 'skipped') ? 'skipped'
+                : (ost === 'new' || ost === 'confirmed') ? 'waiting_pickup'
+                : (ost === 'pickup') ? 'waiting_handoff'
+                : 'done';
+    st = stage === 'skipped' ? 'skipped' : stage === 'done' ? 'done' : 'pending';
+    stLabel = stage === 'waiting_handoff' ? t('drv.st.picked_up')
+            : stage === 'done' ? t('drv.st.handed_off')
+            : _drvStatusLabel(st);
+    if (!routeClosed) {
+      if (stage === 'waiting_pickup') {
+        buttons = `
+          <button onclick="drvOpenPickupForm(${ordId})" style="${_drvBtnStyle('accent')}">${t('drv.btn.took')}</button>
+          <button onclick="drvShowNotTaken(${ordId})" style="${_drvBtnStyle('warn')}">${t('drv.btn.not_taken')}</button>`;
+      } else if (stage === 'waiting_handoff') {
+        buttons = `
+          <button onclick="drvHandoff(${ordId})" style="${_drvBtnStyle('success')}">${t('drv.btn.handoff')}</button>
+          <button onclick="drvUndoPickup(${ordId})" style="${_drvBtnStyle('secondary')}">${t('drv.btn.undo_pickup')}</button>`;
+      }
     }
+  } else {
+    st = ost === 'delivered' ? 'done'
+       : ost === 'cancelled' ? 'skipped'
+       : stop.stop_status === 'skipped' ? 'skipped'
+       : 'pending';
+    stLabel = _drvStatusLabel(st);
+    if (routeClosed) {
+      // без кнопок — только статус выше
+    } else if (st === 'pending') {
+      if (!confirmed) {
+        buttons = `
+          <button onclick="drvTake(${ordId})" style="${_drvBtnStyle('accent')}">${t('drv.btn.take_delivery')}</button>
+          <button onclick="drvShowNotTaken(${ordId})" style="${_drvBtnStyle('warn')}">${t('drv.btn.not_taken')}</button>`;
+      } else {
+        const payBtn = `<button onclick="drvShowPay(${ordId},${orderTotal},${paid})" style="${_drvBtnStyle('secondary')}">${t('drv.btn.payment')}</button>`;
+        buttons =
+          `<button onclick="drvConfirmDeliver(${ordId},${orderTotal},${paid})" style="${_drvBtnStyle('success')}">${t('drv.btn.delivered')}</button>
+           ${payBtn}
+           <button onclick="drvShowReturned(${ordId})" style="${_drvBtnStyle('warn')}">${t('drv.btn.returned')}</button>
+           <button onclick="drvUndoDelivery(${ordId})" style="${_drvBtnStyle('secondary')}">${t('drv.btn.undo')}</button>`;
+      }
+    }
+    // st === 'done' (Доставлен) — без кнопок, финальный статус.
   }
+
+  const stColor = st === 'done' ? 'var(--success,#22c55e)' : st === 'skipped' ? 'var(--text3,#888)' : 'var(--accent)';
 
   const infoBtns = `
     <div style="display:flex;gap:6px;margin-top:8px">
@@ -7617,6 +7655,115 @@ function _drvOpenSheet(title, html) {
 }
 function _drvCloseSheet() {
   document.getElementById('drvSheet').classList.remove('open');
+}
+
+// ── «Забрал» на маршруте типа «Забор» — портировано из прода ──
+let _drvPkpOrderId = null, _drvPkpMode = 'count', _drvPkpSvcRowN = 0, _drvPkpLang = 'ru';
+
+function drvOpenPickupForm(orderId) {
+  _drvPkpOrderId = orderId; _drvPkpMode = 'count'; _drvPkpSvcRowN = 0; _drvPkpLang = 'ru';
+  _drvOpenSheet(t('drv.pkp.title'), `
+    <div class="filter-chips" style="margin-bottom:10px">
+      <button class="fchip active" id="drv_pkp_mode_count_btn" onclick="_drvPkpSetMode('count')">${t('drv.pkp.count_mode')}</button>
+      <button class="fchip" id="drv_pkp_mode_svc_btn" onclick="_drvPkpSetMode('by_service')">${t('drv.pkp.svc_mode')}</button>
+    </div>
+    <div id="drv_pkp_mode_count_wrap">
+      <input id="drv_pkp_count" type="number" min="1" value="1" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px">
+    </div>
+    <div id="drv_pkp_mode_svc_wrap" style="display:none">
+      <div id="drv_pkp_svc_rows"></div>
+      <button onclick="_drvPkpAddSvcRow()" style="margin-top:6px;padding:6px 12px;border:1.5px dashed var(--border);border-radius:8px;background:none;color:var(--text2);font-size:12px;cursor:pointer">${t('drv.pkp.add_svc')}</button>
+    </div>
+    <div style="margin-top:12px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text)">${t('drv.pkp.lang_title')}</div>
+      <div class="filter-chips">
+        <button class="fchip active" id="drv_pkp_lang_ru" onclick="_drvPkpSetLang('ru')">🇷🇺 Русский</button>
+        <button class="fchip" id="drv_pkp_lang_uz" onclick="_drvPkpSetLang('uz')">🇺🇿 Ўзбек</button>
+      </div>
+    </div>
+    <button onclick="drvSubmitPickup()" id="drvPkpSubmitBtn" style="width:100%;margin-top:14px;padding:12px;background:#163E3B;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">${t('drv.pkp.submit')}</button>
+  `);
+  _drvPkpAddSvcRow();
+}
+
+function _drvPkpSetMode(mode) {
+  _drvPkpMode = mode;
+  document.getElementById('drv_pkp_mode_count_btn')?.classList.toggle('active', mode === 'count');
+  document.getElementById('drv_pkp_mode_svc_btn')?.classList.toggle('active', mode === 'by_service');
+  document.getElementById('drv_pkp_mode_count_wrap').style.display = mode === 'count' ? '' : 'none';
+  document.getElementById('drv_pkp_mode_svc_wrap').style.display   = mode === 'by_service' ? '' : 'none';
+}
+
+function _drvPkpSetLang(lang) {
+  _drvPkpLang = lang;
+  document.getElementById('drv_pkp_lang_ru')?.classList.toggle('active', lang === 'ru');
+  document.getElementById('drv_pkp_lang_uz')?.classList.toggle('active', lang === 'uz');
+}
+
+function _drvPkpAddSvcRow() {
+  const wrap = document.getElementById('drv_pkp_svc_rows');
+  if (!wrap) return;
+  const id = _drvPkpSvcRowN++;
+  const row = document.createElement('div');
+  row.id = `drv_pkp_svc_row_${id}`;
+  row.style.cssText = 'display:flex;gap:8px;margin-bottom:6px';
+  row.innerHTML = `
+    <input type="text" placeholder="${t('drv.pkp.svc_placeholder')}" class="drv-pkp-svc-name" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
+    <input type="number" min="1" value="1" class="drv-pkp-svc-qty" style="width:70px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
+    <button onclick="document.getElementById('drv_pkp_svc_row_${id}').remove()" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0 6px">✕</button>`;
+  wrap.appendChild(row);
+}
+
+async function drvSubmitPickup() {
+  if (!_drvPkpOrderId) return;
+  const btn = document.getElementById('drvPkpSubmitBtn');
+  const body = { mode: _drvPkpMode, sms_lang: _drvPkpLang };
+  if (_drvPkpMode === 'by_service') {
+    const items = {};
+    document.querySelectorAll('#drv_pkp_svc_rows > div').forEach(row => {
+      const name = row.querySelector('.drv-pkp-svc-name')?.value.trim();
+      const qty  = parseInt(row.querySelector('.drv-pkp-svc-qty')?.value) || 0;
+      if (name && qty > 0) items[name] = (items[name] || 0) + qty;
+    });
+    if (!Object.keys(items).length) { showToast(t('drv.pkp.svc_required'), 'error'); return; }
+    body.items = items;
+  } else {
+    body.count = parseInt(document.getElementById('drv_pkp_count')?.value) || 1;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = t('common.pleaseWait') || '…'; }
+  try {
+    const r = await apiFetch(`/api/staff/my-route/stops/${_drvPkpOrderId}/take-pickup`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Ошибка');
+    _drvCloseSheet();
+    showToast(t('drv.btn.took'), 'success');
+    await loadDelivery(true);
+  } catch(e) {
+    showToast('⚠️ ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = t('drv.pkp.submit'); }
+  }
+}
+
+async function drvHandoff(orderId) {
+  try {
+    const r = await apiFetch(`/api/staff/pickup/${orderId}/handoff`, { method:'POST' });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Ошибка');
+    showToast(t('drv.btn.handoff'), 'success');
+    await loadDelivery(true);
+  } catch(e) { showToast('⚠️ ' + e.message, 'error'); }
+}
+
+async function drvUndoPickup(orderId) {
+  try {
+    const r = await apiFetch(`/api/staff/my-route/stops/${orderId}/undo-pickup`, { method:'POST' });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Ошибка');
+    await loadDelivery(true);
+  } catch(e) { showToast('⚠️ ' + e.message, 'error'); }
 }
 
 async function drvOpenItems(orderId) {
