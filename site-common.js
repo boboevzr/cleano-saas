@@ -33,6 +33,17 @@
       'cabinet.feature3': 'Повторный заказ в один клик по сохранённым адресам',
       'cabinet.noOrders': 'У вас пока нет заявок',
       'cabinet.items': 'поз.',
+      'cabinet.noOrdersInCategory': 'Нет заказов в этой категории',
+      'cabinet.btn.positions': '📦 Позиции',
+      'cabinet.btn.measureMedia': '📐 Фото/видео замера',
+      'cabinet.btn.photos': '📷 До/После/Повреждено',
+      'cabinet.noPositions': 'Нет позиций',
+      'cabinet.noMeasureMedia': 'Нет фото/видео замера',
+      'cabinet.noPhotos': 'Нет фото',
+      'cabinet.photoType.before': 'До',
+      'cabinet.photoType.after': 'После',
+      'cabinet.photoType.damage': '⚠️ Повреждение',
+      'unit.cm': 'см', 'unit.m2': 'м²', 'unit.sum': 'сум', 'unit.pcs': 'шт',
       'auth.tabLogin': 'Вход', 'auth.tabRegister': 'Регистрация',
       'auth.welcome': 'Добро пожаловать', 'auth.loginSub': 'Войдите, чтобы посмотреть свои заявки',
       'auth.phone': 'Номер телефона', 'auth.password': 'Пароль', 'auth.loginBtn': 'Войти',
@@ -212,6 +223,17 @@
       'cabinet.feature3': "Saqlangan manzillar bo'yicha bir bosishda qayta buyurtma",
       'cabinet.noOrders': "Sizda hali buyurtmalar yo'q",
       'cabinet.items': 'poz.',
+      'cabinet.noOrdersInCategory': "Bu turkumda buyurtmalar yo'q",
+      'cabinet.btn.positions': '📦 Pozitsiyalar',
+      'cabinet.btn.measureMedia': "📐 O'lchov fotosi/videosi",
+      'cabinet.btn.photos': '📷 Oldin/Keyin/Shikastlangan',
+      'cabinet.noPositions': "Pozitsiya yo'q",
+      'cabinet.noMeasureMedia': "O'lchov fotosi/videosi yo'q",
+      'cabinet.noPhotos': "Foto yo'q",
+      'cabinet.photoType.before': 'Oldin',
+      'cabinet.photoType.after': 'Keyin',
+      'cabinet.photoType.damage': '⚠️ Shikastlangan',
+      'unit.cm': 'sm', 'unit.m2': 'm²', 'unit.sum': "so'm", 'unit.pcs': 'dona',
       'auth.tabLogin': 'Kirish', 'auth.tabRegister': "Ro'yxatdan o'tish",
       'auth.welcome': 'Xush kelibsiz', 'auth.loginSub': "Buyurtmalaringizni ko'rish uchun tizimga kiring",
       'auth.phone': 'Telefon raqami', 'auth.password': 'Parol', 'auth.loginBtn': 'Kirish',
@@ -396,6 +418,11 @@
     if (typeof recalc === 'function') recalc();
     if (typeof refreshDynamicUI === 'function') refreshDynamicUI();
     _reloadSiteVideoForLang();
+    // Личный кабинет: карточки заказов построены через t() на момент рендера —
+    // не обновляются реактивно, перерисовываем + сбрасываем кэш открытых секций.
+    if (typeof _ocdCache === 'object') { _ocdCache.items = {}; _ocdCache.media = {}; _ocdCache.photos = {}; }
+    if (typeof renderDashboardOrders === 'function') renderDashboardOrders();
+    if (typeof renderDrawerOrders === 'function') renderDrawerOrders();
   }
 
   applyI18n();
@@ -1504,6 +1531,20 @@
     renderDrawerOrders();
   });
 
+  // Подсветка активных (незавершённых) заказов — портировано из прода.
+  (function _ocdInjectStyle(){
+    if (document.getElementById('ocdActiveStyle')) return;
+    const s = document.createElement('style');
+    s.id = 'ocdActiveStyle';
+    s.textContent = `
+      .oc-active{ border-color: var(--teal-soft,#2CC6B3); animation: ocActivePulse 2.6s ease-in-out infinite; }
+      @keyframes ocActivePulse{
+        0%,100%{ box-shadow: 0 0 0 1px var(--teal-soft,#2CC6B3), 0 0 10px rgba(44,198,179,.25); }
+        50%{ box-shadow: 0 0 0 1px var(--teal-soft,#2CC6B3), 0 0 22px rgba(44,198,179,.55); }
+      }`;
+    document.head.appendChild(s);
+  })();
+
   function renderDrawerOrders(){
     const list = document.getElementById('drOrdersList');
     if (!list) return;
@@ -1513,19 +1554,28 @@
     }
     const filtered = lastOrders.filter(matchFilter);
     if (!filtered.length){
-      list.innerHTML = `<div class="orders-empty">Нет заказов в этой категории</div>`;
+      list.innerHTML = `<div class="orders-empty">${t('cabinet.noOrdersInCategory')}</div>`;
       return;
     }
     list.innerHTML = filtered.map(o => {
       const canCancel = o.status === 'new';
-      return `<div class="oc-full" id="oc-${o.order_num}">
+      const isActive = !['delivered','cancelled'].includes(o.status);
+      return `<div class="oc-full${isActive ? ' oc-active' : ''}" id="oc-${o.order_num}">
         <div class="oc-top">
           <span class="oc-num">${o.order_num}</span>
           <span class="order-status ${statusClass(o.status)}">${statusLabel(o.status)}</span>
         </div>
-        <div class="oc-row">${o.service || '—'}${o.branch ? ' · ' + o.branch : ''}</div>
         ${o.address ? `<div class="oc-meta">📍 ${o.address}</div>` : ''}
         ${o.pickup_date ? `<div class="oc-meta">📅 ${o.pickup_date}${o.pickup_time ? ' · ' + o.pickup_time : ''}</div>` : ''}
+        ${(o.item_count || o.total_price > 0) ? `<div class="oc-meta">${o.item_count ? '📦 ' + o.item_count + ' ' + t('cabinet.items') : ''}${(o.item_count && o.total_price > 0) ? ' · ' : ''}${o.total_price > 0 ? '💰 ' + formatSum(o.total_price) + ' сум' : ''}</div>` : ''}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+          <button class="btn-cancel ocd-sec-btn" id="ocdbtn-items-${o.order_num}" style="background:var(--sand-card);color:var(--ink);border:1px solid var(--line);width:auto;flex:1" onclick="toggleOrderSection('${o.order_num}','items')">${t('cabinet.btn.positions')}</button>
+          <button class="btn-cancel ocd-sec-btn" id="ocdbtn-media-${o.order_num}" style="background:var(--sand-card);color:var(--ink);border:1px solid var(--line);width:auto;flex:1" onclick="toggleOrderSection('${o.order_num}','media')">${t('cabinet.btn.measureMedia')}</button>
+          <button class="btn-cancel ocd-sec-btn" id="ocdbtn-photos-${o.order_num}" style="background:var(--sand-card);color:var(--ink);border:1px solid var(--line);width:auto;flex:1" onclick="toggleOrderSection('${o.order_num}','photos')">${t('cabinet.btn.photos')}</button>
+        </div>
+        <div class="oc-details" id="ocd-items-${o.order_num}" style="display:none"></div>
+        <div class="oc-details" id="ocd-media-${o.order_num}" style="display:none"></div>
+        <div class="oc-details" id="ocd-photos-${o.order_num}" style="display:none"></div>
         ${canCancel ? `<button class="btn-cancel" onclick="showCancelConfirm('${o.order_num}')">Отменить заказ</button>
           <div class="cancel-confirm" id="ccf-${o.order_num}">
             <span>Вы уверены?</span>
@@ -1536,6 +1586,142 @@
           </div>` : ''}
       </div>`;
     }).join('');
+  }
+
+  // ── Детали заказа: позиции / фото-видео замера / фото до-после-повреждено — раздельно ──
+  const _ocdCache = {items:{}, media:{}, photos:{}};
+  const OCD_PHOTO_TYPE_KEYS = {before:'cabinet.photoType.before', after:'cabinet.photoType.after', damage:'cabinet.photoType.damage'};
+  const _ocdEsc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const _ocdAuthHeaders = () => ({'Authorization':`Bearer ${localStorage.getItem('artez_token')}`});
+  const _ocdSvcLabel = it => (lang === 'uz' ? it.service_uz : it.service_ru) || it.service || '';
+
+  function _ocdEnsureLightbox(){
+    let box = document.getElementById('ocdLightbox');
+    if (box) return box;
+    box = document.createElement('div');
+    box.id = 'ocdLightbox';
+    box.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:99999;align-items:center;justify-content:center;padding:16px';
+    box.innerHTML = '<div id="ocdLightboxInner" style="max-width:100%;max-height:100%" onclick="event.stopPropagation()"></div>';
+    box.onclick = () => { box.style.display = 'none'; document.getElementById('ocdLightboxInner').innerHTML = ''; };
+    document.body.appendChild(box);
+    return box;
+  }
+  window.ocdOpenImage = url => {
+    const box = _ocdEnsureLightbox();
+    document.getElementById('ocdLightboxInner').innerHTML =
+      `<img src="${url}" oncontextmenu="return false" style="max-width:100%;max-height:90vh;border-radius:12px;display:block">`;
+    box.style.display = 'flex';
+  };
+  window.ocdOpenVideo = url => {
+    const box = _ocdEnsureLightbox();
+    document.getElementById('ocdLightboxInner').innerHTML =
+      `<video src="${url}" controls autoplay controlsList="nodownload noremoteplayback" disablePictureInPicture oncontextmenu="return false" style="max-width:100%;max-height:90vh;border-radius:12px;display:block"></video>`;
+    box.style.display = 'flex';
+  };
+  function _ocdMediaTile(url, isVideo){
+    return isVideo
+      ? `<div onclick="ocdOpenVideo('${url}')" style="cursor:pointer;width:100%;aspect-ratio:1;border-radius:8px;border:1px solid var(--line);background:var(--sand-card);display:flex;align-items:center;justify-content:center;font-size:28px">▶️</div>`
+      : `<img src="${url}" onclick="ocdOpenImage('${url}')" oncontextmenu="return false" style="cursor:pointer;width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--line)">`;
+  }
+
+  window.toggleOrderSection = async (num, section) => {
+    const box = document.getElementById(`ocd-${section}-${num}`);
+    if (!box) return;
+    const setActive = (sec, on) => {
+      const btn = document.getElementById(`ocdbtn-${sec}-${num}`);
+      if (!btn) return;
+      btn.style.background = on ? 'var(--teal)' : 'var(--sand-card)';
+      btn.style.color = on ? '#fff' : 'var(--ink)';
+    };
+    const wasOpen = box.style.display !== 'none';
+    ['items','media','photos'].forEach(s => {
+      if (s !== section) { const b = document.getElementById(`ocd-${s}-${num}`); if (b) b.style.display = 'none'; setActive(s, false); }
+    });
+    if (wasOpen) { box.style.display = 'none'; setActive(section, false); return; }
+    box.style.display = '';
+    setActive(section, true);
+    if (_ocdCache[section][num]) { box.innerHTML = _ocdCache[section][num]; return; }
+    box.innerHTML = `<div class="orders-empty">${t('common.loading')}</div>`;
+    try {
+      const html = section === 'items' ? await _ocdRenderItems(num)
+                 : section === 'media' ? await _ocdRenderMedia(num)
+                 : await _ocdRenderPhotos(num);
+      _ocdCache[section][num] = html;
+      box.innerHTML = html;
+    } catch (err) {
+      box.innerHTML = `<div class="orders-empty">${err.message}</div>`;
+    }
+  };
+
+  function _ocdItemMeta(it){
+    const dims = (it.width_cm && it.length_cm) ? `${it.width_cm}×${it.length_cm} ${t('unit.cm')} · ` : '';
+    const sqm = it.sqm > 0 ? `${dims}${Number(it.sqm).toFixed(2)} ${t('unit.m2')}` : '';
+    const price = it.price_per_sqm > 0 ? `${sqm ? ' · ' : ''}${formatSum(it.price_per_sqm)} ${t('unit.sum')}/${t('unit.m2')}` : '';
+    return sqm + price;
+  }
+
+  function _ocdFmtDt(v){
+    if (!v) return '';
+    const d = new Date(v);
+    return isNaN(d) ? String(v) : d.toLocaleString('ru', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  }
+
+  async function _ocdRenderItems(num){
+    const data = await apiFetch('/orders/'+num+'/items', {headers:_ocdAuthHeaders()});
+    const items = data.items || [];
+    if (!items.length) return `<div class="orders-empty">${t('cabinet.noPositions')}</div>`;
+    return items.map((it,i) => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)">
+          <div>
+            <div style="font-weight:600">${i+1}. ${_ocdEsc(_ocdSvcLabel(it)) || '—'}</div>
+            ${_ocdItemMeta(it) ? `<div style="font-size:12px;color:var(--text2)">${_ocdItemMeta(it)}</div>` : ''}
+          </div>
+          ${it.total_sum > 0 ? `<span style="font-weight:700">${formatSum(it.total_sum)} ${t('unit.sum')}</span>` : ''}
+        </div>`).join('');
+  }
+
+  async function _ocdRenderMedia(num){
+    const token = localStorage.getItem('artez_token');
+    const itemsData = await apiFetch('/orders/'+num+'/items', {headers:_ocdAuthHeaders()});
+    const items = itemsData.items || [];
+    if (!items.length) return `<div class="orders-empty">${t('cabinet.noPositions')}</div>`;
+    const mediaLists = await Promise.all(items.map(it =>
+      apiFetch(`/orders/${num}/items/${it.id}/media`, {headers:_ocdAuthHeaders()}).then(d => d.media || []).catch(() => [])
+    ));
+    const groups = items.map((it,i) => ({item:it, idx:i, media:mediaLists[i]})).filter(g => g.media.length);
+    if (!groups.length) return `<div class="orders-empty">${t('cabinet.noMeasureMedia')}</div>`;
+    return groups.map(g => {
+      const meta = _ocdItemMeta(g.item);
+      const sum = g.item.total_sum > 0 ? `${formatSum(g.item.total_sum)} ${t('unit.sum')}` : '';
+      const first = g.media[0];
+      const who = first?.created_by ? ` · 👤 ${_ocdEsc(first.created_by)}` : '';
+      const when = first?.created_at ? ` · 📅 ${_ocdFmtDt(first.created_at)}` : '';
+      return `<div style="margin-top:8px">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:2px">${g.idx+1}. ${_ocdEsc(_ocdSvcLabel(g.item)) || '—'}</div>
+          ${(meta || sum) ? `<div style="font-size:11px;color:var(--text2);margin-bottom:4px">${meta}${meta && sum ? ' · ' : ''}${sum}${who}${when}</div>` : ''}
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">
+            ${g.media.map(m => _ocdMediaTile(`${API_BASE}/item-media/${m.id}?t=${token}`, m.tg_file_type === 'video')).join('')}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  async function _ocdRenderPhotos(num){
+    const token = localStorage.getItem('artez_token');
+    const data = await apiFetch('/orders/'+num+'/photos', {headers:_ocdAuthHeaders()});
+    const photos = data.photos || [];
+    if (!photos.length) return `<div class="orders-empty">${t('cabinet.noPhotos')}</div>`;
+    const byType = {};
+    photos.forEach(p => {
+      if (!byType[p.photo_type]) byType[p.photo_type] = [];
+      byType[p.photo_type].push(p);
+    });
+    return Object.entries(byType).map(([type, list]) => `
+        <div style="margin-top:8px">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px">${OCD_PHOTO_TYPE_KEYS[type] ? t(OCD_PHOTO_TYPE_KEYS[type]) : _ocdEsc(type)}</div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">
+            ${list.map(p => _ocdMediaTile(`${API_BASE}/media/${p.id}?t=${token}`, p.tg_file_type === 'video')).join('')}
+          </div>
+        </div>`).join('');
   }
 
   window.showCancelConfirm = num => document.getElementById('ccf-'+num)?.classList.add('show');
