@@ -10222,23 +10222,27 @@ function statusBadgeClass(status) {
 
 const fmtMoney = n => (n != null && n !== '' && Number(n) !== 0) ? Number(n).toLocaleString('ru') + ' сум' : '—';
 // Та же формула, что в get_orders_with_debt (бэкенд) — items_total/total_price минус
-// все скидки минус уже учтённые платежи. Используется и в _payRow, и в фильтре «Долги».
-function _orderDebtAmount(o) {
+// все скидки минус уже учтённые платежи. Сумма к оплате всегда округляется вниз до
+// 1000 (остаток < 1000 не считается долгом) — портировано из прода 2026-08-07.
+// Используется и в _payRow, и в фильтре «Долги».
+function _orderNet(o) {
   const total = Number(o.items_total ?? o.total_price ?? 0);
   const disc  = Number(o.discount_sum||0) + Number(o.delivery_discount||0) + Number(o.manual_discount||0);
   const net   = Math.max(0, total - disc);
-  const paid  = Number(o.paid_amount ?? 0);
+  return net - (net % 1000);
+}
+function _orderDebtAmount(o) {
+  const net  = _orderNet(o);
+  const paid = Number(o.paid_amount ?? 0);
   return Math.max(0, net - paid);
 }
 function _orderHasDebt(o) {
   return !!o.debt_responsible_id && _orderDebtAmount(o) > 0;
 }
 function _payRow(o) {
-  const total   = Number(o.items_total ?? o.total_price ?? 0);
-  const disc    = Number(o.discount_sum||0) + Number(o.delivery_discount||0) + Number(o.manual_discount||0);
-  const net     = Math.max(0, total - disc);
-  const paid    = Number(o.paid_amount ?? 0);
-  const debt    = _orderDebtAmount(o);
+  const net  = _orderNet(o);
+  const paid = Number(o.paid_amount ?? 0);
+  const debt = _orderDebtAmount(o);
   return `<span>💰 ${fmtMoney(net)}</span><span style="color:${paid>0?'#22c55e':'inherit'}">Опл: ${fmtMoney(paid)}</span><span style="color:${debt>0?'#ef4444':'inherit'}">Долг: ${fmtMoney(debt)}</span>`;
 }
 
