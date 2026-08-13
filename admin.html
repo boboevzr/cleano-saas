@@ -3669,6 +3669,47 @@
             </div>
           </div>
 
+          <!-- Карточка: Видео-инструкция бота при первом входе -->
+          <div class="card" id="card-bot-welcome-video" style="margin-bottom:14px">
+            <div class="cfg-title-row">
+              <h3 class="cfg-title" data-i18n="tg.card.welcome_video">🎬 Видео-инструкция при первом входе</h3>
+            </div>
+            <p class="cfg-hint" data-i18n="tg.welcome_video.hint">Отправляется автоматически один раз каждому новому клиенту бота, сразу после выбора языка — отдельное от видео-карточки на сайте. До 19 МБ.</p>
+            <div class="demo-video-grid">
+              <div class="demo-video-col">
+                <div class="demo-video-col-head">
+                  <span class="demo-video-flag">🇷🇺</span> <span data-i18n="video.ru">Видео на русском</span>
+                  <span class="demo-video-pill" id="botWelcomeVideo_ru_pill">— нет</span>
+                </div>
+                <label class="demo-video-filepicker" for="botWelcomeVideo_ru_file">
+                  <span class="dvf-ico">📁</span>
+                  <span class="dvf-text" id="botWelcomeVideo_ru_filename" data-i18n="video.choosefile">Выбрать файл…</span>
+                </label>
+                <input type="file" id="botWelcomeVideo_ru_file" accept="video/*" style="display:none" onchange="botWelcomeVideoFilePicked('ru')">
+                <button class="demo-video-upload-btn" onclick="uploadBotWelcomeVideo('ru', this)">
+                  <span>⬆️</span> <span data-i18n="video.btn.upload">Загрузить</span>
+                </button>
+                <button class="btn btn-sm" id="botWelcomeVideo_ru_delete_btn" onclick="deleteBotWelcomeVideo('ru')" style="display:none;background:var(--surface2);color:var(--text);width:100%" data-i18n="video.btn.delete">🗑️ Удалить</button>
+              </div>
+              <div class="demo-video-col">
+                <div class="demo-video-col-head">
+                  <span class="demo-video-flag">🇺🇿</span> <span data-i18n="video.uz">Видео на узбекском</span>
+                  <span class="demo-video-pill" id="botWelcomeVideo_uz_pill">— нет</span>
+                </div>
+                <label class="demo-video-filepicker" for="botWelcomeVideo_uz_file">
+                  <span class="dvf-ico">📁</span>
+                  <span class="dvf-text" id="botWelcomeVideo_uz_filename" data-i18n="video.choosefile">Выбрать файл…</span>
+                </label>
+                <input type="file" id="botWelcomeVideo_uz_file" accept="video/*" style="display:none" onchange="botWelcomeVideoFilePicked('uz')">
+                <button class="demo-video-upload-btn" onclick="uploadBotWelcomeVideo('uz', this)">
+                  <span>⬆️</span> <span data-i18n="video.btn.upload">Загрузить</span>
+                </button>
+                <button class="btn btn-sm" id="botWelcomeVideo_uz_delete_btn" onclick="deleteBotWelcomeVideo('uz')" style="display:none;background:var(--surface2);color:var(--text);width:100%" data-i18n="video.btn.delete">🗑️ Удалить</button>
+              </div>
+            </div>
+            <div style="margin-top:8px"><span class="s-msg" id="msg_bot_welcome_video"></span></div>
+          </div>
+
           <!-- Карточка: Новые клиенты -->
           <div class="card" id="card-tg-new-clients" style="margin-top:14px">
             <div class="cfg-title-row">
@@ -6763,6 +6804,8 @@ const _adminI18n = {
     'sms.tpl.tab.templates':'📋 Шаблоны','sms.tpl.tab.system':'🔑 Системные',
     'tg.card.group':'💬 Группа TG',
     'tg.card.orders.groups':'📋 Группы Заказов','tg.card.media':'📁 Медиа-канал',
+    'tg.card.welcome_video':'🎬 Видео-инструкция при первом входе',
+    'tg.welcome_video.hint':'Отправляется автоматически один раз каждому новому клиенту бота, сразу после выбора языка — отдельное от видео-карточки на сайте. До 19 МБ.',
     'tg.card.cash':'💵 Канал кассы','tg.card.leads':'🎯 Группа Лидов',
     'tg.card.delivery':'🚗 Группа водителей / доставщиков','tg.card.new.clients':'👤 Новые пользователи сайта',
     'tg.field.link':'Ссылка',
@@ -7298,6 +7341,8 @@ const _adminI18n = {
     'sms.tpl.tab.templates':'📋 Shablonlar','sms.tpl.tab.system':'🔑 Tizimli',
     'tg.card.group':'💬 TG Guruhi',
     'tg.card.orders.groups':'📋 Buyurtmalar guruhlari','tg.card.media':'📁 Media-kanal',
+    'tg.card.welcome_video':"🎬 Birinchi kirishda video-yo'riqnoma",
+    'tg.welcome_video.hint':"Botning har bir yangi mijoziga til tanlangandan keyin bir marta avtomatik yuboriladi — saytdagi video-kartochkadan alohida. 19 MB gacha.",
     'tg.card.cash':'💵 Kassa kanali','tg.card.leads':'🎯 Lidlar guruhi',
     'tg.card.delivery':'🚗 Haydovchilar / yetkazuvchilar guruhi','tg.card.new.clients':'👤 Yangi sayt foydalanuvchilari',
     'tg.field.link':'Havola',
@@ -8444,6 +8489,75 @@ async function deleteSiteVideo(lang) {
   if (!confirm('Удалить видео (' + lang.toUpperCase() + ')?')) return;
   const r = await apiDelete('/admin/site-video/' + lang);
   if (r?.ok) { await loadSiteVideo(); showToast('Видео удалено'); }
+}
+
+async function loadBotWelcomeVideoStatus() {
+  try {
+    const d = await apiGet('/admin/bot-welcome-video-status');
+    _setBotWelcomeVideoPill('ru', d?.ru);
+    _setBotWelcomeVideoPill('uz', d?.uz);
+  } catch(e) {}
+}
+
+function _setBotWelcomeVideoPill(lang, uploaded) {
+  const pill   = document.getElementById('botWelcomeVideo_' + lang + '_pill');
+  const delBtn = document.getElementById('botWelcomeVideo_' + lang + '_delete_btn');
+  if (!pill) return;
+  if (delBtn) delBtn.style.display = uploaded ? '' : 'none';
+  pill.textContent = uploaded ? '✓ загружено' : '— нет';
+  pill.classList.toggle('ok', !!uploaded);
+}
+
+function botWelcomeVideoFilePicked(lang) {
+  const input = document.getElementById('botWelcomeVideo_' + lang + '_file');
+  const label = input.previousElementSibling;
+  const nameEl = document.getElementById('botWelcomeVideo_' + lang + '_filename');
+  const file = input.files[0];
+  if (file) {
+    nameEl.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' МБ)';
+    label.classList.add('picked');
+  } else {
+    nameEl.textContent = 'Выбрать файл…';
+    label.classList.remove('picked');
+  }
+}
+
+async function uploadBotWelcomeVideo(lang, btn) {
+  const input = document.getElementById('botWelcomeVideo_' + lang + '_file');
+  const msg = document.getElementById('msg_bot_welcome_video');
+  const file = input.files[0];
+  if (!file) { msg.style.color = '#dc2626'; msg.textContent = 'Выберите файл видео'; return; }
+  msg.style.color = 'var(--text2)';
+  msg.textContent = 'Загрузка… это может занять до минуты';
+  btn.disabled = true;
+  const origHtml = btn.innerHTML;
+  btn.innerHTML = '<span>⏳</span> Загрузка…';
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    const r = await fetch(`${API_BASE}/admin/bot-welcome-video/${lang}`, {
+      method: 'POST', headers: { Authorization: `Bearer ${adminToken}` }, body: fd
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) throw new Error(d.detail || 'Ошибка загрузки видео');
+    msg.style.color = '#15803d';
+    msg.textContent = '✓ Видео (' + lang.toUpperCase() + ') загружено';
+    input.value = '';
+    botWelcomeVideoFilePicked(lang);
+    await loadBotWelcomeVideoStatus();
+  } catch (e) {
+    msg.style.color = '#dc2626';
+    msg.textContent = e.message || 'Ошибка';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origHtml;
+  }
+}
+
+async function deleteBotWelcomeVideo(lang) {
+  if (!confirm('Удалить видео (' + lang.toUpperCase() + ')?')) return;
+  const r = await apiDelete('/admin/bot-welcome-video/' + lang);
+  if (r?.ok) { await loadBotWelcomeVideoStatus(); showToast('Видео удалено'); }
 }
 
 const MAX_SLIDES = 5;
@@ -9608,7 +9722,7 @@ function _activatePage(page) {
   if (page === 'siteconfig')  { loadSiteSettings(); staffMgmtLoad(); }
   if (page === 'company-settings') { _loadCompanyProfile(); loadSiteSettings(); _loadCompanySocial(); renderBranchContactCards(); loadBranches().then(() => renderBranchContactCards()); }
   if (page === 'site-design') designLoad();
-  if (page === 'tg-bot')      loadSiteSettings();
+  if (page === 'tg-bot')      { loadSiteSettings(); loadBotWelcomeVideoStatus(); }
   if (page === 'tg-messages') loadTgSettings();
   if (page === 'tg-clients')  loadTgClients();
   if (page === 'tg-vars')  loadProjVars();
