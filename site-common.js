@@ -646,8 +646,9 @@
 
   let pendingPhone = null; // телефон, ожидающий подтверждения кода
   let pendingViaTg = false; // был ли код отправлен через Telegram
+  let _regTgBotUsername = 'artez_orders_bot'; // дефолт до загрузки настроек компании
   function copyTgBotLink() {
-    const link = 'https://t.me/artez_orders_bot?start=link_phone';
+    const link = `https://t.me/${_regTgBotUsername}?start=link_phone`;
     navigator.clipboard.writeText(link).then(() => {
       const btn = document.getElementById('regTgCopyBtn');
       if (btn) { btn.textContent = t('auth.tgCopied'); setTimeout(() => { btn.textContent = t('auth.tgCopy'); }, 2500); }
@@ -1479,7 +1480,7 @@
               3. ${t('dr.agent.step3')}<br>
               4. ${t('dr.agent.step4')}
             </div>
-            <a href="https://t.me/artez_orders_bot" target="_blank"
+            <a href="https://t.me/${_regTgBotUsername}" target="_blank"
               style="display:block;text-align:center;padding:13px;background:#229ED9;color:#fff;border-radius:10px;font-weight:600;text-decoration:none;margin-bottom:10px">
               📱 ${t('dr.agent.openBot')}
             </a>
@@ -2917,6 +2918,25 @@
     });
     I18N.ru['order.successText'] = lines.join('\n');
     I18N.uz['order.successText'] = linesUz.join('\n');
+
+    // Ссылки на TG-бота в шаге регистрации «через Telegram» — раньше были
+    // жёстко зашиты на прод-бот ARTEZ (@artez_orders_bot) везде, независимо
+    // от компании. Каждая компания подключает СВОЙ бот (order_bot_username).
+    const botUsername = s.order_bot_username || '';
+    const tgMethodBtn = document.getElementById('regMethodTgBtn');
+    if (!botUsername) {
+      if (tgMethodBtn) tgMethodBtn.style.display = 'none';
+    } else {
+      _regTgBotUsername = botUsername;
+      const link = `https://t.me/${botUsername}?start=link_phone`;
+      const openBtn = document.getElementById('regTgOpenBotLink');
+      if (openBtn) openBtn.href = link;
+      const linkField = document.getElementById('regTgBotLinkField');
+      if (linkField) linkField.value = link;
+      I18N.ru['auth.tgVar3Html'] = `Откройте <a href="https://t.me/${botUsername}" target="_blank" rel="noopener" style="color:#229ED9;text-decoration:none;font-weight:600">@${botUsername}</a>, в меню нажмите <b>👤 Мой профиль</b> → <b>📞 Привязать номер</b>`;
+      I18N.uz['auth.tgVar3Html'] = `<a href="https://t.me/${botUsername}" target="_blank" rel="noopener" style="color:#229ED9;text-decoration:none;font-weight:600">@${botUsername}</a> ni oching, menyuda <b>👤 Mening profilim</b> → <b>📞 Raqam ulash</b> ni bosing`;
+      applyI18n();
+    }
   }).catch(() => {});
 
   function _renderContactModal() {
