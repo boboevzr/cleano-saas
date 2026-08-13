@@ -2526,7 +2526,7 @@
     const payload = {
       first_name: document.getElementById('sName').value.trim(),
       phone: document.getElementById('sPhone').value.trim(),
-      branch: branchName(selectedSimpleBranch),
+      branch: selectedSimpleBranch,
       address: '—',
       is_quick: true,
     };
@@ -2560,7 +2560,7 @@
     const payload = {
       first_name: document.getElementById('dName').value.trim(),
       phone: document.getElementById('dPhone').value.trim(),
-      branch: branchName(selectedBranch),
+      branch: selectedBranch,
       address: document.getElementById('dAddress').value.trim(),
       location: getMarkerCoords(),
       location_address: _mapLocationAddress || '',

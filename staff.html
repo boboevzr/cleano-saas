@@ -3798,7 +3798,7 @@ function openLeadDetail(id) {
   _currentLeadId = id;
   const pad = document.getElementById('scrollPad');
   document.getElementById('fabBtn').style.display = 'none';
-  const branch    = BRANCH_RU[lead.branch] || lead.branch || '—';
+  const branch    = branchLabel(lead.branch);
   const creator   = [lead.creator_last_name, lead.creator_first_name].filter(Boolean).join(' ');
   const creatorStr = creator ? `${creator}${lead.creator_position?' · '+lead.creator_position:''}` : '—';
   const code      = lead.lead_code ? `<div style="font-size:26px;font-weight:900;color:var(--accent,#163E3B);letter-spacing:.02em;line-height:1;margin-bottom:4px">${lead.lead_code}</div>` : '';

@@ -7903,7 +7903,9 @@ async function tgCheckId(inputId, nameElId) {
   nameEl.textContent = '…';
   nameEl.className = 'tg-chat-name';
   try {
-    const d = await api(`/tg/chat-info?chat_id=${encodeURIComponent(id)}`);
+    const res = await apiFetch(`${API_BASE}/tg/chat-info?chat_id=${encodeURIComponent(id)}`);
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.detail || 'ID неверный или бот не является участником группы/канала');
     nameEl.textContent = d.title || '—';
     nameEl.className = 'tg-chat-name';
   } catch(e) {
@@ -10389,7 +10391,7 @@ function renderOrderCards(orders, containerId) {
         <span>🕐 ${o.pickup_time || '—'}</span>
       </div>
       <div class="order-meta">
-        <span>🏢 ${o.branch || '—'}</span>
+        <span>🏢 ${branchName(o.branch)}</span>
         <span>📍 ${o.short_address || o.address || ''}</span>
       </div>
       <div class="order-meta">${_payRow(o)}</div>
@@ -14973,7 +14975,7 @@ function _renderAdminLeadsTable(leads) {
       <td data-label="Телефон"><a href="tel:${l.client_phone}" onclick="event.stopPropagation()">${l.client_phone}</a></td>
       <td data-label="Услуга">${l.service || '—'}</td>
       <td data-label="Адрес">${l.short_address || l.address || '—'}</td>
-      <td data-label="Филиал">${l.branch || '—'}</td>
+      <td data-label="Филиал">${branchName(l.branch)}</td>
       <td data-label="Статус">${badge}</td>
       <td data-label="Дата">${d}</td>
     </tr>`;
