@@ -2602,7 +2602,7 @@ async function tgCheckId(inputId, nameElId) {
   nameEl.textContent = '…';
   nameEl.className = 'tg-chat-name';
   try {
-    const d = await api(`/tg/chat-info?chat_id=${encodeURIComponent(id)}`);
+    const d = await api(`/tg/chat-info?chat_id=${encodeURIComponent(id)}&company_id=${_currentCompanyId}`);
     nameEl.textContent = d.title || '—';
     nameEl.className = 'tg-chat-name';
   } catch(e) {
