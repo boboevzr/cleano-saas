@@ -2121,10 +2121,19 @@
     orderSuccess.style.display = 'none';
     document.body.style.overflow = 'hidden';
 
-    // Сбрасываем выбор филиала в быстрой форме
-    selectedSimpleBranch = '';
-    document.getElementById('sBranch').value = '';
-    document.querySelectorAll('#sBranchGroup .pill-btn').forEach(b => b.classList.remove('active'));
+    // Сбрасываем выбор филиала в быстрой форме — кроме случая единственного
+    // филиала: там поле скрыто (см. _renderCalcBranchPills), и его нужно
+    // оставить предвыбранным, иначе форма не отправится (пусто и невидимо).
+    const sPills = document.querySelectorAll('#sBranchGroup .pill-btn');
+    if (sPills.length === 1) {
+      sPills[0].classList.add('active');
+      selectedSimpleBranch = sPills[0].dataset.branch;
+      document.getElementById('sBranch').value = selectedSimpleBranch;
+    } else {
+      selectedSimpleBranch = '';
+      document.getElementById('sBranch').value = '';
+      sPills.forEach(b => b.classList.remove('active'));
+    }
 
     // Pre-fill name and phone if user is logged in
     if (currentUser) {
