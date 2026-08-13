@@ -1480,7 +1480,7 @@
               3. ${t('dr.agent.step3')}<br>
               4. ${t('dr.agent.step4')}
             </div>
-            <a href="https://t.me/${_regTgBotUsername}" target="_blank"
+            <a href="https://t.me/${_escHtml(_regTgBotUsername)}" target="_blank"
               style="display:block;text-align:center;padding:13px;background:#229ED9;color:#fff;border-radius:10px;font-weight:600;text-decoration:none;margin-bottom:10px">
               📱 ${t('dr.agent.openBot')}
             </a>
@@ -2933,8 +2933,9 @@
       if (openBtn) openBtn.href = link;
       const linkField = document.getElementById('regTgBotLinkField');
       if (linkField) linkField.value = link;
-      I18N.ru['auth.tgVar3Html'] = `Откройте <a href="https://t.me/${botUsername}" target="_blank" rel="noopener" style="color:#229ED9;text-decoration:none;font-weight:600">@${botUsername}</a>, в меню нажмите <b>👤 Мой профиль</b> → <b>📞 Привязать номер</b>`;
-      I18N.uz['auth.tgVar3Html'] = `<a href="https://t.me/${botUsername}" target="_blank" rel="noopener" style="color:#229ED9;text-decoration:none;font-weight:600">@${botUsername}</a> ni oching, menyuda <b>👤 Mening profilim</b> → <b>📞 Raqam ulash</b> ni bosing`;
+      const botUsernameSafe = _escHtml(botUsername);
+      I18N.ru['auth.tgVar3Html'] = `Откройте <a href="https://t.me/${botUsernameSafe}" target="_blank" rel="noopener" style="color:#229ED9;text-decoration:none;font-weight:600">@${botUsernameSafe}</a>, в меню нажмите <b>👤 Мой профиль</b> → <b>📞 Привязать номер</b>`;
+      I18N.uz['auth.tgVar3Html'] = `<a href="https://t.me/${botUsernameSafe}" target="_blank" rel="noopener" style="color:#229ED9;text-decoration:none;font-weight:600">@${botUsernameSafe}</a> ni oching, menyuda <b>👤 Mening profilim</b> → <b>📞 Raqam ulash</b> ni bosing`;
       applyI18n();
     }
   }).catch(() => {});
