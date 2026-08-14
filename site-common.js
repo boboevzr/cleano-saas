@@ -691,6 +691,9 @@
     if (method === 'tg') {
       document.getElementById('regTgPhone').value = '';
       showTgSubStep('phone');
+      // Некуда возвращаться, если SMS-метод скрыт (единственный вариант — Telegram).
+      const backBtn = document.getElementById('regTgBackBtn');
+      if (backBtn) backBtn.style.display = _smsRegAvailable ? '' : 'none';
     }
     hideAlert();
   }

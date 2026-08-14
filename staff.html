@@ -11739,6 +11739,94 @@ async function smSaveAndClose() {
   showToast(approved ? 'Сохранено и утверждено' : 'Сохранено', 'success');
 }
 
+// ── ВЫБОР УСЛУГИ ПЕРЕД ЗАМЕРОМ (если у позиции ещё не указана) ────────────────
+let _svpItemId = null;
+
+async function staffOpenServicePick(itemId) {
+  _svpItemId = itemId;
+  document.getElementById('svp_custom_name').value = '';
+  svpSwitchTab('price');
+  await svpFillCatalog();
+  document.getElementById('staffModalServicePick').classList.add('open');
+}
+
+function staffCloseServicePick() {
+  document.getElementById('staffModalServicePick').classList.remove('open');
+}
+
+async function svpFillCatalog() {
+  await _loadStaffPrices();
+  const svcSel = document.getElementById('svp_svc_select');
+  svcSel.innerHTML = '<option value="">— Выберите услугу —</option>';
+  const svcOrder = ['carpet','carpet_home','sofa','mattress','curtains'];
+  svcOrder.forEach(k => {
+    if ((_sPrices||{})[k]) svcSel.innerHTML += `<option value="${k}">${_svcName(k)}</option>`;
+  });
+  document.getElementById('svp_type_select').innerHTML = '<option value="">— Сначала выберите услугу —</option>';
+}
+
+function svpSwitchTab(tab) {
+  ['price','custom'].forEach(tb => {
+    const panel = document.getElementById(`svp-panel-${tb}`);
+    const btn   = document.getElementById(`svp-tab-${tb}`);
+    if (panel) panel.style.display = tb === tab ? '' : 'none';
+    if (btn) { btn.style.background = tb === tab ? '#fff' : 'transparent'; btn.style.color = tb === tab ? '#163E3B' : '#888'; }
+  });
+}
+
+function svpOnSvcChange() {
+  const prices = _sPrices || {};
+  const svcKey = document.getElementById('svp_svc_select').value;
+  const typeSel = document.getElementById('svp_type_select');
+  typeSel.innerHTML = '<option value="">— Выберите тип —</option>';
+  if (!svcKey || !prices[svcKey]) return;
+  Object.entries(prices[svcKey]).forEach(([typeKey, info]) => {
+    typeSel.innerHTML += `<option value="${typeKey}">${_typeName(typeKey)} — ${(info.price||0).toLocaleString('ru')} ${t('unit.sum')}/${t('unit.m2')}</option>`;
+  });
+  const _orderType = _sOrderCache?.service_type || 'standard';
+  const _match = Array.from(typeSel.options).find(o => o.value === _orderType);
+  if (_match) typeSel.value = _orderType;
+  else if (typeSel.options.length >= 2) typeSel.selectedIndex = 1;
+}
+
+async function svpConfirm() {
+  const isCustom = document.getElementById('svp-panel-custom')?.style.display !== 'none';
+  let service = '', service_ru = null, service_uz = null;
+  if (isCustom) {
+    service = document.getElementById('svp_custom_name')?.value.trim() || '';
+  } else {
+    const svcKey  = document.getElementById('svp_svc_select')?.value || '';
+    const typeKey = document.getElementById('svp_type_select')?.value || '';
+    if (!svcKey || !typeKey) { showToast('Выберите услугу', 'warning'); return; }
+    service    = `${_svcName(svcKey)} — ${_typeName(typeKey)}`;
+    service_ru = `${_svcName(svcKey,'ru')} — ${_typeName(typeKey,'ru')}`;
+    service_uz = `${_svcName(svcKey,'uz')} — ${_typeName(typeKey,'uz')}`;
+  }
+  if (!service) { showToast('Выберите услугу', 'warning'); return; }
+
+  const itemId = _svpItemId;
+  // Бэкенд у PUT всегда перезаписывает price_per_sqm/sqm/размеры из тела запроса
+  // (дефолт 0, если не передать) — шлём текущие значения позиции, чтобы их не стереть.
+  const cur = _sItemsCache.find(i => i.id === itemId) || {};
+  const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items/${itemId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type':'application/json', Authorization:`Bearer ${_staffToken()}` },
+    body: JSON.stringify({
+      service, service_ru, service_uz,
+      price_per_sqm: cur.price_per_sqm || 0,
+      sqm: cur.sqm || null, width_cm: cur.width_cm || null, length_cm: cur.length_cm || null,
+    })
+  });
+  if (!res.ok) { const e = await res.json().catch(()=>({})); showToast(e.detail||'Ошибка', 'error'); return; }
+  const d = await res.json().catch(()=>({}));
+  const idx = _sItemsCache.findIndex(i => i.id === itemId);
+  if (idx >= 0) _sItemsCache[idx] = d.item ? { ..._sItemsCache[idx], ...d.item } : { ..._sItemsCache[idx], service, service_ru, service_uz };
+
+  staffCloseServicePick();
+  _reRenderItems();
+  await staffOpenMeasure(itemId);
+}
+
 // ── ЗАМЕР ПОЗИЦИИ (мойщик) ───────────────────────────────────────────────────
 let _measureItemId = null;
 let _smMediaList    = [];
@@ -11750,6 +11838,12 @@ const itemMediaUrl  = id => `${API_BASE}/item-media/${id}?t=${_staffToken()}`;
 async function staffOpenMeasure(itemId) {
   const item = _sItemsCache.find(i => i.id === itemId);
   if (!item) return;
+  // Менеджеры часто забывали указать услугу при замере — если её ещё нет,
+  // сначала просим выбрать (отдельная модалка), потом уже открываем замер.
+  if (!item.service) {
+    staffOpenServicePick(itemId);
+    return;
+  }
   _measureItemId = itemId;
   _smMediaList   = [];
   const _smGrid = document.getElementById('sm_media_grid');
@@ -14262,6 +14356,39 @@ function staffChatSend() {
           📤 Отправить уведомление
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ МОДАЛКА: ВЫБОР УСЛУГИ ПЕРЕД ЗАМЕРОМ ═══════════ -->
+<!-- Открывается вместо staffModalMeasure, если у позиции ещё не указана услуга
+     (менеджеры часто забывали её указать при замере) — full-screen без бэкдропа,
+     закрыть можно только явной кнопкой ✕/Отмена. -->
+<div class="modal-fs" id="staffModalServicePick" style="z-index:303">
+  <div class="modal-fs-wrap">
+    <div class="modal-fs-head">
+      <div style="font-size:16px;font-weight:700;flex:1">🏷 Укажите услугу</div>
+      <button class="modal-fs-close" onclick="staffCloseServicePick()">✕</button>
+    </div>
+    <div class="modal-fs-body">
+      <div style="font-size:13px;color:#888;margin-bottom:14px">Прежде чем ввести замер — выберите услугу для этой позиции</div>
+      <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:14px;padding:14px">
+        <div style="display:flex;background:#e8edf2;border-radius:8px;overflow:hidden;margin-bottom:10px;padding:2px;gap:2px">
+          <button id="svp-tab-price" onclick="svpSwitchTab('price')" style="flex:1;padding:7px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#163E3B;transition:all .15s">📋 Из прайса</button>
+          <button id="svp-tab-custom" onclick="svpSwitchTab('custom')" style="flex:1;padding:7px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:#888;transition:all .15s">✏️ Другая</button>
+        </div>
+        <div id="svp-panel-price">
+          <select id="svp_svc_select" onchange="svpOnSvcChange()" style="width:100%;padding:10px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;background:#fff;margin-bottom:8px;box-sizing:border-box;outline:none;color:#1a1a1a"></select>
+          <select id="svp_type_select" style="width:100%;padding:10px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;background:#fff;box-sizing:border-box;outline:none;color:#1a1a1a;margin-bottom:0"></select>
+        </div>
+        <div id="svp-panel-custom" style="display:none">
+          <input id="svp_custom_name" type="text" placeholder="Название услуги" style="width:100%;padding:10px 14px;border:1.5px solid #007aff;border-radius:10px;font-size:14px;background:#f0f6ff;box-sizing:border-box;outline:none;color:#1a1a1a">
+        </div>
+      </div>
+    </div>
+    <div style="padding:12px 18px calc(var(--safe-bot,0px) + 12px);border-top:1.5px solid #f0f0f0;display:flex;gap:7%;box-sizing:border-box">
+      <button onclick="staffCloseServicePick()" style="flex:1;padding:12px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;border:1.5px solid #e2e8f0;background:#fff;color:#64748b">Отмена</button>
+      <button onclick="svpConfirm()" style="flex:1;padding:12px 0;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;border:none;background:#163E3B;color:#fff">Далее →</button>
     </div>
   </div>
 </div>
