@@ -23795,7 +23795,7 @@ async function smsSysLoad() {
     count: '12',
     phones: phones || '+998 XX XXX-XX-XX',
     bot_link: botLink,
-    site_link: slug ? `https://cleano.uz/?c=${slug}` : 'https://cleano.uz',
+    site_link: slug ? `https://${slug}.cleano.uz/` : 'https://cleano.uz',
   };
   ['register','login','reset','pickup_ru','pickup_uz','ready_ru','ready_uz'].forEach(_smsEskizPreview);
 }
@@ -23837,7 +23837,7 @@ function _smsPickupCountLen(field) {
 function _smsPickupRenderToggle(checked) {
   const track = document.getElementById('sys_sms_pickup_enabled_track');
   if (!track) return;
-  track.style.background = checked ? '#163E3B' : 'var(--border)';
+  track.style.background = checked ? 'var(--accent)' : 'var(--border)';
   track.innerHTML = `<span style="position:absolute;top:2px;left:${checked?'22px':'2px'};width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s"></span>`;
 }
 
@@ -23853,7 +23853,7 @@ async function smsPickupToggleEnabled(checked) {
 function _smsRegistrationRenderToggle(checked) {
   const track = document.getElementById('sys_sms_registration_enabled_track');
   if (!track) return;
-  track.style.background = checked ? '#163E3B' : 'var(--border)';
+  track.style.background = checked ? 'var(--accent)' : 'var(--border)';
   track.innerHTML = `<span style="position:absolute;top:2px;left:${checked?'22px':'2px'};width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s"></span>`;
 }
 
@@ -23869,7 +23869,7 @@ async function smsRegistrationToggleEnabled(checked) {
 function _smsReadyRenderToggle(checked) {
   const track = document.getElementById('sys_sms_ready_enabled_track');
   if (!track) return;
-  track.style.background = checked ? '#163E3B' : 'var(--border)';
+  track.style.background = checked ? 'var(--accent)' : 'var(--border)';
   track.innerHTML = `<span style="position:absolute;top:2px;left:${checked?'22px':'2px'};width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s"></span>`;
 }
 
