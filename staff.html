@@ -11514,8 +11514,17 @@ function sifUpdatePreview() {
   const sqm   = parseFloat(document.getElementById('sif_sqm').value)   || 0;
   const price = parseFloat(document.getElementById('sif_price').value)  || 0;
   const prev  = document.getElementById('sif_preview');
-  prev.textContent = (sqm > 0 && price > 0)
-    ? `${sqm.toFixed(2)} м² × ${price.toLocaleString('ru')} = ${(sqm*price).toLocaleString('ru')} сум`
+  const isCustom = document.getElementById('sif-panel-custom')?.style.display !== 'none';
+  let minOrder = null;
+  if (!isCustom) {
+    const svcKey  = document.getElementById('sif_svc_select')?.value;
+    const typeKey = document.getElementById('sif_type_select')?.value;
+    minOrder = (_sPrices||{})[svcKey]?.[typeKey]?.min_order || null;
+  }
+  const billedSqm = (minOrder && sqm > 0 && sqm < minOrder) ? minOrder : sqm;
+  const minNote = (minOrder && sqm > 0 && sqm < minOrder) ? ` (мин. ${minOrder} м²)` : '';
+  prev.textContent = (billedSqm > 0 && price > 0)
+    ? `${billedSqm.toFixed(2)} м² × ${price.toLocaleString('ru')} = ${(billedSqm*price).toLocaleString('ru')} сум${minNote}`
     : '';
 }
 
@@ -11532,7 +11541,17 @@ async function staffSaveItemForm() {
   if (!service) { alert('Укажите название услуги'); return; }
   if (!sqm && width && length) sqm = parseFloat((width * length / 10000).toFixed(3));
 
-  const body   = { service, sqm, width_cm: width, length_cm: length, price_per_sqm: price };
+  // Мин. площадь позиции из прайса — только для услуги, выбранной из справочника
+  // (у "своей услуги" каталожного min_order нет).
+  let min_order = null;
+  if (!isCustom) {
+    const svcKey  = document.getElementById('sif_svc_select')?.value;
+    const typeKey = document.getElementById('sif_type_select')?.value;
+    min_order = (_sPrices||{})[svcKey]?.[typeKey]?.min_order || null;
+  }
+  if (min_order && sqm && sqm < min_order) sqm = min_order;
+
+  const body   = { service, sqm, width_cm: width, length_cm: length, price_per_sqm: price, min_order };
   const url    = _sItemEdit
     ? `/admin/orders/${_sOrderId}/items/${_sItemEdit}`
     : `/admin/orders/${_sOrderId}/items`;
@@ -11636,16 +11655,17 @@ function smcGetService() {
 function smcGetServiceBilingual() {
   const isCustom = document.getElementById('smc-panel-custom')?.style.display !== 'none';
   if (isCustom) {
-    return { service: document.getElementById('smc_custom_name')?.value.trim() || '', service_ru: null, service_uz: null };
+    return { service: document.getElementById('smc_custom_name')?.value.trim() || '', service_ru: null, service_uz: null, min_order: null };
   }
   const service = document.getElementById('smc_service_name')?.value.trim() || '';
   const svcKey  = document.getElementById('smc_svc_select')?.value || '';
   const typeKey = document.getElementById('smc_type_select')?.value || '';
-  if (!svcKey || !typeKey) return { service, service_ru: null, service_uz: null };
+  if (!svcKey || !typeKey) return { service, service_ru: null, service_uz: null, min_order: null };
   return {
     service,
     service_ru: `${_svcName(svcKey,'ru')} — ${_typeName(typeKey,'ru')}`,
     service_uz: `${_svcName(svcKey,'uz')} — ${_typeName(typeKey,'uz')}`,
+    min_order: (_sPrices||{})[svcKey]?.[typeKey]?.min_order || null,
   };
 }
 
@@ -11682,17 +11702,20 @@ async function smcFillFromItem(item) {
 }
 
 async function smSaveItemInfo() {
-  const { service, service_ru, service_uz } = smcGetServiceBilingual();
+  const { service, service_ru, service_uz, min_order } = smcGetServiceBilingual();
   if (!service) { showToast('Выберите услугу', 'warning'); return false; }
   const price = parseFloat(document.getElementById('smc_price')?.value) || 0;
   const cur   = _sItemsCache.find(i => i.id === _measureItemId) || {};
   const w     = _smCanEdit ? (parseFloat(document.getElementById('sm_actual_w')?.value) || null) : (cur.width_cm  || null);
   const l     = _smCanEdit ? (parseFloat(document.getElementById('sm_actual_l')?.value) || null) : (cur.length_cm || null);
-  const sqm   = (w && l) ? parseFloat((w * l / 10000).toFixed(3)) : (cur.sqm || null);
+  let   sqm   = (w && l) ? parseFloat((w * l / 10000).toFixed(3)) : (cur.sqm || null);
+  // Мин. площадь позиции из прайса (запрос пользователя 2026-08-14) — если реально
+  // измеренная площадь меньше, платим как за минимум.
+  if (min_order && sqm && sqm < min_order) sqm = min_order;
   const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items/${_measureItemId}`, {
     method: 'PUT',
     headers: { 'Content-Type':'application/json', Authorization:`Bearer ${_staffToken()}` },
-    body: JSON.stringify({ service, service_ru, service_uz, price_per_sqm: price, sqm, width_cm: w, length_cm: l })
+    body: JSON.stringify({ service, service_ru, service_uz, price_per_sqm: price, sqm, width_cm: w, length_cm: l, min_order })
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); if (await _reloadItemsOnNotFound(e.detail)) return false; showToast(e.detail||'Ошибка', 'error'); return false; }
   const d = await res.json().catch(()=>({}));
