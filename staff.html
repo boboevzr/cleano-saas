@@ -1288,7 +1288,7 @@ const _i18n = {
     'lead.created_assigned':'✅ Лид создан и назначен на вас',
     'nav.leads':'🎯 Лиды','nav.orders':'📦 Заявки','nav.clients':'👥 Клиенты','nav.notifications':'🔔 Уведомления','nav.profile':'Профиль',
     'nav.lbl.dashboard':'Главная','nav.lbl.leads':'Лиды','nav.lbl.orders':'Заявки','nav.lbl.clients':'Клиенты','nav.lbl.notifications':'Уведомления','nav.lbl.delivery':'Доставка','nav.lbl.pickup':'Забор','nav.lbl.timesheet':'Табель','nav.lbl.chat':'Чаты','nav.lbl.cash':'Касса','nav.lbl.profile':'Профиль','nav.lbl.routes_admin':'Маршруты',
-    'ord.st.new':'Новый','ord.st.confirmed':'Подтверждён','ord.st.pickup':'Вывоз','ord.st.received':'В мастерской','ord.st.washing':'Мойка','ord.st.drying':'Сушка','ord.st.packing':'Упаковка','ord.st.ready':'Готов','ord.st.delivery':'Доставка','ord.st.delivered':'Доставлен','ord.st.cancelled':'Отменён',
+    'ord.st.new':'Новый','ord.st.confirmed':'Подтверждён','ord.st.pickup':'Вывоз','ord.st.received':'В мастерской','ord.st.washing':'Мойка','ord.st.drying':'Сушка','ord.st.packing':'Упаковка','ord.st.ready':'Готов','ord.st.ready_postponed':'Отложенные','ord.st.delivery':'Доставка','ord.st.delivered':'Доставлен','ord.st.cancelled':'Отменён',
     'drv.btn.took':'✅ Забрал','drv.btn.not_taken':'❌ Не забрал','drv.btn.delivered':'🏠 Доставил',
     'drv.btn.payment':'💳 Оплата','drv.btn.returned':'🔙 Вернул','drv.btn.undo':'↩️ Отменить',
     'drv.btn.undo_delivered':'↩️ Отменить «Доставлен»',
@@ -1560,7 +1560,7 @@ const _i18n = {
     'lead.created_assigned':'✅ Lid yaratildi va sizga biriktirildi',
     'nav.leads':'🎯 Lidlar','nav.orders':'📦 Buyurtmalar','nav.clients':'👥 Mijozlar','nav.notifications':'🔔 Bildirishnomalar','nav.profile':'Profil',
     'nav.lbl.dashboard':'Bosh sahifa','nav.lbl.leads':'Lidlar','nav.lbl.orders':'Buyurtmalar','nav.lbl.clients':'Mijozlar','nav.lbl.notifications':'Bildirishnomalar','nav.lbl.delivery':'Yetkazib berish','nav.lbl.chat':'Chatlar','nav.lbl.cash':'Kassa','nav.lbl.profile':'Profil','nav.lbl.routes_admin':'Marshrutlar',
-    'ord.st.new':'Yangi','ord.st.confirmed':'Tasdiqlangan','ord.st.pickup':`Olib ketish`,'ord.st.received':'Ustaxonada','ord.st.washing':'Yuvish','ord.st.drying':'Quritish','ord.st.packing':'Qadoqlash','ord.st.ready':'Tayyor','ord.st.delivery':'Yetkazish','ord.st.delivered':'Yetkazildi','ord.st.cancelled':`Bekor qilindi`,
+    'ord.st.new':'Yangi','ord.st.confirmed':'Tasdiqlangan','ord.st.pickup':`Olib ketish`,'ord.st.received':'Ustaxonada','ord.st.washing':'Yuvish','ord.st.drying':'Quritish','ord.st.packing':'Qadoqlash','ord.st.ready':'Tayyor','ord.st.ready_postponed':'Kechiktirilgan','ord.st.delivery':'Yetkazish','ord.st.delivered':'Yetkazildi','ord.st.cancelled':`Bekor qilindi`,
     'drv.btn.took':'✅ Oldim','drv.btn.not_taken':'❌ Olmadim','drv.btn.delivered':'🏠 Yetkazdim',
     'drv.btn.payment':'💳 Toʻlov','drv.btn.returned':'🔙 Qaytardim','drv.btn.undo':'↩️ Bekor qilish',
     'drv.btn.undo_delivered':'↩️ «Yetkazildi»ni bekor qilish',
@@ -1802,7 +1802,7 @@ function hasPermission(perm) {
 
 function statusLabel(s) {
   const icons = { new:'🆕', confirmed:'✅', pickup:'🚗', received:'📥', washing:'🧼',
-                  drying:'💨', packing:'📦', ready:'✅', delivery:'🚚', delivered:'🎉', cancelled:'❌' };
+                  drying:'💨', packing:'📦', ready:'✅', ready_postponed:'⏸', delivery:'🚚', delivered:'🎉', cancelled:'❌' };
   const ic = icons[s]; const st = t('ord.st.' + s);
   return ic ? ic + ' ' + st : st || s || '—';
 }
@@ -5986,7 +5986,7 @@ function pageOrders() {
   const _isWasherPage = currentStaff?.role === 'washer';
   const statuses = _isWasherPage
     ? ['all','washing','drying','packing','ready']
-    : ['all','new','confirmed','pickup','received','washing','drying','packing','ready','delivery','delivered','cancelled'];
+    : ['all','new','confirmed','pickup','received','washing','drying','packing','ready','ready_postponed','delivery','delivered','cancelled'];
   return `
     <div class="page-header">
       <div class="section-title" style="margin-bottom:0">${t('ord.title')}</div>
@@ -6313,6 +6313,8 @@ function renderOrders() {
   _renderOrdersDateRow();
   let items = isWasher ? ordersData.filter(o => WASHER_ORDER_STATUSES.has(o.status)) : ordersData;
   if (ordersFilter === 'debt') items = items.filter(_orderHasDebt);
+  else if (ordersFilter === 'ready') items = items.filter(o=>o.status==='ready' && !o.postponed_until);
+  else if (ordersFilter === 'ready_postponed') items = items.filter(o=>o.status==='ready' && !!o.postponed_until);
   else if (ordersFilter !== 'all') items = items.filter(o=>o.status===ordersFilter);
   if (ordersStaffFilter) items = items.filter(o => _orderCreatorName(o) === ordersStaffFilter);
   if (ordersOwnerFilter === 'mine') {
