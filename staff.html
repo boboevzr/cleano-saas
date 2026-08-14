@@ -9193,6 +9193,9 @@ function _ackOrderChanged() {
 function staffCloseOrder() {
   document.getElementById('staffModalOrder').classList.remove('open');
   if (_orderItemsPollTimer) { clearInterval(_orderItemsPollTimer); _orderItemsPollTimer = null; }
+  // Список заказов мог устареть за время просмотра карточки (статус сменили,
+  // отложили доставку и т.п.) — обновляем молча, только если сейчас на вкладке заказов.
+  if (currentPage === 'orders') loadOrders(true);
 }
 
 
@@ -9424,6 +9427,7 @@ async function washerOpenOrder(orderId) {
 function washerCloseOrder() {
   document.getElementById('washerModalOrder').classList.remove('open');
   if (_orderItemsPollTimer) { clearInterval(_orderItemsPollTimer); _orderItemsPollTimer = null; }
+  if (currentPage === 'orders') loadOrders(true);
 }
 
 function wmoSwitchTab(tab) {
