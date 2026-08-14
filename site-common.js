@@ -666,6 +666,7 @@
   let pendingPhone = null; // телефон, ожидающий подтверждения кода
   let pendingViaTg = false; // был ли код отправлен через Telegram
   let _regTgBotUsername = 'artez_orders_bot'; // дефолт до загрузки настроек компании
+  let _smsRegAvailable = true; // дефолт до загрузки настроек — см. sms_registration_available
   function copyTgBotLink() {
     const link = `https://t.me/${_regTgBotUsername}?start=link_phone`;
     navigator.clipboard.writeText(link).then(() => {
@@ -679,8 +680,11 @@
 
   let _regTgPhone  = null; // телефон в TG-флоу регистрации
 
-  // Переключение метода регистрации (null = назад к пикеру)
+  // Переключение метода регистрации (null = назад к пикеру). Если SMS-регистрация
+  // недоступна (тогл выключен / Eskiz не настроен / баланс исчерпан) — пикер с
+  // единственным вариантом не показываем, сразу открываем Telegram-метод.
   function pickRegMethod(method) {
+    if (method === null && !_smsRegAvailable) method = 'tg';
     document.getElementById('regStepPicker').style.display = method === null ? '' : 'none';
     document.getElementById('regStepSms').style.display    = method === 'sms' ? '' : 'none';
     document.getElementById('regStepTg').style.display     = method === 'tg'  ? '' : 'none';
@@ -3029,6 +3033,14 @@
       I18N.uz['auth.tgVar3Html'] = `<a href="https://t.me/${botUsernameSafe}" target="_blank" rel="noopener" style="color:#229ED9;text-decoration:none;font-weight:600">@${botUsernameSafe}</a> ni oching, menyuda <b>👤 Mening profilim</b> → <b>📞 Raqam ulash</b> ni bosing`;
       applyI18n();
     }
+
+    // Метод «Через SMS» доступен только если у компании включена SMS-регистрация
+    // И реально настроен/оплачен Eskiz (см. main.py sms_registration_available —
+    // тогл + eskiz_email/password + баланс >= 1000, с кэшем на 15 минут).
+    // Если недоступен — кнопку прячем и сразу открываем Telegram-метод, минуя пикер.
+    _smsRegAvailable = s.sms_registration_available !== false;
+    const smsMethodBtn = document.getElementById('regMethodSmsBtn');
+    if (smsMethodBtn) smsMethodBtn.style.display = _smsRegAvailable ? '' : 'none';
   }).catch(() => {});
 
   function _renderContactModal() {

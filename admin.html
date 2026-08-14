@@ -4568,6 +4568,18 @@
               Используйте <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:4px">{code}</code> — вместо него подставится одноразовый код.
             </div>
 
+            <!-- Тогл: Регистрация через SMS -->
+            <div class="sys-sms-card" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <label style="font-size:13px;font-weight:600;color:var(--text)">📲 Регистрация через SMS</label>
+                <div style="font-size:12px;color:var(--text2);margin-top:2px">Если выключено — на сайте останется только регистрация через Telegram</div>
+              </div>
+              <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+                <input type="checkbox" id="sys_sms_registration_enabled" onchange="smsRegistrationToggleEnabled(this.checked)" style="opacity:0;width:0;height:0">
+                <span id="sys_sms_registration_enabled_track" style="position:absolute;inset:0;background:var(--border);border-radius:24px;cursor:pointer;transition:.2s"></span>
+              </label>
+            </div>
+
             <!-- Поле: Регистрация -->
             <div class="sys-sms-card" id="sys-card-register" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -23767,6 +23779,8 @@ async function smsSysLoad() {
   if (enabledEl) { enabledEl.checked = s.sms_pickup_enabled === 'true'; _smsPickupRenderToggle(enabledEl.checked); }
   const readyEnabledEl = document.getElementById('sys_sms_ready_enabled');
   if (readyEnabledEl) { readyEnabledEl.checked = s.sms_ready_enabled === 'true'; _smsReadyRenderToggle(readyEnabledEl.checked); }
+  const regEnabledEl = document.getElementById('sys_sms_registration_enabled');
+  if (regEnabledEl) { regEnabledEl.checked = s.sms_registration_enabled !== 'false'; _smsRegistrationRenderToggle(regEnabledEl.checked); }
 
   // Значения для примера, который отправляется на модерацию в Eskiz — реальные
   // настроенные телефоны/бот/домен компании, а не {плейсхолдеры}. Eskiz требует
@@ -23833,6 +23847,22 @@ async function smsPickupToggleEnabled(checked) {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
     body: JSON.stringify({ sms_pickup_enabled: checked ? 'true' : 'false' })
+  }).catch(() => {});
+}
+
+function _smsRegistrationRenderToggle(checked) {
+  const track = document.getElementById('sys_sms_registration_enabled_track');
+  if (!track) return;
+  track.style.background = checked ? '#163E3B' : 'var(--border)';
+  track.innerHTML = `<span style="position:absolute;top:2px;left:${checked?'22px':'2px'};width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s"></span>`;
+}
+
+async function smsRegistrationToggleEnabled(checked) {
+  _smsRegistrationRenderToggle(checked);
+  await fetch(`${API_BASE}/admin/settings/site`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+    body: JSON.stringify({ sms_registration_enabled: checked ? 'true' : 'false' })
   }).catch(() => {});
 }
 
