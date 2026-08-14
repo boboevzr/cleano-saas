@@ -927,6 +927,14 @@
   }
   .auth-form{ display:flex; flex-direction:column; gap:14px; }
   .auth-form .field{ margin-bottom:0; }
+  .pwd-eye-wrap{ position:relative; }
+  .pwd-eye-wrap input{ padding-right:42px; width:100%; }
+  .pwd-eye{
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    background:none; border:none; cursor:pointer; font-size:15px; line-height:1;
+    padding:0; opacity:.7; color:var(--ink-soft);
+  }
+  .pwd-eye:hover{ opacity:1; }
   .cabinet-card .field label{ color:rgba(255,255,255,.75); }
   .cabinet-card h3, .cabinet-card .cabinet-grid h2{ color:#fff; }
   .cabinet-card .sub{ color:rgba(255,255,255,.7); }
@@ -3243,9 +3251,52 @@
             <label for="loginPass" data-i18n="auth.password">Пароль</label>
             <input type="password" id="loginPass" placeholder="••••••••" required>
           </div>
+          <div class="small-note" style="text-align:right;margin:-8px 0 4px"><a href="#" id="goForgotPass" data-i18n="auth.forgotPass">Забыли пароль?</a></div>
           <button type="submit" class="btn btn-amber" data-i18n="auth.loginBtn">Войти</button>
           <div class="small-note"><span data-i18n="auth.noAccount">Нет аккаунта?</span> <a href="#" id="goRegister" data-i18n="auth.tabRegister">Зарегистрироваться</a></div>
         </form>
+      </div>
+
+      <!-- ЗАБЫЛИ ПАРОЛЬ -->
+      <div id="forgotForm" style="display:none">
+        <button type="button" onclick="showStep('login')" style="background:none;border:none;cursor:pointer;color:#999;font-size:13px;padding:0 0 14px;display:flex;align-items:center;gap:4px">‹ <span data-i18n="auth.back">Назад</span></button>
+        <h3 data-i18n="auth.fpTitle">Восстановление пароля</h3>
+
+        <div id="fpPhoneSection">
+          <p class="sub" data-i18n="auth.fpPhoneSub">Введите номер телефона — пришлём код для сброса пароля</p>
+          <form class="auth-form" id="fpPhoneFormEl">
+            <div class="field">
+              <label data-i18n="auth.phone">Номер телефона</label>
+              <input type="tel" id="fpPhone" placeholder="+998 90 123-45-67" required autocomplete="tel">
+            </div>
+            <button type="submit" id="fpPhoneSubmitBtn" class="btn btn-amber" data-i18n="auth.fpSendCode">Отправить код</button>
+          </form>
+        </div>
+
+        <div id="fpCodeSection" style="display:none">
+          <p class="sub" id="fpChannelNote"></p>
+          <form class="auth-form" id="fpCodeFormEl">
+            <div class="field">
+              <label data-i18n="auth.smsCode">Код из SMS</label>
+              <input type="text" id="fpCode" placeholder="000000" inputmode="numeric" maxlength="6" required>
+            </div>
+            <div class="field">
+              <label data-i18n="auth.fpNewPassword">Новый пароль</label>
+              <div class="pwd-eye-wrap">
+                <input type="password" id="fpPass1" placeholder="Минимум 6 символов" data-i18n-placeholder="auth.passwordPlaceholder" required>
+                <button type="button" class="pwd-eye" onclick="togglePwd('fpPass1',this)" tabindex="-1">👁</button>
+              </div>
+            </div>
+            <div class="field">
+              <label data-i18n="auth.fpRepeatPassword">Повторите пароль</label>
+              <div class="pwd-eye-wrap">
+                <input type="password" id="fpPass2" placeholder="Минимум 6 символов" data-i18n-placeholder="auth.passwordPlaceholder" required>
+                <button type="button" class="pwd-eye" onclick="togglePwd('fpPass2',this)" tabindex="-1">👁</button>
+              </div>
+            </div>
+            <button type="submit" id="fpCodeSubmitBtn" class="btn btn-amber" data-i18n="auth.fpSubmit">Сохранить пароль</button>
+          </form>
+        </div>
       </div>
 
       <!-- РЕГИСТРАЦИЯ -->

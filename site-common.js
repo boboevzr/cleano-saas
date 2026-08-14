@@ -48,6 +48,15 @@
       'auth.welcome': 'Добро пожаловать', 'auth.loginSub': 'Войдите, чтобы посмотреть свои заявки',
       'auth.phone': 'Номер телефона', 'auth.password': 'Пароль', 'auth.loginBtn': 'Войти',
       'auth.noAccount': 'Нет аккаунта?',
+      'auth.forgotPass': 'Забыли пароль?',
+      'auth.fpTitle': 'Восстановление пароля',
+      'auth.fpPhoneSub': 'Введите номер телефона — пришлём код для сброса пароля',
+      'auth.fpSendCode': 'Отправить код',
+      'auth.fpChannelNote': 'Если аккаунт с этим номером существует — код отправлен в Telegram или по SMS',
+      'auth.fpNewPassword': 'Новый пароль', 'auth.fpRepeatPassword': 'Повторите пароль',
+      'auth.fpSubmit': 'Сохранить пароль',
+      'auth.fpEnterPhone': 'Введите номер телефона', 'auth.fpEnterCode': 'Введите код',
+      'auth.fpPasswordsMismatch': 'Пароли не совпадают',
       'auth.createAccount': 'Создать аккаунт', 'auth.registerSub': 'Это займёт меньше минуты',
       'auth.name': 'Имя', 'auth.namePlaceholder': 'Ваше имя', 'auth.passwordPlaceholder': 'Минимум 6 символов',
       'auth.getSmsCode': 'Получить код по SMS', 'auth.hasAccount': 'Уже есть аккаунт?',
@@ -239,6 +248,15 @@
       'auth.welcome': 'Xush kelibsiz', 'auth.loginSub': "Buyurtmalaringizni ko'rish uchun tizimga kiring",
       'auth.phone': 'Telefon raqami', 'auth.password': 'Parol', 'auth.loginBtn': 'Kirish',
       'auth.noAccount': "Hisobingiz yo'qmi?",
+      'auth.forgotPass': "Parolni unutdingizmi?",
+      'auth.fpTitle': 'Parolni tiklash',
+      'auth.fpPhoneSub': "Telefon raqamingizni kiriting — parolni tiklash uchun kod yuboramiz",
+      'auth.fpSendCode': 'Kodni yuborish',
+      'auth.fpChannelNote': "Agar shu raqamda akkaunt bo'lsa — kod Telegram yoki SMS orqali yuborildi",
+      'auth.fpNewPassword': 'Yangi parol', 'auth.fpRepeatPassword': 'Parolni takrorlang',
+      'auth.fpSubmit': 'Parolni saqlash',
+      'auth.fpEnterPhone': 'Telefon raqamini kiriting', 'auth.fpEnterCode': 'Kodni kiriting',
+      'auth.fpPasswordsMismatch': "Parollar mos kelmadi",
       'auth.createAccount': 'Hisob yaratish', 'auth.registerSub': 'Bir daqiqadan kam vaqt ketadi',
       'auth.name': 'Ism', 'auth.namePlaceholder': 'Ismingiz', 'auth.passwordPlaceholder': 'Kamida 6 belgi',
       'auth.getSmsCode': 'SMS orqali kod olish', 'auth.hasAccount': 'Hisobingiz bormi?',
@@ -640,6 +658,7 @@
   const tabRegister = document.getElementById('tabRegister');
   const loginForm    = document.getElementById('loginForm');
   const registerForm = document.getElementById('registerForm');
+  const forgotForm   = document.getElementById('forgotForm');
   const verifyForm   = document.getElementById('verifyForm');
   const dashboard    = document.getElementById('dashboard');
   const formAlert    = document.getElementById('formAlert');
@@ -753,13 +772,79 @@
   }
   function hideAlert(){ formAlert.style.display = 'none'; }
 
+  // ── ЗАБЫЛИ ПАРОЛЬ ──
+  let _fpPhone = null;
+  function togglePwd(id, btn){
+    const inp = document.getElementById(id);
+    if (!inp) return;
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+  }
+  window.togglePwd = togglePwd;
+  document.getElementById('fpPhoneFormEl')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert();
+    const phone = document.getElementById('fpPhone').value.trim();
+    const btn = document.getElementById('fpPhoneSubmitBtn');
+    if (!phone) { showAlert(t('auth.fpEnterPhone')); return; }
+    btn.disabled = true; btn.textContent = t('common.pleaseWait');
+    try {
+      await apiFetch('/forgot-password/request', {
+        method: 'POST',
+        body: JSON.stringify({ phone, lang: lang || 'ru', company_slug: window.APP_COMPANY_SLUG }),
+      });
+      _fpPhone = phone;
+      document.getElementById('fpChannelNote').textContent = t('auth.fpChannelNote');
+      document.getElementById('fpCode').value = '';
+      document.getElementById('fpPass1').value = '';
+      document.getElementById('fpPass2').value = '';
+      document.getElementById('fpPhoneSection').style.display = 'none';
+      document.getElementById('fpCodeSection').style.display = '';
+    } catch (err) {
+      showAlert(err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = t('auth.fpSendCode');
+    }
+  });
+
+  document.getElementById('fpCodeFormEl')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert();
+    const code = document.getElementById('fpCode').value.trim();
+    const p1 = document.getElementById('fpPass1').value;
+    const p2 = document.getElementById('fpPass2').value;
+    const btn = document.getElementById('fpCodeSubmitBtn');
+    if (!code) { showAlert(t('auth.fpEnterCode')); return; }
+    if (p1.length < 6) { showAlert(t('auth.passwordPlaceholder')); return; }
+    if (p1 !== p2)     { showAlert(t('auth.fpPasswordsMismatch')); return; }
+    btn.disabled = true; btn.textContent = t('common.pleaseWait');
+    try {
+      const data = await apiFetch('/forgot-password/confirm', {
+        method: 'POST',
+        body: JSON.stringify({ phone: _fpPhone, code, password: p1, lang: lang || 'ru', company_slug: window.APP_COMPANY_SLUG }),
+      });
+      localStorage.setItem('artez_token', data.token);
+      await loadDashboard(data.user);
+    } catch (err) {
+      showAlert(err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = t('auth.fpSubmit');
+    }
+  });
+
   function showStep(step){
     authTabs.style.display = (step === 'login' || step === 'register') ? '' : 'none';
     loginForm.style.display    = step === 'login'    ? '' : 'none';
     registerForm.style.display = step === 'register' ? '' : 'none';
+    if (forgotForm) forgotForm.style.display = step === 'forgot' ? '' : 'none';
     verifyForm.style.display   = step === 'verify'   ? '' : 'none';
     dashboard.style.display    = step === 'dashboard'? '' : 'none';
     hideAlert();
+
+    if (step === 'forgot' && forgotForm){
+      document.getElementById('fpPhoneSection').style.display = '';
+      document.getElementById('fpCodeSection').style.display  = 'none';
+    }
 
     if (step === 'login'){
       tabLogin.classList.add('active');
@@ -776,6 +861,12 @@
   tabRegister.addEventListener('click', () => showStep('register'));
   document.getElementById('goRegister').addEventListener('click', (e) => { e.preventDefault(); showStep('register'); });
   document.getElementById('goLogin').addEventListener('click', (e) => { e.preventDefault(); showStep('login'); });
+  document.getElementById('goForgotPass')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const fpPhoneEl = document.getElementById('fpPhone');
+    if (fpPhoneEl) fpPhoneEl.value = document.getElementById('loginPhone')?.value.trim() || '';
+    showStep('forgot');
+  });
 
   function setLoading(button, loading, defaultText){
     button.disabled = loading;
