@@ -875,6 +875,7 @@
       document.getElementById('fpCodeSection').style.display  = 'none';
       // Браузер может подставить сохранённые значения (autofill/кеш) в code/password
       // поля ещё до отправки формы — чистим при каждом открытии шага
+      document.getElementById('fpPhone').value = '';
       document.getElementById('fpCode').value = '';
       document.getElementById('fpPass1').value = '';
       document.getElementById('fpPass2').value = '';
@@ -898,8 +899,6 @@
   document.getElementById('goLogin').addEventListener('click', (e) => { e.preventDefault(); showStep('login'); });
   document.getElementById('goForgotPass')?.addEventListener('click', (e) => {
     e.preventDefault();
-    const fpPhoneEl = document.getElementById('fpPhone');
-    if (fpPhoneEl) fpPhoneEl.value = document.getElementById('loginPhone')?.value.trim() || '';
     showStep('forgot');
   });
 
