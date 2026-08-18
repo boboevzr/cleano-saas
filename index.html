@@ -975,6 +975,11 @@
   .cabinet-card .tabs{ background:rgba(0,0,0,.22); }
   .cabinet-card .tabs button{ color:rgba(255,255,255,.55); }
   .cabinet-card .tabs button.active{ background:rgba(255,255,255,.18); color:#fff; box-shadow:none; }
+  /* .small-note/.small-note a живут только внутри карточки входа — она всегда
+     на тёмном стекле (.cabinet-section — фиксированный тёмный градиент),
+     независимо от темы сайта, поэтому цвет фиксированный, а не через [data-theme] */
+  .cabinet-card .small-note{ color:rgba(255,255,255,.6); }
+  .cabinet-card .small-note a{ color:var(--teal-soft); }
   .small-note{
     font-size:12.5px;
     color: var(--ink-soft);

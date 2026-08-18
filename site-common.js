@@ -56,6 +56,7 @@
       'auth.fpNewPassword': 'Новый пароль', 'auth.fpRepeatPassword': 'Повторите пароль',
       'auth.fpSubmit': 'Сохранить пароль',
       'auth.fpEnterPhone': 'Введите номер телефона', 'auth.fpEnterCode': 'Введите код',
+      'auth.fpInvalidPhone': 'Неверный номер телефона. Формат: +998XXXXXXXXX',
       'auth.fpPasswordsMismatch': 'Пароли не совпадают',
       'auth.createAccount': 'Создать аккаунт', 'auth.registerSub': 'Это займёт меньше минуты',
       'auth.name': 'Имя', 'auth.namePlaceholder': 'Ваше имя', 'auth.passwordPlaceholder': 'Минимум 6 символов',
@@ -256,6 +257,7 @@
       'auth.fpNewPassword': 'Yangi parol', 'auth.fpRepeatPassword': 'Parolni takrorlang',
       'auth.fpSubmit': 'Parolni saqlash',
       'auth.fpEnterPhone': 'Telefon raqamini kiriting', 'auth.fpEnterCode': 'Kodni kiriting',
+      'auth.fpInvalidPhone': "Telefon raqami noto'g'ri. Format: +998XXXXXXXXX",
       'auth.fpPasswordsMismatch': "Parollar mos kelmadi",
       'auth.createAccount': 'Hisob yaratish', 'auth.registerSub': 'Bir daqiqadan kam vaqt ketadi',
       'auth.name': 'Ism', 'auth.namePlaceholder': 'Ismingiz', 'auth.passwordPlaceholder': 'Kamida 6 belgi',
@@ -788,12 +790,31 @@
     btn.textContent = inp.type === 'password' ? '👁' : '🙈';
   }
   window.togglePwd = togglePwd;
+  // Оставляет только цифры и ведущий '+' — убирает пробелы/тире/скобки по мере ввода
+  function _fpCleanPhoneInput(v) {
+    v = v || '';
+    let out = '';
+    for (let i = 0; i < v.length; i++) {
+      const ch = v[i];
+      if (ch === '+' && i === 0) out += ch;
+      else if (/\d/.test(ch)) out += ch;
+    }
+    return out;
+  }
+  const fpPhoneInputEl = document.getElementById('fpPhone');
+  fpPhoneInputEl?.addEventListener('input', () => {
+    const cleaned = _fpCleanPhoneInput(fpPhoneInputEl.value);
+    if (cleaned !== fpPhoneInputEl.value) fpPhoneInputEl.value = cleaned;
+  });
   document.getElementById('fpPhoneFormEl')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideAlert();
-    const phone = document.getElementById('fpPhone').value.trim();
+    let phone = _fpCleanPhoneInput(fpPhoneInputEl.value.trim());
+    if (phone && !phone.startsWith('+')) phone = '+' + phone;
     const btn = document.getElementById('fpPhoneSubmitBtn');
     if (!phone) { showAlert(t('auth.fpEnterPhone')); return; }
+    if (!/^\+998\d{9}$/.test(phone)) { showAlert(t('auth.fpInvalidPhone')); return; }
+    fpPhoneInputEl.value = phone;
     btn.disabled = true; btn.textContent = t('common.pleaseWait');
     try {
       await apiFetch('/forgot-password/request', {
