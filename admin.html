@@ -2221,6 +2221,7 @@
         </div>
         <div id="adminOrdersStaffRow" style="display:flex;gap:6px;margin-top:8px;margin-bottom:4px"></div>
         <div id="ordersList"><div class="loader">Загрузка…</div></div>
+        <div id="ordersPager"></div>
       </div>
 
 
@@ -9771,7 +9772,7 @@ function _activatePage(page) {
   if (page === 'routes')      { loadRoutes(); _loadBranchLocations(); }
   if (page === 'prices')      loadPrices();
   if (page === 'units')       loadUnits();
-  if (page === 'orders')      loadOrders('');
+  if (page === 'orders')      { ordersPage = 1; loadOrders(''); }
   if (page === 'dashboard')   loadDashboard();
   if (page === 'cash')        { loadCashDashboard(); cashTabSwitch('payments'); }
   if (page === 'promotions')  promoLoad();
@@ -10423,25 +10424,68 @@ async function deleteUnit(key) {
 
 // ── ORDERS ──
 let currentStatus = '';
+let ordersPage = 1;
+let ordersPageSize = 50;
+let ordersTotal = 0;
+const ORDERS_PAGE_SIZES = [50, 100, 200, 300, 500];
+
 async function loadOrders(status) {
   currentStatus = status;
   document.getElementById('ordersList').innerHTML = '<div class="loader">Загрузка…</div>';
   // «debt» — не настоящий статус заказа (это delivered + непогашенный долг), поэтому
   // грузим весь список (с высоким limit — долги могут быть старше последних 50
   // заказов) и фильтруем на клиенте той же формулой, что и в _payRow/
-  // get_orders_with_debt (см. _orderHasDebt).
-  const path = status === 'debt' ? '/admin/orders?limit=1000'
-    : status ? `/admin/orders?status=${status}` : '/admin/orders';
+  // get_orders_with_debt (см. _orderHasDebt). Без пагинации, как и раньше.
+  const isDebt = status === 'debt';
+  const path = isDebt
+    ? '/admin/orders?limit=1000'
+    : `/admin/orders?limit=${ordersPageSize}&offset=${(ordersPage-1)*ordersPageSize}${status ? `&status=${status}` : ''}`;
   const data = await apiGet(path);
   if (!data) return;
-  const orders = status === 'debt' ? (data.orders || []).filter(_orderHasDebt) : (data.orders || []);
+  const orders = isDebt ? (data.orders || []).filter(_orderHasDebt) : (data.orders || []);
+  ordersTotal = isDebt ? 0 : (data.total || 0);
   renderOrderCards(orders, 'ordersList');
   _renderAdminOrdersStaffRow();
+  _renderOrdersPager();
+}
+
+function _renderOrdersPager() {
+  const el = document.getElementById('ordersPager');
+  if (!el) return;
+  if (currentStatus === 'debt') { el.innerHTML = ''; return; } // «Долги» без пагинации
+  const totalPages = Math.max(1, Math.ceil(ordersTotal / ordersPageSize));
+  if (ordersPage > totalPages) ordersPage = totalPages;
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 4px">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text2)">
+        <span>На странице:</span>
+        <select onchange="setOrdersPageSize(this.value)" style="border:1.5px solid var(--border);border-radius:8px;padding:4px 8px;font-size:12.5px;background:var(--surface);color:var(--text)">
+          ${ORDERS_PAGE_SIZES.map(n=>`<option value="${n}" ${n===ordersPageSize?'selected':''}>${n}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2)">
+        <button onclick="ordersGoPage(${ordersPage-1})" ${ordersPage<=1?'disabled':''} style="border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;background:var(--surface);color:var(--text);cursor:pointer;opacity:${ordersPage<=1?'.4':'1'}">‹</button>
+        <span>${ordersPage} / ${totalPages} <span style="opacity:.6">(${ordersTotal})</span></span>
+        <button onclick="ordersGoPage(${ordersPage+1})" ${ordersPage>=totalPages?'disabled':''} style="border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;background:var(--surface);color:var(--text);cursor:pointer;opacity:${ordersPage>=totalPages?'.4':'1'}">›</button>
+      </div>
+    </div>`;
+}
+function ordersGoPage(p) {
+  const totalPages = Math.max(1, Math.ceil(ordersTotal / ordersPageSize));
+  if (p < 1 || p > totalPages || p === ordersPage) return;
+  ordersPage = p;
+  loadOrders(currentStatus);
+}
+function setOrdersPageSize(v) {
+  ordersPageSize = parseInt(v, 10) || 50;
+  ordersPage = 1;
+  loadOrders(currentStatus);
 }
 
 function filterOrders(btn) {
   document.querySelectorAll('#orderFilters .filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  ordersPage = 1;
   loadOrders(btn.dataset.status);
 }
 
@@ -17465,7 +17509,7 @@ function tgClientsDoSearch() {
     try {
       const page = getActivePage();
       if (!page) return;
-      if (page === 'orders')      loadOrders('');
+      if (page === 'orders')      { ordersPage = 1; loadOrders(''); }
       else if (page === 'dashboard')  loadDashboard();
       else if (page === 'staff' || page === 'agents') loadStaffFromAPI();
       else if (page === 'leads')       adminLoadLeads();

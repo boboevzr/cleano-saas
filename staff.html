@@ -1370,7 +1370,7 @@ const _i18n = {
     'perm.leads':'Лиды','perm.orders':'Заявки','perm.clients':'Клиенты','perm.status':'Статусы',
     'perm.staff':'Сотрудники','perm.reports':'Отчёты','perm.settings':'Настройки',
     'perm.orders_own':'Свои заявки','perm.status_delivery':'Статус доставки',
-    'ord.title':'Заявки','ord.filters':'🔽 Фильтры','ord.select_all':'Все','ord.delete':'🗑 Удалить','ord.reset':'↺ Сброс','ord.select':'☑️ Выбрать','ord.search_ph':'Номер, телефон…','ord.all':'🗂 Все','ord.mine':'👤 Мои','ord.debt':'💸 Долги',
+    'ord.title':'Заявки','ord.filters':'🔽 Фильтры','ord.select_all':'Все','ord.delete':'🗑 Удалить','ord.reset':'↺ Сброс','ord.select':'☑️ Выбрать','ord.search_ph':'Номер, телефон…','ord.all':'🗂 Все','ord.mine':'👤 Мои','ord.debt':'💸 Долги','ord.pageSize':'На странице:',
     'ord.date.all':'Все даты','ord.date.today':'Сегодня','ord.date.yesterday':'Вчера','ord.date.week':'Неделя','ord.date.month':'Месяц','ord.date.period':'Период',
     'ord.staff.all':'👤 Все сотрудники','ord.staff.pick':'Выбрать сотрудника','ord.staff.none':'Заявок от сотрудников нет','ord.staff.not_found':'Не найдено','ord.staff.search_ph':'Имя…',
     'ord.empty':'Заявок нет','ord.loading':'Загрузка…','ord.no_access':'Нет доступа','ord.tab.unavailable':'недоступна для вашей роли',
@@ -1643,7 +1643,7 @@ const _i18n = {
     'perm.leads':'Lidlar','perm.orders':'Buyurtmalar','perm.clients':'Mijozlar','perm.status':'Holatlar',
     'perm.staff':'Xodimlar','perm.reports':'Hisobotlar','perm.settings':'Sozlamalar',
     'perm.orders_own':'Mening buyurtmalarim','perm.status_delivery':'Yetkazish holati',
-    'ord.title':'Buyurtmalar','ord.filters':'🔽 Filtrlar','ord.select_all':'Barchasi','ord.delete':`🗑 Oʻchirish`,'ord.reset':`↺ Tozalash`,'ord.select':'☑️ Tanlash','ord.search_ph':'Raqam, telefon…','ord.all':'🗂 Barchasi','ord.mine':'👤 Mening','ord.debt':'💸 Qarzlar',
+    'ord.title':'Buyurtmalar','ord.filters':'🔽 Filtrlar','ord.select_all':'Barchasi','ord.delete':`🗑 Oʻchirish`,'ord.reset':`↺ Tozalash`,'ord.select':'☑️ Tanlash','ord.search_ph':'Raqam, telefon…','ord.all':'🗂 Barchasi','ord.mine':'👤 Mening','ord.debt':'💸 Qarzlar','ord.pageSize':'Sahifada:',
     'ord.date.all':'Barcha sana','ord.date.today':'Bugun','ord.date.yesterday':'Kecha','ord.date.week':'Hafta','ord.date.month':'Oy','ord.date.period':'Davr',
     'ord.staff.all':'👤 Barcha xodimlar','ord.staff.pick':'Xodim tanlash','ord.staff.none':`Xodimlardan buyurtma yoʻq`,'ord.staff.not_found':'Topilmadi','ord.staff.search_ph':'Ism…',
     'ord.empty':`Buyurtma yoʻq`,'ord.loading':'Yuklanmoqda…','ord.no_access':`Kirish yoʻq`,'ord.tab.unavailable':`sizning rolingiz uchun mavjud emas`,
@@ -2146,6 +2146,7 @@ function startApp() {
     if (_sfO && _savedPage === 'orders') {
       ordersFilter=_sfO.st||'new'; ordersOwnerFilter=_sfO.ow||'all'; ordersDateFilter=_sfO.dt||'all';
       ordersDateFrom=_sfO.df||''; ordersDateTo=_sfO.dt2||''; ordersStaffFilter=_sfO.stf||null; _ordersFiltersOpen=!!_sfO.op;
+      ordersPage=_sfO.pg||1; ordersPageSize=_sfO.ps||50;
       _skipFilterReset = true;
     }
     gotoPage(_savedPage || _defaultPage);
@@ -2361,7 +2362,7 @@ function gotoPage(pageId) {
     pad.innerHTML = pageLeads(); loadLeads();
   }
   else if (pageId === 'orders') {
-    if (!_skipFilterReset) { ordersFilter=currentStaff?.role==='washer'?'washing':'new'; ordersStaffFilter=null; ordersOwnerFilter='all'; ordersDateFilter='all'; ordersDateFrom=''; ordersDateTo=''; _ordersFiltersOpen=false; }
+    if (!_skipFilterReset) { ordersFilter=currentStaff?.role==='washer'?'washing':'new'; ordersStaffFilter=null; ordersOwnerFilter='all'; ordersDateFilter='all'; ordersDateFrom=''; ordersDateTo=''; _ordersFiltersOpen=false; ordersPage=1; }
     pad.innerHTML = pageOrders(); loadOrders(); if (currentStaff?.can_approve_measure) _pollMeasureReviews();
   }
   else if (pageId === 'clients') { pad.innerHTML = pageClients(); loadClients(); }
@@ -5981,6 +5982,9 @@ let ordersDateFilter  = 'all'; // 'all' | 'today' | 'yesterday' | 'week' | 'mont
 let ordersDateFrom    = '';
 let ordersDateTo      = '';
 let ordersStaffFilter = null; // null = все, или staff_id
+let ordersPage = 1;
+let ordersPageSize = 50;
+let ordersTotal = 0;
 let _ordersFiltersOpen = false;
 let _ordersStaffCache = {}; // id → name
 
@@ -6022,6 +6026,7 @@ function pageOrders() {
       ${!_isWasherPage ? `<button class="fchip ${ordersFilter==='debt'?'active':''}" id="ofc_debt" onclick="setOrdersFilter('debt')">${t('ord.debt')}</button>` : ''}
     </div>
     <div id="ordersList"><div class="empty-box">${t('ord.loading')}</div></div>
+    <div id="ordersPager"></div>
   `;
 }
 function _ownerBtnStyle(active) {
@@ -6037,13 +6042,30 @@ function setOrdersOwnerFilter(v) {
   renderOrders();
 }
 
+// 'debt'/'all' — нет одиночного статуса в БД; 'ready_postponed' — тот же статус,
+// что 'ready', разделяются client-side по postponed_until (см. renderOrders)
+function _ordersFilterToStatus(f) {
+  if (f === 'all' || f === 'debt') return null;
+  if (f === 'ready_postponed') return 'ready';
+  return f;
+}
+
 async function loadOrders(silent = false) {
   try {
-    const token = localStorage.getItem(TOKEN_KEY);
-    const path  = hasPermission('orders') ? '/staff/orders' : '/staff/orders/own';
-    const res   = await fetch(`${API_BASE}${path}`, { headers: { Authorization: `Bearer ${token}` } });
+    const token  = localStorage.getItem(TOKEN_KEY);
+    const path   = hasPermission('orders') ? '/staff/orders' : '/staff/orders/own';
+    const status = _ordersFilterToStatus(ordersFilter);
+    // «Долги» — не настоящий статус (считается по формуле на клиенте), поэтому
+    // грузим без пагинации, с высоким limit — как и раньше, не трогаем.
+    const isDebt = ordersFilter === 'debt';
+    const params = isDebt
+      ? 'limit=1000'
+      : `limit=${ordersPageSize}&offset=${(ordersPage-1)*ordersPageSize}${status ? `&status=${status}` : ''}`;
+    const res = await fetch(`${API_BASE}${path}?${params}`, { headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) {
-      ordersData = (await res.json()).orders || [];
+      const data = await res.json();
+      ordersData  = data.orders || [];
+      ordersTotal = isDebt ? 0 : (data.total || 0);
       const _sfSearch = JSON.parse(sessionStorage.getItem('sf_orders')||'null')?.s||'';
       if (_sfSearch) { const si = document.getElementById('ordersSearch'); if (si && !si.value) si.value = _sfSearch; }
       renderOrders(); _updateOrdersFilterBtn();
@@ -6053,9 +6075,46 @@ async function loadOrders(silent = false) {
 
 function setOrdersFilter(s) {
   ordersFilter = s;
+  ordersPage = 1;
   document.querySelectorAll('.fchip[id^="ofc_"]').forEach(b=>b.classList.remove('active'));
   const fc = document.getElementById(`ofc_${s}`);
   if (fc) fc.classList.add('active');
+  _saveOrdersFilters();
+  loadOrders(true);
+}
+
+const ORDERS_PAGE_SIZES = [50, 100, 200, 300, 500];
+function _renderOrdersPager() {
+  const el = document.getElementById('ordersPager');
+  if (!el) return;
+  if (ordersFilter === 'debt') { el.innerHTML = ''; return; } // «Долги» без пагинации
+  const totalPages = Math.max(1, Math.ceil(ordersTotal / ordersPageSize));
+  if (ordersPage > totalPages) ordersPage = totalPages;
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--sep)">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text2)">
+        <span>${t('ord.pageSize')}</span>
+        <select onchange="setOrdersPageSize(this.value)" style="border:1.5px solid var(--sep);border-radius:8px;padding:4px 8px;font-size:12.5px;background:var(--bg);color:var(--text)">
+          ${ORDERS_PAGE_SIZES.map(n=>`<option value="${n}" ${n===ordersPageSize?'selected':''}>${n}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2)">
+        <button onclick="ordersGoPage(${ordersPage-1})" ${ordersPage<=1?'disabled':''} style="border:1.5px solid var(--sep);border-radius:8px;padding:5px 10px;background:var(--bg);color:var(--text);cursor:pointer;opacity:${ordersPage<=1?'.4':'1'}">‹</button>
+        <span>${ordersPage} / ${totalPages} <span style="opacity:.6">(${ordersTotal})</span></span>
+        <button onclick="ordersGoPage(${ordersPage+1})" ${ordersPage>=totalPages?'disabled':''} style="border:1.5px solid var(--sep);border-radius:8px;padding:5px 10px;background:var(--bg);color:var(--text);cursor:pointer;opacity:${ordersPage>=totalPages?'.4':'1'}">›</button>
+      </div>
+    </div>`;
+}
+function ordersGoPage(p) {
+  const totalPages = Math.max(1, Math.ceil(ordersTotal / ordersPageSize));
+  if (p < 1 || p > totalPages || p === ordersPage) return;
+  ordersPage = p;
+  _saveOrdersFilters();
+  loadOrders(true);
+}
+function setOrdersPageSize(v) {
+  ordersPageSize = parseInt(v, 10) || 50;
+  ordersPage = 1;
   _saveOrdersFilters();
   loadOrders(true);
 }
@@ -6099,7 +6158,7 @@ function setOrdersDateFilter(v) {
   renderOrders();
 }
 function _resetOrdersFilters() {
-  ordersFilter = 'new'; ordersStaffFilter = null;
+  ordersFilter = 'new'; ordersStaffFilter = null; ordersPage = 1;
   ordersDateFilter = 'all'; ordersDateFrom = ''; ordersDateTo = '';
   document.querySelectorAll('.fchip[id^="ofc_"]').forEach(b => b.classList.remove('active'));
   const fc = document.getElementById('ofc_new'); if (fc) fc.classList.add('active');
@@ -6107,13 +6166,15 @@ function _resetOrdersFilters() {
   setOrdersOwnerFilter('all');
   _updateOrdersFilterBtn();
   _saveOrdersFilters();
+  loadOrders(true);
 }
 
 function _saveOrdersFilters() {
   sessionStorage.setItem('sf_orders', JSON.stringify({
     st: ordersFilter, ow: ordersOwnerFilter, dt: ordersDateFilter,
     df: ordersDateFrom, dt2: ordersDateTo, stf: ordersStaffFilter,
-    s: document.getElementById('ordersSearch')?.value||'', op: _ordersFiltersOpen
+    s: document.getElementById('ordersSearch')?.value||'', op: _ordersFiltersOpen,
+    pg: ordersPage, ps: ordersPageSize
   }));
 }
 function _toggleOrdersFilters() {
@@ -6291,6 +6352,7 @@ function renderOrders() {
 
   // Проверка доступа к вкладке для мойщика
   if (isWasher && ordersFilter !== 'all' && !WASHER_ALLOWED_STATUSES.has(ordersFilter)) {
+    const pagerEl = document.getElementById('ordersPager'); if (pagerEl) pagerEl.innerHTML = '';
     el.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;gap:16px">
         <div style="width:64px;height:64px;background:linear-gradient(135deg,#fff1f2,#ffe4e6);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px">🔒</div>
@@ -6313,6 +6375,7 @@ function renderOrders() {
   const q  = (document.getElementById('ordersSearch')?.value||'').toLowerCase();
   const WASHER_ORDER_STATUSES = new Set(['washing','drying','packing','ready']);
   _renderOrdersDateRow();
+  _renderOrdersPager();
   let items = isWasher ? ordersData.filter(o => WASHER_ORDER_STATUSES.has(o.status)) : ordersData;
   if (ordersFilter === 'debt') items = items.filter(_orderHasDebt);
   else if (ordersFilter === 'ready') items = items.filter(o=>o.status==='ready' && !o.postponed_until);
