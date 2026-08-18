@@ -3282,20 +3282,24 @@
           <p class="sub" id="fpChannelNote"></p>
           <form class="auth-form" id="fpCodeFormEl">
             <div class="field">
+              <label data-i18n="auth.phone">Номер телефона</label>
+              <input type="tel" id="fpCodePhoneDisplay" disabled>
+            </div>
+            <div class="field">
               <label data-i18n="auth.smsCode">Код из SMS</label>
-              <input type="text" id="fpCode" placeholder="000000" inputmode="numeric" maxlength="6" required>
+              <input type="text" id="fpCode" placeholder="000000" inputmode="numeric" maxlength="6" required autocomplete="one-time-code">
             </div>
             <div class="field">
               <label data-i18n="auth.fpNewPassword">Новый пароль</label>
               <div class="pwd-eye-wrap">
-                <input type="password" id="fpPass1" placeholder="Минимум 6 символов" data-i18n-placeholder="auth.passwordPlaceholder" required>
+                <input type="password" id="fpPass1" placeholder="Минимум 6 символов" data-i18n-placeholder="auth.passwordPlaceholder" required autocomplete="new-password">
                 <button type="button" class="pwd-eye" onclick="togglePwd('fpPass1',this)" tabindex="-1">👁</button>
               </div>
             </div>
             <div class="field">
               <label data-i18n="auth.fpRepeatPassword">Повторите пароль</label>
               <div class="pwd-eye-wrap">
-                <input type="password" id="fpPass2" placeholder="Минимум 6 символов" data-i18n-placeholder="auth.passwordPlaceholder" required>
+                <input type="password" id="fpPass2" placeholder="Минимум 6 символов" data-i18n-placeholder="auth.passwordPlaceholder" required autocomplete="new-password">
                 <button type="button" class="pwd-eye" onclick="togglePwd('fpPass2',this)" tabindex="-1">👁</button>
               </div>
             </div>

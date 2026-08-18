@@ -823,6 +823,7 @@
       });
       _fpPhone = phone;
       document.getElementById('fpChannelNote').textContent = t('auth.fpChannelNote');
+      document.getElementById('fpCodePhoneDisplay').value = phone;
       document.getElementById('fpCode').value = '';
       document.getElementById('fpPass1').value = '';
       document.getElementById('fpPass2').value = '';
@@ -872,6 +873,12 @@
     if (step === 'forgot' && forgotForm){
       document.getElementById('fpPhoneSection').style.display = '';
       document.getElementById('fpCodeSection').style.display  = 'none';
+      // Браузер может подставить сохранённые значения (autofill/кеш) в code/password
+      // поля ещё до отправки формы — чистим при каждом открытии шага
+      document.getElementById('fpCode').value = '';
+      document.getElementById('fpPass1').value = '';
+      document.getElementById('fpPass2').value = '';
+      document.getElementById('fpCodePhoneDisplay').value = '';
     }
 
     if (step === 'login'){
