@@ -783,7 +783,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 <button class="fab" id="fabBtn" style="display:none" onclick="onFabClick()">＋</button>
 
 <!-- Bottom sheet: куда отправить лид -->
-<div id="leadSendChoiceSheet" onclick="if(event.target===this)_hideLeadSendChoice()" style="display:none;position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.55);align-items:flex-end;justify-content:center">
+<div id="leadSendChoiceSheet" style="display:none;position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.55);align-items:flex-end;justify-content:center">
   <div style="background:var(--card);border-radius:20px 20px 0 0;width:100%;padding:24px 20px 36px;max-width:480px">
     <div id="ldSendCreated" style="font-size:17px;font-weight:700;color:var(--text);text-align:center;margin-bottom:6px">Лид создан!</div>
     <div id="ldSendQuestion" style="font-size:14px;color:var(--text2);text-align:center;margin-bottom:24px">Что делать с этим лидом?</div>
@@ -1397,8 +1397,9 @@ const _i18n = {
     'unit.cm':'см','unit.m2':'м²','unit.sum':'сум','unit.pcs':'шт',
     'sm.position':'Позиция','sm.close':'Закрыть','sm.save':'💾 Сохранить','sm.save_approve':'💾 Сохранить и утвердить',
     'sm.svcTitle':'🏷 Услуга','sm.fromPrice':'📋 Из прайса','sm.custom':'✏️ Другая',
-    'sm.selectService':'Выберите услугу','sm.customNamePh':'Название услуги','sm.pricePerM2':'Цена за м²',
+    'sm.selectService':'Выберите услугу','sm.customNamePh':'Название услуги','sm.pricePerM2':'Цена за м²','sm.pricePerPcs':'Цена за шт',
     'sm.dims':'📐 Размеры','sm.width':'Ширина, см','sm.length':'Длина, см','sm.area':'Площадь, м² (авто)',
+    'sm.qtyTitle':'🔢 Количество','sm.qty':'Количество, шт',
     'sm.prewashTitle':'Доступно в статусе «Мойка»',
     'sm.prewashBody':'Ввод размеров и добавление<br>фото / видео замера станут доступны<br>когда заказ перейдёт в статус Мойка',
     'sm.mediaTitle':'Фото / видео замера','sm.camera':'Камера','sm.gallery':'Из галереи',
@@ -1669,8 +1670,9 @@ const _i18n = {
     'unit.cm':'sm','unit.m2':'m²','unit.sum':"soʻm",'unit.pcs':'dona',
     'sm.position':'Pozitsiya','sm.close':'Yopish','sm.save':'💾 Saqlash','sm.save_approve':'💾 Saqlash va tasdiqlash',
     'sm.svcTitle':'🏷 Xizmat','sm.fromPrice':'📋 Narxnomadan','sm.custom':'✏️ Boshqa',
-    'sm.selectService':'Xizmatni tanlang','sm.customNamePh':'Xizmat nomi','sm.pricePerM2':'m² narxi',
+    'sm.selectService':'Xizmatni tanlang','sm.customNamePh':'Xizmat nomi','sm.pricePerM2':'m² narxi','sm.pricePerPcs':'Dona narxi',
     'sm.dims':'📐 Oʻlchamlar','sm.width':'Kengligi, sm','sm.length':'Uzunligi, sm','sm.area':'Maydoni, m² (avtomatik)',
+    'sm.qtyTitle':'🔢 Miqdori','sm.qty':'Miqdori, dona',
     'sm.prewashTitle':'«Yuvish» holatida mavjud',
     'sm.prewashBody':"Oʻlchamlarni kiritish va<br>oʻlchov fotosi/videosini qoʻshish<br>buyurtma «Yuvish» holatiga oʻtganda mavjud boʻladi",
     'sm.mediaTitle':'Oʻlchov fotosi / videosi','sm.camera':'Kamera','sm.gallery':'Galereyadan',
@@ -10550,25 +10552,58 @@ function staffRenderItems(items, containerEl) {
   };
 
   // Разбивка по услугам — сумма площади (если замерена) или количество позиций (шт).
+  // Заодно копим сырую сумму (rawTotal) и позиционно-клампленную (clampedTotal) на
+  // группу — нужно ниже для "мин. по заказу" (группового минимума).
   const _svcGroups = {};
   items.forEach(it => {
     if (!it.service) return;
     const m = sifFindPriceMatch(it.service);
     const gKey = it.service_ru || (m ? `${m.svcKey}::${m.typeKey}` : it.service);
-    if (!_svcGroups[gKey]) _svcGroups[gKey] = { label: _svcLabel(it), count: 0, sqm: 0 };
-    _svcGroups[gKey].count++;
-    _svcGroups[gKey].sqm += parseFloat(it.sqm || 0);
+    if (!_svcGroups[gKey]) _svcGroups[gKey] = { label: _svcLabel(it), count: 0, sqm: 0, rawTotal: 0, clampedTotal: 0, unitKey: m ? ((_sPrices||{})[m.svcKey]?.[m.typeKey]?.unit_key || 'm2') : 'm2', match: m };
+    const g = _svcGroups[gKey];
+    g.count++;
+    g.sqm += parseFloat(it.sqm || 0);
+    g.rawTotal += parseFloat(it.total_sum || 0);
+    // Позиционный мин. по позиции — влияет и на свою строку (см. displayTotal ниже),
+    // и на вклад позиции в Итого группы (когда сама группа выше своего мин. по заказу).
+    const _posCatalogInfo = m ? (_sPrices||{})[m.svcKey]?.[m.typeKey] : null;
+    const _posMin = _posCatalogInfo?.min_order;
+    const _itSqm = parseFloat(it.sqm || 0);
+    const _itPrice = parseFloat(it.price_per_sqm || 0);
+    g.clampedTotal += (_posMin && _itSqm && _itSqm < _posMin && _itPrice)
+      ? _posMin * _itPrice
+      : parseFloat(it.total_sum || 0);
   });
   const _svcBreakdownHtml = Object.values(_svcGroups).map(g => {
-    const label = g.sqm > 0 ? `${g.sqm.toFixed(2)} ${t('unit.m2')}` : `${g.count} ${t('unit.pcs')}`;
+    const label = g.unitKey === 'pcs' ? `${g.count} ${t('unit.pcs')}` : `${g.sqm.toFixed(2)} ${t('unit.m2')}`;
     return `<div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;padding:2px 0">
       <span>${_esc(g.label)}</span><span>${label}</span>
     </div>`;
   }).join('');
 
+  // "Итого" — не сумма total_sum по позициям, а по группам услуг:
+  // • если сырая сумма площади/штук услуги во ВСЕХ её позициях заказа меньше "мин. по
+  //   заказу" из прайса — вклад всей группы = мин_по_заказу × цена (а не факт).
+  // • иначе — сумма ПОЗИЦИОННО-клампленных total (clampedTotal): каждая позиция внутри
+  //   группы меньше своего "мин. по позиции" всё равно считается по этому минимуму.
   let total = 0;
+  Object.values(_svcGroups).forEach(g => {
+    const catalogInfo = g.match ? (_sPrices||{})[g.match.svcKey]?.[g.match.typeKey] : null;
+    const groupMin = catalogInfo?.min_order_total || 0;
+    const qty = g.sqm > 0 ? g.sqm : g.count;
+    total += (groupMin && qty < groupMin && catalogInfo?.price) ? groupMin * catalogInfo.price : g.clampedTotal;
+  });
+  items.forEach(it => { if (!it.service) total += parseFloat(it.total_sum || 0); }); // позиции без услуги — вне групп
+
   el.innerHTML = items.map((it,i) => {
-    total += parseFloat(it.total_sum || 0);
+    // Позиционный минимум (мин. по позиции) — только для отображения СВОЕЙ строки.
+    const _mPos = it.service ? sifFindPriceMatch(it.service) : null;
+    const _posCatalogInfo = _mPos ? (_sPrices||{})[_mPos.svcKey]?.[_mPos.typeKey] : null;
+    const _posMinOrder = _posCatalogInfo?.min_order;
+    const _posUnitKey  = _posCatalogInfo?.unit_key || 'm2';
+    const displayTotal = (_posMinOrder && it.sqm && it.sqm < _posMinOrder && it.price_per_sqm)
+      ? _posMinOrder * it.price_per_sqm
+      : it.total_sum;
 
     const hasDims  = it.width_cm && it.length_cm;
     const isMine   = it.washer_login === myLogin;
@@ -10577,7 +10612,9 @@ function staffRenderItems(items, containerEl) {
 
     // Блок замера
     let measureBlock = '';
-    const dimInfo = hasDims ? `${it.width_cm}×${it.length_cm} ${t('unit.cm')} → ${parseFloat(it.sqm||0).toFixed(2)} ${t('unit.m2')}` : (it.sqm ? `${parseFloat(it.sqm).toFixed(2)} ${t('unit.m2')}` : '');
+    const dimInfo = _posUnitKey === 'pcs'
+      ? (it.sqm ? `${parseFloat(it.sqm).toFixed(0)} ${t('unit.pcs')}` : '')
+      : (hasDims ? `${it.width_cm}×${it.length_cm} ${t('unit.cm')} → ${parseFloat(it.sqm||0).toFixed(2)} ${t('unit.m2')}` : (it.sqm ? `${parseFloat(it.sqm).toFixed(2)} ${t('unit.m2')}` : ''));
 
     if (needsMeasure) {
       if (ms === 'pending' || ms === 'rejected') {
@@ -10672,10 +10709,10 @@ function staffRenderItems(items, containerEl) {
           ? `<div style="font-weight:600;font-size:14px;color:#1a1a1a">${_esc(_svcLabel(it))}</div>`
           : `<div style="font-weight:600;font-size:14px;color:#bbb;font-style:italic">${t('item.empty')}</div>`}
         ${parseFloat(it.price_per_sqm||0) > 0
-          ? `<div style="font-size:11px;color:#888;margin-top:1px">${Number(it.price_per_sqm).toLocaleString('ru')} ${t('unit.sum')}/${t('unit.m2')}</div>`
+          ? `<div style="font-size:11px;color:#888;margin-top:1px">${Number(it.price_per_sqm).toLocaleString('ru')} ${t('unit.sum')}/${_posUnitKey === 'pcs' ? t('unit.pcs') : t('unit.m2')}</div>`
           : ''}
         ${(it.service && parseFloat(it.sqm||0) > 0)
-          ? `<div style="font-size:12px;color:#888;margin-top:2px">${hasDims ? it.width_cm+'×'+it.length_cm+' '+t('unit.cm')+' · ' : ''}${parseFloat(it.sqm).toFixed(2)} ${t('unit.m2')}</div>`
+          ? `<div style="font-size:12px;color:#888;margin-top:2px">${hasDims ? it.width_cm+'×'+it.length_cm+' '+t('unit.cm')+' · ' : ''}${_posUnitKey === 'pcs' ? parseFloat(it.sqm).toFixed(0)+' '+t('unit.pcs') : parseFloat(it.sqm).toFixed(2)+' '+t('unit.m2')}</div>`
           : ''}
         ${measureBlock}${washerBadge}${managerWasherRow}
         ${!isWasher && canApproveMeasure && isWashingPhase && ms === 'submitted'
@@ -10690,7 +10727,7 @@ function staffRenderItems(items, containerEl) {
           : ''}
       </div>
       <div style="text-align:right;flex-shrink:0">
-        ${it.total_sum > 0 ? `<div style="font-weight:700;font-size:14px;color:#1a1a1a">${Number(it.total_sum).toLocaleString('ru')} ${t('unit.sum')}</div>` : ''}
+        ${displayTotal > 0 ? `<div style="font-weight:700;font-size:14px;color:#1a1a1a">${Number(displayTotal).toLocaleString('ru')} ${t('unit.sum')}</div>` : ''}
         <div style="display:flex;gap:4px;justify-content:flex-end;margin-top:4px">${editBtns}</div>
       </div>
     </div>`;
@@ -10777,7 +10814,9 @@ async function staffOpenItemForm(itemId) {
   // Заполнить select услуг
   const svcSel = document.getElementById('sif_svc_select');
   svcSel.innerHTML = '<option value="">— Выберите услугу —</option>';
-  const svcOrder = ['carpet','carpet_home','sofa','mattress','curtains'];
+  const svcOrder = Object.keys(_svcApiData||{}).length
+    ? Object.values(_svcApiData).sort((a,b) => (a.order_idx||0) - (b.order_idx||0)).map(s => s.key)
+    : Object.keys(prices||{});
   svcOrder.forEach(k => {
     if (prices[k]) svcSel.innerHTML += `<option value="${k}">${_svcName(k)}</option>`;
   });
@@ -11541,17 +11580,7 @@ async function staffSaveItemForm() {
   if (!service) { alert('Укажите название услуги'); return; }
   if (!sqm && width && length) sqm = parseFloat((width * length / 10000).toFixed(3));
 
-  // Мин. площадь позиции из прайса — только для услуги, выбранной из справочника
-  // (у "своей услуги" каталожного min_order нет).
-  let min_order = null;
-  if (!isCustom) {
-    const svcKey  = document.getElementById('sif_svc_select')?.value;
-    const typeKey = document.getElementById('sif_type_select')?.value;
-    min_order = (_sPrices||{})[svcKey]?.[typeKey]?.min_order || null;
-  }
-  if (min_order && sqm && sqm < min_order) sqm = min_order;
-
-  const body   = { service, sqm, width_cm: width, length_cm: length, price_per_sqm: price, min_order };
+  const body   = { service, sqm, width_cm: width, length_cm: length, price_per_sqm: price };
   const url    = _sItemEdit
     ? `/admin/orders/${_sOrderId}/items/${_sItemEdit}`
     : `/admin/orders/${_sOrderId}/items`;
@@ -11620,7 +11649,8 @@ function smcOnSvcChange() {
   nameEl.value = ''; nameEl.style.display = 'none';
   if (!svcKey || !prices[svcKey]) return;
   Object.entries(prices[svcKey]).forEach(([typeKey, info]) => {
-    typeSel.innerHTML += `<option value="${typeKey}" data-price="${info.price||0}">${_typeName(typeKey)} — ${(info.price||0).toLocaleString('ru')} ${t('unit.sum')}/${t('unit.m2')}</option>`;
+    const _unitLabel = (info.unit_key === 'pcs') ? t('unit.pcs') : t('unit.m2');
+    typeSel.innerHTML += `<option value="${typeKey}" data-price="${info.price||0}">${_typeName(typeKey)} — ${(info.price||0).toLocaleString('ru')} ${t('unit.sum')}/${_unitLabel}</option>`;
   });
   // Авто-выбор типа из заказа (пользователь не меняет)
   const _smOrderType = _sOrderCache?.service_type || 'standard';
@@ -11641,6 +11671,11 @@ function smcOnTypeChange() {
   nameEl.value = name; nameEl.style.display = '';
   const priceEl = document.getElementById('smc_price');
   if (priceEl) priceEl.value = price;
+  _smIsPcs = (prices[svcKey]?.[typeKey]?.unit_key || 'm2') === 'pcs';
+  document.getElementById('sm_dims_edit').style.display = (_smCanEdit && !_smIsPcs) ? '' : 'none';
+  document.getElementById('sm_qty_edit').style.display  = (_smCanEdit && _smIsPcs) ? '' : 'none';
+  const _smPriceLabelEl = document.getElementById('smPriceLabel');
+  if (_smPriceLabelEl) _smPriceLabelEl.textContent = _smIsPcs ? t('sm.pricePerPcs') : t('sm.pricePerM2');
 }
 
 function smcGetService() {
@@ -11655,17 +11690,16 @@ function smcGetService() {
 function smcGetServiceBilingual() {
   const isCustom = document.getElementById('smc-panel-custom')?.style.display !== 'none';
   if (isCustom) {
-    return { service: document.getElementById('smc_custom_name')?.value.trim() || '', service_ru: null, service_uz: null, min_order: null };
+    return { service: document.getElementById('smc_custom_name')?.value.trim() || '', service_ru: null, service_uz: null };
   }
   const service = document.getElementById('smc_service_name')?.value.trim() || '';
   const svcKey  = document.getElementById('smc_svc_select')?.value || '';
   const typeKey = document.getElementById('smc_type_select')?.value || '';
-  if (!svcKey || !typeKey) return { service, service_ru: null, service_uz: null, min_order: null };
+  if (!svcKey || !typeKey) return { service, service_ru: null, service_uz: null };
   return {
     service,
     service_ru: `${_svcName(svcKey,'ru')} — ${_typeName(typeKey,'ru')}`,
     service_uz: `${_svcName(svcKey,'uz')} — ${_typeName(typeKey,'uz')}`,
-    min_order: (_sPrices||{})[svcKey]?.[typeKey]?.min_order || null,
   };
 }
 
@@ -11673,7 +11707,9 @@ async function smcFillFromItem(item) {
   await _loadStaffPrices();
   const svcSel = document.getElementById('smc_svc_select');
   svcSel.innerHTML = '<option value="">— Выберите услугу —</option>';
-  const svcOrder = ['carpet','carpet_home','sofa','mattress','curtains'];
+  const svcOrder = Object.keys(_svcApiData||{}).length
+    ? Object.values(_svcApiData).sort((a,b) => (a.order_idx||0) - (b.order_idx||0)).map(s => s.key)
+    : Object.keys(_sPrices||{});
   svcOrder.forEach(k => {
     if ((_sPrices||{})[k]) svcSel.innerHTML += `<option value="${k}">${_svcName(k)}</option>`;
   });
@@ -11702,20 +11738,23 @@ async function smcFillFromItem(item) {
 }
 
 async function smSaveItemInfo() {
-  const { service, service_ru, service_uz, min_order } = smcGetServiceBilingual();
+  const { service, service_ru, service_uz } = smcGetServiceBilingual();
   if (!service) { showToast('Выберите услугу', 'warning'); return false; }
   const price = parseFloat(document.getElementById('smc_price')?.value) || 0;
   const cur   = _sItemsCache.find(i => i.id === _measureItemId) || {};
-  const w     = _smCanEdit ? (parseFloat(document.getElementById('sm_actual_w')?.value) || null) : (cur.width_cm  || null);
-  const l     = _smCanEdit ? (parseFloat(document.getElementById('sm_actual_l')?.value) || null) : (cur.length_cm || null);
-  let   sqm   = (w && l) ? parseFloat((w * l / 10000).toFixed(3)) : (cur.sqm || null);
-  // Мин. площадь позиции из прайса (запрос пользователя 2026-08-14) — если реально
-  // измеренная площадь меньше, платим как за минимум.
-  if (min_order && sqm && sqm < min_order) sqm = min_order;
+  let w, l, sqm;
+  if (_smIsPcs) {
+    w = null; l = null;
+    sqm = _smCanEdit ? (parseFloat(document.getElementById('sm_actual_qty')?.value) || null) : (cur.sqm || null);
+  } else {
+    w   = _smCanEdit ? (parseFloat(document.getElementById('sm_actual_w')?.value) || null) : (cur.width_cm  || null);
+    l   = _smCanEdit ? (parseFloat(document.getElementById('sm_actual_l')?.value) || null) : (cur.length_cm || null);
+    sqm = (w && l) ? parseFloat((w * l / 10000).toFixed(3)) : (cur.sqm || null);
+  }
   const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items/${_measureItemId}`, {
     method: 'PUT',
     headers: { 'Content-Type':'application/json', Authorization:`Bearer ${_staffToken()}` },
-    body: JSON.stringify({ service, service_ru, service_uz, price_per_sqm: price, sqm, width_cm: w, length_cm: l, min_order })
+    body: JSON.stringify({ service, service_ru, service_uz, price_per_sqm: price, sqm, width_cm: w, length_cm: l })
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); if (await _reloadItemsOnNotFound(e.detail)) return false; showToast(e.detail||'Ошибка', 'error'); return false; }
   const d = await res.json().catch(()=>({}));
@@ -11734,13 +11773,21 @@ async function smSaveAndClose() {
 
   let approved = false;
   if (wasUnapproved) {
-    const w = parseFloat(document.getElementById('sm_actual_w')?.value) || 0;
-    const l = parseFloat(document.getElementById('sm_actual_l')?.value) || 0;
-    if (w && l) {
+    let _body = { action: 'direct_approve' };
+    let _canApproveNow = false;
+    if (_smIsPcs) {
+      const qty = parseFloat(document.getElementById('sm_actual_qty')?.value) || 0;
+      if (qty) { _body.quantity = qty; _canApproveNow = true; }
+    } else {
+      const w = parseFloat(document.getElementById('sm_actual_w')?.value) || 0;
+      const l = parseFloat(document.getElementById('sm_actual_l')?.value) || 0;
+      if (w && l) { _body.actual_width_cm = w; _body.actual_length_cm = l; _canApproveNow = true; }
+    }
+    if (_canApproveNow) {
       const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items/${_measureItemId}/measure`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_staffToken()}` },
-        body: JSON.stringify({ action: 'direct_approve', actual_width_cm: w, actual_length_cm: l }),
+        body: JSON.stringify(_body),
       });
       if (res.ok) {
         const d = await res.json();
@@ -11781,7 +11828,9 @@ async function svpFillCatalog() {
   await _loadStaffPrices();
   const svcSel = document.getElementById('svp_svc_select');
   svcSel.innerHTML = '<option value="">— Выберите услугу —</option>';
-  const svcOrder = ['carpet','carpet_home','sofa','mattress','curtains'];
+  const svcOrder = Object.keys(_svcApiData||{}).length
+    ? Object.values(_svcApiData).sort((a,b) => (a.order_idx||0) - (b.order_idx||0)).map(s => s.key)
+    : Object.keys(_sPrices||{});
   svcOrder.forEach(k => {
     if ((_sPrices||{})[k]) svcSel.innerHTML += `<option value="${k}">${_svcName(k)}</option>`;
   });
@@ -11856,6 +11905,7 @@ let _smMediaList    = [];
 let _smCanEdit      = false;
 let _smIsAdminEdit  = false; // true for admin or can_override_measure — shows 💾 Save button
 let _smFullMeasure  = false; // true for can_measure+can_approve_measure combo — shows ✅ Провести замер
+let _smIsPcs         = false; // true when item's price catalog unit_key === 'pcs' — показывать количество вместо Ш×Д
 const itemMediaUrl  = id => `${API_BASE}/item-media/${id}?t=${_staffToken()}`;
 
 async function staffOpenMeasure(itemId) {
@@ -11884,6 +11934,8 @@ async function staffOpenMeasure(itemId) {
   _smS('smWidthLabel', t('sm.width'));
   _smS('smLengthLabel', t('sm.length'));
   _smS('smAreaLabel', t('sm.area'));
+  _smS('smQtyTitle', t('sm.qtyTitle'));
+  _smS('smQtyLabel', t('sm.qty'));
   _smS('smPrewashTitle', t('sm.prewashTitle'));
   const _prewashBodyEl = document.getElementById('smPrewashBody');
   if (_prewashBodyEl) _prewashBodyEl.innerHTML = t('sm.prewashBody');
@@ -11938,6 +11990,19 @@ async function staffOpenMeasure(itemId) {
     if (svcStatic) { svcStatic.style.display = ''; svcStatic.textContent = item.service || '—'; }
   }
 
+  // Штучная услуга (unit_key='pcs') — вместо Ш×Д нужно количество
+  let _mUnitKey = 'm2';
+  if (canEditService) {
+    const _svcKeyNow  = document.getElementById('smc_svc_select')?.value;
+    const _typeKeyNow = document.getElementById('smc_type_select')?.value;
+    if (_svcKeyNow && _typeKeyNow) _mUnitKey = (_sPrices||{})[_svcKeyNow]?.[_typeKeyNow]?.unit_key || 'm2';
+  } else {
+    const _mMatch = item.service ? sifFindPriceMatch(item.service) : null;
+    if (_mMatch) _mUnitKey = (_sPrices||{})[_mMatch.svcKey]?.[_mMatch.typeKey]?.unit_key || 'm2';
+  }
+  _smIsPcs = _mUnitKey === 'pcs';
+  _smS('smPriceLabel', _smIsPcs ? t('sm.pricePerPcs') : t('sm.pricePerM2'));
+
   // Статус-баннер
   const banner = document.getElementById('sm_status_banner');
   if (ms === 'submitted') {
@@ -11957,7 +12022,8 @@ async function staffOpenMeasure(itemId) {
   }
 
   const isWashingStatus = _sOrderStatus === 'washing';
-  document.getElementById('sm_dims_edit').style.display    = _smCanEdit ? '' : 'none';
+  document.getElementById('sm_dims_edit').style.display     = (_smCanEdit && !_smIsPcs) ? '' : 'none';
+  document.getElementById('sm_qty_edit').style.display      = (_smCanEdit && _smIsPcs) ? '' : 'none';
   document.getElementById('sm_dims_readonly').style.display = _smCanEdit ? 'none' : '';
   document.getElementById('sm_upload_label').style.display  = _smCanEdit ? '' : 'none';
   document.getElementById('sm_upload_hint').style.display   = _smCanEdit ? '' : 'none';
@@ -11968,13 +12034,21 @@ async function staffOpenMeasure(itemId) {
   document.getElementById('sm_media_section').style.display = _preWash ? 'none' : '';
   if (_preWash) {
     document.getElementById('sm_dims_edit').style.display    = 'none';
+    document.getElementById('sm_qty_edit').style.display     = 'none';
     document.getElementById('sm_dims_readonly').style.display = 'none';
   }
 
   if (_smCanEdit) {
-    document.getElementById('sm_actual_w').value = item.width_cm || '';
-    document.getElementById('sm_actual_l').value = item.length_cm || '';
-    smCalcSqm();
+    if (_smIsPcs) {
+      document.getElementById('sm_actual_qty').value = item.sqm || '';
+    } else {
+      document.getElementById('sm_actual_w').value = item.width_cm || '';
+      document.getElementById('sm_actual_l').value = item.length_cm || '';
+      smCalcSqm();
+    }
+  } else if (_smIsPcs) {
+    const dimsText = item.sqm ? `${parseFloat(item.sqm).toFixed(0)} ${t('unit.pcs')}` : '—';
+    document.getElementById('sm_actual_dims_text').textContent = dimsText;
   } else {
     const w = item.width_cm; const l = item.length_cm;
     const dimsText = w && l
@@ -12156,14 +12230,22 @@ async function smSubmit() {
     if (!ok) return;
   }
 
-  const w = parseFloat(document.getElementById('sm_actual_w').value);
-  const l = parseFloat(document.getElementById('sm_actual_l').value);
-  if (!w || !l) { showToast('Введите ширину и длину', 'error'); return; }
+  const _body = { action: 'submit' };
+  if (_smIsPcs) {
+    const qty = parseFloat(document.getElementById('sm_actual_qty').value);
+    if (!qty || qty <= 0) { showToast('Введите количество', 'error'); return; }
+    _body.quantity = qty;
+  } else {
+    const w = parseFloat(document.getElementById('sm_actual_w').value);
+    const l = parseFloat(document.getElementById('sm_actual_l').value);
+    if (!w || !l) { showToast('Введите ширину и длину', 'error'); return; }
+    _body.actual_width_cm = w; _body.actual_length_cm = l;
+  }
   if (!_smMediaList.length) { showToast('Добавьте фото или видео замера', 'error'); return; }
   const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items/${_measureItemId}/measure`, {
     method: 'PATCH',
     headers: { 'Content-Type':'application/json', Authorization:`Bearer ${_staffToken()}` },
-    body: JSON.stringify({ action:'submit', actual_width_cm:w, actual_length_cm:l }),
+    body: JSON.stringify(_body),
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); if (await _reloadItemsOnNotFound(e.detail)) return; showToast(e.detail||'Ошибка', 'error'); return; }
   const d = await res.json();
@@ -12181,13 +12263,21 @@ async function smSubmitAndApprove() {
     const ok = await smSaveItemInfo();
     if (!ok) return;
   }
-  const w = parseFloat(document.getElementById('sm_actual_w')?.value) || 0;
-  const l = parseFloat(document.getElementById('sm_actual_l')?.value) || 0;
-  if (!w || !l) { showToast('Введите ширину и длину', 'error'); return; }
+  const _body = { action: 'direct_approve' };
+  if (_smIsPcs) {
+    const qty = parseFloat(document.getElementById('sm_actual_qty')?.value) || 0;
+    if (!qty) { showToast('Введите количество', 'error'); return; }
+    _body.quantity = qty;
+  } else {
+    const w = parseFloat(document.getElementById('sm_actual_w')?.value) || 0;
+    const l = parseFloat(document.getElementById('sm_actual_l')?.value) || 0;
+    if (!w || !l) { showToast('Введите ширину и длину', 'error'); return; }
+    _body.actual_width_cm = w; _body.actual_length_cm = l;
+  }
   const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items/${_measureItemId}/measure`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_staffToken()}` },
-    body: JSON.stringify({ action: 'direct_approve', actual_width_cm: w, actual_length_cm: l }),
+    body: JSON.stringify(_body),
   });
   if (!res.ok) { const e = await res.json().catch(() => ({})); showToast(e.detail || 'Ошибка', 'error'); return; }
   const d = await res.json();
@@ -14316,7 +14406,7 @@ function staffChatSend() {
 </script>
 
 <!-- ═══════════ МОДАЛКА: ЗАПРОС ПОЗИЦИИ ═══════════ -->
-<div class="modal-overlay" id="posReqModal" style="z-index:310;align-items:center;padding:0 16px" onclick="if(event.target===this)closePosReqModal()">
+<div class="modal-overlay" id="posReqModal" style="z-index:310;align-items:center;padding:0 16px">
   <div style="background:#fff;border-radius:20px;width:100%;max-width:420px;margin:0 auto;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)">
     <!-- Шапка -->
     <div style="background:linear-gradient(135deg,#163E3B,#1e5c57);padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between">
@@ -14357,7 +14447,7 @@ function staffChatSend() {
 </div>
 
 <!-- ═══════════ МОДАЛКА: УВЕДОМИТЬ МОЙЩИКА ═══════════ -->
-<div class="modal-overlay" id="notifyWasherModal" style="z-index:320;align-items:center;padding:0 16px" onclick="if(event.target===this)closeNotifyWasherModal()">
+<div class="modal-overlay" id="notifyWasherModal" style="z-index:320;align-items:center;padding:0 16px">
   <div style="background:#fff;border-radius:20px;width:100%;max-width:380px;margin:0 auto;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)">
     <div style="background:linear-gradient(135deg,#1d4ed8,#2563eb);padding:16px 18px 14px">
       <div style="font-size:16px;font-weight:800;color:#fff">📢 Уведомить мойщика?</div>
@@ -14475,6 +14565,16 @@ function staffChatSend() {
         </div>
       </div>
 
+      <!-- Количество — для штучных услуг (замер по площади не нужен) -->
+      <div id="sm_qty_edit" style="display:none;background:#f0f6ff;border-radius:12px;padding:12px 14px;border:1.5px solid #007aff;margin-bottom:8px">
+        <div id="smQtyTitle" style="font-size:11px;font-weight:700;color:#007aff;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">🔢 Количество</div>
+        <div>
+          <div id="smQtyLabel" style="font-size:11px;color:#888;margin-bottom:4px">Количество, шт</div>
+          <input id="sm_actual_qty" type="number" inputmode="numeric" min="1" placeholder="1"
+                 style="width:100%;padding:10px;border:1.5px solid #d0e4ff;border-radius:10px;font-size:15px;background:#fff;box-sizing:border-box;outline:none;color:#1a1a1a">
+        </div>
+      </div>
+
       <!-- Размеры — readonly (после утверждения / просмотр) -->
       <div id="sm_dims_readonly" style="display:none;background:#f5f5f7;border-radius:12px;padding:12px 14px;margin-bottom:8px">
         <div id="smDimsTitle2" style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">📐 Размеры</div>
@@ -14527,7 +14627,7 @@ function staffChatSend() {
 
 <!-- ═══════════ ЛАЙТБОКС: ПРОСМОТР МЕДИА ═══════════ -->
 <div id="smLightbox" style="display:none;position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,.95);align-items:center;justify-content:center;flex-direction:column"
-     onclick="if(event.target===this)smLightboxClose()"
+    
      ontouchstart="smLbTouchStart(event)" ontouchend="smLbTouchEnd(event)">
   <button onclick="smLightboxClose()" style="position:absolute;top:max(16px,env(safe-area-inset-top,16px));right:20px;background:none;border:none;color:#fff;font-size:30px;cursor:pointer;line-height:1">✕</button>
   <button id="smLbPrev" onclick="smLightboxNav(-1)" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:28px;cursor:pointer;border-radius:50%;width:48px;height:48px">‹</button>
@@ -14554,7 +14654,7 @@ function staffChatSend() {
   </div>
 </div>
 
-<div id="svcPickerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center;padding:0 5%" onclick="if(event.target===this)closeSvcPicker()">
+<div id="svcPickerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;align-items:center;justify-content:center;padding:0 5%">
   <div style="background:#fff;border-radius:18px;width:100%;max-width:320px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)">
     <div style="padding:16px 18px 12px;border-bottom:1px solid #f0f0f0">
       <div id="svcPickerTitle" style="font-weight:700;font-size:15px;color:#1a1a2e">Выберите услуги</div>
@@ -14568,7 +14668,7 @@ function staffChatSend() {
 </div>
 
 <!-- МОДАЛКА: НЕ ДОЗВОНИЛСЯ -->
-<div id="noAnswerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;display:none;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)closeNoAnswerModal()">
+<div id="noAnswerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;display:none;align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border-radius:20px;width:100%;max-width:360px;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
 
     <!-- Заголовок -->
@@ -14638,7 +14738,7 @@ function staffChatSend() {
 </div>
 
 <!-- МОДАЛКА: ПЕРЕЗВОНИТЬ (объединённая) -->
-<div id="callbackOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;align-items:center;justify-content:center;padding:16px;overflow-y:auto" onclick="if(event.target===this)closeCallbackModal()">
+<div id="callbackOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;align-items:center;justify-content:center;padding:16px;overflow-y:auto">
   <div style="background:#fff;border-radius:20px;width:100%;max-width:380px;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18);margin:auto">
     <div style="text-align:center;margin-bottom:18px">
       <div style="font-size:32px;margin-bottom:4px">🔔</div>
@@ -14698,7 +14798,7 @@ function staffChatSend() {
 </div>
 
 <!-- МОДАЛКА: ПОТЕРЯН -->
-<div id="lostOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)closeLostModal()">
+<div id="lostOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border-radius:20px;width:100%;max-width:360px;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
     <div style="text-align:center;margin-bottom:20px">
       <div style="font-size:36px;margin-bottom:6px">❌</div>
@@ -14721,7 +14821,7 @@ function staffChatSend() {
 </div>
 
 <!-- МОДАЛКА: ЗАМЕТКА -->
-<div id="leadNoteOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)closeLeadNoteModal()">
+<div id="leadNoteOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border-radius:20px;width:100%;max-width:360px;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
     <div style="text-align:center;margin-bottom:20px">
       <div style="font-size:36px;margin-bottom:6px">💬</div>
@@ -14764,7 +14864,7 @@ function staffChatSend() {
 
 <!-- CALLBACK BANNER -->
 <!-- PHOTO VIEWER (staff) -->
-<div id="sPhotoViewerOverlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.95);align-items:center;justify-content:center;flex-direction:column" onclick="if(event.target===this)closeSPhotoViewer()">
+<div id="sPhotoViewerOverlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.95);align-items:center;justify-content:center;flex-direction:column">
   <button onclick="closeSPhotoViewer()" style="position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:30px;cursor:pointer">✕</button>
   <button onclick="sPhotoViewerNext(-1)" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:28px;cursor:pointer;border-radius:50%;width:48px;height:48px">‹</button>
   <button onclick="sPhotoViewerNext(1)"  style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:28px;cursor:pointer;border-radius:50%;width:48px;height:48px">›</button>
@@ -14773,7 +14873,7 @@ function staffChatSend() {
   <div id="sPhotoViewerCounter" style="color:rgba(255,255,255,.55);font-size:13px;margin-top:10px"></div>
 </div>
 
-<div class="modal-overlay" id="receiptPreviewModal" style="z-index:340;align-items:center;padding:0 16px" onclick="if(event.target===this)closeReceiptPreview()">
+<div class="modal-overlay" id="receiptPreviewModal" style="z-index:340;align-items:center;padding:0 16px">
   <div class="modal-box" style="border-radius:16px;max-width:400px;max-height:88dvh;padding:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-weight:700;font-size:15px">🧾 Чек</div>
@@ -14792,7 +14892,7 @@ function staffChatSend() {
   </div>
 </div>
 
-<div class="modal-overlay" id="resendReceiptModal" style="z-index:350;align-items:center;padding:0 16px" onclick="if(event.target===this)closeResendReceiptModal()">
+<div class="modal-overlay" id="resendReceiptModal" style="z-index:350;align-items:center;padding:0 16px">
   <div class="modal-box" style="border-radius:16px;max-width:360px;padding:20px">
     <div style="font-weight:700;font-size:15px;margin-bottom:8px">Повторная отправка чека</div>
     <div id="resendReceiptInfo" style="font-size:13px;color:#666;margin-bottom:14px;line-height:1.4"></div>
@@ -14929,7 +15029,7 @@ function staffChatSend() {
   <button onclick="document.getElementById('notifPermBanner').classList.remove('show')" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0 0 0 8px">✕</button>
 </div>
 
-<div id="mapChoiceOverlay" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeMapChoice()">
+<div id="mapChoiceOverlay" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);align-items:flex-end;justify-content:center">
   <div style="background:#fff;border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-width:480px">
     <div style="text-align:center;font-size:16px;font-weight:700;margin-bottom:16px">Открыть в...</div>
     <div style="display:flex;flex-direction:column;gap:10px">
@@ -15155,7 +15255,7 @@ function staffChatSend() {
   </div>
 </div>
 
-<div id="bulkDelOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1300;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)closeBulkDeleteModal()">
+<div id="bulkDelOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1300;align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border-radius:20px;width:100%;max-width:340px;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.2)">
     <div style="text-align:center;margin-bottom:20px">
       <div style="font-size:36px;margin-bottom:6px">🗑</div>
@@ -15176,7 +15276,7 @@ function staffChatSend() {
 </div>
 
 <!-- МОДАЛКА: КАРТОЧКА ЛИДА (для агентов) -->
-<div id="leadCardOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1200;align-items:flex-end;justify-content:center;padding:0" onclick="if(event.target===this)closeLeadCard()">
+<div id="leadCardOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1200;align-items:flex-end;justify-content:center;padding:0">
   <div id="leadCardSheet" style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:24px 20px 32px;box-shadow:0 -4px 32px rgba(0,0,0,.15);max-height:85vh;overflow-y:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div style="font-size:17px;font-weight:700;color:#1a1a1a" id="lcTitle">Лид</div>
@@ -15412,7 +15512,7 @@ function staffChatSend() {
 </div>
 
 <!-- Driver: позиции / история -->
-<div id="drvSheet" class="modal-overlay" style="z-index:10010;align-items:flex-end" onclick="if(event.target===this)_drvCloseSheet()">
+<div id="drvSheet" class="modal-overlay" style="z-index:10010;align-items:flex-end">
   <div style="background:var(--surface,#1e2130);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:500px;margin:0 auto;box-shadow:0 -4px 30px rgba(0,0,0,.3);max-height:80vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <div id="drvSheetTitle" style="font-size:16px;font-weight:800;color:#f0f0f0"></div>
@@ -15515,7 +15615,7 @@ function staffChatSend() {
 </div>
 
 <!-- TIMESHEET ENTRY MODAL (manager in staff) -->
-<div class="sts-modal-overlay hidden" id="stsModal" onclick="if(event.target===this)stsClose()">
+<div class="sts-modal-overlay hidden" id="stsModal">
   <div class="sts-modal-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div>
