@@ -3263,23 +3263,26 @@
             </div>
           </div>
 
-          <!-- ─── Правила приёма и выдачи заказов ─── -->
-          <div class="s-panel" id="stab-rules" style="display:none;">
-            <div class="card">
-              <div class="cfg-title-row">
-                <h3 class="cfg-title">📋 Правила приёма и выдачи заказов</h3>
-              </div>
-              <p class="cfg-hint">Показывается клиентам на сайте (ссылка рядом с согласием на обработку данных и в подвале сайта). Можно добавлять и удалять пункты, у каждого — своя эмодзи и текст на русском и узбекском.</p>
-              <div id="orderRulesList"></div>
-              <button type="button" class="btn btn-sm" onclick="addOrderRule()" style="margin-top:6px">➕ Добавить пункт</button>
-              <div class="cfg-actions" style="margin-top:16px">
-                <button class="btn btn-primary" onclick="saveOrderRules()">💾 Сохранить</button>
-                <span class="s-msg" id="msg_rules"></span>
-              </div>
+        </div>
+
+        <!-- ─── Правила приёма и выдачи заказов ─── -->
+        <!-- Шире остальных вкладок (не 660px) — эта форма редактируется только
+             с компьютера, мобильная адаптация ей не нужна. -->
+        <div class="s-panel" id="stab-rules" style="display:none;max-width:1100px;">
+          <div class="card">
+            <div class="cfg-title-row">
+              <h3 class="cfg-title">📋 Правила приёма и выдачи заказов</h3>
+            </div>
+            <p class="cfg-hint">Показывается клиентам на сайте (ссылка рядом с согласием на обработку данных и в подвале сайта). Можно добавлять, удалять и менять порядок пунктов — у каждого своя эмодзи и текст на русском и узбекском.</p>
+            <div id="orderRulesList"></div>
+            <button type="button" class="btn btn-sm" onclick="addOrderRule()" style="margin-top:6px">➕ Добавить пункт</button>
+            <div class="cfg-actions" style="margin-top:16px">
+              <button class="btn btn-primary" onclick="saveOrderRules()">💾 Сохранить</button>
+              <span class="s-msg" id="msg_rules"></span>
             </div>
           </div>
-
         </div>
+
       </div>
 
       <!-- Модалка: отзыв -->
@@ -13071,27 +13074,31 @@ async function loadOrderRules() {
   } catch(e) { console.error('loadOrderRules', e); }
 }
 
-function _orderRuleRowHtml(rule, uid) {
+function _orderRuleRowHtml(rule, uid, idx, total) {
   return `
-  <div class="card order-rule-row" data-uid="${uid}" style="margin-bottom:12px;padding:14px">
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-      <input class="form-input" type="text" id="rule-em-${uid}" maxlength="5" value="${_esc(rule.emoji||'')}" style="text-align:center;width:52px;flex-shrink:0">
-      <button type="button" class="btn btn-sm" onclick="openEmojiPicker('rule-em-${uid}')" style="flex-shrink:0">😀</button>
-      <span style="font-size:12px;color:var(--text2)">Пункт</span>
-      <button type="button" class="btn btn-sm" onclick="removeOrderRule(${uid})" style="margin-left:auto;color:#dc2626;flex-shrink:0">🗑 Удалить</button>
+  <div class="card order-rule-row" data-uid="${uid}" style="margin-bottom:14px;padding:16px 18px">
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--accent-bg,#e8f1ff);color:var(--accent);font-size:12px;font-weight:800;flex-shrink:0">${idx + 1}</span>
+      <input class="form-input" type="text" id="rule-em-${uid}" maxlength="5" value="${_esc(rule.emoji||'')}" style="text-align:center;width:56px;flex-shrink:0;font-size:18px">
+      <button type="button" class="btn btn-sm" onclick="openEmojiPicker('rule-em-${uid}')" style="flex-shrink:0">😀 Эмодзи</button>
+      <div style="margin-left:auto;display:flex;gap:6px">
+        <button type="button" class="btn btn-sm" onclick="moveOrderRule(${uid},-1)" ${idx === 0 ? 'disabled' : ''} title="Переместить выше" style="flex-shrink:0">↑</button>
+        <button type="button" class="btn btn-sm" onclick="moveOrderRule(${uid},1)" ${idx === total - 1 ? 'disabled' : ''} title="Переместить ниже" style="flex-shrink:0">↓</button>
+        <button type="button" class="btn btn-sm" onclick="removeOrderRule(${uid})" style="color:#dc2626;flex-shrink:0">🗑 Удалить</button>
+      </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
       <div>
-        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">🇷🇺 Заголовок (RU)</label>
+        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px;font-weight:600">🇷🇺 Заголовок (RU)</label>
         <input class="form-input" type="text" id="rule-title-ru-${uid}" value="${_esc(rule.title_ru||'')}" placeholder="ЗАГОЛОВОК ПУНКТА">
-        <label style="font-size:11px;color:var(--text2);display:block;margin:8px 0 4px">Текст (RU)</label>
-        <textarea class="form-input" id="rule-text-ru-${uid}" rows="4" placeholder="Текст пункта на русском">${_esc(rule.text_ru||'')}</textarea>
+        <label style="font-size:11px;color:var(--text2);display:block;margin:10px 0 4px;font-weight:600">Текст (RU)</label>
+        <textarea class="form-input" id="rule-text-ru-${uid}" rows="6" placeholder="Текст пункта на русском">${_esc(rule.text_ru||'')}</textarea>
       </div>
       <div>
-        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">🇺🇿 Sarlavha (UZ)</label>
+        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px;font-weight:600">🇺🇿 Sarlavha (UZ)</label>
         <input class="form-input" type="text" id="rule-title-uz-${uid}" value="${_esc(rule.title_uz||'')}" placeholder="BAND SARLAVHASI">
-        <label style="font-size:11px;color:var(--text2);display:block;margin:8px 0 4px">Matn (UZ)</label>
-        <textarea class="form-input" id="rule-text-uz-${uid}" rows="4" placeholder="O'zbek tilida matn">${_esc(rule.text_uz||'')}</textarea>
+        <label style="font-size:11px;color:var(--text2);display:block;margin:10px 0 4px;font-weight:600">Matn (UZ)</label>
+        <textarea class="form-input" id="rule-text-uz-${uid}" rows="6" placeholder="O'zbek tilida matn">${_esc(rule.text_uz||'')}</textarea>
       </div>
     </div>
   </div>`;
@@ -13101,7 +13108,17 @@ function renderOrderRulesList() {
   const el = document.getElementById('orderRulesList');
   if (!el) return;
   if (!_orderRulesData.length) { el.innerHTML = '<p class="cfg-hint">Пунктов пока нет — добавьте первый.</p>'; return; }
-  el.innerHTML = _orderRulesData.map(r => _orderRuleRowHtml(r, r._uid)).join('');
+  el.innerHTML = _orderRulesData.map((r, i) => _orderRuleRowHtml(r, r._uid, i, _orderRulesData.length)).join('');
+}
+
+function moveOrderRule(uid, dir) {
+  _syncOrderRulesFromDom();
+  const idx = _orderRulesData.findIndex(r => r._uid === uid);
+  const newIdx = idx + dir;
+  if (idx < 0 || newIdx < 0 || newIdx >= _orderRulesData.length) return;
+  const [item] = _orderRulesData.splice(idx, 1);
+  _orderRulesData.splice(newIdx, 0, item);
+  renderOrderRulesList();
 }
 
 function _syncOrderRulesFromDom() {
