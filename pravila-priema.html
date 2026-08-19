@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">Правила приёма и выдачи заказов — ARTEZ</title>
+  <link rel="icon" href="LOGO/favicon.ico">
+  <script src="config.js"></script>
+  <script>
+    (function(){
+      var qs = new URLSearchParams(location.search).get('company_slug');
+      if (qs) window.APP_COMPANY_SLUG = qs;
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --teal-deep:#0E2D2A; --teal:#1A5C54; --teal-soft:#2CC6B3;
+      --amber:#E8A83C; --amber-deep:#C98C24;
+      --sand:#F4EFE6; --sand-card:#FFFFFF;
+      --ink:#141E1B; --ink-soft:#5A6D68; --line:#E0D9CC;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:"Inter",system-ui,sans-serif;background:var(--sand);color:var(--ink);line-height:1.7;min-height:100vh}
+
+    .header{
+      background:linear-gradient(135deg,#0A1F1D 0%,var(--teal-deep) 50%,#152E32 100%);
+      padding:0 24px; height:64px; display:flex; align-items:center; gap:16px;
+      position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 20px rgba(0,0,0,.3);
+    }
+    .header-back{
+      color:rgba(255,255,255,.75); text-decoration:none; font-size:13px; font-weight:500;
+      display:flex; align-items:center; gap:6px; padding:6px 12px;
+      border:1px solid rgba(255,255,255,.15); border-radius:20px;
+      transition:all .2s; white-space:nowrap;
+    }
+    .header-back:hover{color:#fff;border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.07)}
+    .header-logo{display:flex;align-items:center}
+    .header-logo img{height:32px;width:auto}
+    .lang-switch{margin-left:auto;display:flex;gap:6px}
+    .lang-btn{
+      padding:5px 16px; border-radius:20px; border:1px solid rgba(255,255,255,.25);
+      cursor:pointer; font-size:13px; font-weight:600; font-family:"Sora",sans-serif;
+      transition:all .2s; background:transparent; color:rgba(255,255,255,.7);
+    }
+    .lang-btn.active{background:var(--teal-soft);color:#fff;border-color:var(--teal-soft);box-shadow:0 0 12px rgba(44,198,179,.4)}
+    .lang-btn:hover:not(.active){background:rgba(255,255,255,.08);color:#fff}
+
+    .page-hero{
+      background:linear-gradient(135deg,var(--teal-deep) 0%,var(--teal) 100%);
+      padding:40px 24px 36px; text-align:center;
+    }
+    .page-hero h1{font-family:"Sora",sans-serif;font-size:clamp(22px,4vw,32px);font-weight:800;color:#fff;margin-bottom:8px}
+    .page-hero .sub{font-size:14px;color:rgba(255,255,255,.7)}
+
+    .container{max-width:800px;margin:0 auto;padding:32px 24px 64px}
+    .section{
+      background:var(--sand-card); border-radius:16px;
+      padding:24px 28px; margin-bottom:16px;
+      box-shadow:0 2px 12px rgba(14,45,42,.07);
+      border:1px solid var(--line);
+    }
+    .section-title{
+      font-family:"Sora",sans-serif; font-size:15.5px; font-weight:800;
+      color:var(--teal); margin-bottom:12px; display:flex; align-items:center; gap:10px;
+    }
+    .section-title .num{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:26px; height:26px; border-radius:50%; flex-shrink:0;
+      background:linear-gradient(135deg,var(--teal-soft),var(--teal));
+      color:#fff; font-size:12px; font-weight:800;
+    }
+    .section-title .emoji{font-size:19px;flex-shrink:0}
+    .section p{font-size:14.5px;color:#334155;line-height:1.75}
+
+    .loading, .empty{text-align:center;color:var(--ink-soft);padding:40px 24px;font-size:14px}
+
+    footer{
+      text-align:center;padding:24px;font-size:13px;color:var(--ink-soft);
+      border-top:1px solid var(--line); background:var(--sand-card);
+    }
+
+    @media(max-width:600px){
+      .section{padding:18px 16px;border-radius:12px}
+      .page-hero{padding:28px 16px 24px}
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a class="header-back" href="index.html">← Назад</a>
+  <div class="header-logo">
+    <img src="LOGO/artez-logo-lockup.svg" alt="ARTEZ" id="headerLogo">
+  </div>
+  <div class="lang-switch">
+    <button class="lang-btn active" id="langBtnRu" onclick="setLang('ru')">RU</button>
+    <button class="lang-btn" id="langBtnUz" onclick="setLang('uz')">UZ</button>
+  </div>
+</div>
+
+<div class="page-hero">
+  <h1 id="pageH1">Правила приёма и выдачи заказов</h1>
+  <div class="sub" id="pageSub">Информация для заказчика химчистки «ARTEZ»</div>
+</div>
+
+<div class="container" id="rulesContainer">
+  <div class="loading" id="rulesLoading">Загрузка…</div>
+</div>
+
+<footer id="pageFooter">© 2024–2026 ARTEZ · <a href="mailto:info@artez.uz" id="footerEmail" style="color:var(--teal);text-decoration:none">info@artez.uz</a></footer>
+
+<script>
+  const PAGE_I18N = {
+    ru: { title: 'Правила приёма и выдачи заказов', sub: 'Информация для заказчика химчистки «ARTEZ»', empty: 'Правила пока не заполнены.', back: '← Назад' },
+    uz: { title: "Buyurtmani qabul qilish va topshirish qoidalari", sub: "«ARTEZ» kimyoviy tozalash mijozlari uchun ma'lumot", empty: "Qoidalar hali kiritilmagan.", back: '← Orqaga' },
+  };
+  let _rules = [];
+  let _lang  = 'ru';
+
+  function setLang(l) {
+    _lang = l;
+    document.getElementById('langBtnRu').classList.toggle('active', l === 'ru');
+    document.getElementById('langBtnUz').classList.toggle('active', l === 'uz');
+    const t = PAGE_I18N[l];
+    document.getElementById('pageH1').textContent = t.title;
+    document.getElementById('pageSub').textContent = t.sub;
+    document.querySelector('.header-back').textContent = t.back;
+    renderRules();
+  }
+
+  function _esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function renderRules() {
+    const el = document.getElementById('rulesContainer');
+    if (!_rules.length) {
+      el.innerHTML = `<div class="empty">${PAGE_I18N[_lang].empty}</div>`;
+      return;
+    }
+    el.innerHTML = _rules.map((r, i) => `
+      <div class="section">
+        <div class="section-title">
+          <span class="num">${i + 1}</span>
+          <span class="emoji">${_esc(r.emoji || '')}</span>
+          <span>${_esc(_lang === 'uz' ? (r.title_uz || r.title_ru) : (r.title_ru || r.title_uz))}</span>
+        </div>
+        <p>${_esc(_lang === 'uz' ? (r.text_uz || r.text_ru) : (r.text_ru || r.text_uz))}</p>
+      </div>
+    `).join('');
+  }
+
+  // ── Company data (per-tenant): имя/домен/телефон/email/лого вместо жёстких ARTEZ-значений ──
+  // Тот же паттерн, что в terms.html/privacy.html этого репозитория.
+  (async function loadCompanyData(){
+    const API_BASE = (window.APP_API_URL || "https://artez-api-production.up.railway.app") + "/api";
+    const slug = window.APP_COMPANY_SLUG || '';
+    try {
+      const [company, site] = await Promise.all([
+        fetch(API_BASE + '/company/resolve?slug=' + encodeURIComponent(slug)).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(API_BASE + '/settings/site?company_slug=' + encodeURIComponent(slug)).then(r => r.ok ? r.json() : null).catch(() => null),
+      ]);
+      const name = company && company.name;
+      const s = site && site.settings;
+
+      if (name || s) {
+        const host = location.host;
+        const replaceAll = (str) => {
+          let v = str;
+          if (name) v = v.split('ARTEZ').join(name);
+          v = v.split('artez.uz').join(host);
+          return v;
+        };
+        ['title','sub','empty','back'].forEach(k => {
+          PAGE_I18N.ru[k] = replaceAll(PAGE_I18N.ru[k]);
+          PAGE_I18N.uz[k] = replaceAll(PAGE_I18N.uz[k]);
+        });
+        document.title = replaceAll(document.title);
+        document.getElementById('pageFooter').innerHTML = replaceAll(document.getElementById('pageFooter').innerHTML);
+
+        const logo = document.getElementById('headerLogo');
+        const safeLogo = company && company.logo_url && /^https?:\/\/|^data:image\//.test(company.logo_url) ? company.logo_url : null;
+        if (logo) { logo.alt = name || 'ARTEZ'; if (safeLogo) logo.src = safeLogo; }
+
+        const email = s && s.contact_email;
+        const footerEmail = document.getElementById('footerEmail');
+        if (footerEmail && email) { footerEmail.href = 'mailto:' + email; footerEmail.textContent = email; }
+      }
+
+      try { _rules = JSON.parse((s && s.order_rules) || '[]'); } catch(e) { _rules = []; }
+    } catch (e) {
+      _rules = [];
+    }
+    setLang('ru');
+  })();
+</script>
+</body>
+</html>

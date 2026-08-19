@@ -2868,6 +2868,7 @@
           <button class="s-tab"        data-stab="stats"      onclick="switchStab(this)" data-i18n="cfg.tab.stats">📊 Статистика</button>
           <button class="s-tab"        data-stab="reviews"    onclick="switchStab(this)" data-i18n="cfg.tab.reviews">⭐ Отзывы</button>
           <button class="s-tab"        data-stab="faq"        onclick="switchStab(this)" data-i18n="cfg.tab.faq">❓ FAQ</button>
+          <button class="s-tab"        data-stab="rules"      onclick="switchStab(this);loadOrderRules()" data-i18n="cfg.tab.rules">📋 Правила приёма</button>
         </div>
 
         <div style="max-width:660px;">
@@ -3259,6 +3260,22 @@
               <p class="cfg-hint" data-i18n="faq.admin.hint">Показываются в блоке FAQ на главной странице.</p>
               <div id="faqList" style="margin-top:10px"></div>
               <button class="btn btn-primary" onclick="openFaqModal()" style="margin-top:12px" data-i18n="faq.btn.add">+ Добавить вопрос</button>
+            </div>
+          </div>
+
+          <!-- ─── Правила приёма и выдачи заказов ─── -->
+          <div class="s-panel" id="stab-rules" style="display:none;">
+            <div class="card">
+              <div class="cfg-title-row">
+                <h3 class="cfg-title">📋 Правила приёма и выдачи заказов</h3>
+              </div>
+              <p class="cfg-hint">Показывается клиентам на сайте (ссылка рядом с согласием на обработку данных и в подвале сайта). Можно добавлять и удалять пункты, у каждого — своя эмодзи и текст на русском и узбекском.</p>
+              <div id="orderRulesList"></div>
+              <button type="button" class="btn btn-sm" onclick="addOrderRule()" style="margin-top:6px">➕ Добавить пункт</button>
+              <div class="cfg-actions" style="margin-top:16px">
+                <button class="btn btn-primary" onclick="saveOrderRules()">💾 Сохранить</button>
+                <span class="s-msg" id="msg_rules"></span>
+              </div>
             </div>
           </div>
 
@@ -6438,7 +6455,7 @@ const _adminI18n = {
     'cfg.tab.sms':'📨 SMS (Eskiz)','cfg.tab.sheets':'📊 Google Sheets',
     'cfg.tab.agents':'🤝 Агенты','cfg.tab.receipt':'🧾 Чек',
     'cfg.tab.slides':'🖼️ Слайдер','cfg.tab.video':'🎥 Видео','cfg.tab.stats':'📊 Статистика',
-    'cfg.tab.reviews':'⭐ Отзывы','cfg.tab.faq':'❓ FAQ',
+    'cfg.tab.reviews':'⭐ Отзывы','cfg.tab.faq':'❓ FAQ','cfg.tab.rules':'📋 Правила приёма',
     'video.card.title':'🎥 Видео-карточка на сайте',
     'video.card.hint':'Короткое видео о вашей компании (до 19 МБ). Показывается на главной странице сайта — выберите, где именно.',
     'video.enable':'Показывать видео-карточку','video.placement':'Где показать',
@@ -6975,7 +6992,7 @@ const _adminI18n = {
     'cfg.tab.sms':'📨 SMS (Eskiz)','cfg.tab.sheets':'📊 Google Sheets',
     'cfg.tab.agents':'🤝 Agentlar','cfg.tab.receipt':'🧾 Chek',
     'cfg.tab.slides':'🖼️ Slayder','cfg.tab.video':'🎥 Video','cfg.tab.stats':'📊 Statistika',
-    'cfg.tab.reviews':'⭐ Sharhlar','cfg.tab.faq':'❓ FAQ',
+    'cfg.tab.reviews':'⭐ Sharhlar','cfg.tab.faq':'❓ FAQ','cfg.tab.rules':"📋 Qabul qilish qoidalari",
     'video.card.title':'🎥 Saytdagi video-karta',
     'video.card.hint':"Kompaniyangiz haqida qisqa video (19 MB gacha). Sayt bosh sahifasida ko'rsatiladi — qayerda ko'rsatilishini tanlang.",
     'video.enable':"Video-kartani ko'rsatish",'video.placement':"Qayerda ko'rsatilsin",
@@ -13032,6 +13049,100 @@ async function saveTab(tab) {
     });
     cancelTab(tab);
     showToast('Изменения сохранены');
+  } catch(e) {
+    showToast('Ошибка: ' + e.message, 'error');
+  }
+}
+
+// ══════════════════════════════════════════
+// ПРАВИЛА ПРИЁМА И ВЫДАЧИ ЗАКАЗОВ
+// ══════════════════════════════════════════
+let _orderRulesUid  = 0;
+let _orderRulesData = [];
+
+async function loadOrderRules() {
+  try {
+    const res = await fetch(`${API_BASE}/admin/settings/site`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    const data = await res.json();
+    let rules = [];
+    try { rules = JSON.parse((data.settings || {}).order_rules || '[]'); } catch(e) { rules = []; }
+    _orderRulesData = rules.map(r => ({ ...r, _uid: _orderRulesUid++ }));
+    renderOrderRulesList();
+  } catch(e) { console.error('loadOrderRules', e); }
+}
+
+function _orderRuleRowHtml(rule, uid) {
+  return `
+  <div class="card order-rule-row" data-uid="${uid}" style="margin-bottom:12px;padding:14px">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+      <input class="form-input" type="text" id="rule-em-${uid}" maxlength="5" value="${_esc(rule.emoji||'')}" style="text-align:center;width:52px;flex-shrink:0">
+      <button type="button" class="btn btn-sm" onclick="openEmojiPicker('rule-em-${uid}')" style="flex-shrink:0">😀</button>
+      <span style="font-size:12px;color:var(--text2)">Пункт</span>
+      <button type="button" class="btn btn-sm" onclick="removeOrderRule(${uid})" style="margin-left:auto;color:#dc2626;flex-shrink:0">🗑 Удалить</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">🇷🇺 Заголовок (RU)</label>
+        <input class="form-input" type="text" id="rule-title-ru-${uid}" value="${_esc(rule.title_ru||'')}" placeholder="ЗАГОЛОВОК ПУНКТА">
+        <label style="font-size:11px;color:var(--text2);display:block;margin:8px 0 4px">Текст (RU)</label>
+        <textarea class="form-input" id="rule-text-ru-${uid}" rows="4" placeholder="Текст пункта на русском">${_esc(rule.text_ru||'')}</textarea>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">🇺🇿 Sarlavha (UZ)</label>
+        <input class="form-input" type="text" id="rule-title-uz-${uid}" value="${_esc(rule.title_uz||'')}" placeholder="BAND SARLAVHASI">
+        <label style="font-size:11px;color:var(--text2);display:block;margin:8px 0 4px">Matn (UZ)</label>
+        <textarea class="form-input" id="rule-text-uz-${uid}" rows="4" placeholder="O'zbek tilida matn">${_esc(rule.text_uz||'')}</textarea>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderOrderRulesList() {
+  const el = document.getElementById('orderRulesList');
+  if (!el) return;
+  if (!_orderRulesData.length) { el.innerHTML = '<p class="cfg-hint">Пунктов пока нет — добавьте первый.</p>'; return; }
+  el.innerHTML = _orderRulesData.map(r => _orderRuleRowHtml(r, r._uid)).join('');
+}
+
+function _syncOrderRulesFromDom() {
+  _orderRulesData.forEach(r => {
+    const uid = r._uid;
+    const em = document.getElementById(`rule-em-${uid}`);
+    const tRu = document.getElementById(`rule-title-ru-${uid}`);
+    const xRu = document.getElementById(`rule-text-ru-${uid}`);
+    const tUz = document.getElementById(`rule-title-uz-${uid}`);
+    const xUz = document.getElementById(`rule-text-uz-${uid}`);
+    if (em)  r.emoji    = em.value.trim();
+    if (tRu) r.title_ru = tRu.value.trim();
+    if (xRu) r.text_ru  = xRu.value.trim();
+    if (tUz) r.title_uz = tUz.value.trim();
+    if (xUz) r.text_uz  = xUz.value.trim();
+  });
+}
+
+function addOrderRule() {
+  _syncOrderRulesFromDom();
+  _orderRulesData.push({ emoji: '📋', title_ru: '', text_ru: '', title_uz: '', text_uz: '', _uid: _orderRulesUid++ });
+  renderOrderRulesList();
+}
+
+function removeOrderRule(uid) {
+  _syncOrderRulesFromDom();
+  _orderRulesData = _orderRulesData.filter(r => r._uid !== uid);
+  renderOrderRulesList();
+}
+
+async function saveOrderRules() {
+  _syncOrderRulesFromDom();
+  const payload = _orderRulesData.map(({ _uid, ...rest }) => rest);
+  try {
+    const res = await fetch(`${API_BASE}/admin/settings/site`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ order_rules: JSON.stringify(payload) })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast('Правила сохранены');
   } catch(e) {
     showToast('Ошибка: ' + e.message, 'error');
   }
