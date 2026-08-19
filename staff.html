@@ -1365,6 +1365,8 @@ const _i18n = {
     'prof.my_data':'Мои данные','prof.edit':'Редактировать','prof.save':'Сохранить',
     'prof.branch_none':'— не указан —','prof.gender':'Пол','prof.gender_m':'Мужской','prof.gender_f':'Женский',
     'prof.perms':'МОИ РАЗРЕШЕНИЯ','prof.logout':'Выйти из аккаунта','profDrop.logout':'Выйти',
+    'prof.install_app':'Установить приложение','prof.app_installed':'Приложение уже установлено',
+    'prof.install_unavailable':'Установка недоступна в этом браузере',
     'role.admin':'Администратор','role.manager':'Менеджер','role.callcenter':'Колл-центр',
     'role.driver':'Водитель','role.logistics':'Логистика','role.washer':'Мойщик','role.agent':'Агент',
     'perm.leads':'Лиды','perm.orders':'Заявки','perm.clients':'Клиенты','perm.status':'Статусы',
@@ -1638,6 +1640,8 @@ const _i18n = {
     'prof.my_data':'Mening ma\'lumotlarim','prof.edit':'Tahrirlash','prof.save':'Saqlash',
     'prof.branch_none':'— ko\'rsatilmagan —','prof.gender':'Jins','prof.gender_m':'Erkak','prof.gender_f':'Ayol',
     'prof.perms':'MENING RUXSATLARIM','prof.logout':'Hisobdan chiqish','profDrop.logout':'Chiqish',
+    'prof.install_app':'Ilovani o\'rnatish','prof.app_installed':'Ilova allaqachon o\'rnatilgan',
+    'prof.install_unavailable':'Ushbu brauzerda o\'rnatish mavjud emas',
     'role.admin':'Administrator','role.manager':'Menejer','role.callcenter':'Call-markaz',
     'role.driver':'Haydovchi','role.logistics':'Logistika','role.washer':'Yuvuvchi','role.agent':'Agent',
     'perm.leads':'Lidlar','perm.orders':'Buyurtmalar','perm.clients':'Mijozlar','perm.status':'Holatlar',
@@ -4409,8 +4413,8 @@ window.addEventListener('beforeinstallprompt', e => {
   if (!_isStandalone()) _showPwaBanner('chrome');
 });
 
-function _showPwaBanner(type) {
-  if (localStorage.getItem('pwa_banner_dismissed') === '1') return;
+function _showPwaBanner(type, force) {
+  if (!force && localStorage.getItem('pwa_banner_dismissed') === '1') return;
   const banner = document.getElementById('pwaBanner');
   if (!banner) return;
   if (type === 'safari') {
@@ -4419,7 +4423,7 @@ function _showPwaBanner(type) {
       'Safari → <b style="color:#fff">Поделиться</b> (□↑) → <b style="color:#fff">На экран «Домой»</b> → Добавить';
     document.getElementById('pwaBannerBtn').textContent = 'Понятно';
   }
-  setTimeout(() => banner.classList.add('show'), 1500);
+  setTimeout(() => banner.classList.add('show'), force ? 0 : 1500);
 }
 
 function pwaBannerAction() {
@@ -4429,6 +4433,19 @@ function pwaBannerAction() {
   }
   document.getElementById('pwaBanner').classList.remove('show');
   localStorage.setItem('pwa_banner_dismissed', '1');
+}
+
+// Кнопка «Установить приложение» в профиле — принудительно (force) обходит
+// pwa_banner_dismissed, т.к. это явное действие пользователя, а не авто-нотиф.
+function installPwaFromProfile() {
+  if (_isStandalone()) return;
+  if (_pwaInstallEvent) {
+    _pwaInstallEvent.prompt();
+    _pwaInstallEvent.userChoice.then(() => { _pwaInstallEvent = null; });
+    return;
+  }
+  if (_isIOS() && _isSafari()) { _showPwaBanner('safari', true); return; }
+  showToast(t('prof.install_unavailable'), 4000);
 }
 
 function pwaBannerDismiss() {
@@ -7333,6 +7350,9 @@ function pageProfile() {
       <div class="perms-title">${t('prof.perms')}</div>
       <div class="perms-wrap">${perms.map(p=>`<span class="perm-tag">${_permLabel(p)}</span>`).join('')}</div>
     </div>`:''}
+    ${_isStandalone()
+      ? `<button class="btn-logout-full" disabled style="background:var(--accent-bg);color:var(--accent);opacity:.6;cursor:default;margin-top:14px">✅ ${t('prof.app_installed')}</button>`
+      : `<button class="btn-logout-full" onclick="installPwaFromProfile()" style="background:var(--accent-bg);color:var(--accent);margin-top:14px">📲 ${t('prof.install_app')}</button>`}
     <button class="btn-logout-full" onclick="doLogout()">${t('prof.logout')}</button>
   `;
 }
