@@ -165,6 +165,12 @@
       'dr.settings.title': 'Смена пароля', 'dr.settings.oldPass': 'Текущий пароль',
       'dr.settings.newPass': 'Новый пароль', 'dr.settings.newPassPh': 'Минимум 6 символов',
       'dr.settings.save': 'Изменить пароль',
+      'dr.pwa.title': 'Приложение', 'dr.pwa.install': 'Установить приложение',
+      'dr.pwa.installed': 'Приложение уже установлено',
+      'dr.pwa.use_browser_icon': 'Нажмите значок установки в адресной строке браузера ⊕',
+      'pwa.bannerTitle': 'Установите приложение', 'pwa.bannerSub': 'Быстрый доступ к заказам с главного экрана',
+      'pwa.bannerInstall': 'Установить', 'pwa.bannerLater': 'Позже',
+      'pwa.bannerSubSafari': 'Safari → Поделиться → На экран «Домой»',
       'dr.openCabinet': 'Открыть кабинет',
       months: ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
       dow: ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],
@@ -366,6 +372,12 @@
       "dr.settings.title": "Parolni o'zgartirish", 'dr.settings.oldPass': 'Joriy parol',
       "dr.settings.newPass": "Yangi parol", 'dr.settings.newPassPh': 'Kamida 6 belgi',
       "dr.settings.save": "Parolni o'zgartirish",
+      'dr.pwa.title': 'Ilova', 'dr.pwa.install': "Ilovani o'rnatish",
+      'dr.pwa.installed': "Ilova allaqachon o'rnatilgan",
+      'dr.pwa.use_browser_icon': "Brauzer manzil satridagi o'rnatish belgisini bosing ⊕",
+      'pwa.bannerTitle': "Ilovani o'rnating", 'pwa.bannerSub': "Bosh ekrandan buyurtmalarga tezkor kirish",
+      'pwa.bannerInstall': "O'rnatish", 'pwa.bannerLater': 'Keyinroq',
+      'pwa.bannerSubSafari': 'Safari → Ulashish → Bosh ekranga',
       "dr.openCabinet": "Kabinetni ochish",
       months: ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'],
       dow: ['Du','Se','Ch','Pa','Ju','Sha','Ya'],
@@ -1937,6 +1949,75 @@
       alertEl.className='form-alert error'; alertEl.textContent=err.message; alertEl.style.display='';
     } finally { setLoading(btn, false, 'Изменить пароль'); }
   });
+
+  // ── PWA: установка приложения (клиентский сайт) ──
+  let _pwaInstallEvent = null;
+  const _isStandalone  = () => window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  const _isSafari      = () => /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+  const _isIOS         = () => /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  }
+
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _pwaInstallEvent = e;
+    if (!_isStandalone()) _showClientPwaBanner('chrome');
+  });
+
+  function _showClientPwaBanner(type, force) {
+    if (_isStandalone()) return;
+    if (!force && localStorage.getItem('client_pwa_banner_dismissed') === '1') return;
+    const banner = document.getElementById('clientPwaBanner');
+    if (!banner) return;
+    if (type === 'safari') {
+      document.getElementById('clientPwaBannerSub').textContent = t('pwa.bannerSubSafari');
+      document.getElementById('clientPwaBannerBtn').textContent = lang === 'uz' ? 'Tushunarli' : 'Понятно';
+    }
+    setTimeout(() => banner.classList.add('show'), force ? 0 : 2000);
+  }
+  window.clientPwaBannerAction = function() {
+    if (_pwaInstallEvent) {
+      _pwaInstallEvent.prompt();
+      _pwaInstallEvent.userChoice.then(() => { _pwaInstallEvent = null; });
+    }
+    document.getElementById('clientPwaBanner').classList.remove('show');
+    localStorage.setItem('client_pwa_banner_dismissed', '1');
+  };
+  window.clientPwaBannerDismiss = function() {
+    document.getElementById('clientPwaBanner').classList.remove('show');
+    localStorage.setItem('client_pwa_banner_dismissed', '1');
+  };
+  // Кнопка в Личном кабинете → Настройки — force обходит dismissed-флаг баннера,
+  // т.к. это явное действие пользователя, а не авто-нотиф.
+  window.installPwaFromCabinet = function() {
+    if (_isStandalone()) return;
+    if (_pwaInstallEvent) {
+      _pwaInstallEvent.prompt();
+      _pwaInstallEvent.userChoice.then(() => { _pwaInstallEvent = null; });
+      return;
+    }
+    if (_isIOS() && _isSafari()) { _showClientPwaBanner('safari', true); return; }
+    // Chrome иногда не присылает beforeinstallprompt в JS, даже если сам считает
+    // сайт устанавливаемым (значок в адресной строке) — не врём "недоступно".
+    const alertEl = document.getElementById('drPwaAlert');
+    if (alertEl) {
+      alertEl.className = 'form-alert error';
+      alertEl.textContent = t('dr.pwa.use_browser_icon');
+      alertEl.style.display = '';
+      setTimeout(() => { alertEl.style.display = 'none'; }, 6000);
+    }
+  };
+  function _updatePwaInstallBtn() {
+    const btn = document.getElementById('drPwaInstallBtn');
+    if (!btn || !_isStandalone()) return;
+    btn.disabled = true;
+    btn.textContent = `✅ ${t('dr.pwa.installed')}`;
+    btn.style.opacity = '.6';
+    btn.style.cursor = 'default';
+  }
+  window.addEventListener('DOMContentLoaded', _updatePwaInstallBtn);
 
   // ── Dashboard: компактный список заказов ──
   function renderDashboardOrders(){
