@@ -2001,13 +2001,17 @@
     if (_isIOS() && _isSafari()) { _showClientPwaBanner('safari', true); return; }
     // Chrome иногда не присылает beforeinstallprompt в JS, даже если сам считает
     // сайт устанавливаемым (значок в адресной строке) — не врём "недоступно".
-    const alertEl = document.getElementById('drPwaAlert');
-    if (alertEl) {
-      alertEl.className = 'form-alert error';
-      alertEl.textContent = t('dr.pwa.use_browser_icon');
-      alertEl.style.display = '';
-      setTimeout(() => { alertEl.style.display = 'none'; }, 6000);
-    }
+    showPwaHintModal(t('dr.pwa.use_browser_icon'));
+  };
+  window.showPwaHintModal = function(msg) {
+    const overlay = document.getElementById('pwaHintOverlay');
+    const textEl = document.getElementById('pwaHintText');
+    if (!overlay || !textEl) return;
+    textEl.textContent = msg;
+    overlay.classList.add('show');
+  };
+  window.closePwaHintModal = function() {
+    document.getElementById('pwaHintOverlay')?.classList.remove('show');
   };
   function _updatePwaInstallBtn() {
     const btn = document.getElementById('drPwaInstallBtn');

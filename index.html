@@ -1219,6 +1219,13 @@
   #clientPwaBanner .cpb-btn{ background:linear-gradient(135deg,var(--amber) 0%,var(--amber-deep) 100%); color:#1A0E00; border:none; border-radius:10px; padding:8px 16px; font-size:13px; font-weight:700; cursor:pointer; }
   #clientPwaBanner .cpb-btn-ghost{ background:none; border:1.5px solid var(--line); color:var(--ink-soft); border-radius:10px; padding:8px 16px; font-size:13px; font-weight:600; cursor:pointer; }
 
+  #pwaHintOverlay{ display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.5); align-items:center; justify-content:center; padding:20px; }
+  #pwaHintOverlay.show{ display:flex; }
+  #pwaHintOverlay .phm-card{ background:var(--sand-card); border-radius:var(--radius); padding:28px 24px; max-width:340px; width:100%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.35); }
+  #pwaHintOverlay .phm-icon{ font-size:36px; margin-bottom:12px; }
+  #pwaHintOverlay .phm-text{ font-size:14.5px; color:var(--ink); line-height:1.5; margin-bottom:20px; }
+  #pwaHintOverlay .phm-btn{ background:linear-gradient(135deg,var(--amber) 0%,var(--amber-deep) 100%); color:#1A0E00; border:none; border-radius:10px; padding:12px 24px; font-size:14px; font-weight:700; cursor:pointer; width:100%; font-family:inherit; }
+
   /* Orders filter */
   .orders-filter{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
   .f-btn{
@@ -3767,7 +3774,7 @@
   </div>
 </div>
 
-<script src="site-common.js?v=15"></script>
+<script src="site-common.js?v=16"></script>
 
 <!-- ══════════════════════════════
      OVERLAY + CABINET DRAWER
@@ -3861,7 +3868,6 @@
       <button class="btn btn-amber" id="drSavePassBtn" style="width:100%;margin-top:6px" data-i18n="dr.settings.save">Изменить пароль</button>
 
       <div class="settings-title" style="margin-top:24px" data-i18n="dr.pwa.title">Приложение</div>
-      <div id="drPwaAlert" class="form-alert" style="display:none"></div>
       <button class="btn btn-amber" id="drPwaInstallBtn" style="width:100%" onclick="installPwaFromCabinet()">📲 <span data-i18n="dr.pwa.install">Установить приложение</span></button>
     </div>
 
@@ -3874,6 +3880,15 @@
 
   </div><!-- /dr-body -->
 </div><!-- /cabinet-drawer -->
+
+<!-- Модалка-подсказка "используйте иконку установки браузера" -->
+<div id="pwaHintOverlay">
+  <div class="phm-card">
+    <div class="phm-icon">📲</div>
+    <div class="phm-text" id="pwaHintText"></div>
+    <button class="phm-btn" onclick="closePwaHintModal()">OK</button>
+  </div>
+</div>
 
 <!-- PWA install banner (клиентский сайт) -->
 <div id="clientPwaBanner">

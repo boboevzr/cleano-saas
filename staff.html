@@ -525,6 +525,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 #pwaBanner .pwa-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 #pwaBanner .pwa-btn{background:#6366f1;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer}
 #pwaBanner .pwa-btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer}
+#pwaHintOverlay{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px}
+#pwaHintOverlay.show{display:flex}
+#pwaHintOverlay .phm-card{background:var(--card);border-radius:var(--radius);padding:26px 22px;max-width:320px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+#pwaHintOverlay .phm-icon{font-size:34px;margin-bottom:12px}
+#pwaHintOverlay .phm-text{font-size:14.5px;color:var(--text);line-height:1.5;margin-bottom:20px}
+#pwaHintOverlay .phm-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;width:100%;font-family:inherit}
 #notifPermBanner{position:fixed;top:0;left:0;right:0;z-index:7400;background:#6366f1;color:#fff;padding:12px 18px;display:flex;align-items:center;gap:10px;transform:translateY(-110%);transition:transform .35s cubic-bezier(.4,0,.2,1)}
 #notifPermBanner.show{transform:translateY(0)}
 #staffToastBox{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9000;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 32px);max-width:480px}
@@ -4450,7 +4456,18 @@ function installPwaFromProfile() {
   // Chrome иногда не присылает beforeinstallprompt в JS, даже если сам считает
   // сайт устанавливаемым (значок в адресной строке). Не врём "недоступно" —
   // подсказываем воспользоваться нативной иконкой браузера.
-  showToast(t('prof.install_use_browser_icon'), 6000);
+  showPwaHintModal(t('prof.install_use_browser_icon'));
+}
+
+function showPwaHintModal(msg) {
+  const overlay = document.getElementById('pwaHintOverlay');
+  const textEl = document.getElementById('pwaHintText');
+  if (!overlay || !textEl) return;
+  textEl.textContent = msg;
+  overlay.classList.add('show');
+}
+function closePwaHintModal() {
+  document.getElementById('pwaHintOverlay')?.classList.remove('show');
 }
 
 function pwaBannerDismiss() {
@@ -15095,6 +15112,15 @@ function staffChatSend() {
   </div>
 </div>
 <div id="mApprovedBanner"><div id="mApprovedBannerBox"></div></div>
+
+<!-- Модалка-подсказка "используйте иконку установки браузера" -->
+<div id="pwaHintOverlay">
+  <div class="phm-card">
+    <div class="phm-icon">📲</div>
+    <div class="phm-text" id="pwaHintText"></div>
+    <button class="phm-btn" onclick="closePwaHintModal()">OK</button>
+  </div>
+</div>
 
 <!-- Баннер установки PWA -->
 <div id="pwaBanner">
