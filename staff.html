@@ -1367,6 +1367,7 @@ const _i18n = {
     'prof.perms':'МОИ РАЗРЕШЕНИЯ','prof.logout':'Выйти из аккаунта','profDrop.logout':'Выйти',
     'prof.install_app':'Установить приложение','prof.app_installed':'Приложение уже установлено',
     'prof.install_unavailable':'Установка недоступна в этом браузере',
+    'prof.install_use_browser_icon':'Нажмите значок установки в адресной строке браузера ⊕',
     'role.admin':'Администратор','role.manager':'Менеджер','role.callcenter':'Колл-центр',
     'role.driver':'Водитель','role.logistics':'Логистика','role.washer':'Мойщик','role.agent':'Агент',
     'perm.leads':'Лиды','perm.orders':'Заявки','perm.clients':'Клиенты','perm.status':'Статусы',
@@ -1642,6 +1643,7 @@ const _i18n = {
     'prof.perms':'MENING RUXSATLARIM','prof.logout':'Hisobdan chiqish','profDrop.logout':'Chiqish',
     'prof.install_app':'Ilovani o\'rnatish','prof.app_installed':'Ilova allaqachon o\'rnatilgan',
     'prof.install_unavailable':'Ushbu brauzerda o\'rnatish mavjud emas',
+    'prof.install_use_browser_icon':'Brauzer manzil satridagi o\'rnatish belgisini bosing ⊕',
     'role.admin':'Administrator','role.manager':'Menejer','role.callcenter':'Call-markaz',
     'role.driver':'Haydovchi','role.logistics':'Logistika','role.washer':'Yuvuvchi','role.agent':'Agent',
     'perm.leads':'Lidlar','perm.orders':'Buyurtmalar','perm.clients':'Mijozlar','perm.status':'Holatlar',
@@ -4445,7 +4447,10 @@ function installPwaFromProfile() {
     return;
   }
   if (_isIOS() && _isSafari()) { _showPwaBanner('safari', true); return; }
-  showToast(t('prof.install_unavailable'), 4000);
+  // Chrome иногда не присылает beforeinstallprompt в JS, даже если сам считает
+  // сайт устанавливаемым (значок в адресной строке). Не врём "недоступно" —
+  // подсказываем воспользоваться нативной иконкой браузера.
+  showToast(t('prof.install_use_browser_icon'), 6000);
 }
 
 function pwaBannerDismiss() {
