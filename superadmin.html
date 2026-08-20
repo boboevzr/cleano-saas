@@ -730,13 +730,16 @@
       <div class="page" id="page-sa-order-rules">
         <div class="section-header">
           <div class="page-title" style="margin:0">📋 Правила приёма и выдачи заказов (шаблон)</div>
+          <button class="btn btn-ghost btn-sm" onclick="saOrderRulesSeedFromCompany()">📥 Заполнить из компании #1</button>
         </div>
-        <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Текст «Правил приёма и выдачи заказов» копируется в новую компанию при регистрации (дефолт — текст ARTEZ, если шаблон компании 0 ещё пуст). Каждая компания дальше редактирует свою копию независимо в своей админке (⚙️ Настройки сайта → 📋 Правила приёма).</p>
-        <div style="max-width:560px;display:flex;flex-direction:column;gap:12px">
-          <div style="padding:10px 14px;border-radius:10px;background:#fef9c3;border:1px solid #fde68a;font-size:13px;color:#854d0e">
-            Компании, у которых поле уже пустое (созданы до появления этой фичи, или ещё не заполняли), получат дефолтный текст ARTEZ. Компании, которые уже что-то сохранили — не тронутся.
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Этот текст копируется в новую компанию при регистрации (если шаблон ниже пуст — используется дефолт ARTEZ). Каждая компания дальше редактирует свою копию независимо в своей админке (⚙️ Настройки сайта → 📋 Правила приёма) — изменения здесь на уже созданные компании не влияют.</p>
+        <div style="max-width:900px">
+          <div id="saOrderRulesList"></div>
+          <button type="button" class="btn-outline" onclick="saAddOrderRule()" style="margin-top:6px">➕ Добавить пункт</button>
+          <div style="padding:10px 14px;border-radius:10px;background:#fef9c3;border:1px solid #fde68a;font-size:13px;color:#854d0e;margin-top:16px">
+            Компании, у которых поле уже пустое (созданы до появления этой фичи, или ещё не заполняли), получат этот шаблон. Компании, которые уже что-то сохранили у себя — не тронутся.
           </div>
-          <button class="btn-outline" onclick="saOrderRulesReseedCompanies()">🔄 Довезти правила во все компании</button>
+          <button class="btn-outline" onclick="saOrderRulesReseedCompanies()" style="margin-top:10px">🔄 Довезти правила во все компании</button>
         </div>
       </div>
 
@@ -1746,6 +1749,7 @@ function showPage(name, navEl) {
   if (name === 'sa-tg-messages') loadSaTgMessages();
   if (name === 'sa-sms-templates') saSmsSysLoad();
   if (name === 'sa-expense-cats') loadSaExpCats();
+  if (name === 'sa-order-rules') loadSaOrderRules();
   if (name === 'sa-chat-templates') loadSaChatTpls();
   if (name === 'sa-site-slides') loadSaSlides();
   if (name === 'sa-site-stats') loadSaStats();
@@ -2241,6 +2245,163 @@ async function saOrderRulesReseedCompanies() {
     const r = await api('/saas/catalog/order-rules/seed-to-companies', 'POST');
     alert(`Готово: проверено компаний — ${r.companies}`);
   } catch(e) { alert(e.message); }
+}
+
+// ── ORDER RULES TEMPLATE (company_id=0) ────────────────
+let _saOrderRulesUid  = 0;
+let _saOrderRulesData = [];
+
+function _saRuleEsc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _saRuleTruncate(s, n) { s = String(s||''); return s.length > n ? s.slice(0, n).trim() + '…' : s; }
+
+async function loadSaOrderRules() {
+  try {
+    const r = await api('/saas/catalog/order-rules');
+    let rules = [];
+    try { rules = JSON.parse(r.order_rules || '[]'); } catch(e) { rules = []; }
+    _saOrderRulesData = rules.map(x => ({ ...x, _uid: _saOrderRulesUid++, _editing: false, _new: false }));
+    renderSaOrderRulesList();
+  } catch(e) { alert(e.message); }
+}
+
+function _saOrderRuleRowHtml(rule, uid, idx, total) {
+  if (!rule._editing) {
+    return `
+    <div class="card" data-uid="${uid}" style="margin-bottom:14px;padding:14px 18px">
+      <div style="display:flex;gap:12px;align-items:center">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--bg);color:var(--text2);font-size:12px;font-weight:800;flex-shrink:0">${idx + 1}</span>
+        <span style="font-size:20px;flex-shrink:0">${_saRuleEsc(rule.emoji||'📋')}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_saRuleEsc(rule.title_ru || rule.title_uz || '(без заголовка)')}</div>
+          <div style="font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">${_saRuleEsc(_saRuleTruncate(rule.text_ru || rule.text_uz, 110))}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button type="button" class="btn-outline" onclick="saMoveOrderRule(${uid},-1)" ${idx === 0 ? 'disabled' : ''} title="Переместить выше">↑</button>
+          <button type="button" class="btn-outline" onclick="saMoveOrderRule(${uid},1)" ${idx === total - 1 ? 'disabled' : ''} title="Переместить ниже">↓</button>
+          <button type="button" class="btn-outline" onclick="saEditOrderRule(${uid})">✏️ Редактировать</button>
+          <button type="button" class="btn-outline" onclick="saRemoveOrderRule(${uid})" style="color:#dc2626">🗑 Удалить</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  return `
+  <div class="card" data-uid="${uid}" style="margin-bottom:14px;padding:16px 18px;border-color:var(--accent,#3b82f6)">
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--bg);color:var(--text2);font-size:12px;font-weight:800;flex-shrink:0">${idx + 1}</span>
+      <input type="text" id="sa-rule-em-${uid}" maxlength="5" value="${_saRuleEsc(rule.emoji||'')}" style="text-align:center;width:56px;flex-shrink:0;font-size:18px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)">
+      <span style="margin-left:auto;font-size:12px;color:var(--accent,#3b82f6);font-weight:600">✏️ Редактирование</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;width:100%">
+      <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px;font-weight:600">🇷🇺 Заголовок (RU)</label>
+      <input type="text" id="sa-rule-title-ru-${uid}" value="${_saRuleEsc(rule.title_ru||'')}" placeholder="ЗАГОЛОВОК ПУНКТА" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)">
+      <label style="font-size:11px;color:var(--text2);display:block;margin:10px 0 4px;font-weight:600">Текст (RU)</label>
+      <textarea id="sa-rule-text-ru-${uid}" rows="6" placeholder="Текст пункта на русском" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);resize:vertical">${_saRuleEsc(rule.text_ru||'')}</textarea>
+      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
+      <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px;font-weight:600">🇺🇿 Sarlavha (UZ)</label>
+      <input type="text" id="sa-rule-title-uz-${uid}" value="${_saRuleEsc(rule.title_uz||'')}" placeholder="BAND SARLAVHASI" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)">
+      <label style="font-size:11px;color:var(--text2);display:block;margin:10px 0 4px;font-weight:600">Matn (UZ)</label>
+      <textarea id="sa-rule-text-uz-${uid}" rows="6" placeholder="O'zbek tilida matn" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);resize:vertical">${_saRuleEsc(rule.text_uz||'')}</textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+      <button type="button" class="btn-outline" onclick="saCancelOrderRuleEdit(${uid})">✖ Отмена</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="saSaveOrderRuleRow(${uid})">💾 Сохранить</button>
+    </div>
+  </div>`;
+}
+
+function renderSaOrderRulesList() {
+  const el = document.getElementById('saOrderRulesList');
+  if (!el) return;
+  if (!_saOrderRulesData.length) { el.innerHTML = '<p style="font-size:13px;color:var(--text2)">Пунктов пока нет — добавьте первый.</p>'; return; }
+  el.innerHTML = _saOrderRulesData.map((r, i) => _saOrderRuleRowHtml(r, r._uid, i, _saOrderRulesData.length)).join('');
+}
+
+function saEditOrderRule(uid) {
+  const r = _saOrderRulesData.find(x => x._uid === uid);
+  if (!r) return;
+  r._snapshot = { emoji: r.emoji, title_ru: r.title_ru, text_ru: r.text_ru, title_uz: r.title_uz, text_uz: r.text_uz };
+  r._editing = true;
+  renderSaOrderRulesList();
+}
+
+function saCancelOrderRuleEdit(uid) {
+  const idx = _saOrderRulesData.findIndex(x => x._uid === uid);
+  if (idx < 0) return;
+  const r = _saOrderRulesData[idx];
+  if (r._new) {
+    _saOrderRulesData.splice(idx, 1);
+  } else {
+    Object.assign(r, r._snapshot);
+    delete r._snapshot;
+    r._editing = false;
+  }
+  renderSaOrderRulesList();
+}
+
+function _saSyncOrderRuleFromDom(uid) {
+  const r = _saOrderRulesData.find(x => x._uid === uid);
+  if (!r) return;
+  const em = document.getElementById(`sa-rule-em-${uid}`);
+  const tRu = document.getElementById(`sa-rule-title-ru-${uid}`);
+  const xRu = document.getElementById(`sa-rule-text-ru-${uid}`);
+  const tUz = document.getElementById(`sa-rule-title-uz-${uid}`);
+  const xUz = document.getElementById(`sa-rule-text-uz-${uid}`);
+  if (em)  r.emoji    = em.value.trim();
+  if (tRu) r.title_ru = tRu.value.trim();
+  if (xRu) r.text_ru  = xRu.value.trim();
+  if (tUz) r.title_uz = tUz.value.trim();
+  if (xUz) r.text_uz  = xUz.value.trim();
+}
+
+async function saSaveOrderRuleRow(uid) {
+  _saSyncOrderRuleFromDom(uid);
+  const r = _saOrderRulesData.find(x => x._uid === uid);
+  if (!r) return;
+  r._editing = false;
+  r._new = false;
+  delete r._snapshot;
+  renderSaOrderRulesList();
+  try {
+    await _saPersistOrderRules();
+  } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+async function saMoveOrderRule(uid, dir) {
+  const idx = _saOrderRulesData.findIndex(r => r._uid === uid);
+  const newIdx = idx + dir;
+  if (idx < 0 || newIdx < 0 || newIdx >= _saOrderRulesData.length) return;
+  const [item] = _saOrderRulesData.splice(idx, 1);
+  _saOrderRulesData.splice(newIdx, 0, item);
+  renderSaOrderRulesList();
+  try { await _saPersistOrderRules(); } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+function saAddOrderRule() {
+  _saOrderRulesData.push({ emoji: '📋', title_ru: '', text_ru: '', title_uz: '', text_uz: '', _uid: _saOrderRulesUid++, _editing: true, _new: true });
+  renderSaOrderRulesList();
+}
+
+async function saRemoveOrderRule(uid) {
+  const r = _saOrderRulesData.find(x => x._uid === uid);
+  if (!r) return;
+  if (!confirm(`Удалить пункт «${r.title_ru || r.title_uz || 'без заголовка'}» из шаблона? Это действие нельзя отменить.`)) return;
+  _saOrderRulesData = _saOrderRulesData.filter(x => x._uid !== uid);
+  renderSaOrderRulesList();
+  try { await _saPersistOrderRules(); } catch(e) { alert('Ошибка: ' + e.message); }
+}
+
+async function _saPersistOrderRules() {
+  const payload = _saOrderRulesData.map(({ _uid, _editing, _new, _snapshot, ...rest }) => rest);
+  await api('/saas/catalog/order-rules', 'PUT', { order_rules: JSON.stringify(payload) });
+}
+
+async function saOrderRulesSeedFromCompany() {
+  if (!confirm('Заменить шаблон текущими правилами компании #1? Текущий шаблон будет перезаписан.')) return;
+  try {
+    await api('/saas/catalog/order-rules/seed-from-company', 'POST');
+    await loadSaOrderRules();
+    alert('Готово — шаблон заполнен из компании #1');
+  } catch(e) { alert('Ошибка: ' + e.message); }
 }
 
 // ── COMPANIES ─────────────────────────────────────────
