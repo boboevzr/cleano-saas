@@ -58,6 +58,10 @@
       'auth.fpEnterPhone': 'Введите номер телефона', 'auth.fpEnterCode': 'Введите код',
       'auth.fpInvalidPhone': 'Неверный номер телефона. Формат: +998XXXXXXXXX',
       'auth.fpPasswordsMismatch': 'Пароли не совпадают',
+      'auth.mcpTitle': 'Смените пароль',
+      'auth.mcpSub': 'Пароль был выдан автоматически — придумайте свой перед входом в кабинет',
+      'auth.mcpNew': 'Новый пароль', 'auth.mcpRepeat': 'Повторите пароль',
+      'auth.mcpSubmit': 'Сохранить пароль', 'auth.mcpCancelLogin': 'Отмена входа',
       'auth.createAccount': 'Создать аккаунт', 'auth.registerSub': 'Это займёт меньше минуты',
       'auth.name': 'Имя', 'auth.namePlaceholder': 'Ваше имя', 'auth.passwordPlaceholder': 'Минимум 6 символов',
       'auth.getSmsCode': 'Получить код по SMS', 'auth.hasAccount': 'Уже есть аккаунт?',
@@ -266,6 +270,10 @@
       'auth.fpEnterPhone': 'Telefon raqamini kiriting', 'auth.fpEnterCode': 'Kodni kiriting',
       'auth.fpInvalidPhone': "Telefon raqami noto'g'ri. Format: +998XXXXXXXXX",
       'auth.fpPasswordsMismatch': "Parollar mos kelmadi",
+      'auth.mcpTitle': 'Parolni almashtiring',
+      'auth.mcpSub': "Parol avtomatik berilgan — kabinetga kirishdan oldin o'zingiznikini o'ylab toping",
+      'auth.mcpNew': 'Yangi parol', 'auth.mcpRepeat': 'Parolni takrorlang',
+      'auth.mcpSubmit': 'Parolni saqlash', 'auth.mcpCancelLogin': 'Kirishni bekor qilish',
       'auth.createAccount': 'Hisob yaratish', 'auth.registerSub': 'Bir daqiqadan kam vaqt ketadi',
       'auth.name': 'Ism', 'auth.namePlaceholder': 'Ismingiz', 'auth.passwordPlaceholder': 'Kamida 6 belgi',
       'auth.getSmsCode': 'SMS orqali kod olish', 'auth.hasAccount': 'Hisobingiz bormi?',
@@ -780,7 +788,7 @@
         body: JSON.stringify({ phone: _regTgPhone, first_name, password, lang: lang || 'ru', company_slug: window.APP_COMPANY_SLUG }),
       });
       localStorage.setItem('artez_token', data.token);
-      await loadDashboard(data.user);
+      await enterDashboardOrForcePasswordChange(data.user);
     } catch (err) {
       showAlert(err.message);
     } finally {
@@ -867,12 +875,64 @@
         body: JSON.stringify({ phone: _fpPhone, code, password: p1, lang: lang || 'ru', company_slug: window.APP_COMPANY_SLUG }),
       });
       localStorage.setItem('artez_token', data.token);
-      await loadDashboard(data.user);
+      await enterDashboardOrForcePasswordChange(data.user);
     } catch (err) {
       showAlert(err.message);
     } finally {
       btn.disabled = false; btn.textContent = t('auth.fpSubmit');
     }
+  });
+
+  // ── ОБЯЗАТЕЛЬНАЯ СМЕНА ПАРОЛЯ (после регистрации через бота) ──
+  let _pendingDashboardUser = null;
+  function showMustChangePasswordOverlay(){
+    document.getElementById('mustChangePassOverlay').style.display = 'flex';
+  }
+  function hideMustChangePasswordOverlay(){
+    document.getElementById('mustChangePassOverlay').style.display = 'none';
+  }
+  async function enterDashboardOrForcePasswordChange(user){
+    if (user && user.must_change_password) {
+      _pendingDashboardUser = user;
+      showMustChangePasswordOverlay();
+      return;
+    }
+    await loadDashboard(user);
+  }
+  document.getElementById('mcpFormEl')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alertEl = document.getElementById('mcpAlert');
+    alertEl.style.display = 'none';
+    const p1 = document.getElementById('mcpPass1').value;
+    const p2 = document.getElementById('mcpPass2').value;
+    const btn = document.getElementById('mcpSubmitBtn');
+    if (p1.length < 6) { alertEl.textContent = t('auth.passwordPlaceholder'); alertEl.style.display = ''; return; }
+    if (p1 !== p2)     { alertEl.textContent = t('auth.fpPasswordsMismatch'); alertEl.style.display = ''; return; }
+    btn.disabled = true; btn.textContent = t('common.pleaseWait');
+    try {
+      const token = localStorage.getItem('artez_token');
+      await apiFetch('/me/password', {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ new_password: p1 }),
+      });
+      hideMustChangePasswordOverlay();
+      document.getElementById('mcpFormEl').reset();
+      const user = _pendingDashboardUser;
+      _pendingDashboardUser = null;
+      await loadDashboard(user);
+    } catch (err) {
+      alertEl.textContent = err.message;
+      alertEl.style.display = '';
+    } finally {
+      btn.disabled = false; btn.textContent = t('auth.mcpSubmit');
+    }
+  });
+  document.getElementById('mcpCancelBtn')?.addEventListener('click', () => {
+    hideMustChangePasswordOverlay();
+    document.getElementById('mcpFormEl').reset();
+    _pendingDashboardUser = null;
+    doLogout();
   });
 
   function showStep(step){
@@ -996,7 +1056,7 @@
         body: JSON.stringify({ phone: pendingPhone, code, company_slug: window.APP_COMPANY_SLUG }),
       });
       localStorage.setItem('artez_token', data.token);
-      await loadDashboard(data.user);
+      await enterDashboardOrForcePasswordChange(data.user);
     } catch (err){
       showAlert(err.message);
     } finally {
@@ -1055,7 +1115,7 @@
         body: JSON.stringify({ phone, password, company_slug: window.APP_COMPANY_SLUG }),
       });
       localStorage.setItem('artez_token', data.token);
-      await loadDashboard(data.user);
+      await enterDashboardOrForcePasswordChange(data.user);
     } catch (err){
       showAlert(err.message);
     } finally {
@@ -2138,7 +2198,7 @@
     if (!token){ showStep('login'); return; }
     try {
       const user = await apiFetch('/me', { headers: { 'Authorization': `Bearer ${token}` } });
-      await loadDashboard(user);
+      await enterDashboardOrForcePasswordChange(user);
     } catch {
       localStorage.removeItem('artez_token');
       showStep('login');

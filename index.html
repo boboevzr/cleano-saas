@@ -3244,6 +3244,53 @@
   </div>
 </section>
 
+<!-- ОБЯЗАТЕЛЬНАЯ СМЕНА ПАРОЛЯ (после регистрации через бота) -->
+<style>
+  #mustChangePassOverlay .mcp-card{ background:var(--sand-card); color:var(--ink); }
+  #mustChangePassOverlay .sub{ color:var(--ink-soft); }
+  #mustChangePassOverlay .mcp-cancel{ background:transparent; color:var(--ink-soft); border:1px solid var(--line); }
+  #mustChangePassOverlay .field input{
+    background:#FBF9F4; color:var(--ink); border:1.5px solid var(--line);
+  }
+  #mustChangePassOverlay .field input::placeholder{ color:var(--ink-soft); }
+  #mustChangePassOverlay .field input:focus{
+    border-color: var(--teal-soft); background:#fff;
+    box-shadow: 0 0 0 3px rgba(44,198,179,.18);
+  }
+  [data-theme="dark"] #mustChangePassOverlay .field input{
+    background:#253330; color:var(--ink); border-color:#2E3D3A;
+  }
+  [data-theme="dark"] #mustChangePassOverlay .field input:focus{
+    background:#2A3A37; border-color:rgba(44,198,179,.4);
+  }
+</style>
+<div id="mustChangePassOverlay" style="display:none;position:fixed;inset:0;z-index:100000;background:rgba(10,15,13,.72);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px">
+  <div class="mcp-card" style="border-radius:20px;padding:28px 26px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35)">
+    <div style="font-size:36px;text-align:center;margin-bottom:6px">🔑</div>
+    <h3 style="text-align:center;margin:0 0 6px" data-i18n="auth.mcpTitle">Смените пароль</h3>
+    <p class="sub" style="text-align:center;margin:0 0 18px" data-i18n="auth.mcpSub">Пароль был выдан автоматически — придумайте свой перед входом в кабинет</p>
+    <form class="auth-form" id="mcpFormEl">
+      <div class="field">
+        <label data-i18n="auth.mcpNew">Новый пароль</label>
+        <div class="pwd-eye-wrap">
+          <input type="password" id="mcpPass1" placeholder="Минимум 6 символов" data-i18n-placeholder="auth.passwordPlaceholder" required autocomplete="new-password">
+          <button type="button" class="pwd-eye" onclick="togglePwd('mcpPass1',this)" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="field">
+        <label data-i18n="auth.mcpRepeat">Повторите пароль</label>
+        <div class="pwd-eye-wrap">
+          <input type="password" id="mcpPass2" placeholder="Минимум 6 символов" data-i18n-placeholder="auth.passwordPlaceholder" required autocomplete="new-password">
+          <button type="button" class="pwd-eye" onclick="togglePwd('mcpPass2',this)" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div id="mcpAlert" style="display:none;color:#dc2626;font-size:13px;margin-bottom:8px"></div>
+      <button type="submit" id="mcpSubmitBtn" class="btn btn-amber" style="width:100%" data-i18n="auth.mcpSubmit">Сохранить пароль</button>
+    </form>
+    <button type="button" id="mcpCancelBtn" class="btn mcp-cancel" style="width:100%;margin-top:10px" data-i18n="auth.mcpCancelLogin">Отмена входа</button>
+  </div>
+</div>
+
 <!-- PERSONAL CABINET -->
 <section class="cabinet-section" id="cabinet">
   <div class="wrap cabinet-grid">
