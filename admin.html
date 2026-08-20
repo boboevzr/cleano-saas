@@ -4583,14 +4583,14 @@
         <div id="smsTplPane-system" style="display:none">
           <div style="max-width:560px;display:flex;flex-direction:column;gap:12px">
             <div style="padding:10px 14px;border-radius:10px;background:#fef9c3;border:1px solid #fde68a;font-size:13px;color:#854d0e">
-              Используйте <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:4px">{code}</code> — вместо него подставится одноразовый код.
+              <span data-i18n="sms.tpl.code.pre">Используйте</span> <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:4px">{code}</code> <span data-i18n="sms.tpl.code.post">— вместо него подставится одноразовый код.</span>
             </div>
 
             <!-- Тогл: Регистрация через SMS -->
             <div class="sys-sms-card" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
               <div>
-                <label style="font-size:13px;font-weight:600;color:var(--text)">📲 Регистрация через SMS</label>
-                <div style="font-size:12px;color:var(--text2);margin-top:2px">Если выключено — на сайте останется только регистрация через Telegram</div>
+                <label style="font-size:13px;font-weight:600;color:var(--text)" data-i18n="sms.tpl.reg.toggle.lbl">📲 Регистрация через SMS</label>
+                <div style="font-size:12px;color:var(--text2);margin-top:2px" data-i18n="sms.tpl.reg.toggle.hint">Если выключено — на сайте останется только регистрация через Telegram</div>
               </div>
               <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
                 <input type="checkbox" id="sys_sms_registration_enabled" onchange="smsRegistrationToggleEnabled(this.checked)" style="opacity:0;width:0;height:0">
@@ -4601,19 +4601,19 @@
             <!-- Поле: Регистрация -->
             <div class="sys-sms-card" id="sys-card-register" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <label style="font-size:13px;font-weight:600;color:var(--text)">📲 Регистрация на сайте</label>
+                <label style="font-size:13px;font-weight:600;color:var(--text)" data-i18n="sms.tpl.card.register.lbl">📲 Регистрация на сайте</label>
                 <div style="display:flex;gap:6px;align-items:center">
                   <span id="sys-msg-register" style="font-size:12px;display:none"></span>
-                  <button id="sys-edit-register" onclick="smsSysEdit('register')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px">✏️ Изменить</button>
-                  <button id="sys-save-register" onclick="smsSysSaveOne('register','sms_text_register')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px">💾 Сохранить</button>
-                  <button id="sys-cancel-register" onclick="smsSysCancel('register')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px">Отмена</button>
+                  <button id="sys-edit-register" onclick="smsSysEdit('register')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.edit">✏️ Изменить</button>
+                  <button id="sys-save-register" onclick="smsSysSaveOne('register','sms_text_register')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px" data-i18n="btn.save">💾 Сохранить</button>
+                  <button id="sys-cancel-register" onclick="smsSysCancel('register')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.cancel">Отмена</button>
                 </div>
               </div>
               <textarea id="sys_sms_register" class="price-input" rows="3" disabled oninput="_smsEskizPreview('register')" style="width:100%;resize:vertical;opacity:0.7" placeholder="Kod podtverzhdeniya dlya registracii: {code}"></textarea>
               <div style="margin-top:8px;padding:10px 12px;background:var(--bg,#f5f5f7);border:1px dashed var(--border);border-radius:10px">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase">Пример для Eskiz-модерации</span>
-                  <button onclick="_smsCopyEskizPreview('register')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer">📋 Копировать</button>
+                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase" data-i18n="sms.tpl.eskiz.example">Пример для Eskiz-модерации</span>
+                  <button onclick="_smsCopyEskizPreview('register')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer" data-i18n="sms.tpl.eskiz.copy">📋 Копировать</button>
                 </div>
                 <div id="sys-eskiz-register" style="font-size:13px;color:var(--text);white-space:pre-wrap"></div>
               </div>
@@ -4622,19 +4622,19 @@
             <!-- Поле: Вход -->
             <div class="sys-sms-card" id="sys-card-login" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <label style="font-size:13px;font-weight:600;color:var(--text)">🔐 Вход в аккаунт</label>
+                <label style="font-size:13px;font-weight:600;color:var(--text)" data-i18n="sms.tpl.card.login.lbl">🔐 Вход в аккаунт</label>
                 <div style="display:flex;gap:6px;align-items:center">
                   <span id="sys-msg-login" style="font-size:12px;display:none"></span>
-                  <button id="sys-edit-login" onclick="smsSysEdit('login')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px">✏️ Изменить</button>
-                  <button id="sys-save-login" onclick="smsSysSaveOne('login','sms_text_login')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px">💾 Сохранить</button>
-                  <button id="sys-cancel-login" onclick="smsSysCancel('login')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px">Отмена</button>
+                  <button id="sys-edit-login" onclick="smsSysEdit('login')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.edit">✏️ Изменить</button>
+                  <button id="sys-save-login" onclick="smsSysSaveOne('login','sms_text_login')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px" data-i18n="btn.save">💾 Сохранить</button>
+                  <button id="sys-cancel-login" onclick="smsSysCancel('login')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.cancel">Отмена</button>
                 </div>
               </div>
               <textarea id="sys_sms_login" class="price-input" rows="3" disabled oninput="_smsEskizPreview('login')" style="width:100%;resize:vertical;opacity:0.7" placeholder="Kod vhoda na sayt ARTEZ.uz: {code}"></textarea>
               <div style="margin-top:8px;padding:10px 12px;background:var(--bg,#f5f5f7);border:1px dashed var(--border);border-radius:10px">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase">Пример для Eskiz-модерации</span>
-                  <button onclick="_smsCopyEskizPreview('login')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer">📋 Копировать</button>
+                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase" data-i18n="sms.tpl.eskiz.example">Пример для Eskiz-модерации</span>
+                  <button onclick="_smsCopyEskizPreview('login')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer" data-i18n="sms.tpl.eskiz.copy">📋 Копировать</button>
                 </div>
                 <div id="sys-eskiz-login" style="font-size:13px;color:var(--text);white-space:pre-wrap"></div>
               </div>
@@ -4643,19 +4643,19 @@
             <!-- Поле: Сброс пароля -->
             <div class="sys-sms-card" id="sys-card-reset" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <label style="font-size:13px;font-weight:600;color:var(--text)">🔑 Восстановление пароля</label>
+                <label style="font-size:13px;font-weight:600;color:var(--text)" data-i18n="sms.tpl.card.reset.lbl">🔑 Восстановление пароля</label>
                 <div style="display:flex;gap:6px;align-items:center">
                   <span id="sys-msg-reset" style="font-size:12px;display:none"></span>
-                  <button id="sys-edit-reset" onclick="smsSysEdit('reset')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px">✏️ Изменить</button>
-                  <button id="sys-save-reset" onclick="smsSysSaveOne('reset','sms_text_reset')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px">💾 Сохранить</button>
-                  <button id="sys-cancel-reset" onclick="smsSysCancel('reset')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px">Отмена</button>
+                  <button id="sys-edit-reset" onclick="smsSysEdit('reset')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.edit">✏️ Изменить</button>
+                  <button id="sys-save-reset" onclick="smsSysSaveOne('reset','sms_text_reset')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px" data-i18n="btn.save">💾 Сохранить</button>
+                  <button id="sys-cancel-reset" onclick="smsSysCancel('reset')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.cancel">Отмена</button>
                 </div>
               </div>
               <textarea id="sys_sms_reset" class="price-input" rows="3" disabled oninput="_smsEskizPreview('reset')" style="width:100%;resize:vertical;opacity:0.7" placeholder="Kod vosstanovleniya parolya: {code}"></textarea>
               <div style="margin-top:8px;padding:10px 12px;background:var(--bg,#f5f5f7);border:1px dashed var(--border);border-radius:10px">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase">Пример для Eskiz-модерации</span>
-                  <button onclick="_smsCopyEskizPreview('reset')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer">📋 Копировать</button>
+                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase" data-i18n="sms.tpl.eskiz.example">Пример для Eskiz-модерации</span>
+                  <button onclick="_smsCopyEskizPreview('reset')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer" data-i18n="sms.tpl.eskiz.copy">📋 Копировать</button>
                 </div>
                 <div id="sys-eskiz-reset" style="font-size:13px;color:var(--text);white-space:pre-wrap"></div>
               </div>
@@ -4663,7 +4663,7 @@
 
             <!-- Поле: SMS клиенту при заборе водителем -->
             <div style="padding:10px 14px;border-radius:10px;background:#fef9c3;border:1px solid #fde68a;font-size:13px;color:#854d0e;margin-top:6px">
-              🚚 SMS клиенту, когда водитель забрал вещи (новый заказ или существующий). Только латиница, до 170 символов (1 SMS-сегмент). Плейсхолдеры:
+              <span data-i18n="sms.tpl.pickup.hint">🚚 SMS клиенту, когда водитель забрал вещи (новый заказ или существующий). Только латиница, до 170 символов (1 SMS-сегмент). Плейсхолдеры:</span>
               <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:4px">{order_num}</code>
               <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:4px">{count}</code>
               <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:4px">{phones}</code>
@@ -4671,7 +4671,7 @@
               <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:4px">{site_link}</code>
             </div>
             <div class="sys-sms-card" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
-              <label style="font-size:13px;font-weight:600;color:var(--text)">Включить SMS при заборе</label>
+              <label style="font-size:13px;font-weight:600;color:var(--text)" data-i18n="sms.tpl.pickup.enable.lbl">Включить SMS при заборе</label>
               <label style="position:relative;display:inline-block;width:44px;height:24px">
                 <input type="checkbox" id="sys_sms_pickup_enabled" onchange="smsPickupToggleEnabled(this.checked)" style="opacity:0;width:0;height:0">
                 <span id="sys_sms_pickup_enabled_track" style="position:absolute;inset:0;background:var(--border);border-radius:24px;cursor:pointer;transition:.2s"></span>
@@ -4679,40 +4679,40 @@
             </div>
             <div class="sys-sms-card" id="sys-card-pickup_ru" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <label style="font-size:13px;font-weight:600;color:var(--text)">🇷🇺 Забор — русский текст (латиница)</label>
+                <label style="font-size:13px;font-weight:600;color:var(--text)" data-i18n="sms.tpl.pickup.ru.lbl">🇷🇺 Забор — русский текст (латиница)</label>
                 <div style="display:flex;gap:6px;align-items:center">
                   <span id="sys-len-pickup_ru" style="font-size:11px;color:var(--text2)"></span>
                   <span id="sys-msg-pickup_ru" style="font-size:12px;display:none"></span>
-                  <button id="sys-edit-pickup_ru" onclick="smsSysEdit('pickup_ru')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px">✏️ Изменить</button>
-                  <button id="sys-save-pickup_ru" onclick="smsSysSaveOne('pickup_ru','sms_pickup_template_ru')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px">💾 Сохранить</button>
-                  <button id="sys-cancel-pickup_ru" onclick="smsSysCancel('pickup_ru')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px">Отмена</button>
+                  <button id="sys-edit-pickup_ru" onclick="smsSysEdit('pickup_ru')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.edit">✏️ Изменить</button>
+                  <button id="sys-save-pickup_ru" onclick="smsSysSaveOne('pickup_ru','sms_pickup_template_ru')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px" data-i18n="btn.save">💾 Сохранить</button>
+                  <button id="sys-cancel-pickup_ru" onclick="smsSysCancel('pickup_ru')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.cancel">Отмена</button>
                 </div>
               </div>
               <textarea id="sys_sms_pickup_ru" class="price-input" rows="3" disabled oninput="_smsPickupCountLen('pickup_ru');_smsEskizPreview('pickup_ru')" style="width:100%;resize:vertical;opacity:0.7" placeholder="Zakaz {order_num} prinyat kurerom ({count} poz.)..."></textarea>
               <div style="margin-top:8px;padding:10px 12px;background:var(--bg,#f5f5f7);border:1px dashed var(--border);border-radius:10px">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase">Пример для Eskiz-модерации</span>
-                  <button onclick="_smsCopyEskizPreview('pickup_ru')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer">📋 Копировать</button>
+                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase" data-i18n="sms.tpl.eskiz.example">Пример для Eskiz-модерации</span>
+                  <button onclick="_smsCopyEskizPreview('pickup_ru')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer" data-i18n="sms.tpl.eskiz.copy">📋 Копировать</button>
                 </div>
                 <div id="sys-eskiz-pickup_ru" style="font-size:13px;color:var(--text);white-space:pre-wrap"></div>
               </div>
             </div>
             <div class="sys-sms-card" id="sys-card-pickup_uz" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <label style="font-size:13px;font-weight:600;color:var(--text)">🇺🇿 Забор — узбекский текст (латиница)</label>
+                <label style="font-size:13px;font-weight:600;color:var(--text)" data-i18n="sms.tpl.pickup.uz.lbl">🇺🇿 Забор — узбекский текст (латиница)</label>
                 <div style="display:flex;gap:6px;align-items:center">
                   <span id="sys-len-pickup_uz" style="font-size:11px;color:var(--text2)"></span>
                   <span id="sys-msg-pickup_uz" style="font-size:12px;display:none"></span>
-                  <button id="sys-edit-pickup_uz" onclick="smsSysEdit('pickup_uz')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px">✏️ Изменить</button>
-                  <button id="sys-save-pickup_uz" onclick="smsSysSaveOne('pickup_uz','sms_pickup_template_uz')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px">💾 Сохранить</button>
-                  <button id="sys-cancel-pickup_uz" onclick="smsSysCancel('pickup_uz')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px">Отмена</button>
+                  <button id="sys-edit-pickup_uz" onclick="smsSysEdit('pickup_uz')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.edit">✏️ Изменить</button>
+                  <button id="sys-save-pickup_uz" onclick="smsSysSaveOne('pickup_uz','sms_pickup_template_uz')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px" data-i18n="btn.save">💾 Сохранить</button>
+                  <button id="sys-cancel-pickup_uz" onclick="smsSysCancel('pickup_uz')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.cancel">Отмена</button>
                 </div>
               </div>
               <textarea id="sys_sms_pickup_uz" class="price-input" rows="3" disabled oninput="_smsPickupCountLen('pickup_uz');_smsEskizPreview('pickup_uz')" style="width:100%;resize:vertical;opacity:0.7" placeholder="{order_num} buyurtma kuryer tomonidan qabul qilindi..."></textarea>
               <div style="margin-top:8px;padding:10px 12px;background:var(--bg,#f5f5f7);border:1px dashed var(--border);border-radius:10px">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase">Пример для Eskiz-модерации</span>
-                  <button onclick="_smsCopyEskizPreview('pickup_uz')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer">📋 Копировать</button>
+                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase" data-i18n="sms.tpl.eskiz.example">Пример для Eskiz-модерации</span>
+                  <button onclick="_smsCopyEskizPreview('pickup_uz')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer" data-i18n="sms.tpl.eskiz.copy">📋 Копировать</button>
                 </div>
                 <div id="sys-eskiz-pickup_uz" style="font-size:13px;color:var(--text);white-space:pre-wrap"></div>
               </div>
@@ -4720,14 +4720,14 @@
 
             <!-- Поле: SMS клиенту при статусе «Готово» -->
             <div style="padding:10px 14px;border-radius:10px;background:#fef9c3;border:1px solid #fde68a;font-size:13px;color:#854d0e;margin-top:6px">
-              ✅ SMS клиенту, когда заказ готов к выдаче/доставке. Только латиница, до 170 символов. Плейсхолдеры:
+              <span data-i18n="sms.tpl.ready.hint">✅ SMS клиенту, когда заказ готов к выдаче/доставке. Только латиница, до 170 символов. Плейсхолдеры:</span>
               <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:4px">{order_num}</code>
               <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:4px">{phones}</code>
               <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:4px">{bot_link}</code>
               <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:4px">{site_link}</code>
             </div>
             <div class="sys-sms-card" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
-              <label style="font-size:13px;font-weight:600;color:var(--text)">Включить SMS при Готово</label>
+              <label style="font-size:13px;font-weight:600;color:var(--text)" data-i18n="sms.tpl.ready.enable.lbl">Включить SMS при Готово</label>
               <label style="position:relative;display:inline-block;width:44px;height:24px">
                 <input type="checkbox" id="sys_sms_ready_enabled" onchange="smsReadyToggleEnabled(this.checked)" style="opacity:0;width:0;height:0">
                 <span id="sys_sms_ready_enabled_track" style="position:absolute;inset:0;background:var(--border);border-radius:24px;cursor:pointer;transition:.2s"></span>
@@ -4735,40 +4735,40 @@
             </div>
             <div class="sys-sms-card" id="sys-card-ready_ru" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <label style="font-size:13px;font-weight:600;color:var(--text)">🇷🇺 Готово — русский текст (латиница)</label>
+                <label style="font-size:13px;font-weight:600;color:var(--text)" data-i18n="sms.tpl.ready.ru.lbl">🇷🇺 Готово — русский текст (латиница)</label>
                 <div style="display:flex;gap:6px;align-items:center">
                   <span id="sys-len-ready_ru" style="font-size:11px;color:var(--text2)"></span>
                   <span id="sys-msg-ready_ru" style="font-size:12px;display:none"></span>
-                  <button id="sys-edit-ready_ru" onclick="smsSysEdit('ready_ru')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px">✏️ Изменить</button>
-                  <button id="sys-save-ready_ru" onclick="smsSysSaveOne('ready_ru','sms_ready_template_ru')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px">💾 Сохранить</button>
-                  <button id="sys-cancel-ready_ru" onclick="smsSysCancel('ready_ru')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px">Отмена</button>
+                  <button id="sys-edit-ready_ru" onclick="smsSysEdit('ready_ru')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.edit">✏️ Изменить</button>
+                  <button id="sys-save-ready_ru" onclick="smsSysSaveOne('ready_ru','sms_ready_template_ru')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px" data-i18n="btn.save">💾 Сохранить</button>
+                  <button id="sys-cancel-ready_ru" onclick="smsSysCancel('ready_ru')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.cancel">Отмена</button>
                 </div>
               </div>
               <textarea id="sys_sms_ready_ru" class="price-input" rows="3" disabled oninput="_smsPickupCountLen('ready_ru');_smsEskizPreview('ready_ru')" style="width:100%;resize:vertical;opacity:0.7" placeholder="zakaz {order_num} gotov..."></textarea>
               <div style="margin-top:8px;padding:10px 12px;background:var(--bg,#f5f5f7);border:1px dashed var(--border);border-radius:10px">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase">Пример для Eskiz-модерации</span>
-                  <button onclick="_smsCopyEskizPreview('ready_ru')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer">📋 Копировать</button>
+                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase" data-i18n="sms.tpl.eskiz.example">Пример для Eskiz-модерации</span>
+                  <button onclick="_smsCopyEskizPreview('ready_ru')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer" data-i18n="sms.tpl.eskiz.copy">📋 Копировать</button>
                 </div>
                 <div id="sys-eskiz-ready_ru" style="font-size:13px;color:var(--text);white-space:pre-wrap"></div>
               </div>
             </div>
             <div class="sys-sms-card" id="sys-card-ready_uz" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <label style="font-size:13px;font-weight:600;color:var(--text)">🇺🇿 Готово — узбекский текст (латиница)</label>
+                <label style="font-size:13px;font-weight:600;color:var(--text)" data-i18n="sms.tpl.ready.uz.lbl">🇺🇿 Готово — узбекский текст (латиница)</label>
                 <div style="display:flex;gap:6px;align-items:center">
                   <span id="sys-len-ready_uz" style="font-size:11px;color:var(--text2)"></span>
                   <span id="sys-msg-ready_uz" style="font-size:12px;display:none"></span>
-                  <button id="sys-edit-ready_uz" onclick="smsSysEdit('ready_uz')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px">✏️ Изменить</button>
-                  <button id="sys-save-ready_uz" onclick="smsSysSaveOne('ready_uz','sms_ready_template_uz')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px">💾 Сохранить</button>
-                  <button id="sys-cancel-ready_uz" onclick="smsSysCancel('ready_uz')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px">Отмена</button>
+                  <button id="sys-edit-ready_uz" onclick="smsSysEdit('ready_uz')" class="btn btn-sm" style="background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.edit">✏️ Изменить</button>
+                  <button id="sys-save-ready_uz" onclick="smsSysSaveOne('ready_uz','sms_ready_template_uz')" class="btn btn-primary btn-sm" style="display:none;padding:4px 10px" data-i18n="btn.save">💾 Сохранить</button>
+                  <button id="sys-cancel-ready_uz" onclick="smsSysCancel('ready_uz')" class="btn btn-sm" style="display:none;background:var(--surface2);color:var(--text);padding:4px 10px" data-i18n="btn.cancel">Отмена</button>
                 </div>
               </div>
               <textarea id="sys_sms_ready_uz" class="price-input" rows="3" disabled oninput="_smsPickupCountLen('ready_uz');_smsEskizPreview('ready_uz')" style="width:100%;resize:vertical;opacity:0.7" placeholder="{order_num} buyurtma tayyor..."></textarea>
               <div style="margin-top:8px;padding:10px 12px;background:var(--bg,#f5f5f7);border:1px dashed var(--border);border-radius:10px">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase">Пример для Eskiz-модерации</span>
-                  <button onclick="_smsCopyEskizPreview('ready_uz')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer">📋 Копировать</button>
+                  <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase" data-i18n="sms.tpl.eskiz.example">Пример для Eskiz-модерации</span>
+                  <button onclick="_smsCopyEskizPreview('ready_uz')" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text2);cursor:pointer" data-i18n="sms.tpl.eskiz.copy">📋 Копировать</button>
                 </div>
                 <div id="sys-eskiz-ready_uz" style="font-size:13px;color:var(--text);white-space:pre-wrap"></div>
               </div>
@@ -4783,12 +4783,12 @@
       <div id="smsTplModal" class="modal-overlay hidden">
         <div class="modal-box" style="max-width:500px;width:94%">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-            <h3 style="margin:0" id="smsTplModalTitle">Новый шаблон</h3>
+            <h3 style="margin:0" id="smsTplModalTitle" data-i18n="sms.tpl.new">Новый шаблон</h3>
             <button onclick="smsTplCloseModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2)">✕</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
             <div>
-              <label class="cfg-label">Категория</label>
+              <label class="cfg-label" data-i18n="sms.tpl.cat.lbl">Категория</label>
               <select id="smsTplCat" class="price-input" style="width:100%">
                 <option value="cleaning" data-i18n="sms.cat.cleaning">🧺 Химчистка</option>
                 <option value="greeting" data-i18n="sms.cat.greetings">🎉 Поздравления</option>
@@ -4796,13 +4796,13 @@
               </select>
             </div>
             <div>
-              <label class="cfg-label">Название шаблона</label>
-              <input id="smsTplTitle" class="price-input" style="width:100%" placeholder="Напр.: Заказ готов">
+              <label class="cfg-label" data-i18n="sms.tpl.title.lbl">Название шаблона</label>
+              <input id="smsTplTitle" class="price-input" style="width:100%" data-i18n-ph="sms.tpl.title.ph" placeholder="Напр.: Заказ готов">
             </div>
             <div>
-              <label class="cfg-label">Текст SMS</label>
-              <textarea id="smsTplText" class="price-input" style="width:100%;min-height:100px;resize:vertical" placeholder="Текст сообщения. Можно использовать {name}, {phone} и т.д."></textarea>
-              <div id="smsTplCharCount" style="font-size:11px;color:var(--text2);margin-top:4px;text-align:right">0 / 160 символов</div>
+              <label class="cfg-label" data-i18n="sms.tpl.text.lbl">Текст SMS</label>
+              <textarea id="smsTplText" class="price-input" style="width:100%;min-height:100px;resize:vertical" data-i18n-ph="sms.tpl.text.ph" placeholder="Текст сообщения. Можно использовать {name}, {phone} и т.д."></textarea>
+              <div id="smsTplCharCount" style="font-size:11px;color:var(--text2);margin-top:4px;text-align:right" data-i18n="sms.tpl.charcount.init">0 / 160 символов</div>
             </div>
           </div>
           <div id="smsTplModalErr" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-top:12px;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5"></div>
@@ -6977,6 +6977,29 @@ const _adminI18n = {
     'sms.cnt.imp.st.new':'Новый','sms.cnt.imp.st.dup':'Дубликат','sms.cnt.imp.st.bad':'Неверный',
     'sms.cnt.imp.error':'❌ Ошибка импорта','sms.cnt.imp.importing':'⏳ Импорт...',
     'sms.tpl.tab.templates':'📋 Шаблоны','sms.tpl.tab.system':'🔑 Системные',
+    'sms.tpl.code.pre':'Используйте','sms.tpl.code.post':'— вместо него подставится одноразовый код.',
+    'sms.tpl.reg.toggle.lbl':'📲 Регистрация через SMS',
+    'sms.tpl.reg.toggle.hint':'Если выключено — на сайте останется только регистрация через Telegram',
+    'sms.tpl.card.register.lbl':'📲 Регистрация на сайте','sms.tpl.card.login.lbl':'🔐 Вход в аккаунт',
+    'sms.tpl.card.reset.lbl':'🔑 Восстановление пароля',
+    'sms.tpl.eskiz.example':'Пример для Eskiz-модерации','sms.tpl.eskiz.copy':'📋 Копировать',
+    'sms.tpl.eskiz.copied':'Скопировано','sms.tpl.eskiz.copy.fail':'Не удалось скопировать',
+    'sms.tpl.pickup.hint':'🚚 SMS клиенту, когда водитель забрал вещи (новый заказ или существующий). Только латиница, до 170 символов (1 SMS-сегмент). Плейсхолдеры:',
+    'sms.tpl.pickup.enable.lbl':'Включить SMS при заборе',
+    'sms.tpl.pickup.ru.lbl':'🇷🇺 Забор — русский текст (латиница)','sms.tpl.pickup.uz.lbl':'🇺🇿 Забор — узбекский текст (латиница)',
+    'sms.tpl.ready.hint':'✅ SMS клиенту, когда заказ готов к выдаче/доставке. Только латиница, до 170 символов. Плейсхолдеры:',
+    'sms.tpl.ready.enable.lbl':'Включить SMS при Готово',
+    'sms.tpl.ready.ru.lbl':'🇷🇺 Готово — русский текст (латиница)','sms.tpl.ready.uz.lbl':'🇺🇿 Готово — узбекский текст (латиница)',
+    'sms.tpl.new':'Новый шаблон','sms.tpl.edit':'Изменить шаблон','sms.tpl.untitled':'Без названия',
+    'sms.tpl.cat.lbl':'Категория','sms.tpl.title.lbl':'Название шаблона','sms.tpl.title.ph':'Напр.: Заказ готов',
+    'sms.tpl.text.lbl':'Текст SMS','sms.tpl.text.ph':'Текст сообщения. Можно использовать {name}, {phone} и т.д.',
+    'sms.tpl.charcount.init':'0 / 160 символов','sms.tpl.chars.unit':'символов','sms.tpl.chars.abbr':'симв',
+    'sms.tpl.cat.cleaning.label':'Химчистка','sms.tpl.cat.greeting.label':'Поздравления','sms.tpl.cat.other.label':'Другие',
+    'sms.tpl.copy.text':'Копировать текст',
+    'sms.tpl.err.title':'Введите название','sms.tpl.err.text':'Введите текст SMS',
+    'sms.tpl.updated':'Шаблон обновлён','sms.tpl.added':'Шаблон добавлен','sms.tpl.save.error':'Ошибка сохранения',
+    'sms.tpl.confirm.delete':'Удалить этот шаблон?','sms.tpl.deleted':'Шаблон удалён','sms.tpl.copied':'Текст скопирован',
+    'sms.tpl.saved':'Сохранено','sms.tpl.error':'Ошибка',
     'tg.card.group':'💬 Группа TG',
     'tg.card.orders.groups':'📋 Группы Заказов','tg.card.media':'📁 Медиа-канал',
     'tg.card.welcome_video':'🎬 Видео-инструкция при первом входе',
@@ -7631,6 +7654,29 @@ const _adminI18n = {
     'sms.cnt.imp.st.new':'Yangi','sms.cnt.imp.st.dup':'Takror','sms.cnt.imp.st.bad':'Notoʻgʻri',
     'sms.cnt.imp.error':'❌ Import xatosi','sms.cnt.imp.importing':'⏳ Import qilinmoqda...',
     'sms.tpl.tab.templates':'📋 Shablonlar','sms.tpl.tab.system':'🔑 Tizimli',
+    'sms.tpl.code.pre':' ','sms.tpl.code.post':'dan foydalaning — buning oʻrniga bir martalik kod qoʻyiladi.',
+    'sms.tpl.reg.toggle.lbl':'📲 SMS orqali roʻyxatdan oʻtish',
+    'sms.tpl.reg.toggle.hint':'Oʻchirilgan boʻlsa — saytda faqat Telegram orqali roʻyxatdan oʻtish qoladi',
+    'sms.tpl.card.register.lbl':'📲 Saytda roʻyxatdan oʻtish','sms.tpl.card.login.lbl':'🔐 Akkauntga kirish',
+    'sms.tpl.card.reset.lbl':'🔑 Parolni tiklash',
+    'sms.tpl.eskiz.example':'Eskiz moderatsiyasi uchun namuna','sms.tpl.eskiz.copy':'📋 Nusxalash',
+    'sms.tpl.eskiz.copied':'Nusxalandi','sms.tpl.eskiz.copy.fail':'Nusxalab boʻlmadi',
+    'sms.tpl.pickup.hint':'🚚 Kuryer buyumlarni olib ketganda (yangi yoki mavjud buyurtma) mijozga yuboriladigan SMS. Faqat lotin alifbosi, 170 belgigacha (1 SMS-segment). Oʻzgaruvchilar:',
+    'sms.tpl.pickup.enable.lbl':'Olib ketishda SMS yoqish',
+    'sms.tpl.pickup.ru.lbl':'🇷🇺 Olib ketish — rus tili matni (lotin)','sms.tpl.pickup.uz.lbl':'🇺🇿 Olib ketish — oʻzbek tili matni (lotin)',
+    'sms.tpl.ready.hint':'✅ Buyurtma yetkazishga/olib ketishga tayyor boʻlganda mijozga yuboriladigan SMS. Faqat lotin alifbosi, 170 belgigacha. Oʻzgaruvchilar:',
+    'sms.tpl.ready.enable.lbl':'«Tayyor» holatida SMS yoqish',
+    'sms.tpl.ready.ru.lbl':'🇷🇺 Tayyor — rus tili matni (lotin)','sms.tpl.ready.uz.lbl':'🇺🇿 Tayyor — oʻzbek tili matni (lotin)',
+    'sms.tpl.new':'Yangi shablon','sms.tpl.edit':'Shablonni tahrirlash','sms.tpl.untitled':'Nomsiz',
+    'sms.tpl.cat.lbl':'Kategoriya','sms.tpl.title.lbl':'Shablon nomi','sms.tpl.title.ph':'Masalan: Buyurtma tayyor',
+    'sms.tpl.text.lbl':'SMS matni','sms.tpl.text.ph':'Xabar matni. {name}, {phone} va h.k. dan foydalanish mumkin.',
+    'sms.tpl.charcount.init':'0 / 160 belgi','sms.tpl.chars.unit':'belgi','sms.tpl.chars.abbr':'belgi',
+    'sms.tpl.cat.cleaning.label':'Kimyoviy tozalash','sms.tpl.cat.greeting.label':'Tabriklar','sms.tpl.cat.other.label':'Boshqalar',
+    'sms.tpl.copy.text':'Matnni nusxalash',
+    'sms.tpl.err.title':'Nomni kiriting','sms.tpl.err.text':'SMS matnini kiriting',
+    'sms.tpl.updated':'Shablon yangilandi','sms.tpl.added':'Shablon qoʻshildi','sms.tpl.save.error':'Saqlashda xatolik',
+    'sms.tpl.confirm.delete':'Bu shablonni oʻchirasizmi?','sms.tpl.deleted':'Shablon oʻchirildi','sms.tpl.copied':'Matn nusxalandi',
+    'sms.tpl.saved':'Saqlandi','sms.tpl.error':'Xatolik',
     'tg.card.group':'💬 TG Guruhi',
     'tg.card.orders.groups':'📋 Buyurtmalar guruhlari','tg.card.media':'📁 Media-kanal',
     'tg.card.welcome_video':"🎬 Birinchi kirishda video-yo'riqnoma",
@@ -24444,8 +24490,8 @@ async function _smsCopyEskizPreview(field) {
   if (!out) return;
   try {
     await navigator.clipboard.writeText(out.textContent || '');
-    showToast('📋 Скопировано');
-  } catch(e) { showToast('Не удалось скопировать', 'error'); }
+    showToast('📋 ' + _t('sms.tpl.eskiz.copied'));
+  } catch(e) { showToast(_t('sms.tpl.eskiz.copy.fail'), 'error'); }
 }
 
 // Латиница ≤170 символов = 1 SMS-сегмент по GSM-7 — считаем и подсвечиваем красным при превышении.
@@ -24551,15 +24597,15 @@ async function smsSysSaveOne(field, settingKey) {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
     body: JSON.stringify({ [settingKey]: ta.value.trim() })
   }).then(r => r.json()).catch(() => null);
-  btn.disabled = false; btn.textContent = '💾 Сохранить';
+  btn.disabled = false; btn.textContent = _t('btn.save');
   if (res && !res.detail) {
-    msg.style.display = ''; msg.style.color = '#16a34a'; msg.textContent = '✅ Сохранено';
+    msg.style.display = ''; msg.style.color = '#16a34a'; msg.textContent = '✅ ' + _t('sms.tpl.saved');
     ta.dataset.orig = ta.value;   // новое сохранённое значение — теперь это база для будущей Отмены
     _smsSysCloseEdit(field);
     _smsEskizPreview(field);      // обновить «Пример для Eskiz» под только что сохранённым текстом
     setTimeout(() => { msg.style.display = 'none'; }, 2500);
   } else {
-    msg.style.display = ''; msg.style.color = '#dc2626'; msg.textContent = '❌ Ошибка';
+    msg.style.display = ''; msg.style.color = '#dc2626'; msg.textContent = '❌ ' + _t('sms.tpl.error');
   }
 }
 
@@ -24727,9 +24773,9 @@ function smsTplMainTab(tab) {
 }
 
 const _SMS_TPL_CATS = {
-  cleaning: { icon: '🧺', label: 'Химчистка' },
-  greeting: { icon: '🎉', label: 'Поздравления' },
-  other:    { icon: '📁', label: 'Другие' },
+  cleaning: { icon: '🧺', get label() { return _t('sms.tpl.cat.cleaning.label'); } },
+  greeting: { icon: '🎉', get label() { return _t('sms.tpl.cat.greeting.label'); } },
+  other:    { icon: '📁', get label() { return _t('sms.tpl.cat.other.label'); } },
 };
 
 async function smsTplLoad() {
@@ -24767,21 +24813,21 @@ function smsTplRender() {
         <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
           <span style="font-size:20px">${cat.icon}</span>
           <div style="min-width:0">
-            <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(t.title||'Без названия')}</div>
+            <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(t.title||_t('sms.tpl.untitled'))}</div>
             <div style="font-size:11px;color:var(--text2);margin-top:2px">${cat.label}</div>
           </div>
         </div>
-        <span style="font-size:11px;padding:3px 8px;border-radius:20px;background:var(--surface2);color:var(--text2);white-space:nowrap">${chars} симв · ${smsCount} SMS</span>
+        <span style="font-size:11px;padding:3px 8px;border-radius:20px;background:var(--surface2);color:var(--text2);white-space:nowrap">${chars} ${_t('sms.tpl.chars.abbr')} · ${smsCount} SMS</span>
       </div>
       <div style="font-size:13px;color:var(--text2);background:var(--surface2);border-radius:9px;padding:10px 12px;line-height:1.5;max-height:70px;overflow:hidden;position:relative">
         ${_esc(t.text||'')}
         <div style="position:absolute;bottom:0;left:0;right:0;height:24px;background:linear-gradient(transparent,var(--surface2))"></div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button onclick="smsTplQuickSend(${t.id})" class="btn btn-primary btn-sm" style="flex:1;min-width:100px">📤 Отправить</button>
-        <button onclick="smsTplCopyText(${t.id})" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="Копировать текст">📋</button>
-        <button onclick="smsTplOpenEdit(${t.id})" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="Изменить">✏️</button>
-        <button onclick="smsTplDelete(${t.id})" class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5" title="Удалить">🗑️</button>
+        <button onclick="smsTplQuickSend(${t.id})" class="btn btn-primary btn-sm" style="flex:1;min-width:100px">${_t('sms.btn.send')}</button>
+        <button onclick="smsTplCopyText(${t.id})" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="${_t('sms.tpl.copy.text')}">📋</button>
+        <button onclick="smsTplOpenEdit(${t.id})" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="${_t('btn.edit')}">✏️</button>
+        <button onclick="smsTplDelete(${t.id})" class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5" title="${_t('btn.delete')}">🗑️</button>
       </div>
     </div>`;
   }).join('');
@@ -24789,11 +24835,11 @@ function smsTplRender() {
 
 function smsTplOpenCreate() {
   _smsTplEditId = null;
-  document.getElementById('smsTplModalTitle').textContent = 'Новый шаблон';
+  document.getElementById('smsTplModalTitle').textContent = _t('sms.tpl.new');
   document.getElementById('smsTplCat').value   = _smsTplCat === 'all' ? 'cleaning' : _smsTplCat;
   document.getElementById('smsTplTitle').value = '';
   document.getElementById('smsTplText').value  = '';
-  document.getElementById('smsTplCharCount').textContent = '0 / 160 символов';
+  document.getElementById('smsTplCharCount').textContent = '0 / 160 ' + _t('sms.tpl.chars.unit');
   document.getElementById('smsTplModalErr').style.display = 'none';
   document.getElementById('smsTplModal').classList.remove('hidden');
 }
@@ -24802,12 +24848,12 @@ function smsTplOpenEdit(id) {
   const t = _smsTplData.find(x => x.id === id);
   if (!t) return;
   _smsTplEditId = id;
-  document.getElementById('smsTplModalTitle').textContent = 'Изменить шаблон';
+  document.getElementById('smsTplModalTitle').textContent = _t('sms.tpl.edit');
   document.getElementById('smsTplCat').value   = t.category || 'other';
   document.getElementById('smsTplTitle').value = t.title || '';
   document.getElementById('smsTplText').value  = t.text  || '';
   const len = (t.text||'').length;
-  document.getElementById('smsTplCharCount').textContent = `${len} / 160 символов`;
+  document.getElementById('smsTplCharCount').textContent = `${len} / 160 ${_t('sms.tpl.chars.unit')}`;
   document.getElementById('smsTplModalErr').style.display = 'none';
   document.getElementById('smsTplModal').classList.remove('hidden');
 }
@@ -24822,7 +24868,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (ta) ta.addEventListener('input', () => {
     const len = ta.value.length;
     const sms = Math.ceil(len / 160) || 1;
-    document.getElementById('smsTplCharCount').textContent = `${len} символов · ${sms} SMS`;
+    document.getElementById('smsTplCharCount').textContent = `${len} ${_t('sms.tpl.chars.unit')} · ${sms} SMS`;
   });
 });
 
@@ -24831,8 +24877,8 @@ async function smsTplSave() {
   const title = document.getElementById('smsTplTitle').value.trim();
   const text  = document.getElementById('smsTplText').value.trim();
   const errEl = document.getElementById('smsTplModalErr');
-  if (!title) { errEl.style.display=''; errEl.textContent='Введите название'; return; }
-  if (!text)  { errEl.style.display=''; errEl.textContent='Введите текст SMS'; return; }
+  if (!title) { errEl.style.display=''; errEl.textContent=_t('sms.tpl.err.title'); return; }
+  if (!text)  { errEl.style.display=''; errEl.textContent=_t('sms.tpl.err.text'); return; }
   errEl.style.display = 'none';
   let res;
   if (_smsTplEditId) {
@@ -24848,7 +24894,7 @@ async function smsTplSave() {
     const newCat  = res.category || cat;
     const wasEdit = !!_smsTplEditId;
     smsTplCloseModal();
-    showToast(wasEdit ? '✅ Шаблон обновлён' : '✅ Шаблон добавлен', 'success');
+    showToast(wasEdit ? '✅ ' + _t('sms.tpl.updated') : '✅ ' + _t('sms.tpl.added'), 'success');
     await smsTplLoad();
     // Переключить на вкладку «Шаблоны» и нужную категорию, выделить новый
     smsTplMainTab('templates');
@@ -24860,23 +24906,23 @@ async function smsTplSave() {
       }, 100);
     }
   } else {
-    errEl.style.display=''; errEl.textContent='❌ '+(res?.detail||'Ошибка сохранения');
+    errEl.style.display=''; errEl.textContent='❌ '+(res?.detail||_t('sms.tpl.save.error'));
   }
 }
 
 async function smsTplDelete(id) {
-  if (!confirm('Удалить этот шаблон?')) return;
+  if (!confirm(_t('sms.tpl.confirm.delete'))) return;
   await fetch(`${API_BASE}/admin/sms/templates/${id}`, {
     method:'DELETE', headers:{Authorization:`Bearer ${adminToken}`}
   });
-  showToast('🗑️ Шаблон удалён', 'info');
+  showToast('🗑️ ' + _t('sms.tpl.deleted'), 'info');
   await smsTplLoad();
 }
 
 function smsTplCopyText(id) {
   const t = _smsTplData.find(x => x.id === id);
   if (!t) return;
-  navigator.clipboard.writeText(t.text || '').then(() => showToast('📋 Текст скопирован', 'success'));
+  navigator.clipboard.writeText(t.text || '').then(() => showToast('📋 ' + _t('sms.tpl.copied'), 'success'));
 }
 
 // Быстрая отправка из шаблона — открывает send-страницу с текстом
