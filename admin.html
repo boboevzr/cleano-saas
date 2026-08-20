@@ -6973,6 +6973,8 @@ const _adminI18n = {
     'sf.lbl.pct':'Процент (%)','sf.lead.global':'глобально',
     'sm.lbl.staff':'Сотрудник','sm.btn.create':'Создать',
     'lbl.all.days':'Все дни','workon.all.staff':'Все сотрудники',
+    'workon.now.here':'сейчас на месте','workon.pushed':'✓ Внесено','workon.push':'→ В табель',
+    'workon.pushed.toast':'✅ Внесено в табель','workon.push.err':'Ошибка при внесении в табель',
     'cash.balances.title':'💵 Наличные на руках',
     'cash.balances.staff':'🧑‍💼 Исполнители (на руках)',
     'cash.balances.managers':'💰 Ответственные за кассу',
@@ -7683,6 +7685,8 @@ const _adminI18n = {
     'sf.lbl.pct':'Foiz (%)','sf.lead.global':'global',
     'sm.lbl.staff':'Xodim','sm.btn.create':'Yaratish',
     'lbl.all.days':'Barcha kunlar','workon.all.staff':'Barcha xodimlar',
+    'workon.now.here':'hozir ish joyida','workon.pushed':'✓ Kiritildi','workon.push':'→ Tabelga',
+    'workon.pushed.toast':'✅ Tabelga kiritildi','workon.push.err':'Tabelga kiritishda xatolik',
     'cash.balances.title':'💵 Qoʻldagi naqd',
     'cash.balances.staff':'🧑‍💼 Ijrochilar (qoʻlda)',
     'cash.balances.managers':'💰 Kassa masʼullari',
@@ -11328,7 +11332,7 @@ function _workonFmtSessions(rec) {
   if (!sessions.length) return '<span style="color:var(--text2)">—</span>';
   const hasOpen = sessions.some(s => !s.check_out_at);
   const line = sessions.map(s => `${_fmtHM(s.check_in_at)}–${s.check_out_at ? _fmtHM(s.check_out_at) : '…'}`).join(', ');
-  const note = hasOpen ? `<div style="font-size:11px;color:#f59e0b">сейчас на месте</div>` : '';
+  const note = hasOpen ? `<div style="font-size:11px;color:#f59e0b">${_t('workon.now.here')}</div>` : '';
   return `<div>${line}</div>${note}`;
 }
 
@@ -11349,9 +11353,9 @@ function _workonRender() {
     const pushed  = !!_workonPushed[i];
     const btnHtml = canPush
       ? (pushed
-          ? `<button class="btn btn-sm" disabled style="background:rgba(34,197,94,.15);color:#86efac">✓ Внесено</button>`
-          : `<button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="workonPushToTimesheet(${i})">→ В табель</button>`)
-      : `<button class="btn btn-sm" disabled style="background:var(--surface2);color:var(--text2);opacity:.5">→ В табель</button>`;
+          ? `<button class="btn btn-sm" disabled style="background:rgba(34,197,94,.15);color:#86efac">${_t('workon.pushed')}</button>`
+          : `<button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="workonPushToTimesheet(${i})">${_t('workon.push')}</button>`)
+      : `<button class="btn btn-sm" disabled style="background:var(--surface2);color:var(--text2);opacity:.5">${_t('workon.push')}</button>`;
     return `<tr>
       <td><b>${escHtml(r.name || '—')}</b></td>
       <td style="font-size:13px">${roleLabel}</td>
@@ -11380,9 +11384,9 @@ async function workonPushToTimesheet(i) {
   if (res?.ok) {
     _workonPushed[i] = true;
     _workonRender();
-    showToast('✅ Внесено в табель');
+    showToast(_t('workon.pushed.toast'));
   } else {
-    showToast(res?.detail || 'Ошибка при внесении в табель', 'error');
+    showToast(res?.detail || _t('workon.push.err'), 'error');
   }
 }
 
