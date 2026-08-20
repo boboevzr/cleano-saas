@@ -4233,7 +4233,7 @@
               </tr>
             </thead>
             <tbody id="smsCntBody">
-              <tr><td colspan="6" style="padding:40px;text-align:center;color:var(--text2)">⏳ Загрузка...</td></tr>
+              <tr><td colspan="6" style="padding:40px;text-align:center;color:var(--text2)" data-i18n="sms.cnt.loading">⏳ Загрузка...</td></tr>
             </tbody>
           </table>
         </div>
@@ -4253,7 +4253,7 @@
             </div>
             <div>
               <label class="cfg-label" data-i18n="sms.cnt.fio.lbl">Ф.И.О (необязательно)</label>
-              <input id="smsCntAddName" class="price-input" style="width:100%" placeholder="Иванов Иван">
+              <input id="smsCntAddName" class="price-input" style="width:100%" data-i18n-ph="sms.cnt.name.ph" placeholder="Иванов Иван">
             </div>
             <div>
               <label class="cfg-label" data-i18n="th.phone">Телефон</label>
@@ -4286,11 +4286,11 @@
               </select>
             </div>
             <div style="background:var(--surface2);border-radius:10px;padding:12px;font-size:13px;color:var(--text2)">
-              📋 Формат CSV: два столбца — <b>Имя</b> и <b>Телефон</b>. Телефон: 9 цифр (без +998) или с +998.
-              <button onclick="smsCntDownloadTemplate()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px;text-decoration:underline;padding:0;margin-left:6px">📋 Скачать шаблон</button>
+              <span data-i18n="sms.imp.csv.fmt1">📋 Формат CSV: два столбца —</span> <b data-i18n="th.name">Имя</b> <span data-i18n="sms.imp.csv.and">и</span> <b data-i18n="th.phone">Телефон</b><span data-i18n="sms.imp.csv.fmt2">. Телефон: 9 цифр (без +998) или с +998.</span>
+              <button onclick="smsCntDownloadTemplate()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px;text-decoration:underline;padding:0;margin-left:6px" data-i18n="sms.imp.download.tpl">📋 Скачать шаблон</button>
             </div>
             <div>
-              <label class="cfg-label">Выберите файл CSV</label>
+              <label class="cfg-label" data-i18n="sms.imp.file.lbl">Выберите файл CSV</label>
               <input type="file" id="smsCntImpFile" accept=".csv,.txt" class="price-input" style="width:100%;padding:8px" onchange="smsCntImportParse()">
             </div>
             <div id="smsCntImpPreview" style="display:none">
@@ -4298,9 +4298,9 @@
               <div style="overflow-x:auto;max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:10px">
                 <table style="width:100%;border-collapse:collapse;font-size:12px" id="smsCntImpTable">
                   <thead><tr style="background:var(--surface2)">
-                    <th style="padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)">Имя</th>
-                    <th style="padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)">Телефон</th>
-                    <th style="padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)">Статус</th>
+                    <th style="padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)" data-i18n="th.name">Имя</th>
+                    <th style="padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)" data-i18n="th.phone">Телефон</th>
+                    <th style="padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)" data-i18n="th.status">Статус</th>
                   </tr></thead>
                   <tbody id="smsCntImpBody"></tbody>
                 </table>
@@ -4309,8 +4309,8 @@
             <div id="smsCntImpErr" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5"></div>
           </div>
           <div style="display:flex;gap:8px;margin-top:18px">
-            <button id="smsCntImpBtn" onclick="smsCntImportConfirm()" class="btn btn-primary" style="flex:1" disabled>📥 Импортировать</button>
-            <button onclick="smsCntImportClose()" class="btn btn-sm" style="background:var(--surface2);color:var(--text)">Отмена</button>
+            <button id="smsCntImpBtn" onclick="smsCntImportConfirm()" class="btn btn-primary" style="flex:1" disabled data-i18n="sms.imp.btn">📥 Импортировать</button>
+            <button onclick="smsCntImportClose()" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" data-i18n="btn.cancel">Отмена</button>
           </div>
         </div>
       </div>
@@ -6964,6 +6964,18 @@ const _adminI18n = {
     'sms.cost.balance':'💳 Баланс','sms.cost.dispatch':'📤 Стоимость рассылки','sms.cost.left':'✅ Остаток',
     'sms.cnt.add.title':'Добавить контакт','sms.cnt.fio.lbl':'Ф.И.О (необязательно)','sms.cnt.add.btn':'💾 Добавить',
     'sms.imp.title':'📥 Импорт контактов CSV','sms.imp.group.lbl':'Группа для импорта',
+    'sms.cnt.loading':'⏳ Загрузка...','sms.cnt.name.ph':'Иванов Иван',
+    'sms.imp.csv.fmt1':'📋 Формат CSV: два столбца —','sms.imp.csv.and':'и',
+    'sms.imp.csv.fmt2':'. Телефон: 9 цифр (без +998) или с +998.',
+    'sms.imp.download.tpl':'📋 Скачать шаблон','sms.imp.file.lbl':'Выберите файл CSV','sms.imp.btn':'📥 Импортировать',
+    'sms.cnt.status.active':'Активный','sms.cnt.status.inactive':'Неактивный','sms.cnt.status.blacklist':'Чёрный список',
+    'sms.cnt.status.updated':'Статус обновлён','sms.cnt.confirm.delete':'Удалить этот контакт?','sms.cnt.deleted':'Удалён',
+    'sms.cnt.create.group.first':'Сначала создайте группу',
+    'sms.cnt.err.select.group':'Выберите группу','sms.cnt.err.enter.phone':'Введите телефон',
+    'sms.cnt.added':'Контакт добавлен','sms.cnt.error':'Ошибка',
+    'sms.cnt.imp.new':'Новых:','sms.cnt.imp.dup':'Дубликатов в файле:','sms.cnt.imp.bad':'Неверный формат:',
+    'sms.cnt.imp.st.new':'Новый','sms.cnt.imp.st.dup':'Дубликат','sms.cnt.imp.st.bad':'Неверный',
+    'sms.cnt.imp.error':'❌ Ошибка импорта','sms.cnt.imp.importing':'⏳ Импорт...',
     'sms.tpl.tab.templates':'📋 Шаблоны','sms.tpl.tab.system':'🔑 Системные',
     'tg.card.group':'💬 Группа TG',
     'tg.card.orders.groups':'📋 Группы Заказов','tg.card.media':'📁 Медиа-канал',
@@ -7606,6 +7618,18 @@ const _adminI18n = {
     'sms.cost.balance':'💳 Balans','sms.cost.dispatch':'📤 Tarqatma narxi','sms.cost.left':'✅ Qoldiq',
     'sms.cnt.add.title':'Kontakt qoʻshish','sms.cnt.fio.lbl':'F.I.O (ixtiyoriy)','sms.cnt.add.btn':'💾 Qoʻshish',
     'sms.imp.title':'📥 CSV kontaktlarni import qilish','sms.imp.group.lbl':'Import uchun guruh',
+    'sms.cnt.loading':'⏳ Yuklanmoqda...','sms.cnt.name.ph':'Aliyev Ali',
+    'sms.imp.csv.fmt1':'📋 CSV format: ikkita ustun —','sms.imp.csv.and':'va',
+    'sms.imp.csv.fmt2':'. Telefon: +998siz 9 ta raqam yoki +998 bilan.',
+    'sms.imp.download.tpl':'📋 Andozani yuklab olish','sms.imp.file.lbl':'CSV faylni tanlang','sms.imp.btn':'📥 Import qilish',
+    'sms.cnt.status.active':'Faol','sms.cnt.status.inactive':'Faol emas','sms.cnt.status.blacklist':'Qora roʻyxat',
+    'sms.cnt.status.updated':'Holat yangilandi','sms.cnt.confirm.delete':'Bu kontaktni oʻchirishni xohlaysizmi?','sms.cnt.deleted':'Oʻchirildi',
+    'sms.cnt.create.group.first':'Avval guruh yarating',
+    'sms.cnt.err.select.group':'Guruhni tanlang','sms.cnt.err.enter.phone':'Telefon raqamini kiriting',
+    'sms.cnt.added':'Kontakt qoʻshildi','sms.cnt.error':'Xatolik',
+    'sms.cnt.imp.new':'Yangi:','sms.cnt.imp.dup':'Fayldagi takrorlar:','sms.cnt.imp.bad':'Notoʻgʻri format:',
+    'sms.cnt.imp.st.new':'Yangi','sms.cnt.imp.st.dup':'Takror','sms.cnt.imp.st.bad':'Notoʻgʻri',
+    'sms.cnt.imp.error':'❌ Import xatosi','sms.cnt.imp.importing':'⏳ Import qilinmoqda...',
     'sms.tpl.tab.templates':'📋 Shablonlar','sms.tpl.tab.system':'🔑 Tizimli',
     'tg.card.group':'💬 TG Guruhi',
     'tg.card.orders.groups':'📋 Buyurtmalar guruhlari','tg.card.media':'📁 Media-kanal',
@@ -23804,9 +23828,9 @@ function smsCntGoGroup(gid) {
 let _smsCntGroups = [];
 
 const _SMS_STATUS = {
-  active:    { label: 'Активный',    color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
-  inactive:  { label: 'Неактивный',  color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
-  blacklist: { label: 'Чёрный список', color: '#dc2626', bg: '#fef2f2', border: '#fca5a5' },
+  active:    { get label() { return _t('sms.cnt.status.active'); },    color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
+  inactive:  { get label() { return _t('sms.cnt.status.inactive'); },  color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+  blacklist: { get label() { return _t('sms.cnt.status.blacklist'); }, color: '#dc2626', bg: '#fef2f2', border: '#fca5a5' },
 };
 
 async function smsCntLoad() {
@@ -23877,18 +23901,18 @@ async function smsCntSetStatus(cid, status) {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
     body: JSON.stringify({ status })
   });
-  showToast('✅ Статус обновлён', 'success');
+  showToast('✅ ' + _t('sms.cnt.status.updated'), 'success');
 }
 
 async function smsCntDelete(cid) {
-  if (!confirm('Удалить этот контакт?')) return;
+  if (!confirm(_t('sms.cnt.confirm.delete'))) return;
   await fetch(`${API_BASE}/admin/sms/contacts/${cid}`, { method:'DELETE', headers:{Authorization:`Bearer ${adminToken}`} });
-  showToast('🗑️ Удалён', 'info');
+  showToast('🗑️ ' + _t('sms.cnt.deleted'), 'info');
   await smsCntLoad();
 }
 
 function smsCntOpenAdd() {
-  if (!_smsCntGroups.length) { showToast('Сначала создайте группу', 'error'); return; }
+  if (!_smsCntGroups.length) { showToast(_t('sms.cnt.create.group.first'), 'error'); return; }
   document.getElementById('smsCntAddName').value  = '';
   document.getElementById('smsCntAddPhone').value = '';
   document.getElementById('smsCntModalErr').style.display = 'none';
@@ -23909,8 +23933,8 @@ async function smsCntSaveAdd() {
   const name  = document.getElementById('smsCntAddName').value.trim();
   const phone = document.getElementById('smsCntAddPhone').value.trim();
   const errEl = document.getElementById('smsCntModalErr');
-  if (!gid)   { errEl.style.display=''; errEl.textContent='Выберите группу'; return; }
-  if (!phone) { errEl.style.display=''; errEl.textContent='Введите телефон'; return; }
+  if (!gid)   { errEl.style.display=''; errEl.textContent=_t('sms.cnt.err.select.group'); return; }
+  if (!phone) { errEl.style.display=''; errEl.textContent=_t('sms.cnt.err.enter.phone'); return; }
   errEl.style.display = 'none';
   const res = await fetch(`${API_BASE}/admin/sms/groups/${gid}/contacts`, {
     method: 'POST',
@@ -23919,11 +23943,11 @@ async function smsCntSaveAdd() {
   }).then(r => r.json()).catch(() => null);
   if (res?.id) {
     smsCntCloseModal();
-    showToast('✅ Контакт добавлен', 'success');
+    showToast('✅ ' + _t('sms.cnt.added'), 'success');
     _smsCntGroups = []; // сбросить кеш групп для обновления счётчика
     await smsCntLoad();
   } else {
-    errEl.style.display=''; errEl.textContent='❌ ' + (res?.detail || 'Ошибка');
+    errEl.style.display=''; errEl.textContent='❌ ' + (res?.detail || _t('sms.cnt.error'));
   }
 }
 
@@ -24115,7 +24139,7 @@ function smsCntImportOpen(groupId) {
   // Заполнить группы
   const sel = document.getElementById('smsCntImpGroup');
   const groups = _smsGrpData.length ? _smsGrpData : [];
-  sel.innerHTML = '<option value="">— выберите группу —</option>' +
+  sel.innerHTML = `<option value="">${_t('sms.grp.select.ph')}</option>` +
     groups.map(g => `<option value="${g.id}" ${g.id==groupId?'selected':''}>${_esc(g.name)}</option>`).join('');
   document.getElementById('smsCntImportModal').classList.remove('hidden');
 }
@@ -24153,11 +24177,11 @@ function smsCntImportParse() {
     const badCount  = _smsImpParsed.filter(r => r.status === 'invalid').length;
     const statsEl = document.getElementById('smsCntImpStats');
     statsEl.innerHTML = [
-      `<span style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:8px;padding:4px 12px">✅ Новых: ${newCount}</span>`,
-      dupCount ? `<span style="background:#fffbeb;color:#b45309;border:1px solid #fcd34d;border-radius:8px;padding:4px 12px">⚠️ Дубликатов в файле: ${dupCount}</span>` : '',
-      badCount ? `<span style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:8px;padding:4px 12px">❌ Неверный формат: ${badCount}</span>` : '',
+      `<span style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:8px;padding:4px 12px">✅ ${_t('sms.cnt.imp.new')} ${newCount}</span>`,
+      dupCount ? `<span style="background:#fffbeb;color:#b45309;border:1px solid #fcd34d;border-radius:8px;padding:4px 12px">⚠️ ${_t('sms.cnt.imp.dup')} ${dupCount}</span>` : '',
+      badCount ? `<span style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:8px;padding:4px 12px">❌ ${_t('sms.cnt.imp.bad')} ${badCount}</span>` : '',
     ].filter(Boolean).join('');
-    const STATUS_LABEL = {new:'✅ Новый', dup_file:'⚠️ Дубликат', invalid:'❌ Неверный'};
+    const STATUS_LABEL = {new:'✅ '+_t('sms.cnt.imp.st.new'), dup_file:'⚠️ '+_t('sms.cnt.imp.st.dup'), invalid:'❌ '+_t('sms.cnt.imp.st.bad')};
     const STATUS_COLOR = {new:'#15803d', dup_file:'#b45309', invalid:'#dc2626'};
     document.getElementById('smsCntImpBody').innerHTML = _smsImpParsed.map(r =>
       `<tr><td style="padding:6px 10px;border-bottom:1px solid var(--border)">${_esc(r.name||'—')}</td>
@@ -24170,29 +24194,37 @@ function smsCntImportParse() {
   reader.readAsText(file, 'UTF-8');
 }
 
+// Порядок слов в сообщении об импорте различается в RU/UZ — строится по _adminLang, а не через _t()
+function _smsCntImportedMsg(n) {
+  return _adminLang === 'uz' ? `✅ Import qilindi: ${n} ta kontakt` : `✅ Импортировано: ${n} контактов`;
+}
+
 async function smsCntImportConfirm() {
   const gid = document.getElementById('smsCntImpGroup').value;
-  if (!gid) { document.getElementById('smsCntImpErr').style.display=''; document.getElementById('smsCntImpErr').textContent='Выберите группу'; return; }
+  if (!gid) { document.getElementById('smsCntImpErr').style.display=''; document.getElementById('smsCntImpErr').textContent=_t('sms.cnt.err.select.group'); return; }
   const toImport = _smsImpParsed.filter(r => r.status === 'new').map(r => ({phone: r.phone, name: r.name}));
   if (!toImport.length) return;
   document.getElementById('smsCntImpBtn').disabled = true;
-  document.getElementById('smsCntImpBtn').textContent = '⏳ Импорт...';
+  document.getElementById('smsCntImpBtn').textContent = _t('sms.cnt.imp.importing');
   const res = await apiPost(`/admin/sms/groups/${gid}/contacts/bulk`, {contacts: toImport});
   if (res?.ok) {
-    showToast(`✅ Импортировано: ${res.added} контактов`, 'success');
+    showToast(_smsCntImportedMsg(res.added), 'success');
     smsCntImportClose();
     await smsGrpLoad();
     if (document.getElementById('smsCntGroupSel').value == gid) await smsCntLoad();
   } else {
     document.getElementById('smsCntImpErr').style.display='';
-    document.getElementById('smsCntImpErr').textContent='❌ Ошибка импорта';
+    document.getElementById('smsCntImpErr').textContent=_t('sms.cnt.imp.error');
   }
   document.getElementById('smsCntImpBtn').disabled = false;
-  document.getElementById('smsCntImpBtn').textContent = '📥 Импортировать';
+  document.getElementById('smsCntImpBtn').textContent = _t('sms.imp.btn');
 }
 
 function smsCntDownloadTemplate() {
-  const csv = '﻿' + 'Имя,Телефон\nИванов Иван,901234567\nПетров Пётр,998901112233\n';
+  const header = _adminLang === 'uz' ? 'Ism,Telefon' : 'Имя,Телефон';
+  const row1   = _adminLang === 'uz' ? 'Aliyev Ali,901234567' : 'Иванов Иван,901234567';
+  const row2   = _adminLang === 'uz' ? 'Valiyev Vali,998901112233' : 'Петров Пётр,998901112233';
+  const csv = '﻿' + `${header}\n${row1}\n${row2}\n`;
   const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
