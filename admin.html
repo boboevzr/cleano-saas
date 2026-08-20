@@ -2108,57 +2108,57 @@
       <!-- Модалка категории -->
       <div id="expCatModal" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:12px">
         <div style="background:var(--card);border-radius:16px;padding:20px;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)">
-          <div style="font-size:16px;font-weight:700;margin-bottom:16px" id="expCatModalTitle">Новая категория</div>
+          <div style="font-size:16px;font-weight:700;margin-bottom:16px" id="expCatModalTitle" data-i18n="exp.cat.modal.new">Новая категория</div>
           <input type="hidden" id="expCatId">
           <div style="display:grid;grid-template-columns:64px 1fr;gap:10px;margin-bottom:10px">
             <div>
-              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Иконка</div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px" data-i18n="exp.cat.lbl.icon">Иконка</div>
               <input id="expCatIcon" type="text" maxlength="4" placeholder="🧾"
                      style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:20px;text-align:center;box-sizing:border-box">
             </div>
             <div>
-              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Родитель (оставь пусто = это категория)</div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px" data-i18n="exp.cat.lbl.parent">Родитель (оставь пусто = это категория)</div>
               <select id="expCatParent" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
-                <option value="">— родительская категория —</option>
+                <option value="" data-i18n="exp.cat.opt.parent">— родительская категория —</option>
               </select>
             </div>
           </div>
           <div style="margin-bottom:10px">
-            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Название (RU)</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px" data-i18n="exp.cat.lbl.name.ru">Название (RU)</div>
             <input id="expCatNameRu" type="text" placeholder="Топливо" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
           </div>
           <div style="margin-bottom:10px">
-            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Название (UZ)</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px" data-i18n="exp.cat.lbl.name.uz">Название (UZ)</div>
             <input id="expCatNameUz" type="text" placeholder="Yoqilg'i" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
             <div>
-              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Кто утверждает</div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px" data-i18n="exp.cat.lbl.approver">Кто утверждает</div>
               <select id="expCatApprove" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
-                <option value="manager">Менеджер</option>
-                <option value="both">Менеджер → Admin</option>
-                <option value="admin">Только Admin</option>
+                <option value="manager" data-i18n="exp.cat.opt.manager">Менеджер</option>
+                <option value="both" data-i18n="exp.cat.opt.both">Менеджер → Admin</option>
+                <option value="admin" data-i18n="exp.cat.opt.admin">Только Admin</option>
               </select>
             </div>
             <div>
-              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Порог суммы (чек)</div>
-              <input id="expCatThreshold" type="number" min="0" placeholder="необяз." inputmode="numeric"
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px" data-i18n="exp.cat.lbl.threshold">Порог суммы (чек)</div>
+              <input id="expCatThreshold" type="number" min="0" placeholder="необяз." data-i18n-ph="exp.cat.ph.threshold" inputmode="numeric"
                      style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
             </div>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px">
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-              <input type="checkbox" id="expCatReceipt"> Требуется чек
+              <input type="checkbox" id="expCatReceipt"> <span data-i18n="exp.cat.chk.receipt">Требуется чек</span>
             </label>
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-              <input type="checkbox" id="expCatForStaff"> 👤 Указать сотрудника
+              <input type="checkbox" id="expCatForStaff"> <span data-i18n="exp.cat.chk.staff">👤 Указать сотрудника</span>
             </label>
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-              <input type="checkbox" id="expCatActive" checked> Активна
+              <input type="checkbox" id="expCatActive" checked> <span data-i18n="exp.cat.chk.active">Активна</span>
             </label>
           </div>
           <div style="margin-bottom:14px">
-            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Порядок сортировки</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px" data-i18n="exp.cat.lbl.sort">Порядок сортировки</div>
             <input id="expCatSort" type="number" value="0" inputmode="numeric" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
           </div>
           <div style="display:flex;gap:10px">
@@ -6450,6 +6450,23 @@ const _adminI18n = {
     'exp.status.all':'Все','exp.status.pending':'⏳ На рассмотрении',
     'exp.status.mgr':'🔵 Ожидает Admin','exp.status.paid':'✅ Утверждён',
     'exp.status.rejected':'❌ Отклонён','exp.cat.all':'Все категории',
+    'exp.cat.modal.new':'Новая категория','exp.cat.modal.edit':'Редактировать категорию',
+    'exp.cat.lbl.icon':'Иконка','exp.cat.lbl.parent':'Родитель (оставь пусто = это категория)',
+    'exp.cat.opt.parent':'— родительская категория —',
+    'exp.cat.lbl.name.ru':'Название (RU)','exp.cat.lbl.name.uz':'Название (UZ)',
+    'exp.cat.lbl.approver':'Кто утверждает',
+    'exp.cat.opt.manager':'Менеджер','exp.cat.opt.both':'Менеджер → Admin','exp.cat.opt.admin':'Только Admin',
+    'exp.cat.lbl.threshold':'Порог суммы (чек)','exp.cat.ph.threshold':'необяз.',
+    'exp.cat.chk.receipt':'Требуется чек','exp.cat.chk.staff':'👤 Указать сотрудника',
+    'exp.cat.chk.active':'Активна','exp.cat.lbl.sort':'Порядок сортировки',
+    'exp.btn.add.subcat':'+ подкатег.','exp.empty.cats':'Категорий нет','exp.empty.subcats':'Подкатегорий нет',
+    'exp.badge.inactive':'неактивна','exp.badge.receipt':'📎 чек','exp.link.receipt':'📎 Чек',
+    'exp.approve.manager':'👤 Менеджер','exp.approve.both':'👤→👑 Менеджер+Admin','exp.approve.admin':'👑 Только Admin',
+    'exp.err.name.required':'Введите название (RU)','exp.msg.saved':'Сохранено','exp.msg.created':'Создано',
+    'exp.confirm.delete.cat':'Удалить категорию?','exp.msg.deleted':'Удалено',
+    'exp.bal.loading':'⏳ Загрузка баланса…','exp.bal.balance':'💰 Баланс:','exp.bal.accrued':'📅 Начислено:',
+    'exp.bal.advances':'💸 Авансов:','exp.bal.available':'✅ Доступно:','exp.bal.over.limit':'⚠️ Превышает лимит',
+    'exp.th.category':'Категория',
     'cfg.tab.contacts':'📞 Контакты','cfg.tab.staff':'👤 Сотрудники',
     'cfg.tab.sms':'📨 SMS (Eskiz)','cfg.tab.sheets':'📊 Google Sheets',
     'cfg.tab.agents':'🤝 Агенты','cfg.tab.receipt':'🧾 Чек',
@@ -7127,6 +7144,23 @@ const _adminI18n = {
     'exp.status.all':'Barchasi','exp.status.pending':'⏳ Koʻrib chiqilmoqda',
     'exp.status.mgr':'🔵 Admin kutmoqda','exp.status.paid':'✅ Tasdiqlangan',
     'exp.status.rejected':'❌ Rad etildi','exp.cat.all':'Barcha kategoriyalar',
+    'exp.cat.modal.new':'Yangi kategoriya','exp.cat.modal.edit':'Kategoriyani tahrirlash',
+    'exp.cat.lbl.icon':'Belgicha','exp.cat.lbl.parent':'Ota kategoriya (boʻsh qoldiring = bu kategoriya boʻladi)',
+    'exp.cat.opt.parent':'— ota kategoriya —',
+    'exp.cat.lbl.name.ru':'Nomi (RU)','exp.cat.lbl.name.uz':'Nomi (UZ)',
+    'exp.cat.lbl.approver':'Kim tasdiqlaydi',
+    'exp.cat.opt.manager':'Menejer','exp.cat.opt.both':'Menejer → Admin','exp.cat.opt.admin':'Faqat Admin',
+    'exp.cat.lbl.threshold':'Summa chegarasi (chek)','exp.cat.ph.threshold':'ixtiyoriy',
+    'exp.cat.chk.receipt':'Chek talab qilinadi','exp.cat.chk.staff':'👤 Xodimni koʻrsatish',
+    'exp.cat.chk.active':'Faol','exp.cat.lbl.sort':'Saralash tartibi',
+    'exp.btn.add.subcat':'+ pastki kat.','exp.empty.cats':'Kategoriyalar yoʻq','exp.empty.subcats':'Pastki kategoriyalar yoʻq',
+    'exp.badge.inactive':'faol emas','exp.badge.receipt':'📎 chek','exp.link.receipt':'📎 Chek',
+    'exp.approve.manager':'👤 Menejer','exp.approve.both':'👤→👑 Menejer+Admin','exp.approve.admin':'👑 Faqat Admin',
+    'exp.err.name.required':'Nomni kiriting (RU)','exp.msg.saved':'Saqlandi','exp.msg.created':'Yaratildi',
+    'exp.confirm.delete.cat':'Kategoriyani oʻchirasizmi?','exp.msg.deleted':'Oʻchirildi',
+    'exp.bal.loading':'⏳ Balans yuklanmoqda…','exp.bal.balance':'💰 Balans:','exp.bal.accrued':'📅 Hisoblandi:',
+    'exp.bal.advances':'💸 Avanslar:','exp.bal.available':'✅ Mavjud:','exp.bal.over.limit':'⚠️ Limitdan oshadi',
+    'exp.th.category':'Kategoriya',
     'cfg.tab.contacts':'📞 Kontaktlar','cfg.tab.staff':'👤 Xodimlar',
     'cfg.tab.sms':'📨 SMS (Eskiz)','cfg.tab.sheets':'📊 Google Sheets',
     'cfg.tab.agents':'🤝 Agentlar','cfg.tab.receipt':'🧾 Chek',
@@ -19827,9 +19861,9 @@ let _expAdmTree    = [];   // дерево категорий
 let _expAdmCatFlat = [];   // плоский список для фильтра истории
 
 const _EXP_APPROVE_LABEL = {
-  manager: '<span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:8px;font-size:11px">👤 Менеджер</span>',
-  both:    '<span style="background:#dbeafe;color:#1d4ed8;padding:1px 6px;border-radius:8px;font-size:11px">👤→👑 Менеджер+Admin</span>',
-  admin:   '<span style="background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:8px;font-size:11px">👑 Только Admin</span>',
+  get manager() { return `<span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:8px;font-size:11px">${_t('exp.approve.manager')}</span>`; },
+  get both()    { return `<span style="background:#dbeafe;color:#1d4ed8;padding:1px 6px;border-radius:8px;font-size:11px">${_t('exp.approve.both')}</span>`; },
+  get admin()   { return `<span style="background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:8px;font-size:11px">${_t('exp.approve.admin')}</span>`; },
 };
 
 function expAdmTabSwitch(tab) {
@@ -19855,11 +19889,11 @@ async function expAdminLoad() {
 async function expAdmLoadTree() {
   const el = document.getElementById('expCatTree');
   if (!el) return;
-  el.innerHTML = '<div style="color:var(--text2);font-size:13px">Загружаю…</div>';
+  el.innerHTML = `<div style="color:var(--text2);font-size:13px">${_t('lbl.loading')}</div>`;
   const data = await apiGet('/admin/expenses/categories/tree').catch(() => null);
   _expAdmTree = data?.categories || [];
 
-  if (!_expAdmTree.length) { el.innerHTML = '<div style="color:var(--text2)">Категорий нет</div>'; return; }
+  if (!_expAdmTree.length) { el.innerHTML = `<div style="color:var(--text2)">${_t('exp.empty.cats')}</div>`; return; }
 
   el.innerHTML = _expAdmTree.map(p => `
     <div style="border:1.5px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden">
@@ -19871,7 +19905,7 @@ async function expAdmLoadTree() {
         <div style="display:flex;gap:6px">
           <button onclick="expCatOpenModal(${p.id})" style="padding:4px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--card);font-size:12px;cursor:pointer">✏️</button>
           <button onclick="expCatDelete(${p.id})" style="padding:4px 10px;border:1.5px solid #fca5a5;border-radius:7px;background:#fef2f2;color:#dc2626;font-size:12px;cursor:pointer">🗑️</button>
-          <button onclick="expCatOpenModal(null,${p.id})" style="padding:4px 10px;border:none;border-radius:7px;background:var(--accent,#163E3B);color:#fff;font-size:12px;cursor:pointer;white-space:nowrap">+ подкатег.</button>
+          <button onclick="expCatOpenModal(null,${p.id})" style="padding:4px 10px;border:none;border-radius:7px;background:var(--accent,#163E3B);color:#fff;font-size:12px;cursor:pointer;white-space:nowrap">${_t('exp.btn.add.subcat')}</button>
         </div>
       </div>
       ${(p.children||[]).length ? `
@@ -19885,15 +19919,15 @@ async function expAdmLoadTree() {
               ${c.name_uz ? `<div style="font-size:11px;color:var(--text2)">${c.name_uz}</div>` : ''}
             </div>
             ${_EXP_APPROVE_LABEL[c.approve_level]||''}
-            ${c.receipt_required ? '<span style="font-size:11px;color:#6b7280">📎 чек</span>' : ''}
-            ${!c.active ? '<span style="font-size:11px;color:#dc2626">неактивна</span>' : ''}
+            ${c.receipt_required ? `<span style="font-size:11px;color:#6b7280">${_t('exp.badge.receipt')}</span>` : ''}
+            ${!c.active ? `<span style="font-size:11px;color:#dc2626">${_t('exp.badge.inactive')}</span>` : ''}
           </div>
           <div style="display:flex;gap:6px;flex-shrink:0">
             <button onclick="expCatOpenModal(${c.id})" style="padding:4px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--card);font-size:12px;cursor:pointer">✏️</button>
             <button onclick="expCatDelete(${c.id})" style="padding:4px 10px;border:1.5px solid #fca5a5;border-radius:7px;background:#fef2f2;color:#dc2626;font-size:12px;cursor:pointer">🗑️</button>
           </div>
         </div>`).join('')}
-      </div>` : `<div style="padding:10px 14px;color:var(--text2);font-size:12px">Подкатегорий нет</div>`}
+      </div>` : `<div style="padding:10px 14px;color:var(--text2);font-size:12px">${_t('exp.empty.subcats')}</div>`}
     </div>
   `).join('');
 }
@@ -19916,7 +19950,7 @@ function expCatOpenModal(catId = null, defaultParentId = null) {
   document.getElementById('expCatActive').checked = true;
   document.getElementById('expCatSort').value = '0';
   parentSel.value = defaultParentId ? String(defaultParentId) : '';
-  document.getElementById('expCatModalTitle').textContent = catId ? 'Редактировать категорию' : 'Новая категория';
+  document.getElementById('expCatModalTitle').textContent = _t(catId ? 'exp.cat.modal.edit' : 'exp.cat.modal.new');
 
   if (catId) {
     // Найти категорию
@@ -19947,7 +19981,7 @@ async function expCatSave() {
   const catId    = document.getElementById('expCatId').value;
   const name_ru  = document.getElementById('expCatNameRu').value.trim();
   const name_uz  = document.getElementById('expCatNameUz').value.trim();
-  if (!name_ru) { showToast('Введите название (RU)', 'warning'); return; }
+  if (!name_ru) { showToast(_t('exp.err.name.required'), 'warning'); return; }
   const body = {
     name_ru,
     name_uz: name_uz || name_ru,
@@ -19967,9 +20001,9 @@ async function expCatSave() {
   } else {
     r = await apiPost('/admin/expenses/categories', body).catch(() => null);
   }
-  if (!r?.ok) { showToast(r?.detail || 'Ошибка', 'error'); return; }
+  if (!r?.ok) { showToast(r?.detail || _t('cash.err.generic'), 'error'); return; }
   document.getElementById('expCatModal').style.display = 'none';
-  showToast(catId ? 'Сохранено' : 'Создано', 'success');
+  showToast(_t(catId ? 'exp.msg.saved' : 'exp.msg.created'), 'success');
   const _scrollEl = document.querySelector('.content');
   const _savedScroll = _scrollEl ? _scrollEl.scrollTop : 0;
   await expAdmLoadTree();
@@ -20141,24 +20175,24 @@ async function promoToggleActive(id, val) {
 }
 
 async function expCatDelete(catId) {
-  if (!confirm('Удалить категорию?')) return;
+  if (!confirm(_t('exp.confirm.delete.cat'))) return;
   const r = await apiDelete(`/admin/expenses/categories/${catId}`).catch(() => null);
   if (!r?.ok) {
-    const err = r?.detail || 'Ошибка';
+    const err = r?.detail || _t('cash.err.generic');
     showToast(err, 'error');
     return;
   }
-  showToast('Удалено', 'success');
+  showToast(_t('exp.msg.deleted'), 'success');
   expAdmLoadTree();
 }
 
 // ── Очередь ──
 const _EXP_STATUS_LABEL_ADM = {
-  pending:      '<span style="background:#fef3c7;color:#b45309;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">⏳ На рассмотрении</span>',
-  mgr_approved: '<span style="background:#dbeafe;color:#1d4ed8;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">🔵 Ожидает Admin</span>',
-  approved:     '<span style="background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">✅ Утверждён</span>',
-  rejected:     '<span style="background:#fee2e2;color:#dc2626;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">❌ Отклонён</span>',
-  paid:         '<span style="background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">✅ Утверждён</span>',
+  get pending()      { return `<span style="background:#fef3c7;color:#b45309;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${_t('exp.status.pending')}</span>`; },
+  get mgr_approved() { return `<span style="background:#dbeafe;color:#1d4ed8;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${_t('exp.status.mgr')}</span>`; },
+  get approved()     { return `<span style="background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${_t('exp.status.paid')}</span>`; },
+  get rejected()     { return `<span style="background:#fee2e2;color:#dc2626;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${_t('exp.status.rejected')}</span>`; },
+  get paid()         { return `<span style="background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${_t('exp.status.paid')}</span>`; },
 };
 
 function _expCatLabel(e) {
@@ -20177,7 +20211,7 @@ async function expAdmLoadQueue() {
   el.innerHTML = list.map(e => {
     const dt = new Date(e.created_at).toLocaleString('ru',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     const staffBadge = e.for_staff_id
-      ? `<div id="expBalCard_${e.id}" style="margin:8px 0;font-size:12px;color:var(--text2)">⏳ Загрузка баланса…</div>`
+      ? `<div id="expBalCard_${e.id}" style="margin:8px 0;font-size:12px;color:var(--text2)">${_t('exp.bal.loading')}</div>`
       : '';
     return `<div style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
@@ -20187,16 +20221,16 @@ async function expAdmLoadQueue() {
           ${e.description ? `<div style="font-size:12px;color:var(--text2);margin-top:3px">${e.description}</div>` : ''}
           <div style="font-size:11px;color:var(--text2);margin-top:4px">${e.creator_name||'—'} · ${e.branch||''} · ${dt}</div>
           <div style="margin-top:4px">${_EXP_STATUS_LABEL_ADM[e.status]||''} ${_EXP_APPROVE_LABEL[e.approve_level]||''}</div>
-          ${e.receipt_url ? `<a href="${e.receipt_url}" target="_blank" style="font-size:12px;color:#2563eb;display:inline-block;margin-top:4px">📎 Чек</a>` : ''}
+          ${e.receipt_url ? `<a href="${e.receipt_url}" target="_blank" style="font-size:12px;color:#2563eb;display:inline-block;margin-top:4px">${_t('exp.link.receipt')}</a>` : ''}
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:18px;font-weight:700;color:var(--accent,#163E3B)">${fmt(e.amount)} сум</div>
+          <div style="font-size:18px;font-weight:700;color:var(--accent,#163E3B)">${fmt(e.amount)} ${_t('pay.currency')}</div>
         </div>
       </div>
       ${staffBadge}
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button onclick="expAdmApprove(${e.id})" style="flex:1;padding:8px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✅ Утвердить</button>
-        <button onclick="expAdmReject(${e.id})" style="flex:1;padding:8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer">❌ Отклонить</button>
+        <button onclick="expAdmApprove(${e.id})" style="flex:1;padding:8px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">${_t('cash.btn.approve')}</button>
+        <button onclick="expAdmReject(${e.id})" style="flex:1;padding:8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer">${_t('cash.btn.reject')}</button>
       </div>
     </div>`;
   }).join('');
@@ -20210,11 +20244,11 @@ async function expAdmLoadQueue() {
     const limitColor = b.advance_limit > 0 ? '#15803d' : '#dc2626';
     el2.innerHTML = `<div style="background:${over?'#fff7ed':'#f0fdf4'};border:1px solid ${over?'#fed7aa':'#bbf7d0'};border-radius:8px;padding:8px 12px;font-size:12px">
       <div style="display:flex;flex-wrap:wrap;gap:12px">
-        <span>💰 Баланс: <b>${fmtB(b.balance)}</b></span>
-        <span>📅 Начислено: <b>+${fmtB(b.accrual_month)}</b></span>
-        <span>💸 Авансов: <b>−${fmtB(b.advances_month)}</b></span>
-        <span style="color:${limitColor}">✅ Доступно: <b>${fmtB(b.advance_limit)}</b> (${b.advance_pct}%)</span>
-        ${over ? '<span style="color:#dc2626;font-weight:700">⚠️ Превышает лимит</span>' : ''}
+        <span>${_t('exp.bal.balance')} <b>${fmtB(b.balance)}</b></span>
+        <span>${_t('exp.bal.accrued')} <b>+${fmtB(b.accrual_month)}</b></span>
+        <span>${_t('exp.bal.advances')} <b>−${fmtB(b.advances_month)}</b></span>
+        <span style="color:${limitColor}">${_t('exp.bal.available')} <b>${fmtB(b.advance_limit)}</b> (${b.advance_pct}%)</span>
+        ${over ? `<span style="color:#dc2626;font-weight:700">${_t('exp.bal.over.limit')}</span>` : ''}
       </div>
     </div>`;
   });
@@ -20222,17 +20256,17 @@ async function expAdmLoadQueue() {
 
 async function expAdmApprove(id) {
   const r = await apiPatch(`/admin/expenses/${id}/approve`, {}).catch(() => null);
-  if (!r?.ok) { showToast('Ошибка', 'error'); return; }
-  showToast('Расход утверждён', 'success');
+  if (!r?.ok) { showToast(_t('cash.err.generic'), 'error'); return; }
+  showToast(_t('cash.msg.expense.approved'), 'success');
   expAdmLoadQueue();
 }
 
 async function expAdmReject(id) {
-  const reason = prompt('Причина отклонения:');
+  const reason = prompt(_t('cash.prompt.reject.reason'));
   if (reason === null) return;
   const r = await apiPatch(`/admin/expenses/${id}/reject`, { reason: reason.trim() }).catch(() => null);
-  if (!r?.ok) { showToast('Ошибка', 'error'); return; }
-  showToast('Расход отклонён', 'success');
+  if (!r?.ok) { showToast(_t('cash.err.generic'), 'error'); return; }
+  showToast(_t('cash.msg.expense.rejected'), 'success');
   expAdmLoadQueue();
 }
 
@@ -20273,7 +20307,7 @@ function expAdmSetStatus(btn, status) {
 async function expAdmLoadHistory() {
   const el = document.getElementById('expAdmHistoryList');
   if (!el) return;
-  el.innerHTML = '<div style="color:var(--text2);font-size:13px">Загружаю…</div>';
+  el.innerHTML = `<div style="color:var(--text2);font-size:13px">${_t('lbl.loading')}</div>`;
   const params = new URLSearchParams({ limit: '200' });
   const status = _expAdmHStatus;
   const branch = document.getElementById('expAdmHBranch')?.value;
@@ -20284,14 +20318,14 @@ async function expAdmLoadHistory() {
   const data = await apiGet(`/admin/expenses?${params}`).catch(() => null);
   const list = data?.expenses || [];
   const fmt = v => Number(Math.round(v)).toLocaleString('ru');
-  if (!list.length) { el.innerHTML = '<div style="color:var(--text2);padding:12px 0">Расходов нет</div>'; return; }
+  if (!list.length) { el.innerHTML = `<div style="color:var(--text2);padding:12px 0">${_t('cash.empty.expenses')}</div>`; return; }
   el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px">
     <thead><tr style="text-align:left;border-bottom:2px solid var(--border)">
-      <th style="padding:8px 4px">Категория</th>
-      <th style="padding:8px 4px">Сотрудник</th>
-      <th style="padding:8px 4px">Сумма</th>
-      <th style="padding:8px 4px">Статус</th>
-      <th style="padding:8px 4px">Дата</th>
+      <th style="padding:8px 4px">${_t('exp.th.category')}</th>
+      <th style="padding:8px 4px">${_t('th.staff')}</th>
+      <th style="padding:8px 4px">${_t('th.amount')}</th>
+      <th style="padding:8px 4px">${_t('th.status')}</th>
+      <th style="padding:8px 4px">${_t('th.date')}</th>
     </tr></thead>
     <tbody>${list.map(e => {
       const dt = new Date(e.created_at).toLocaleString('ru',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -20299,8 +20333,8 @@ async function expAdmLoadHistory() {
         <td style="padding:8px 4px">
           <div>${_expCatLabel(e)}</div>
           ${e.description ? `<div style="font-size:11px;color:var(--text2)">${e.description}</div>` : ''}
-          ${e.receipt_url ? `<a href="${e.receipt_url}" target="_blank" style="font-size:11px;color:#2563eb">📎 чек</a>` : ''}
-          ${e.reject_reason ? `<div style="font-size:11px;color:#dc2626">Причина: ${e.reject_reason}</div>` : ''}
+          ${e.receipt_url ? `<a href="${e.receipt_url}" target="_blank" style="font-size:11px;color:#2563eb">${_t('exp.badge.receipt')}</a>` : ''}
+          ${e.reject_reason ? `<div style="font-size:11px;color:#dc2626">${_t('cash.lbl.reason.prefix')} ${e.reject_reason}</div>` : ''}
         </td>
         <td style="padding:8px 4px;color:var(--text2);font-size:12px">${e.creator_name||'—'}<br>${e.branch||''}</td>
         <td style="padding:8px 4px;font-weight:700;white-space:nowrap">${fmt(e.amount)}</td>
