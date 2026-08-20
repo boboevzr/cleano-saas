@@ -1930,41 +1930,41 @@
           </div>
           <!-- Форма приёма наличных -->
           <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">
-            <div style="font-size:13px;font-weight:700;margin-bottom:12px">📥 Принять наличные</div>
+            <div data-i18n="cash.accept.title" style="font-size:13px;font-weight:700;margin-bottom:12px">📥 Принять наличные</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
               <div>
-                <div style="font-size:11px;color:var(--text2);margin-bottom:4px">От кого</div>
+                <div data-i18n="cash.lbl.from.whom" style="font-size:11px;color:var(--text2);margin-bottom:4px">От кого</div>
                 <select id="handoverFrom" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
-                  <option value="">— выбрать —</option>
+                  <option value="" data-i18n="lbl.choose">— выбрать —</option>
                 </select>
               </div>
               <div>
-                <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Кому (получатель)</div>
+                <div data-i18n="cash.lbl.to.recipient" style="font-size:11px;color:var(--text2);margin-bottom:4px">Кому (получатель)</div>
                 <select id="handoverTo" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
-                  <option value="">— выбрать —</option>
+                  <option value="" data-i18n="lbl.choose">— выбрать —</option>
                 </select>
               </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
               <div>
-                <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Сумма</div>
+                <div data-i18n="cash.lbl.amount" style="font-size:11px;color:var(--text2);margin-bottom:4px">Сумма</div>
                 <input type="number" id="handoverAmount" min="0" step="1000" placeholder="0" inputmode="numeric"
                        style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
               </div>
               <div>
-                <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Примечание</div>
-                <input type="text" id="handoverNote" placeholder="необязательно"
+                <div data-i18n="cash.lbl.note" style="font-size:11px;color:var(--text2);margin-bottom:4px">Примечание</div>
+                <input type="text" id="handoverNote" data-i18n-ph="ph.optional" placeholder="необязательно"
                        style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
               </div>
             </div>
-            <button onclick="submitCashHandover()" style="padding:9px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✅ Подтвердить приём</button>
+            <button onclick="submitCashHandover()" data-i18n="cash.btn.accept.confirm" style="padding:9px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✅ Подтвердить приём</button>
           </div>
           <!-- Pending сдачи в сейф -->
           <div id="pendingSafeDepositsWrap" style="display:none;background:rgba(30,64,175,.07);border:1.5px solid #bfdbfe;border-radius:12px;padding:14px;margin-bottom:16px">
-            <div style="font-size:12px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">⏳ 🔒 Ожидают подтверждения (сейф)</div>
+            <div data-i18n="cash.pending.safe.title" style="font-size:12px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">⏳ 🔒 Ожидают подтверждения (сейф)</div>
             <div id="pendingSafeDepositsList"></div>
           </div>
-          <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">История передач</div>
+          <div data-i18n="cash.handovers.history" style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">История передач</div>
           <div id="cashHandoversList"></div>
         </div>
 
@@ -1972,53 +1972,53 @@
         <div id="cashTabPane_deposits" style="display:none">
           <div style="background:var(--surface2);border:1.5px solid #fecaca;border-radius:14px;padding:16px;margin-bottom:16px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-              <div style="font-size:14px;font-weight:700;color:#b91c1c">🏦 Инкассация</div>
+              <div data-i18n="cash.deposits.title" style="font-size:14px;font-weight:700;color:#b91c1c">🏦 Инкассация</div>
               <button onclick="loadBankDeposits()" style="padding:4px 12px;background:var(--surface2);border:1.5px solid var(--sep);border-radius:8px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer">↻</button>
             </div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:10px">
               <div>
-                <div style="font-size:11px;color:var(--text2);margin-bottom:4px">От кого</div>
+                <div data-i18n="cash.lbl.from.whom" style="font-size:11px;color:var(--text2);margin-bottom:4px">От кого</div>
                 <select id="depositFrom" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
-                  <option value="">— выбрать —</option>
+                  <option value="" data-i18n="lbl.choose">— выбрать —</option>
                 </select>
               </div>
               <div>
-                <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Куда</div>
+                <div data-i18n="cash.lbl.where.to" style="font-size:11px;color:var(--text2);margin-bottom:4px">Куда</div>
                 <select id="depositType" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
-                  <option value="bank">🏦 Банк</option>
-                  <option value="safe">🗄 Сейф</option>
+                  <option value="bank" data-i18n="cash.opt.bank">🏦 Банк</option>
+                  <option value="safe" data-i18n="cash.opt.safe">🗄 Сейф</option>
                 </select>
               </div>
               <div>
-                <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Сумма</div>
+                <div data-i18n="cash.lbl.amount" style="font-size:11px;color:var(--text2);margin-bottom:4px">Сумма</div>
                 <input type="number" id="depositAmount" min="0" step="1000" placeholder="0" inputmode="numeric"
                        style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
               </div>
               <div>
-                <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Примечание</div>
-                <input type="text" id="depositNote" placeholder="Квитанция №…"
+                <div data-i18n="cash.lbl.note" style="font-size:11px;color:var(--text2);margin-bottom:4px">Примечание</div>
+                <input type="text" id="depositNote" data-i18n-ph="cash.ph.receipt" placeholder="Квитанция №…"
                        style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
               </div>
             </div>
-            <button onclick="submitBankDeposit()" style="padding:9px 22px;background:#b91c1c;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">💸 Инкассировать</button>
+            <button onclick="submitBankDeposit()" data-i18n="cash.btn.deposit" style="padding:9px 22px;background:#b91c1c;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">💸 Инкассировать</button>
           </div>
-          <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">История инкассаций</div>
+          <div data-i18n="cash.deposits.history" style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">История инкассаций</div>
           <div id="bankDepositsList"></div>
         </div>
 
         <!-- ───── Вкладка: Расходы ───── -->
         <div id="cashTabPane_expenses" style="display:none">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-            <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">🧾 Расходы</div>
-            <button onclick="adminLoadExpenses()" style="padding:5px 12px;background:var(--surface2);border:1.5px solid var(--sep);border-radius:8px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer">↻ Обновить</button>
+            <div data-i18n="cash.expenses.title" style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">🧾 Расходы</div>
+            <button onclick="adminLoadExpenses()" data-i18n="btn.update" style="padding:5px 12px;background:var(--surface2);border:1.5px solid var(--sep);border-radius:8px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer">↻ Обновить</button>
           </div>
           <div id="adminExpensesPending" style="margin-bottom:16px"></div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
-            <button class="filter-btn active" onclick="expCashSetStatus(this,'')">Все</button>
-            <button class="filter-btn" onclick="expCashSetStatus(this,'pending')">⏳ На рассмотрении</button>
-            <button class="filter-btn" onclick="expCashSetStatus(this,'mgr_approved')">🔵 Ожидает Admin</button>
-            <button class="filter-btn" onclick="expCashSetStatus(this,'paid')">✅ Утверждён</button>
-            <button class="filter-btn" onclick="expCashSetStatus(this,'rejected')">❌ Отклонён</button>
+            <button class="filter-btn active" onclick="expCashSetStatus(this,'')" data-i18n="lbl.all">Все</button>
+            <button class="filter-btn" onclick="expCashSetStatus(this,'pending')" data-i18n="cash.exp.status.pending">⏳ На рассмотрении</button>
+            <button class="filter-btn" onclick="expCashSetStatus(this,'mgr_approved')" data-i18n="cash.exp.status.wait.admin">🔵 Ожидает Admin</button>
+            <button class="filter-btn" onclick="expCashSetStatus(this,'paid')" data-i18n="cash.exp.status.approved">✅ Утверждён</button>
+            <button class="filter-btn" onclick="expCashSetStatus(this,'rejected')" data-i18n="cash.exp.status.rejected">❌ Отклонён</button>
           </div>
           <div style="margin-bottom:10px">
             <select id="adminExpFilterBranch" data-branch-select data-add-all="true" onchange="adminLoadExpenses()" style="padding:6px 10px;border:1.5px solid var(--sep);border-radius:8px;font-size:12px;background:var(--card);color:var(--text)">
@@ -2032,10 +2032,10 @@
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
             <select id="cashHistYear" onchange="loadCashHistory()" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px"></select>
             <select id="cashHistMonth" onchange="loadCashHistory()" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
-              <option value="1">Январь</option><option value="2">Февраль</option><option value="3">Март</option>
-              <option value="4">Апрель</option><option value="5">Май</option><option value="6">Июнь</option>
-              <option value="7">Июль</option><option value="8">Август</option><option value="9">Сентябрь</option>
-              <option value="10">Октябрь</option><option value="11">Ноябрь</option><option value="12">Декабрь</option>
+              <option value="1" data-i18n="mon.1">Январь</option><option value="2" data-i18n="mon.2">Февраль</option><option value="3" data-i18n="mon.3">Март</option>
+              <option value="4" data-i18n="mon.4">Апрель</option><option value="5" data-i18n="mon.5">Май</option><option value="6" data-i18n="mon.6">Июнь</option>
+              <option value="7" data-i18n="mon.7">Июль</option><option value="8" data-i18n="mon.8">Август</option><option value="9" data-i18n="mon.9">Сентябрь</option>
+              <option value="10" data-i18n="mon.10">Октябрь</option><option value="11" data-i18n="mon.11">Ноябрь</option><option value="12" data-i18n="mon.12">Декабрь</option>
             </select>
             <select id="cashHistDay" onchange="loadCashHistory()" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px"></select>
             <select id="cashHistBranch" data-branch-select data-add-all="true" onchange="loadCashHistory()" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
@@ -2047,8 +2047,8 @@
         <!-- ───── Вкладка: Долги ───── -->
         <div id="cashTabPane_debts" style="display:none">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-            <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">💸 Заказы в долг</div>
-            <button onclick="loadDebtOrders()" style="padding:5px 12px;background:var(--surface2);border:1.5px solid var(--sep);border-radius:8px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer">↻ Обновить</button>
+            <div data-i18n="cash.debts.title" style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">💸 Заказы в долг</div>
+            <button onclick="loadDebtOrders()" data-i18n="btn.update" style="padding:5px 12px;background:var(--surface2);border:1.5px solid var(--sep);border-radius:8px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer">↻ Обновить</button>
           </div>
           <div id="cashDebtTable" style="overflow-x:auto"></div>
         </div>
@@ -6643,6 +6643,43 @@ const _adminI18n = {
     'lbl.from':'С','lbl.to':'По',
     'cash.btn.by.orders':'📋 По заказам','cash.btn.all.payments':'📋 Все оплаты',
     'cash.empty.payments':'Нет оплаченных заказов за период',
+    'cash.accept.title':'📥 Принять наличные','cash.lbl.from.whom':'От кого',
+    'cash.lbl.to.recipient':'Кому (получатель)','cash.lbl.amount':'Сумма','cash.lbl.note':'Примечание',
+    'cash.btn.accept.confirm':'✅ Подтвердить приём',
+    'cash.pending.safe.title':'⏳ 🔒 Ожидают подтверждения (сейф)','cash.handovers.history':'История передач',
+    'cash.deposits.title':'🏦 Инкассация','cash.lbl.where.to':'Куда',
+    'cash.opt.bank':'🏦 Банк','cash.opt.safe':'🗄 Сейф','cash.ph.receipt':'Квитанция №…',
+    'cash.btn.deposit':'💸 Инкассировать','cash.deposits.history':'История инкассаций',
+    'cash.expenses.title':'🧾 Расходы',
+    'cash.exp.status.pending':'⏳ На рассмотрении','cash.exp.status.wait.admin':'🔵 Ожидает Admin',
+    'cash.exp.status.approved':'✅ Утверждён','cash.exp.status.rejected':'❌ Отклонён',
+    'cash.debts.title':'💸 Заказы в долг','th.way':'Способ',
+    'cash.th.debt':'Долг','cash.th.responsible':'Ответственный','cash.th.due.date':'Срок погашения',
+    'cash.btn.extend':'📅 Продлить','cash.btn.history':'📋 История',
+    'cash.lbl.new.due.date':'Новый срок','cash.lbl.reason.optional':'Причина (необязательно)',
+    'cash.ph.reason':'Клиент объяснил ситуацию…',
+    'cash.hist.not.found':'История не найдена','cash.hist.delivered':'📦 Закрыт с долгом',
+    'cash.hist.extended':'📅 Срок продлён','cash.hist.paid':'✅ Долг погашен',
+    'cash.err.pick.date':'Выберите новую дату','cash.err.save':'Ошибка сохранения',
+    'cash.msg.due.extended':'✅ Срок продлён',
+    'cash.pay.status.paid':'✅ Оплачен','cash.pay.status.partial':'🔶 Предоплата',
+    'cash.bal.collected':'Принял от клиентов','cash.bal.received.others':'Получил от сотрудников',
+    'cash.bal.handed.over':'Сдал','cash.bal.on.hand':'На руках','cash.empty.balance':'Нет активных операций',
+    'cash.err.generic':'Ошибка','cash.msg.confirmed':'Подтверждено ✅','cash.msg.rejected':'Отклонено',
+    'cash.empty.handovers':'Передач пока нет','cash.handover.cancelled':'❌ Отменено','cash.handover.pending':'⏳ Ожидает',
+    'cash.btn.cancel.handover':'✕ Отменить',
+    'cash.err.pick.from':'Выберите от кого','cash.err.pick.recipient':'Выберите получателя',
+    'cash.err.enter.amount':'Введите сумму','cash.err.save.handover':'Ошибка при сохранении',
+    'cash.msg.handover.saved':'Передача зафиксирована','cash.confirm.cancel.handover':'Отменить эту передачу наличных?',
+    'cash.err.cancel':'Ошибка отмены','cash.msg.handover.cancelled':'Передача отменена',
+    'cash.err.deposit':'Ошибка инкассации','cash.msg.deposited.bank':'🏦 Сдано в банк','cash.msg.deposited.safe':'🗄 Помещено в сейф',
+    'cash.loading':'Загружаю…','cash.exp.pending.title':'📋 Ожидают вашего утверждения',
+    'cash.btn.approve':'✅ Утвердить','cash.btn.reject':'❌ Отклонить','cash.empty.expenses':'Расходов нет',
+    'cash.lbl.reason.prefix':'Причина:',
+    'cash.msg.expense.approved':'Расход утверждён','cash.msg.expense.rejected':'Расход отклонён',
+    'cash.prompt.reject.reason':'Причина отклонения:','cash.msg.expense.paid':'Расход выплачен',
+    'mon.1':'Январь','mon.2':'Февраль','mon.3':'Март','mon.4':'Апрель','mon.5':'Май','mon.6':'Июнь',
+    'mon.7':'Июль','mon.8':'Август','mon.9':'Сентябрь','mon.10':'Октябрь','mon.11':'Ноябрь','mon.12':'Декабрь',
     'promo.info':'Одновременно активной может быть только одна акция. Включение акции автоматически выключает остальные.',
     'th.name.ru':'Название (RU)',
     'promo.on':'✅ Вкл','promo.off':'❌ Выкл',
@@ -7180,6 +7217,43 @@ const _adminI18n = {
     'lbl.from':'Dan','lbl.to':'Gacha',
     'cash.btn.by.orders':'📋 Buyurtmalar boʻyicha','cash.btn.all.payments':'📋 Barcha toʻlovlar',
     'cash.empty.payments':'Davr uchun toʻlangan buyurtmalar yoʻq',
+    'cash.accept.title':'📥 Naqd pulni qabul qilish','cash.lbl.from.whom':'Kimdan',
+    'cash.lbl.to.recipient':'Kimga (qabul qiluvchi)','cash.lbl.amount':'Summa','cash.lbl.note':'Izoh',
+    'cash.btn.accept.confirm':'✅ Qabulni tasdiqlash',
+    'cash.pending.safe.title':'⏳ 🔒 Tasdiqlanishini kutmoqda (seyf)','cash.handovers.history':'Topshirishlar tarixi',
+    'cash.deposits.title':'🏦 Inkassatsiya','cash.lbl.where.to':'Qayerga',
+    'cash.opt.bank':'🏦 Bank','cash.opt.safe':'🗄 Seyf','cash.ph.receipt':'Kvitansiya №…',
+    'cash.btn.deposit':'💸 Inkassatsiya qilish','cash.deposits.history':'Inkassatsiyalar tarixi',
+    'cash.expenses.title':'🧾 Xarajatlar',
+    'cash.exp.status.pending':'⏳ Koʻrib chiqilmoqda','cash.exp.status.wait.admin':'🔵 Admin kutmoqda',
+    'cash.exp.status.approved':'✅ Tasdiqlangan','cash.exp.status.rejected':'❌ Rad etilgan',
+    'cash.debts.title':'💸 Qarzga berilgan buyurtmalar','th.way':'Usul',
+    'cash.th.debt':'Qarz','cash.th.responsible':'Masʼul','cash.th.due.date':'Toʻlash muddati',
+    'cash.btn.extend':'📅 Muddatni uzaytirish','cash.btn.history':'📋 Tarix',
+    'cash.lbl.new.due.date':'Yangi muddat','cash.lbl.reason.optional':'Sabab (majburiy emas)',
+    'cash.ph.reason':'Mijoz vaziyatni tushuntirdi…',
+    'cash.hist.not.found':'Tarix topilmadi','cash.hist.delivered':'📦 Qarz bilan yopilgan',
+    'cash.hist.extended':'📅 Muddat uzaytirildi','cash.hist.paid':'✅ Qarz toʻlandi',
+    'cash.err.pick.date':'Yangi sanani tanlang','cash.err.save':'Saqlashda xatolik',
+    'cash.msg.due.extended':'✅ Muddat uzaytirildi',
+    'cash.pay.status.paid':'✅ Toʻlangan','cash.pay.status.partial':'🔶 Oldindan toʻlov',
+    'cash.bal.collected':'Mijozlardan qabul qildi','cash.bal.received.others':'Xodimlardan qabul qildi',
+    'cash.bal.handed.over':'Topshirdi','cash.bal.on.hand':'Qoʻlda','cash.empty.balance':'Faol operatsiyalar yoʻq',
+    'cash.err.generic':'Xatolik','cash.msg.confirmed':'Tasdiqlandi ✅','cash.msg.rejected':'Rad etildi',
+    'cash.empty.handovers':'Topshirishlar hali yoʻq','cash.handover.cancelled':'❌ Bekor qilindi','cash.handover.pending':'⏳ Kutmoqda',
+    'cash.btn.cancel.handover':'✕ Bekor qilish',
+    'cash.err.pick.from':'Kimdanligini tanlang','cash.err.pick.recipient':'Qabul qiluvchini tanlang',
+    'cash.err.enter.amount':'Summani kiriting','cash.err.save.handover':'Saqlashda xatolik',
+    'cash.msg.handover.saved':'Topshirish qayd etildi','cash.confirm.cancel.handover':'Ushbu naqd pul topshirilishini bekor qilasizmi?',
+    'cash.err.cancel':'Bekor qilishda xatolik','cash.msg.handover.cancelled':'Topshirish bekor qilindi',
+    'cash.err.deposit':'Inkassatsiyada xatolik','cash.msg.deposited.bank':'🏦 Bankka topshirildi','cash.msg.deposited.safe':'🗄 Seyfga qoʻyildi',
+    'cash.loading':'Yuklanmoqda…','cash.exp.pending.title':'📋 Sizning tasdiqlashingizni kutmoqda',
+    'cash.btn.approve':'✅ Tasdiqlash','cash.btn.reject':'❌ Rad etish','cash.empty.expenses':'Xarajatlar yoʻq',
+    'cash.lbl.reason.prefix':'Sabab:',
+    'cash.msg.expense.approved':'Xarajat tasdiqlandi','cash.msg.expense.rejected':'Xarajat rad etildi',
+    'cash.prompt.reject.reason':'Rad etish sababi:','cash.msg.expense.paid':'Xarajat toʻlandi',
+    'mon.1':'Yanvar','mon.2':'Fevral','mon.3':'Mart','mon.4':'Aprel','mon.5':'May','mon.6':'Iyun',
+    'mon.7':'Iyul','mon.8':'Avgust','mon.9':'Sentabr','mon.10':'Oktabr','mon.11':'Noyabr','mon.12':'Dekabr',
     'promo.info':'Bir vaqtning oʻzida faqat bitta aksiya faol boʻlishi mumkin. Aksiyani yoqish boshqalarni avtomatik oʻchiradi.',
     'th.name.ru':'Nomi (RU)',
     'promo.on':'✅ Yoq','promo.off':'❌ Oʻchiq',
@@ -13851,7 +13925,7 @@ async function loadCashHistory() {
 async function loadDebtOrders() {
   const el = document.getElementById('cashDebtTable');
   if (!el) return;
-  el.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:10px 0">Загрузка…</div>';
+  el.innerHTML = `<div style="color:var(--text2);font-size:13px;padding:10px 0">${_t('lbl.loading')}</div>`;
   const d = await apiGet('/admin/orders/debts').catch(() => null);
   const rows = d?.debts || [];
   if (!rows.length) {
@@ -13872,13 +13946,13 @@ async function loadDebtOrders() {
   const dueFmt = s => s ? new Date(s + 'T00:00:00').toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'}) : '—';
   el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border:1.5px solid var(--sep);border-radius:12px;overflow:hidden">
     <thead><tr style="background:var(--surface2);color:var(--text2)">
-      <th style="padding:9px 10px;text-align:left;font-weight:600;white-space:nowrap">Заказ</th>
-      <th style="padding:9px 10px;text-align:left;font-weight:600">Клиент</th>
-      <th style="padding:9px 10px;text-align:left;font-weight:600">Телефон</th>
-      <th style="padding:9px 10px;text-align:right;font-weight:600">Долг</th>
-      <th style="padding:9px 10px;text-align:left;font-weight:600">Ответственный</th>
-      <th style="padding:9px 10px;text-align:left;font-weight:600;white-space:nowrap">Срок погашения</th>
-      <th style="padding:9px 10px;text-align:center;font-weight:600">Статус</th>
+      <th style="padding:9px 10px;text-align:left;font-weight:600;white-space:nowrap">${_t('th.order')}</th>
+      <th style="padding:9px 10px;text-align:left;font-weight:600">${_t('th.client')}</th>
+      <th style="padding:9px 10px;text-align:left;font-weight:600">${_t('th.phone')}</th>
+      <th style="padding:9px 10px;text-align:right;font-weight:600">${_t('cash.th.debt')}</th>
+      <th style="padding:9px 10px;text-align:left;font-weight:600">${_t('cash.th.responsible')}</th>
+      <th style="padding:9px 10px;text-align:left;font-weight:600;white-space:nowrap">${_t('cash.th.due.date')}</th>
+      <th style="padding:9px 10px;text-align:center;font-weight:600">${_t('th.status')}</th>
       <th style="padding:9px 10px;text-align:left;font-weight:600"></th>
     </tr></thead>
     <tbody>
@@ -13892,29 +13966,29 @@ async function loadDebtOrders() {
         <td style="padding:8px 10px;white-space:nowrap;color:var(--text2)">${dueFmt(r.debt_due_date)}</td>
         <td style="padding:8px 10px;text-align:center">${statusBadge(r)}</td>
         <td style="padding:8px 10px;white-space:nowrap;display:flex;gap:5px">
-          <button onclick="toggleDebtExtend(${r.id},'${r.debt_due_date||''}')" style="padding:5px 10px;border:1.5px solid var(--border);background:var(--surface2);border-radius:7px;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer">📅 Продлить</button>
-          <button onclick="toggleDebtHistory(${r.id})" style="padding:5px 10px;border:1.5px solid var(--border);background:var(--surface2);border-radius:7px;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer">📋 История</button>
+          <button onclick="toggleDebtExtend(${r.id},'${r.debt_due_date||''}')" style="padding:5px 10px;border:1.5px solid var(--border);background:var(--surface2);border-radius:7px;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer">${_t('cash.btn.extend')}</button>
+          <button onclick="toggleDebtHistory(${r.id})" style="padding:5px 10px;border:1.5px solid var(--border);background:var(--surface2);border-radius:7px;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer">${_t('cash.btn.history')}</button>
         </td>
       </tr>
       <tr id="dext_${r.id}" style="display:none;border-top:none">
         <td colspan="8" style="padding:10px 12px;background:var(--surface2)">
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
             <div>
-              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Новый срок</div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">${_t('cash.lbl.new.due.date')}</div>
               <input type="date" id="dext_date_${r.id}" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
             </div>
             <div style="flex:1;min-width:160px">
-              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Причина (необязательно)</div>
-              <input type="text" id="dext_note_${r.id}" placeholder="Клиент объяснил ситуацию…" style="width:100%;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">${_t('cash.lbl.reason.optional')}</div>
+              <input type="text" id="dext_note_${r.id}" placeholder="${_t('cash.ph.reason')}" style="width:100%;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
             </div>
-            <button onclick="saveDebtDueDate(${r.id})" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">💾 Сохранить</button>
+            <button onclick="saveDebtDueDate(${r.id})" style="padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">${_t('btn.save')}</button>
             <button onclick="toggleDebtExtend(${r.id})" style="padding:8px 12px;background:none;border:1.5px solid var(--border);border-radius:8px;font-size:12px;color:var(--text2);cursor:pointer">✕</button>
           </div>
         </td>
       </tr>
       <tr id="dhist_${r.id}" style="display:none;border-top:none">
         <td colspan="8" style="padding:10px 14px;background:var(--surface2)">
-          <div id="dhist_body_${r.id}" style="color:var(--text2);font-size:12px">Загрузка…</div>
+          <div id="dhist_body_${r.id}" style="color:var(--text2);font-size:12px">${_t('lbl.loading')}</div>
         </td>
       </tr>`).join('')}
     </tbody>
@@ -13939,14 +14013,14 @@ async function toggleDebtHistory(id) {
   if (isOpen) { row.style.display = 'none'; return; }
   row.style.display = '';
   const body = document.getElementById(`dhist_body_${id}`);
-  body.innerHTML = '<span style="color:var(--text2)">Загрузка…</span>';
+  body.innerHTML = `<span style="color:var(--text2)">${_t('lbl.loading')}</span>`;
   const d = await apiGet(`/admin/orders/${id}/debt-history`).catch(() => null);
   const hist = d?.history || [];
   if (!hist.length) {
-    body.innerHTML = '<span style="color:var(--text2)">История не найдена</span>';
+    body.innerHTML = `<span style="color:var(--text2)">${_t('cash.hist.not.found')}</span>`;
     return;
   }
-  const labelMap = { delivered: '📦 Закрыт с долгом', debt_extended: '📅 Срок продлён', debt_paid: '✅ Долг погашен' };
+  const labelMap = { delivered: _t('cash.hist.delivered'), debt_extended: _t('cash.hist.extended'), debt_paid: _t('cash.hist.paid') };
   const dtFmt = s => {
     const d = new Date(s);
     return d.toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'}) + ' ' + d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
@@ -13964,15 +14038,15 @@ async function toggleDebtHistory(id) {
 async function saveDebtDueDate(id) {
   const due_date = document.getElementById(`dext_date_${id}`)?.value;
   const note     = document.getElementById(`dext_note_${id}`)?.value || '';
-  if (!due_date) { showToast('Выберите новую дату', 'error'); return; }
+  if (!due_date) { showToast(_t('cash.err.pick.date'), 'error'); return; }
   const token = adminToken || localStorage.getItem(TOKEN_KEY);
   const res = await fetch(`${API_BASE}/admin/orders/${id}/debt-due-date`, {
     method: 'PATCH',
     headers: { 'Content-Type':'application/json', Authorization:`Bearer ${token}` },
     body: JSON.stringify({ due_date, note }),
   }).catch(() => null);
-  if (!res?.ok) { showToast('Ошибка сохранения', 'error'); return; }
-  showToast('✅ Срок продлён');
+  if (!res?.ok) { showToast(_t('cash.err.save'), 'error'); return; }
+  showToast(_t('cash.msg.due.extended'));
   loadDebtOrders();
   loadCashDashboard();
 }
@@ -14005,27 +14079,27 @@ async function loadCashPage() {
   cardsEl.innerHTML = Object.entries(methods).map(([k,lbl]) => `
     <div style="background:var(--card);border:1.5px solid var(--sep);border-radius:12px;padding:14px 16px">
       <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${lbl}</div>
-      <div style="font-size:20px;font-weight:800;color:var(--accent)">${Number(totals[k]).toLocaleString('ru')} <span style="font-size:12px;font-weight:500">сум</span></div>
+      <div style="font-size:20px;font-weight:800;color:var(--accent)">${Number(totals[k]).toLocaleString('ru')} <span style="font-size:12px;font-weight:500">${_t('pay.currency')}</span></div>
     </div>`).join('') + `
     <div style="background:var(--accent);border-radius:12px;padding:14px 16px">
-      <div style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:4px">💰 Итого</div>
-      <div style="font-size:20px;font-weight:800;color:#fff">${Number(grand).toLocaleString('ru')} <span style="font-size:12px;font-weight:500">сум</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:4px">${_t('pay.total')}</div>
+      <div style="font-size:20px;font-weight:800;color:#fff">${Number(grand).toLocaleString('ru')} <span style="font-size:12px;font-weight:500">${_t('pay.currency')}</span></div>
     </div>`;
 
   // Список заказов
   const pmLabel = { cash:'💵', card:'💳', transfer:'📲' };
-  const stLabel = { paid:'✅ Оплачен', partial:'🔶 Предоплата', unpaid:'⬜' };
+  const stLabel = { paid:_t('cash.pay.status.paid'), partial:_t('cash.pay.status.partial'), unpaid:'⬜' };
   const listEl = document.getElementById('cashOrdersList');
   const orders = data.orders || [];
   listEl.innerHTML = orders.length ? `
     <div style="background:var(--card);border:1.5px solid var(--sep);border-radius:12px;overflow:hidden">
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead><tr style="background:var(--surface2);color:var(--text2)">
-          <th style="padding:8px 12px;text-align:left;font-weight:600">Заказ</th>
-          <th style="padding:8px 12px;text-align:left;font-weight:600">Дата</th>
-          <th style="padding:8px 12px;text-align:right;font-weight:600">Сумма</th>
-          <th style="padding:8px 12px;text-align:center;font-weight:600">Способ</th>
-          <th style="padding:8px 12px;text-align:left;font-weight:600">Статус</th>
+          <th style="padding:8px 12px;text-align:left;font-weight:600">${_t('th.order')}</th>
+          <th style="padding:8px 12px;text-align:left;font-weight:600">${_t('th.date')}</th>
+          <th style="padding:8px 12px;text-align:right;font-weight:600">${_t('th.amount')}</th>
+          <th style="padding:8px 12px;text-align:center;font-weight:600">${_t('th.way')}</th>
+          <th style="padding:8px 12px;text-align:left;font-weight:600">${_t('th.status')}</th>
         </tr></thead>
         <tbody>${orders.map((o,i) => {
           const sum = parseFloat(o.paid_total||0);
@@ -19324,11 +19398,11 @@ async function loadCashBalance() {
     <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px">
       <div style="font-weight:700;font-size:14px;margin-bottom:8px">${b.last_name||''} ${b.first_name||''}</div>
       <div style="display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:12px">
-        <div style="color:var(--text2)">Принял от клиентов</div><div style="text-align:right;font-weight:600">${fmt(b.collected)} сум</div>
-        ${b.received_from_others > 0 ? `<div style="color:var(--text2)">Получил от сотрудников</div><div style="text-align:right;font-weight:600">${fmt(b.received_from_others)} сум</div>` : ''}
-        <div style="color:var(--text2)">Сдал</div><div style="text-align:right;font-weight:600;color:#15803d">${fmt(b.handed_over)} сум</div>
-        <div style="color:var(--text2);font-weight:700;border-top:1px solid var(--border);padding-top:4px;margin-top:2px">На руках</div>
-        <div style="text-align:right;font-weight:700;border-top:1px solid var(--border);padding-top:4px;margin-top:2px;color:${b.on_hand > 0 ? '#b91c1c' : '#15803d'}">${fmt(b.on_hand)} сум</div>
+        <div style="color:var(--text2)">${_t('cash.bal.collected')}</div><div style="text-align:right;font-weight:600">${fmt(b.collected)} ${_t('pay.currency')}</div>
+        ${b.received_from_others > 0 ? `<div style="color:var(--text2)">${_t('cash.bal.received.others')}</div><div style="text-align:right;font-weight:600">${fmt(b.received_from_others)} ${_t('pay.currency')}</div>` : ''}
+        <div style="color:var(--text2)">${_t('cash.bal.handed.over')}</div><div style="text-align:right;font-weight:600;color:#15803d">${fmt(b.handed_over)} ${_t('pay.currency')}</div>
+        <div style="color:var(--text2);font-weight:700;border-top:1px solid var(--border);padding-top:4px;margin-top:2px">${_t('cash.bal.on.hand')}</div>
+        <div style="text-align:right;font-weight:700;border-top:1px solid var(--border);padding-top:4px;margin-top:2px;color:${b.on_hand > 0 ? '#b91c1c' : '#15803d'}">${fmt(b.on_hand)} ${_t('pay.currency')}</div>
       </div>
     </div>`;
 
@@ -19336,7 +19410,7 @@ async function loadCashBalance() {
   const managers  = list.filter(b =>  b.can_manage_cash);
   const grid = items => items.length
     ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">${items.map(renderCard).join('')}</div>`
-    : `<div style="color:var(--text2);font-size:13px">Нет активных операций</div>`;
+    : `<div style="color:var(--text2);font-size:13px">${_t('cash.empty.balance')}</div>`;
 
   const el1 = document.getElementById('cashBalance1List');
   const el2 = document.getElementById('cashBalance2List');
@@ -19347,8 +19421,8 @@ async function loadCashBalance() {
   _adminCashiers = list;
   const fromSel = document.getElementById('handoverFrom');
   const toSel   = document.getElementById('handoverTo');
-  if (fromSel) fromSel.innerHTML = '<option value="">— выбрать —</option>' + list.map(c => `<option value="${c.id}">${c.last_name||''} ${c.first_name||''}</option>`).join('');
-  if (toSel)   toSel.innerHTML   = '<option value="">— выбрать —</option>' + managers.map(c => `<option value="${c.id}">${c.last_name||''} ${c.first_name||''}</option>`).join('');
+  if (fromSel) fromSel.innerHTML = `<option value="">${_t('lbl.choose')}</option>` + list.map(c => `<option value="${c.id}">${c.last_name||''} ${c.first_name||''}</option>`).join('');
+  if (toSel)   toSel.innerHTML   = `<option value="">${_t('lbl.choose')}</option>` + managers.map(c => `<option value="${c.id}">${c.last_name||''} ${c.first_name||''}</option>`).join('');
 }
 
 async function loadPendingSafeDeposits() {
@@ -19378,16 +19452,16 @@ async function loadPendingSafeDeposits() {
 
 async function confirmSafeDeposit(id) {
   const r = await apiPost(`/admin/cash/safe-deposit/${id}/confirm`, {}).catch(() => null);
-  if (!r?.ok) { showToast('Ошибка', 'error'); return; }
-  showToast('Подтверждено ✅', 'success');
+  if (!r?.ok) { showToast(_t('cash.err.generic'), 'error'); return; }
+  showToast(_t('cash.msg.confirmed'), 'success');
   loadPendingSafeDeposits();
   loadCashHandovers();
   loadCashBalance();
 }
 async function rejectSafeDeposit(id) {
   const r = await apiPost(`/admin/cash/safe-deposit/${id}/reject`, {}).catch(() => null);
-  if (!r?.ok) { showToast('Ошибка', 'error'); return; }
-  showToast('Отклонено', 'warning');
+  if (!r?.ok) { showToast(_t('cash.err.generic'), 'error'); return; }
+  showToast(_t('cash.msg.rejected'), 'warning');
   loadPendingSafeDeposits();
 }
 
@@ -19396,13 +19470,13 @@ async function loadCashHandovers() {
   const list = d?.handovers || [];
   const el = document.getElementById('cashHandoversList');
   if (!el) return;
-  if (!list.length) { el.innerHTML = '<div style="color:var(--text2);font-size:13px">Передач пока нет</div>'; return; }
+  if (!list.length) { el.innerHTML = `<div style="color:var(--text2);font-size:13px">${_t('cash.empty.handovers')}</div>`; return; }
   const fmt = v => Number(Math.round(v)).toLocaleString('ru');
   const statusBadge = s => s === 'confirmed'
     ? `<span style="font-size:10px;background:#f0fdf4;color:#15803d;padding:1px 6px;border-radius:4px">✅</span>`
     : s === 'cancelled'
-    ? `<span style="font-size:10px;background:#fee2e2;color:#b91c1c;padding:1px 6px;border-radius:4px">❌ Отменено</span>`
-    : `<span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px">⏳ Ожидает</span>`;
+    ? `<span style="font-size:10px;background:#fee2e2;color:#b91c1c;padding:1px 6px;border-radius:4px">${_t('cash.handover.cancelled')}</span>`
+    : `<span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px">${_t('cash.handover.pending')}</span>`;
   el.innerHTML = list.slice(0, 30).map(h => {
     const dt = new Date(h.created_at).toLocaleString('ru', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     const canCancel = h.status !== 'cancelled';
@@ -19418,8 +19492,8 @@ async function loadCashHandovers() {
         <div style="color:var(--text2);font-size:11px;margin-top:2px">${dt}</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-        <span style="font-weight:700">${fmt(h.amount)} сум</span>
-        ${canCancel ? `<button onclick="cancelCashHandover(${h.id})" style="padding:3px 10px;border:1.5px solid var(--red,#ef4444);border-radius:6px;background:none;color:var(--red,#ef4444);font-size:11px;cursor:pointer;font-weight:600">✕ Отменить</button>` : ''}
+        <span style="font-weight:700">${fmt(h.amount)} ${_t('pay.currency')}</span>
+        ${canCancel ? `<button onclick="cancelCashHandover(${h.id})" style="padding:3px 10px;border:1.5px solid var(--red,#ef4444);border-radius:6px;background:none;color:var(--red,#ef4444);font-size:11px;cursor:pointer;font-weight:600">${_t('cash.btn.cancel.handover')}</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -19430,26 +19504,26 @@ async function submitCashHandover() {
   const toId   = parseInt(document.getElementById('handoverTo')?.value);
   const amount = parseFloat(document.getElementById('handoverAmount')?.value);
   const note   = document.getElementById('handoverNote')?.value?.trim() || '';
-  if (!fromId) { showToast('Выберите от кого', 'warning'); return; }
-  if (!toId)   { showToast('Выберите получателя', 'warning'); return; }
-  if (!amount || amount <= 0) { showToast('Введите сумму', 'warning'); return; }
+  if (!fromId) { showToast(_t('cash.err.pick.from'), 'warning'); return; }
+  if (!toId)   { showToast(_t('cash.err.pick.recipient'), 'warning'); return; }
+  if (!amount || amount <= 0) { showToast(_t('cash.err.enter.amount'), 'warning'); return; }
   const r = await apiPost('/admin/cash/handover', { from_staff_id: fromId, to_staff_id: toId, amount, note }).catch(() => null);
-  if (!r?.ok) { showToast('Ошибка при сохранении', 'error'); return; }
+  if (!r?.ok) { showToast(_t('cash.err.save.handover'), 'error'); return; }
   document.getElementById('handoverAmount').value = '';
   document.getElementById('handoverNote').value = '';
-  showToast('Передача зафиксирована', 'success');
+  showToast(_t('cash.msg.handover.saved'), 'success');
   loadCashBalance();
   loadCashHandovers();
 }
 
 async function cancelCashHandover(id) {
-  if (!confirm('Отменить эту передачу наличных?')) return;
+  if (!confirm(_t('cash.confirm.cancel.handover'))) return;
   const token = adminToken || localStorage.getItem(TOKEN_KEY);
   const r = await fetch(`${API_BASE}/admin/cash/handovers/${id}`, {
     method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
   }).then(x => x.json()).catch(() => null);
-  if (!r?.ok) { showToast('Ошибка отмены', 'error'); return; }
-  showToast('Передача отменена', 'success');
+  if (!r?.ok) { showToast(_t('cash.err.cancel'), 'error'); return; }
+  showToast(_t('cash.msg.handover.cancelled'), 'success');
   loadCashHandovers();
   loadCashBalance();
 }
@@ -19481,13 +19555,13 @@ async function loadBankDeposits() {
   const fmt = v => Number(Math.round(v)).toLocaleString('ru');
   el.innerHTML = list.map(dep => {
     const dt   = new Date(dep.created_at).toLocaleString('ru', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-    const icon = dep.to_type === 'bank' ? '🏦 Банк' : '🗄 Сейф';
+    const icon = dep.to_type === 'bank' ? _t('cash.opt.bank') : _t('cash.opt.safe');
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px">
       <div>
         <div style="font-weight:600">${icon}</div>
         <div style="font-size:11px;color:var(--text2)">${dep.from_name||'—'} · ${dt}${dep.note ? ' · ' + dep.note : ''}</div>
       </div>
-      <div style="font-weight:700;color:#b91c1c">${fmt(dep.amount)} сум</div>
+      <div style="font-weight:700;color:#b91c1c">${fmt(dep.amount)} ${_t('pay.currency')}</div>
     </div>`;
   }).join('');
 }
@@ -19497,14 +19571,14 @@ async function submitBankDeposit() {
   const to_type = document.getElementById('depositType')?.value || 'bank';
   const amount  = parseFloat(document.getElementById('depositAmount')?.value);
   const note    = document.getElementById('depositNote')?.value?.trim() || '';
-  if (!from_staff_id) { showToast('Выберите от кого', 'warning'); return; }
-  if (!amount || amount <= 0) { showToast('Введите сумму', 'warning'); return; }
+  if (!from_staff_id) { showToast(_t('cash.err.pick.from'), 'warning'); return; }
+  if (!amount || amount <= 0) { showToast(_t('cash.err.enter.amount'), 'warning'); return; }
   const r = await apiPost('/admin/cash/bank-deposit', { from_staff_id, to_type, amount, note }).catch(() => null);
-  if (!r?.ok) { showToast('Ошибка инкассации', 'error'); return; }
+  if (!r?.ok) { showToast(_t('cash.err.deposit'), 'error'); return; }
   document.getElementById('depositAmount').value = '';
   document.getElementById('depositNote').value   = '';
-  const label = to_type === 'bank' ? '🏦 Сдано в банк' : '🗄 Помещено в сейф';
-  showToast(`${label}: ${Number(Math.round(amount)).toLocaleString('ru')} сум`, 'success');
+  const label = to_type === 'bank' ? _t('cash.msg.deposited.bank') : _t('cash.msg.deposited.safe');
+  showToast(`${label}: ${Number(Math.round(amount)).toLocaleString('ru')} ${_t('pay.currency')}`, 'success');
   loadBankDeposits();
   loadCashBalance();
 }
@@ -20001,11 +20075,11 @@ async function expAdmLoadHistory() {
 
 // ── РАСХОДЫ (admin) ───────────────────────────────────────────────────────────
 const _EXP_STATUS_LABEL = {
-  pending:      '<span style="background:#fef3c7;color:#b45309;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">⏳ На рассмотрении</span>',
-  mgr_approved: '<span style="background:#dbeafe;color:#1d4ed8;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">🔵 Ожидает Admin</span>',
-  approved:     '<span style="background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">✅ Утверждён</span>',
-  rejected:     '<span style="background:#fee2e2;color:#dc2626;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">❌ Отклонён</span>',
-  paid:         '<span style="background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">✅ Утверждён</span>',
+  get pending()      { return `<span style="background:#fef3c7;color:#b45309;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${_t('cash.exp.status.pending')}</span>`; },
+  get mgr_approved() { return `<span style="background:#dbeafe;color:#1d4ed8;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${_t('cash.exp.status.wait.admin')}</span>`; },
+  get approved()     { return `<span style="background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${_t('cash.exp.status.approved')}</span>`; },
+  get rejected()     { return `<span style="background:#fee2e2;color:#dc2626;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${_t('cash.exp.status.rejected')}</span>`; },
+  get paid()         { return `<span style="background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${_t('cash.exp.status.approved')}</span>`; },
 };
 
 let _expCashStatus = '';
@@ -20023,7 +20097,7 @@ async function adminLoadExpenses() {
   const histEl   = document.getElementById('adminExpensesList');
   if (!pendEl || !histEl) return;
 
-  pendEl.innerHTML = '<div style="color:var(--text2);font-size:13px">Загружаю…</div>';
+  pendEl.innerHTML = `<div style="color:var(--text2);font-size:13px">${_t('cash.loading')}</div>`;
   histEl.innerHTML = '';
 
   const fmt = v => Number(Math.round(v)).toLocaleString('ru');
@@ -20036,7 +20110,7 @@ async function adminLoadExpenses() {
   } else {
     pendEl.innerHTML = `
       <div style="background:#dbeafe;border:1.5px solid #bfdbfe;border-radius:12px;padding:14px;margin-bottom:8px">
-        <div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">📋 Ожидают вашего утверждения (${pendList.length})</div>
+        <div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">${_t('cash.exp.pending.title')} (${pendList.length})</div>
         ${pendList.map(e => {
           const dt = new Date(e.created_at).toLocaleString('ru', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
           return `<div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:8px;border:1px solid #bfdbfe">
@@ -20046,13 +20120,13 @@ async function adminLoadExpenses() {
                 <span style="font-weight:700;font-size:13px;margin-left:4px">${e.parent_name_ru ? e.parent_name_ru + ' → ' + (e.category_name_ru||'—') : (e.category_name_ru||'—')}</span>
                 ${e.description ? `<span style="color:var(--text2);font-size:12px;margin-left:6px">· ${e.description}</span>` : ''}
               </div>
-              <span style="font-weight:700;font-size:15px;color:#163E3B">${fmt(e.amount)} сум</span>
+              <span style="font-weight:700;font-size:15px;color:#163E3B">${fmt(e.amount)} ${_t('pay.currency')}</span>
             </div>
             <div style="font-size:11px;color:var(--text2);margin-top:4px">${e.creator_name||'—'} · ${e.branch||''} · ${dt}${e.for_staff_name ? ` · <b>👤 ${e.for_staff_name}</b>` : ''}</div>
             ${e.receipt_url ? `<div style="margin-top:6px"><a href="${e.receipt_url}" target="_blank" style="font-size:12px;color:#2563eb;text-decoration:none">📎 Чек</a></div>` : ''}
             <div style="display:flex;gap:8px;margin-top:8px">
-              <button onclick="adminApproveExpense(${e.id})" style="flex:1;padding:7px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✅ Утвердить</button>
-              <button onclick="adminRejectExpense(${e.id})" style="flex:1;padding:7px;background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;cursor:pointer">❌ Отклонить</button>
+              <button onclick="adminApproveExpense(${e.id})" style="flex:1;padding:7px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">${_t('cash.btn.approve')}</button>
+              <button onclick="adminRejectExpense(${e.id})" style="flex:1;padding:7px;background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;cursor:pointer">${_t('cash.btn.reject')}</button>
             </div>
           </div>`;
         }).join('')}
@@ -20066,7 +20140,7 @@ async function adminLoadExpenses() {
   const histData = await apiGet(`/admin/expenses?${params}`).catch(() => null);
   const histList = histData?.expenses || [];
   if (!histList.length) {
-    histEl.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:8px 0">Расходов нет</div>';
+    histEl.innerHTML = `<div style="color:var(--text2);font-size:13px;padding:8px 0">${_t('cash.empty.expenses')}</div>`;
     return;
   }
   histEl.innerHTML = histList.map(e => {
@@ -20080,27 +20154,27 @@ async function adminLoadExpenses() {
         ${e.description ? `<div style="font-size:12px;color:var(--text2);margin-top:2px">${e.description}</div>` : ''}
         ${e.for_staff_name ? `<div style="font-size:12px;font-weight:600;color:#163E3B;margin-top:2px">👤 ${e.for_staff_name}</div>` : ''}
         <div style="font-size:11px;color:var(--text2);margin-top:3px">${e.creator_name||'—'} · ${e.branch||''} · ${dt}</div>
-        ${e.reject_reason ? `<div style="font-size:12px;color:#dc2626;margin-top:2px">Причина: ${e.reject_reason}</div>` : ''}
+        ${e.reject_reason ? `<div style="font-size:12px;color:#dc2626;margin-top:2px">${_t('cash.lbl.reason.prefix')} ${e.reject_reason}</div>` : ''}
         ${e.receipt_url ? `<a href="${e.receipt_url}" target="_blank" style="font-size:12px;color:#2563eb;text-decoration:none;display:inline-block;margin-top:2px">📎 Чек</a>` : ''}
       </div>
-      <div style="font-weight:700;font-size:15px;color:#163E3B;white-space:nowrap">${fmt(e.amount)} сум</div>
+      <div style="font-weight:700;font-size:15px;color:#163E3B;white-space:nowrap">${fmt(e.amount)} ${_t('pay.currency')}</div>
     </div>`;
   }).join('');
 }
 
 async function adminApproveExpense(id) {
   const r = await apiPatch(`/admin/expenses/${id}/approve`, {}).catch(() => null);
-  if (!r?.ok) { showToast('Ошибка', 'error'); return; }
-  showToast('Расход утверждён', 'success');
+  if (!r?.ok) { showToast(_t('cash.err.generic'), 'error'); return; }
+  showToast(_t('cash.msg.expense.approved'), 'success');
   adminLoadExpenses();
 }
 
 async function adminRejectExpense(id) {
-  const reason = prompt('Причина отклонения:');
+  const reason = prompt(_t('cash.prompt.reject.reason'));
   if (reason === null) return;
   const r = await apiPatch(`/admin/expenses/${id}/reject`, { reason: reason.trim() }).catch(() => null);
-  if (!r?.ok) { showToast('Ошибка', 'error'); return; }
-  showToast('Расход отклонён', 'success');
+  if (!r?.ok) { showToast(_t('cash.err.generic'), 'error'); return; }
+  showToast(_t('cash.msg.expense.rejected'), 'success');
   adminLoadExpenses();
 }
 
@@ -20108,8 +20182,8 @@ async function adminPayExpense(id) {
   const sel = document.getElementById(`expPaidFrom_${id}`);
   const paid_from = sel?.value || 'cash';
   const r = await apiPatch(`/admin/expenses/${id}/pay`, { paid_from }).catch(() => null);
-  if (!r?.ok) { showToast('Ошибка', 'error'); return; }
-  showToast('Расход выплачен', 'success');
+  if (!r?.ok) { showToast(_t('cash.err.generic'), 'error'); return; }
+  showToast(_t('cash.msg.expense.paid'), 'success');
   adminLoadExpenses();
 }
 
