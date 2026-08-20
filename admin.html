@@ -3656,7 +3656,7 @@
               <h3 class="cfg-title" data-i18n="tg.card.media">📁 Медиа-канал</h3>
               <button class="btn s-edit-btn" onclick="editMeasureChannelCard()">✏️</button>
             </div>
-            <p class="cfg-hint" style="margin-bottom:12px">Сюда загружаются все фото и видео замеров, а также чеки оплат. Бот должен быть администратором этого канала.</p>
+            <p class="cfg-hint" style="margin-bottom:12px" data-i18n="tg.measure.hint">Сюда загружаются все фото и видео замеров, а также чеки оплат. Бот должен быть администратором этого канала.</p>
             <div class="cfg-field" style="margin-bottom:10px">
               <label data-i18n="tg.field.channel.id">ID канала</label>
               <input type="text" id="measureChannelInput" class="form-input" disabled placeholder="-100...">
@@ -3674,12 +3674,12 @@
               <h3 class="cfg-title" data-i18n="tg.card.cash">💵 Канал кассы</h3>
               <button class="btn s-edit-btn" onclick="editCashChannelCard()">✏️</button>
             </div>
-            <p class="cfg-hint" style="margin-bottom:12px">Все операции с кассой (передачи наличных, чеки, подтверждения) отправляются в этот канал.</p>
+            <p class="cfg-hint" style="margin-bottom:12px" data-i18n="tg.cash.hint">Все операции с кассой (передачи наличных, чеки, подтверждения) отправляются в этот канал.</p>
             <div class="cfg-field" style="margin-bottom:10px">
               <label data-i18n="tg.field.channel.id">ID канала</label>
               <input type="text" id="cashChannelInput" class="form-input" disabled placeholder="-100...">
             </div>
-            <div class="cfg-hint" style="margin-bottom:10px">Узнать ID: добавьте бот в канал как администратора и напишите в канале, затем проверьте через <code style="font-size:11px;background:var(--surface2);padding:1px 4px;border-radius:3px">getUpdates</code>.</div>
+            <div class="cfg-hint" style="margin-bottom:10px"><span data-i18n="tg.cash.getid.hint1">Узнать ID: добавьте бот в канал как администратора и напишите в канале, затем проверьте через</span> <code style="font-size:11px;background:var(--surface2);padding:1px 4px;border-radius:3px">getUpdates</code><span data-i18n="tg.cash.getid.hint2">.</span></div>
             <div class="cfg-actions">
               <button class="btn btn-primary  s-save-btn"   onclick="saveCashChannel()" style="display:none;">💾 Сохранить</button>
               <button class="btn btn-ghost    s-cancel-btn" onclick="cancelCashChannelCard()" style="display:none;">Отмена</button>
@@ -3697,7 +3697,7 @@
               <div class="demo-video-col">
                 <div class="demo-video-col-head">
                   <span class="demo-video-flag">🇷🇺</span> <span data-i18n="video.ru">Видео на русском</span>
-                  <span class="demo-video-pill" id="botWelcomeVideo_ru_pill">— нет</span>
+                  <span class="demo-video-pill" id="botWelcomeVideo_ru_pill" data-i18n="tg.video.pill.none">— нет</span>
                 </div>
                 <label class="demo-video-filepicker" for="botWelcomeVideo_ru_file">
                   <span class="dvf-ico">📁</span>
@@ -3712,7 +3712,7 @@
               <div class="demo-video-col">
                 <div class="demo-video-col-head">
                   <span class="demo-video-flag">🇺🇿</span> <span data-i18n="video.uz">Видео на узбекском</span>
-                  <span class="demo-video-pill" id="botWelcomeVideo_uz_pill">— нет</span>
+                  <span class="demo-video-pill" id="botWelcomeVideo_uz_pill" data-i18n="tg.video.pill.none">— нет</span>
                 </div>
                 <label class="demo-video-filepicker" for="botWelcomeVideo_uz_file">
                   <span class="dvf-ico">📁</span>
@@ -3734,7 +3734,7 @@
               <h3 class="cfg-title" data-i18n="tg.card.new.clients">👤 Новые пользователи сайта</h3>
               <button class="btn s-edit-btn" onclick="editCard('card-tg-new-clients')">✏️</button>
             </div>
-            <div style="font-size:12px;color:var(--text2);margin-bottom:10px">При каждой регистрации (SMS или Telegram) — сообщение придёт в эту группу и личным DM сотрудникам с включённым тумблером «🔔 Уведомления о новых клиентах» в их карточке.</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:10px" data-i18n="tg.new_clients.hint">При каждой регистрации (SMS или Telegram) — сообщение придёт в эту группу и личным DM сотрудникам с включённым тумблером «🔔 Уведомления о новых клиентах» в их карточке.</div>
             <div class="cfg-field" style="margin-bottom:4px">
               <label data-i18n="tg.field.new.clients.group">ID группы «Новые клиенты»</label>
               <input type="text" id="cfg_new_clients_group_id" class="form-input" disabled placeholder="-100...">
@@ -6969,6 +6969,28 @@ const _adminI18n = {
     'tg.btn.restart.desc':'Отправит всем клиентам сообщение «Нажмите /start»',
     'tg.master.title':'🔐 Мастер-пароль admin.html',
     'tg.master.desc':'Пароль для подтверждения удалений в admin.html (не для входа — вход по логину/паролю сотрудника)','tg.master.btn':'🔑 Сменить пароль',
+    'tg.measure.hint':'Сюда загружаются все фото и видео замеров, а также чеки оплат. Бот должен быть администратором этого канала.',
+    'tg.cash.hint':'Все операции с кассой (передачи наличных, чеки, подтверждения) отправляются в этот канал.',
+    'tg.cash.getid.hint1':'Узнать ID: добавьте бот в канал как администратора и напишите в канале, затем проверьте через',
+    'tg.cash.getid.hint2':'.',
+    'tg.new_clients.hint':'При каждой регистрации (SMS или Telegram) — сообщение придёт в эту группу и личным DM сотрудникам с включённым тумблером «🔔 Уведомления о новых клиентах» в их карточке.',
+    'tg.video.pill.none':'— нет','tg.video.pill.uploaded':'✓ загружено',
+    'tg.video.err.select':'Выберите файл видео','tg.video.uploading':'Загрузка… это может занять до минуты',
+    'tg.video.err.upload':'Ошибка загрузки видео',
+    'tg.video.uploaded.prefix':'✓ Видео','tg.video.uploaded.suffix':'загружено',
+    'tg.video.deleted':'Видео удалено','tg.unit.mb':'МБ',
+    'tg.order_bot.err_connect':'Ошибка подключения',
+    'tg.broadcast.confirm':'Отправить всем клиентам бота сообщение «Нажмите /start»?\n\nЭто может занять несколько секунд.',
+    'tg.broadcast.sending':'⏳ Отправка...','tg.broadcast.err':'Ошибка рассылки',
+    'tg.err.connection':'Ошибка соединения','tg.err.generic':'Ошибка','tg.msg.saved':'Сохранено',
+    'tg.cfg.saved':'Изменения сохранены','tg.cfg.err.prefix':'Ошибка:',
+    'tg.master.modal.title':'🔐 Смена пароля','tg.master.modal.desc':'Мастер-пароль для входа в admin.html',
+    'tg.master.lbl.current':'Текущий пароль','tg.master.ph.current':'Введите текущий пароль',
+    'tg.master.lbl.new':'Новый пароль','tg.master.ph.new':'Минимум 4 символа',
+    'tg.master.lbl.confirm':'Повтор нового пароля','tg.master.ph.confirm':'Повторите новый пароль',
+    'tg.master.btn.save':'💾 Сохранить новый пароль',
+    'tg.master.err.new_min':'Новый пароль — минимум 4 символа','tg.master.err.mismatch':'Пароли не совпадают',
+    'tg.master.success':'✓ Пароль успешно изменён',
     'tg.msg.desc':'Когда оператор меняет статус заказа — клиент получает сообщение в Telegram. Нажмите ✏️ чтобы редактировать шаблон.',
     'tg.vars.title':'⚙️ Переменные','tg.vars.hint':'Нажми — скопируется',
     'th.orders':'Заказов','th.last.order.tg':'Последний заказ',
@@ -7565,6 +7587,28 @@ const _adminI18n = {
     'tg.btn.restart.desc':'Barcha mijozlarga «/start bosing» xabarini yuboradi',
     'tg.master.title':'🔐 admin.html master-paroli',
     'tg.master.desc':'admin.html’da oʻchirishlarni tasdiqlash uchun parol (kirish uchun emas — kirish xodim login/paroli orqali)','tg.master.btn':'🔑 Parolni oʻzgartirish',
+    'tg.measure.hint':"Bu yerga barcha oʻlchov fotosuratlari va videolari, shuningdek toʻlov cheklari yuklanadi. Bot ushbu kanalda administrator boʻlishi kerak.",
+    'tg.cash.hint':"Kassa bilan bogʻliq barcha amallar (naqd pul topshirish, cheklar, tasdiqlar) shu kanalga yuboriladi.",
+    'tg.cash.getid.hint1':"ID bilish uchun: botni kanalga administrator sifatida qoʻshing va kanalda biror narsa yozing, soʻng",
+    'tg.cash.getid.hint2':' orqali tekshiring.',
+    'tg.new_clients.hint':"Har bir roʻyxatdan oʻtishda (SMS yoki Telegram) — xabar shu guruhga va oʻz profilida «🔔 Yangi mijozlar haqida bildirishnoma» tumbleri yoqilgan xodimlarga shaxsiy DM tarzida keladi.",
+    'tg.video.pill.none':'— yoʻq','tg.video.pill.uploaded':'✓ yuklandi',
+    'tg.video.err.select':'Video faylni tanlang','tg.video.uploading':'Yuklanmoqda… bu bir daqiqagacha vaqt olishi mumkin',
+    'tg.video.err.upload':'Video yuklashda xatolik',
+    'tg.video.uploaded.prefix':'✓ Video','tg.video.uploaded.suffix':'yuklandi',
+    'tg.video.deleted':'Video oʻchirildi','tg.unit.mb':'MB',
+    'tg.order_bot.err_connect':'Ulanishda xatolik',
+    'tg.broadcast.confirm':'Bot mijozlarining barchasiga «/start bosing» xabari yuborilsinmi?\n\nBu bir necha soniya vaqt olishi mumkin.',
+    'tg.broadcast.sending':'⏳ Yuborilmoqda...','tg.broadcast.err':'Xabar yuborishda xatolik',
+    'tg.err.connection':'Ulanishda xatolik','tg.err.generic':'Xatolik','tg.msg.saved':'Saqlandi',
+    'tg.cfg.saved':"Oʻzgarishlar saqlandi",'tg.cfg.err.prefix':'Xatolik:',
+    'tg.master.modal.title':'🔐 Parolni almashtirish','tg.master.modal.desc':"admin.html ga kirish uchun master-parol",
+    'tg.master.lbl.current':'Joriy parol','tg.master.ph.current':'Joriy parolni kiriting',
+    'tg.master.lbl.new':'Yangi parol','tg.master.ph.new':'Kamida 4 ta belgi',
+    'tg.master.lbl.confirm':'Yangi parolni takrorlang','tg.master.ph.confirm':'Yangi parolni qayta kiriting',
+    'tg.master.btn.save':'💾 Yangi parolni saqlash',
+    'tg.master.err.new_min':'Yangi parol — kamida 4 ta belgi','tg.master.err.mismatch':'Parollar mos kelmadi',
+    'tg.master.success':'✓ Parol muvaffaqiyatli oʻzgartirildi',
     'tg.msg.desc':'Operator buyurtma holatini oʻzgartirganda — mijoz Telegramda xabar oladi. Shablonni tahrirlash uchun ✏️ bosing.',
     'tg.vars.title':'⚙️ Oʻzgaruvchilar','tg.vars.hint':'Bosing — nusxa olinadi',
     'th.orders':'Buyurtmalar','th.last.order.tg':'Oxirgi buyurtma',
@@ -8704,7 +8748,7 @@ function _setBotWelcomeVideoPill(lang, uploaded) {
   const delBtn = document.getElementById('botWelcomeVideo_' + lang + '_delete_btn');
   if (!pill) return;
   if (delBtn) delBtn.style.display = uploaded ? '' : 'none';
-  pill.textContent = uploaded ? '✓ загружено' : '— нет';
+  pill.textContent = uploaded ? _t('tg.video.pill.uploaded') : _t('tg.video.pill.none');
   pill.classList.toggle('ok', !!uploaded);
 }
 
@@ -8714,24 +8758,30 @@ function botWelcomeVideoFilePicked(lang) {
   const nameEl = document.getElementById('botWelcomeVideo_' + lang + '_filename');
   const file = input.files[0];
   if (file) {
-    nameEl.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' МБ)';
+    nameEl.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' ' + _t('tg.unit.mb') + ')';
     label.classList.add('picked');
   } else {
-    nameEl.textContent = 'Выбрать файл…';
+    nameEl.textContent = _t('video.choosefile');
     label.classList.remove('picked');
   }
+}
+
+// Порядок слов в подтверждении удаления видео различается в RU/UZ — строится по _adminLang, а не через _t()
+function _tgVideoDeleteConfirmMsg(lang) {
+  const L = lang.toUpperCase();
+  return _adminLang === 'uz' ? `Videoni (${L}) oʻchirasizmi?` : `Удалить видео (${L})?`;
 }
 
 async function uploadBotWelcomeVideo(lang, btn) {
   const input = document.getElementById('botWelcomeVideo_' + lang + '_file');
   const msg = document.getElementById('msg_bot_welcome_video');
   const file = input.files[0];
-  if (!file) { msg.style.color = '#dc2626'; msg.textContent = 'Выберите файл видео'; return; }
+  if (!file) { msg.style.color = '#dc2626'; msg.textContent = _t('tg.video.err.select'); return; }
   msg.style.color = 'var(--text2)';
-  msg.textContent = 'Загрузка… это может занять до минуты';
+  msg.textContent = _t('tg.video.uploading');
   btn.disabled = true;
   const origHtml = btn.innerHTML;
-  btn.innerHTML = '<span>⏳</span> Загрузка…';
+  btn.innerHTML = '<span>⏳</span> ' + _t('video.loading');
   try {
     const fd = new FormData();
     fd.append('file', file);
@@ -8739,15 +8789,15 @@ async function uploadBotWelcomeVideo(lang, btn) {
       method: 'POST', headers: { Authorization: `Bearer ${adminToken}` }, body: fd
     });
     const d = await r.json().catch(() => ({}));
-    if (!r.ok || !d.ok) throw new Error(d.detail || 'Ошибка загрузки видео');
+    if (!r.ok || !d.ok) throw new Error(d.detail || _t('tg.video.err.upload'));
     msg.style.color = '#15803d';
-    msg.textContent = '✓ Видео (' + lang.toUpperCase() + ') загружено';
+    msg.textContent = _t('tg.video.uploaded.prefix') + ' (' + lang.toUpperCase() + ') ' + _t('tg.video.uploaded.suffix');
     input.value = '';
     botWelcomeVideoFilePicked(lang);
     await loadBotWelcomeVideoStatus();
   } catch (e) {
     msg.style.color = '#dc2626';
-    msg.textContent = e.message || 'Ошибка';
+    msg.textContent = e.message || _t('tg.err.generic');
   } finally {
     btn.disabled = false;
     btn.innerHTML = origHtml;
@@ -8755,9 +8805,9 @@ async function uploadBotWelcomeVideo(lang, btn) {
 }
 
 async function deleteBotWelcomeVideo(lang) {
-  if (!confirm('Удалить видео (' + lang.toUpperCase() + ')?')) return;
+  if (!confirm(_tgVideoDeleteConfirmMsg(lang))) return;
   const r = await apiDelete('/admin/bot-welcome-video/' + lang);
-  if (r?.ok) { await loadBotWelcomeVideoStatus(); showToast('Видео удалено'); }
+  if (r?.ok) { await loadBotWelcomeVideoStatus(); showToast(_t('tg.video.deleted')); }
 }
 
 const MAX_SLIDES = 5;
@@ -10370,14 +10420,14 @@ async function saveMeasureChannel() {
   const res  = await apiPut('/admin/settings/media-channel', { media_channel_id: val });
   if (msg) {
     if (res?.ok) {
-      msg.textContent = '✅ Сохранено'; msg.style.color = '#16a34a';
+      msg.textContent = '✅ ' + _t('tg.msg.saved'); msg.style.color = '#16a34a';
       _measureChannelOriginal = val;
       inp.disabled = true;
       card.querySelector('.s-edit-btn').style.display   = '';
       card.querySelector('.s-save-btn').style.display   = 'none';
       card.querySelector('.s-cancel-btn').style.display = 'none';
     } else {
-      msg.textContent = '❌ Ошибка'; msg.style.color = '#ef4444';
+      msg.textContent = '❌ ' + _t('tg.err.generic'); msg.style.color = '#ef4444';
     }
     setTimeout(() => { msg.textContent = ''; }, 2500);
   }
@@ -10411,14 +10461,14 @@ async function saveCashChannel() {
   const res = await apiPut('/admin/settings/cash-channel', { cash_tg_channel_id: val });
   if (msg) {
     if (res?.ok) {
-      msg.textContent = '✅ Сохранено'; msg.style.color = '#16a34a';
+      msg.textContent = '✅ ' + _t('tg.msg.saved'); msg.style.color = '#16a34a';
       _cashChannelOriginal = val;
       inp.disabled = true;
       card.querySelector('.s-edit-btn').style.display   = '';
       card.querySelector('.s-save-btn').style.display   = 'none';
       card.querySelector('.s-cancel-btn').style.display = 'none';
     } else {
-      msg.textContent = '❌ Ошибка'; msg.style.color = '#ef4444';
+      msg.textContent = '❌ ' + _t('tg.err.generic'); msg.style.color = '#ef4444';
     }
     setTimeout(() => { msg.textContent = ''; }, 2500);
   }
@@ -12915,19 +12965,19 @@ async function changeMasterPass() {
     msg.style.color = ok ? '#4ade80' : '#ff3b30';
     msg.style.display = '';
   };
-  if (!cur) return show('Введите текущий пароль', false);
-  if (!np || np.length < 4) return show('Новый пароль — минимум 4 символа', false);
-  if (np !== np2) return show('Пароли не совпадают', false);
+  if (!cur) return show(_t('tg.master.ph.current'), false);
+  if (!np || np.length < 4) return show(_t('tg.master.err.new_min'), false);
+  if (np !== np2) return show(_t('tg.master.err.mismatch'), false);
   try {
     const res = await apiFetch(`${API_BASE}/admin/change-master-password`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ current_password: cur, new_password: np })
     });
     const data = await res.json();
-    if (!res.ok) return show(data.detail || 'Ошибка', false);
-    show('✓ Пароль успешно изменён', true);
+    if (!res.ok) return show(data.detail || _t('tg.err.generic'), false);
+    show(_t('tg.master.success'), true);
     setTimeout(closeMasterPassModal, 1500);
-  } catch(e) { show('Ошибка соединения', false); }
+  } catch(e) { show(_t('tg.err.connection'), false); }
 }
 // ──────────────────────────────────────────────────────────────────────
 
@@ -13062,21 +13112,27 @@ async function tcDoDelete() {
 }
 // ────────────────────────────────────────────────────────────────────────
 
+// Порядок слов в результате рассылки различается в RU/UZ — строится по _adminLang, а не через _t()
+function _tgBroadcastResultMsg(sent, failed, total) {
+  return _adminLang === 'uz'
+    ? `✓ Yuborildi: ${sent}, yetkazilmadi: ${failed}, jami: ${total} ta`
+    : `✓ Отправлено: ${sent}, не доставлено: ${failed} из ${total}`;
+}
 async function botBroadcastRestart() {
-  if (!confirm('Отправить всем клиентам бота сообщение «Нажмите /start»?\n\nЭто может занять несколько секунд.')) return;
+  if (!confirm(_t('tg.broadcast.confirm'))) return;
   const btn = event.currentTarget;
   btn.disabled = true;
-  btn.textContent = '⏳ Отправка...';
+  btn.textContent = _t('tg.broadcast.sending');
   try {
     const res = await apiFetch(`${API_BASE}/admin/bot/broadcast-restart`, { method: 'POST' });
     const data = await res.json();
-    if (res.ok) showToast(`✓ Отправлено: ${data.sent}, не доставлено: ${data.failed} из ${data.total}`, 'success');
-    else showToast(data.detail || 'Ошибка рассылки', 'error');
+    if (res.ok) showToast(_tgBroadcastResultMsg(data.sent, data.failed, data.total), 'success');
+    else showToast(data.detail || _t('tg.broadcast.err'), 'error');
   } catch(e) {
-    showToast('Ошибка соединения', 'error');
+    showToast(_t('tg.err.connection'), 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = '🔄 Перезапустить бот для всех';
+    btn.textContent = _t('tg.btn.restart.bot');
   }
 }
 
@@ -13125,9 +13181,9 @@ async function saveCard(cardId, keys) {
       if (el) _cfgOriginal[k] = el.value.trim();
     });
     cancelCard(cardId, keys);
-    showToast('Изменения сохранены');
+    showToast(_t('tg.cfg.saved'));
   } catch(e) {
-    showToast('Ошибка: ' + e.message, 'error');
+    showToast(_t('tg.cfg.err.prefix') + ' ' + e.message, 'error');
   }
 }
 
@@ -17345,7 +17401,7 @@ async function saveOrderBotToken() {
       method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ token })
     });
     const d = await res.json();
-    if (!res.ok) throw new Error(d.detail || 'Ошибка подключения');
+    if (!res.ok) throw new Error(d.detail || _t('tg.order_bot.err_connect'));
     msg.textContent = '';
     showToast(`${_t('tg.order_bot.connected_toast_prefix')} @${d.username} ${_t('tg.order_bot.connected_toast_suffix')}`);
     await loadOrderBotStatus();
@@ -22133,24 +22189,24 @@ function confirmBranchLoc() {
   <div class="modal-box" style="max-width:380px;padding:0;overflow:hidden;border-radius:20px;background:#1a1b2e">
     <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:20px 20px 16px;position:relative">
       <button onclick="closeMasterPassModal()" style="position:absolute;top:12px;right:14px;background:rgba(255,255,255,.15);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center">✕</button>
-      <div style="font-size:18px;font-weight:800;color:#fff">🔐 Смена пароля</div>
-      <div style="font-size:12px;color:rgba(255,255,255,.75);margin-top:3px">Мастер-пароль для входа в admin.html</div>
+      <div style="font-size:18px;font-weight:800;color:#fff" data-i18n="tg.master.modal.title">🔐 Смена пароля</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.75);margin-top:3px" data-i18n="tg.master.modal.desc">Мастер-пароль для входа в admin.html</div>
     </div>
     <div style="padding:18px;display:flex;flex-direction:column;gap:12px">
       <div>
-        <label style="font-size:11px;color:#6b6b8a;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Текущий пароль</label>
-        <input type="password" id="masterPassCurrent" class="price-input" style="width:100%;background:#16172a;color:#e0e0f0;border-color:#2a2b42" placeholder="Введите текущий пароль">
+        <label style="font-size:11px;color:#6b6b8a;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px" data-i18n="tg.master.lbl.current">Текущий пароль</label>
+        <input type="password" id="masterPassCurrent" class="price-input" style="width:100%;background:#16172a;color:#e0e0f0;border-color:#2a2b42" placeholder="Введите текущий пароль" data-i18n-ph="tg.master.ph.current">
       </div>
       <div>
-        <label style="font-size:11px;color:#6b6b8a;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Новый пароль</label>
-        <input type="password" id="masterPassNew" class="price-input" style="width:100%;background:#16172a;color:#e0e0f0;border-color:#2a2b42" placeholder="Минимум 4 символа">
+        <label style="font-size:11px;color:#6b6b8a;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px" data-i18n="tg.master.lbl.new">Новый пароль</label>
+        <input type="password" id="masterPassNew" class="price-input" style="width:100%;background:#16172a;color:#e0e0f0;border-color:#2a2b42" placeholder="Минимум 4 символа" data-i18n-ph="tg.master.ph.new">
       </div>
       <div>
-        <label style="font-size:11px;color:#6b6b8a;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Повтор нового пароля</label>
-        <input type="password" id="masterPassConfirm" class="price-input" style="width:100%;background:#16172a;color:#e0e0f0;border-color:#2a2b42" placeholder="Повторите новый пароль">
+        <label style="font-size:11px;color:#6b6b8a;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px" data-i18n="tg.master.lbl.confirm">Повтор нового пароля</label>
+        <input type="password" id="masterPassConfirm" class="price-input" style="width:100%;background:#16172a;color:#e0e0f0;border-color:#2a2b42" placeholder="Повторите новый пароль" data-i18n-ph="tg.master.ph.confirm">
       </div>
       <div id="masterPassMsg" style="display:none;font-size:12px;padding:8px 10px;border-radius:8px"></div>
-      <button class="btn btn-primary" style="width:100%;padding:12px" onclick="changeMasterPass()">💾 Сохранить новый пароль</button>
+      <button class="btn btn-primary" style="width:100%;padding:12px" onclick="changeMasterPass()" data-i18n="tg.master.btn.save">💾 Сохранить новый пароль</button>
     </div>
   </div>
 </div>
