@@ -3276,10 +3276,6 @@
             <p class="cfg-hint">Показывается клиентам на сайте (ссылка рядом с согласием на обработку данных и в подвале сайта). Пункты защищены от случайного изменения — жмите «✏️ Редактировать», чтобы открыть нужный, и «💾 Сохранить», чтобы применить именно его.</p>
             <div id="orderRulesList"></div>
             <button type="button" class="btn btn-sm" onclick="addOrderRule()" style="margin-top:6px">➕ Добавить пункт</button>
-            <div class="cfg-actions" style="margin-top:16px">
-              <button class="btn btn-primary" onclick="saveOrderRules()">💾 Сохранить всё</button>
-              <span class="s-msg" id="msg_rules"></span>
-            </div>
           </div>
         </div>
 
@@ -13107,19 +13103,16 @@ function _orderRuleRowHtml(rule, uid, idx, total) {
       <button type="button" class="btn btn-sm" onclick="openEmojiPicker('rule-em-${uid}')" style="flex-shrink:0">😀 Эмодзи</button>
       <span style="margin-left:auto;font-size:12px;color:var(--accent,#3b82f6);font-weight:600">✏️ Редактирование</span>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
-      <div>
-        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px;font-weight:600">🇷🇺 Заголовок (RU)</label>
-        <input class="form-input" type="text" id="rule-title-ru-${uid}" value="${_esc(rule.title_ru||'')}" placeholder="ЗАГОЛОВОК ПУНКТА">
-        <label style="font-size:11px;color:var(--text2);display:block;margin:10px 0 4px;font-weight:600">Текст (RU)</label>
-        <textarea class="form-input" id="rule-text-ru-${uid}" rows="6" placeholder="Текст пункта на русском">${_esc(rule.text_ru||'')}</textarea>
-      </div>
-      <div>
-        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px;font-weight:600">🇺🇿 Sarlavha (UZ)</label>
-        <input class="form-input" type="text" id="rule-title-uz-${uid}" value="${_esc(rule.title_uz||'')}" placeholder="BAND SARLAVHASI">
-        <label style="font-size:11px;color:var(--text2);display:block;margin:10px 0 4px;font-weight:600">Matn (UZ)</label>
-        <textarea class="form-input" id="rule-text-uz-${uid}" rows="6" placeholder="O'zbek tilida matn">${_esc(rule.text_uz||'')}</textarea>
-      </div>
+    <div style="display:flex;flex-direction:column;gap:4px;width:100%">
+      <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px;font-weight:600">🇷🇺 Заголовок (RU)</label>
+      <input class="form-input" type="text" id="rule-title-ru-${uid}" value="${_esc(rule.title_ru||'')}" placeholder="ЗАГОЛОВОК ПУНКТА" style="width:100%">
+      <label style="font-size:11px;color:var(--text2);display:block;margin:10px 0 4px;font-weight:600">Текст (RU)</label>
+      <textarea class="form-input" id="rule-text-ru-${uid}" rows="6" placeholder="Текст пункта на русском" style="width:100%">${_esc(rule.text_ru||'')}</textarea>
+      <hr style="border:none;border-top:1px solid var(--line,#e5e7eb);margin:16px 0">
+      <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px;font-weight:600">🇺🇿 Sarlavha (UZ)</label>
+      <input class="form-input" type="text" id="rule-title-uz-${uid}" value="${_esc(rule.title_uz||'')}" placeholder="BAND SARLAVHASI" style="width:100%">
+      <label style="font-size:11px;color:var(--text2);display:block;margin:10px 0 4px;font-weight:600">Matn (UZ)</label>
+      <textarea class="form-input" id="rule-text-uz-${uid}" rows="6" placeholder="O'zbek tilida matn" style="width:100%">${_esc(rule.text_uz||'')}</textarea>
     </div>
     <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
       <button type="button" class="btn btn-sm" onclick="cancelOrderRuleEdit(${uid})">✖ Отмена</button>
@@ -13233,16 +13226,6 @@ async function _persistOrderRules() {
     body: JSON.stringify({ order_rules: JSON.stringify(payload) })
   });
   if (!res.ok) throw new Error(await res.text());
-}
-
-async function saveOrderRules() {
-  _syncOrderRulesFromDom();
-  try {
-    await _persistOrderRules();
-    showToast('Правила сохранены');
-  } catch(e) {
-    showToast('Ошибка: ' + e.message, 'error');
-  }
 }
 
 // ══════════════════════════════════════════
