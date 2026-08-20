@@ -4919,24 +4919,24 @@
 
       <!-- SMS: НАСТРОЙКИ -->
       <div class="page" id="page-sms-settings">
-        <div style="margin-bottom:20px"><h2 style="margin:0">⚙️ Настройки SMS</h2></div>
+        <div style="margin-bottom:20px"><h2 style="margin:0" data-i18n="sms.cfg.page.title">⚙️ Настройки SMS</h2></div>
         <div style="max-width:520px;display:flex;flex-direction:column;gap:18px">
 
           <!-- Карточка баланса -->
           <div style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);border-radius:16px;padding:24px 24px 20px;color:#fff;position:relative;overflow:hidden">
             <div style="position:absolute;bottom:-28px;right:-28px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,0.08);pointer-events:none"></div>
             <div style="position:absolute;top:10px;right:80px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.05);pointer-events:none"></div>
-            <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;opacity:0.75;margin-bottom:6px">💰 Баланс Eskiz.uz</div>
+            <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;opacity:0.75;margin-bottom:6px" data-i18n="sms.cfg.balance.title">💰 Баланс Eskiz.uz</div>
             <div id="smsBal_amount" style="font-size:34px;font-weight:700;letter-spacing:-0.5px;line-height:1.1;min-height:40px">—</div>
-            <div id="smsBal_updated" style="font-size:12px;opacity:0.65;margin-top:8px">Нажмите «Обновить» для проверки</div>
-            <button onclick="smsRefreshBalance()" id="smsBal_btn" style="position:absolute;top:18px;right:18px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:9px;color:#fff;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.2s;white-space:nowrap" onmouseover="this.style.background='rgba(255,255,255,0.28)'" onmouseout="this.style.background='rgba(255,255,255,0.18)'">🔄 Обновить</button>
+            <div id="smsBal_updated" style="font-size:12px;opacity:0.65;margin-top:8px" data-i18n="sms.cfg.balance.hint.initial">Нажмите «Обновить» для проверки</div>
+            <button onclick="smsRefreshBalance()" id="smsBal_btn" style="position:absolute;top:18px;right:18px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:9px;color:#fff;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.2s;white-space:nowrap" onmouseover="this.style.background='rgba(255,255,255,0.28)'" onmouseout="this.style.background='rgba(255,255,255,0.18)'" data-i18n="btn.refresh">🔄 Обновить</button>
           </div>
 
           <!-- Настройки Eskiz -->
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:12px">
             <div style="display:flex;align-items:center;gap:8px">
               <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:18px">📡</div>
-              <div><div style="font-weight:600;font-size:15px">Eskiz.uz</div><div style="font-size:12px;color:var(--text2)">Провайдер SMS-рассылок</div></div>
+              <div><div style="font-weight:600;font-size:15px">Eskiz.uz</div><div style="font-size:12px;color:var(--text2)" data-i18n="sms.cfg.provider.desc">Провайдер SMS-рассылок</div></div>
             </div>
             <div style="padding:10px 12px;border-radius:10px;background:var(--surface2);font-size:13px;color:var(--text2)" data-i18n="sms.cfg.status.ok">
               ✅ Email и пароль настроены. Токен обновляется автоматически.
@@ -4957,74 +4957,74 @@
               <span style="font-size:12px;color:var(--text2)" data-i18n="lbl.expand">развернуть ▾</span>
             </button>
             <div class="sms-ref-body" style="display:none;padding:0 20px 20px;display:none">
-              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2);margin-bottom:10px">Базовый URL</div>
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2);margin-bottom:10px" data-i18n="sms.cfg.api.baseurl">Базовый URL</div>
               <div style="font-family:monospace;font-size:12px;padding:8px 12px;background:var(--surface2);border-radius:8px;margin-bottom:16px;word-break:break-all">https://notify.eskiz.uz/api</div>
 
               <!-- Auth -->
-              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2);margin-bottom:8px">🔐 Авторизация</div>
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2);margin-bottom:8px" data-i18n="sms.cfg.api.auth.title">🔐 Авторизация</div>
               <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
                 <div style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12px">
                   <span style="font-family:monospace;padding:2px 7px;border-radius:5px;background:#dbeafe;color:#1d4ed8;font-weight:700;flex-shrink:0">POST</span>
-                  <div><div style="font-family:monospace">/auth/login</div><div style="color:var(--text2);margin-top:2px">Получить токен. Body: <code>email</code>, <code>password</code>. Ответ: <code>data.token</code></div></div>
+                  <div><div style="font-family:monospace">/auth/login</div><div style="color:var(--text2);margin-top:2px"><span data-i18n="sms.cfg.api.login.desc">Получить токен. Body:</span> <code>email</code>, <code>password</code>. <span data-i18n="sms.cfg.api.resp">Ответ:</span> <code>data.token</code></div></div>
                 </div>
                 <div style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12px">
                   <span style="font-family:monospace;padding:2px 7px;border-radius:5px;background:#fef3c7;color:#92400e;font-weight:700;flex-shrink:0">PATCH</span>
-                  <div><div style="font-family:monospace">/auth/refresh</div><div style="color:var(--text2);margin-top:2px">Обновить токен. Header: <code>Authorization: Bearer {token}</code>. Ответ: <code>data.token</code></div></div>
+                  <div><div style="font-family:monospace">/auth/refresh</div><div style="color:var(--text2);margin-top:2px"><span data-i18n="sms.cfg.api.refresh.desc">Обновить токен. Header:</span> <code>Authorization: Bearer {token}</code>. <span data-i18n="sms.cfg.api.resp">Ответ:</span> <code>data.token</code></div></div>
                 </div>
               </div>
 
               <!-- Send -->
-              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2);margin-bottom:8px">📤 Отправка SMS</div>
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2);margin-bottom:8px" data-i18n="sms.cfg.api.send.title">📤 Отправка SMS</div>
               <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
                 <div style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12px">
                   <span style="font-family:monospace;padding:2px 7px;border-radius:5px;background:#dbeafe;color:#1d4ed8;font-weight:700;flex-shrink:0">POST</span>
-                  <div><div style="font-family:monospace">/message/sms/send</div><div style="color:var(--text2);margin-top:2px">Одиночное SMS. Form-data: <code>mobile_phone</code>, <code>message</code>, <code>from</code>. Ответ: <code>id</code>, <code>status</code></div></div>
+                  <div><div style="font-family:monospace">/message/sms/send</div><div style="color:var(--text2);margin-top:2px"><span data-i18n="sms.cfg.api.sendone.desc">Одиночное SMS. Form-data:</span> <code>mobile_phone</code>, <code>message</code>, <code>from</code>. <span data-i18n="sms.cfg.api.resp">Ответ:</span> <code>id</code>, <code>status</code></div></div>
                 </div>
                 <div style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12px">
                   <span style="font-family:monospace;padding:2px 7px;border-radius:5px;background:#dbeafe;color:#1d4ed8;font-weight:700;flex-shrink:0">POST</span>
-                  <div><div style="font-family:monospace">/message/sms/send-batch</div><div style="color:var(--text2);margin-top:2px">Пакетная рассылка до 1000 номеров. Form-data: <code>messages</code> (JSON), <code>from</code>. messages: <code>[{to, text}, ...]</code></div></div>
+                  <div><div style="font-family:monospace">/message/sms/send-batch</div><div style="color:var(--text2);margin-top:2px"><span data-i18n="sms.cfg.api.batch.desc">Пакетная рассылка до 1000 номеров. Form-data:</span> <code>messages</code> (JSON), <code>from</code>. <span data-i18n="sms.cfg.api.messages.label">messages:</span> <code>[{to, text}, ...]</code></div></div>
                 </div>
                 <div style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12px">
                   <span style="font-family:monospace;padding:2px 7px;border-radius:5px;background:#d1fae5;color:#065f46;font-weight:700;flex-shrink:0">GET</span>
-                  <div><div style="font-family:monospace">/message/sms/{id}</div><div style="color:var(--text2);margin-top:2px">Статус конкретного SMS. Статусы: <code>waiting</code> · <code>process</code> · <code>delivered</code> · <code>failed</code></div></div>
+                  <div><div style="font-family:monospace">/message/sms/{id}</div><div style="color:var(--text2);margin-top:2px"><span data-i18n="sms.cfg.api.status.desc">Статус конкретного SMS. Статусы:</span> <code>waiting</code> · <code>process</code> · <code>delivered</code> · <code>failed</code></div></div>
                 </div>
               </div>
 
               <!-- Balance -->
-              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2);margin-bottom:8px">💰 Баланс и лимиты</div>
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2);margin-bottom:8px" data-i18n="sms.cfg.api.balancelimits.title">💰 Баланс и лимиты</div>
               <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
                 <div style="display:flex;gap:8px;align-items:flex-start;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12px">
                   <span style="font-family:monospace;padding:2px 7px;border-radius:5px;background:#d1fae5;color:#065f46;font-weight:700;flex-shrink:0">GET</span>
-                  <div><div style="font-family:monospace">/user/get-limit</div><div style="color:var(--text2);margin-top:2px">Текущий баланс. Ответ: <code>data.balance</code></div></div>
+                  <div><div style="font-family:monospace">/user/get-limit</div><div style="color:var(--text2);margin-top:2px"><span data-i18n="sms.cfg.api.limit.desc">Текущий баланс.</span> <span data-i18n="sms.cfg.api.resp">Ответ:</span> <code>data.balance</code></div></div>
                 </div>
               </div>
 
               <!-- Formats -->
-              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2);margin-bottom:8px">📐 Форматы и лимиты</div>
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2);margin-bottom:8px" data-i18n="sms.cfg.api.formats.title">📐 Форматы и лимиты</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
                 <div style="padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12px">
-                  <div style="font-weight:600;margin-bottom:3px">Номер телефона</div>
+                  <div style="font-weight:600;margin-bottom:3px" data-i18n="sms.cfg.fmt.phone.title">Номер телефона</div>
                   <div style="font-family:monospace;color:var(--accent)">998XXXXXXXXX</div>
-                  <div style="color:var(--text2);margin-top:2px">12 цифр, без + или пробелов</div>
+                  <div style="color:var(--text2);margin-top:2px" data-i18n="sms.cfg.fmt.phone.desc">12 цифр, без + или пробелов</div>
                 </div>
                 <div style="padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12px">
-                  <div style="font-weight:600;margin-bottom:3px">Длина SMS</div>
-                  <div style="font-family:monospace;color:var(--accent)">160 / 70 символов</div>
-                  <div style="color:var(--text2);margin-top:2px">Latin / Кириллица (Unicode)</div>
+                  <div style="font-weight:600;margin-bottom:3px" data-i18n="sms.cfg.fmt.len.title">Длина SMS</div>
+                  <div style="font-family:monospace;color:var(--accent)" data-i18n="sms.cfg.fmt.len.value">160 / 70 символов</div>
+                  <div style="color:var(--text2);margin-top:2px" data-i18n="sms.cfg.fmt.len.desc">Latin / Кириллица (Unicode)</div>
                 </div>
                 <div style="padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12px">
-                  <div style="font-weight:600;margin-bottom:3px">Партия (batch)</div>
-                  <div style="font-family:monospace;color:var(--accent)">до 1000 номеров</div>
-                  <div style="color:var(--text2);margin-top:2px">за один запрос</div>
+                  <div style="font-weight:600;margin-bottom:3px" data-i18n="sms.cfg.fmt.batch.title">Партия (batch)</div>
+                  <div style="font-family:monospace;color:var(--accent)" data-i18n="sms.cfg.fmt.batch.value">до 1000 номеров</div>
+                  <div style="color:var(--text2);margin-top:2px" data-i18n="sms.cfg.fmt.batch.desc">за один запрос</div>
                 </div>
                 <div style="padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12px">
-                  <div style="font-weight:600;margin-bottom:3px">Alpha-name</div>
-                  <div style="font-family:monospace;color:var(--accent)">до 11 символов</div>
-                  <div style="color:var(--text2);margin-top:2px">регистрируется в кабинете</div>
+                  <div style="font-weight:600;margin-bottom:3px" data-i18n="sms.cfg.fmt.alpha.title">Alpha-name</div>
+                  <div style="font-family:monospace;color:var(--accent)" data-i18n="sms.cfg.fmt.alpha.value">до 11 символов</div>
+                  <div style="color:var(--text2);margin-top:2px" data-i18n="sms.cfg.fmt.alpha.desc">регистрируется в кабинете</div>
                 </div>
               </div>
               <div style="margin-top:12px;padding:8px 12px;border-radius:8px;background:#fef9c3;border:1px solid #fde68a;font-size:12px;color:#854d0e">
-                ⚠️ Токен действует <b>30 дней</b>. Система обновляет его автоматически через <code>PATCH /auth/refresh</code>.
+                <span data-i18n="sms.cfg.token.warn1">⚠️ Токен действует</span> <b data-i18n="sms.cfg.token.warn.days">30 дней</b><span data-i18n="sms.cfg.token.warn2">. Система обновляет его автоматически через</span> <code>PATCH /auth/refresh</code><span data-i18n="sms.cfg.token.warn3">.</span>
               </div>
             </div>
           </div>
@@ -6736,6 +6736,30 @@ const _adminI18n = {
     'sms.cfg.sender.lbl':'Имя отправителя (alpha-name)',
     'sms.cfg.sender.hint':'Должно быть зарегистрировано в кабинете Eskiz.uz',
     'sms.cfg.api.docs':'📚 Справочник Eskiz API','lbl.expand':'развернуть ▾',
+    'sms.cfg.page.title':'⚙️ Настройки SMS',
+    'sms.cfg.balance.title':'💰 Баланс Eskiz.uz',
+    'sms.cfg.balance.hint.initial':'Нажмите «Обновить» для проверки',
+    'sms.cfg.provider.desc':'Провайдер SMS-рассылок',
+    'sms.cfg.saved':'Сохранено','sms.cfg.error':'Ошибка',
+    'sms.cfg.api.baseurl':'Базовый URL',
+    'sms.cfg.api.auth.title':'🔐 Авторизация',
+    'sms.cfg.api.login.desc':'Получить токен. Body:',
+    'sms.cfg.api.resp':'Ответ:',
+    'sms.cfg.api.refresh.desc':'Обновить токен. Header:',
+    'sms.cfg.api.send.title':'📤 Отправка SMS',
+    'sms.cfg.api.sendone.desc':'Одиночное SMS. Form-data:',
+    'sms.cfg.api.batch.desc':'Пакетная рассылка до 1000 номеров. Form-data:',
+    'sms.cfg.api.messages.label':'messages:',
+    'sms.cfg.api.status.desc':'Статус конкретного SMS. Статусы:',
+    'sms.cfg.api.balancelimits.title':'💰 Баланс и лимиты',
+    'sms.cfg.api.limit.desc':'Текущий баланс.',
+    'sms.cfg.api.formats.title':'📐 Форматы и лимиты',
+    'sms.cfg.fmt.phone.title':'Номер телефона','sms.cfg.fmt.phone.desc':'12 цифр, без + или пробелов',
+    'sms.cfg.fmt.len.title':'Длина SMS','sms.cfg.fmt.len.value':'160 / 70 символов','sms.cfg.fmt.len.desc':'Latin / Кириллица (Unicode)',
+    'sms.cfg.fmt.batch.title':'Партия (batch)','sms.cfg.fmt.batch.value':'до 1000 номеров','sms.cfg.fmt.batch.desc':'за один запрос',
+    'sms.cfg.fmt.alpha.title':'Alpha-name','sms.cfg.fmt.alpha.value':'до 11 символов','sms.cfg.fmt.alpha.desc':'регистрируется в кабинете',
+    'sms.cfg.token.warn1':'⚠️ Токен действует','sms.cfg.token.warn.days':'30 дней',
+    'sms.cfg.token.warn2':'. Система обновляет его автоматически через','sms.cfg.token.warn3':'.',
     'ph.search.tg.clients':'🔍 Поиск по имени, телефону, @username',
     'tg.found':'Найдено:','th.orders.spent':'Потрачено',
     'empty.tg.clients':'Клиентов с Telegram не найдено',
@@ -7354,6 +7378,30 @@ const _adminI18n = {
     'sms.cfg.sender.lbl':'Yuboruvchi nomi (alpha-name)',
     'sms.cfg.sender.hint':'Eskiz.uz kabinetida roʻyxatdan oʻtgan boʻlishi kerak',
     'sms.cfg.api.docs':'📚 Eskiz API maʼlumotnomasi','lbl.expand':'ochish ▾',
+    'sms.cfg.page.title':'⚙️ SMS sozlamalari',
+    'sms.cfg.balance.title':'💰 Eskiz.uz balansi',
+    'sms.cfg.balance.hint.initial':'Tekshirish uchun «Yangilash» tugmasini bosing',
+    'sms.cfg.provider.desc':'SMS xabarnomalari provayderi',
+    'sms.cfg.saved':'Saqlandi','sms.cfg.error':'Xatolik',
+    'sms.cfg.api.baseurl':'Asosiy URL',
+    'sms.cfg.api.auth.title':'🔐 Avtorizatsiya',
+    'sms.cfg.api.login.desc':'Token olish. Body:',
+    'sms.cfg.api.resp':'Javob:',
+    'sms.cfg.api.refresh.desc':'Tokenni yangilash. Header:',
+    'sms.cfg.api.send.title':'📤 SMS yuborish',
+    'sms.cfg.api.sendone.desc':'Bitta SMS. Form-data:',
+    'sms.cfg.api.batch.desc':'1000 tagacha raqamga paketli yuborish. Form-data:',
+    'sms.cfg.api.messages.label':'messages:',
+    'sms.cfg.api.status.desc':'Aniq SMS holati. Holatlar:',
+    'sms.cfg.api.balancelimits.title':'💰 Balans va limitlar',
+    'sms.cfg.api.limit.desc':'Joriy balans.',
+    'sms.cfg.api.formats.title':'📐 Formatlar va limitlar',
+    'sms.cfg.fmt.phone.title':'Telefon raqami','sms.cfg.fmt.phone.desc':'12 ta raqam, + yoki boʻshliqsiz',
+    'sms.cfg.fmt.len.title':'SMS uzunligi','sms.cfg.fmt.len.value':'160 / 70 ta belgi','sms.cfg.fmt.len.desc':'Latin / Kirill (Unicode)',
+    'sms.cfg.fmt.batch.title':'Partiya (batch)','sms.cfg.fmt.batch.value':'1000 tagacha raqam','sms.cfg.fmt.batch.desc':'bitta soʻrovda',
+    'sms.cfg.fmt.alpha.title':'Alpha-name','sms.cfg.fmt.alpha.value':'11 ta belgigacha','sms.cfg.fmt.alpha.desc':'kabinetda roʻyxatdan oʻtkaziladi',
+    'sms.cfg.token.warn1':'⚠️ Token','sms.cfg.token.warn.days':'30 kun',
+    'sms.cfg.token.warn2':' amal qiladi. Tizim uni','sms.cfg.token.warn3':' orqali avtomatik yangilaydi.',
     'ph.search.tg.clients':'🔍 Ism, telefon, @username boʻyicha qidirish',
     'tg.found':'Topildi:','th.orders.spent':'Sarflangan',
     'empty.tg.clients':'Telegram bilan mijozlar topilmadi',
@@ -24266,8 +24314,13 @@ async function smsSaveSettings() {
   const res = await apiPost('/admin/sms/settings', { from: frm });
   const el = document.getElementById('smsSaveResult');
   el.style.display = '';
-  if (res?.ok) { el.style.background='#f0fdf4';el.style.color='#15803d';el.style.border='1px solid #86efac';el.textContent='✅ Сохранено'; }
-  else { el.style.background='#fef2f2';el.style.color='#dc2626';el.style.border='1px solid #fca5a5';el.textContent='❌ '+(res?.detail||'Ошибка'); }
+  if (res?.ok) { el.style.background='#f0fdf4';el.style.color='#15803d';el.style.border='1px solid #86efac';el.textContent='✅ '+_t('sms.cfg.saved'); }
+  else { el.style.background='#fef2f2';el.style.color='#dc2626';el.style.border='1px solid #fca5a5';el.textContent='❌ '+(res?.detail||_t('sms.cfg.error')); }
+}
+
+// Порядок слов в отметке времени обновления баланса различается в RU/UZ — строится по _adminLang, а не через _t()
+function _smsBalUpdatedMsg(hh, mm) {
+  return _adminLang === 'uz' ? `Yangilandi: bugun soat ${hh}:${mm}` : `Обновлено: сегодня в ${hh}:${mm}`;
 }
 
 async function smsRefreshBalance() {
@@ -24279,13 +24332,13 @@ async function smsRefreshBalance() {
   if (btn) btn.disabled = true;
   const d = await apiGet('/admin/sms/balance');
   if (btn) btn.disabled = false;
-  if (!d) { amEl.textContent = '❌ Ошибка'; return; }
+  if (!d) { amEl.textContent = '❌ '+_t('sms.cfg.error'); return; }
   const balance = d?.data?.balance ?? d?.balance ?? '—';
   amEl.textContent = balance;
   const now = new Date();
   const hh = String(now.getHours()).padStart(2,'0');
   const mm = String(now.getMinutes()).padStart(2,'0');
-  if (upEl) upEl.textContent = `Обновлено: сегодня в ${hh}:${mm}`;
+  if (upEl) upEl.textContent = _smsBalUpdatedMsg(hh, mm);
 }
 
 // Legacy (used on sms-send page)
