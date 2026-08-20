@@ -1772,7 +1772,7 @@
         <!-- Наименования услуг -->
         <div class="card" style="margin-bottom:16px">
           <div style="font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px" data-i18n="prices.svc.title">Наименования услуг</div>
-          <div id="svcsLoading" class="loader" style="display:none">Загрузка…</div>
+          <div id="svcsLoading" class="loader" style="display:none" data-i18n="lbl.loading">Загрузка…</div>
           <div id="svcsCardContent"></div>
         </div>
 
@@ -1828,23 +1828,23 @@
           <h3 data-i18n="units.add.title">Добавить единицу измерения</h3>
           <div style="display:grid; grid-template-columns: repeat(5, 1fr) auto; gap:10px; align-items:end;">
             <div>
-              <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:4px;">Ключ (англ., без пробелов)</label>
+              <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:4px;" data-i18n="units.key.lbl">Ключ (англ., без пробелов)</label>
               <input class="price-input" style="width:100%" id="newUnitKey" placeholder="m3">
             </div>
             <div>
-              <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:4px;">Название RU</label>
-              <input class="price-input" style="width:100%" id="newUnitNameRu" placeholder="Кубический метр">
+              <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:4px;" data-i18n="units.new.name.ru.lbl">Название RU</label>
+              <input class="price-input" style="width:100%" id="newUnitNameRu" data-i18n-ph="units.name.ru.ph" placeholder="Кубический метр">
             </div>
             <div>
-              <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:4px;">Название UZ</label>
+              <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:4px;" data-i18n="units.new.name.uz.lbl">Название UZ</label>
               <input class="price-input" style="width:100%" id="newUnitNameUz" placeholder="Kub metr">
             </div>
             <div>
-              <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:4px;">Символ RU</label>
+              <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:4px;" data-i18n="units.new.sym.ru.lbl">Символ RU</label>
               <input class="price-input" style="width:100%" id="newUnitSymbolRu" placeholder="м³">
             </div>
             <div>
-              <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:4px;">Символ UZ</label>
+              <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:4px;" data-i18n="units.new.sym.uz.lbl">Символ UZ</label>
               <input class="price-input" style="width:100%" id="newUnitSymbolUz" placeholder="m³">
             </div>
             <button class="btn btn-save" onclick="addUnit()" data-i18n="btn.add">Добавить</button>
@@ -6170,28 +6170,28 @@
 <!-- PRICE MODAL -->
 <div id="priceModal" class="modal-overlay hidden">
   <div class="modal-box" style="max-width:420px">
-    <div class="modal-title" id="pmTitle">Редактировать цену</div>
+    <div class="modal-title" id="pmTitle" data-i18n="prices.modal.edit.title">Редактировать цену</div>
     <div id="pmSvcLabel" style="font-size:13px;color:var(--text2);margin-bottom:16px"></div>
     <div id="pmNewFields" style="display:none">
       <div class="form-group" style="margin-bottom:12px">
-        <label class="form-label">Услуга *</label>
+        <label class="form-label" data-i18n="prices.modal.svc.lbl">Услуга *</label>
         <select class="form-input" id="pm_svc"></select>
       </div>
       <div class="form-group" style="margin-bottom:12px">
-        <label class="form-label">Тип *</label>
+        <label class="form-label" data-i18n="prices.modal.type.lbl">Тип *</label>
         <select class="form-input" id="pm_tp">
-          <option value="standard">Стандартный</option>
-          <option value="express">Быстрый</option>
+          <option value="standard" data-i18n="prices.type.standard">Стандартный</option>
+          <option value="express" data-i18n="prices.type.express">Быстрый</option>
         </select>
       </div>
     </div>
     <div class="form-grid">
       <div class="form-group">
-        <label class="form-label">Цена (сум) *</label>
+        <label class="form-label" data-i18n="prices.modal.price.lbl">Цена (сум) *</label>
         <input class="form-input" type="number" id="pm_price" min="1" step="1000" inputmode="numeric">
       </div>
       <div class="form-group">
-        <label class="form-label">Ед. изм.</label>
+        <label class="form-label" data-i18n="th.unit">Ед. изм.</label>
         <select class="form-input" id="pm_unit"></select>
       </div>
       <div class="form-group">
@@ -6212,35 +6212,35 @@
 
 <div id="svcNewModal" class="modal-overlay hidden">
   <div class="modal-box" style="max-width:420px">
-    <div class="modal-title">Новая услуга</div>
+    <div class="modal-title" data-i18n="prices.svc.new.title">Новая услуга</div>
     <div class="form-grid">
       <div class="form-group">
-        <label class="form-label">Ключ (латиница) *</label>
+        <label class="form-label" data-i18n="prices.svc.key.lbl">Ключ (латиница) *</label>
         <input class="form-input" type="text" id="se-new-key" maxlength="30" placeholder="dry_clean">
       </div>
       <div class="form-group">
         <label class="form-label">Emoji</label>
         <div style="display:flex;gap:6px">
           <input class="form-input" type="text" id="se-new-em" maxlength="5" placeholder="🆕" style="text-align:center;width:52px;flex-shrink:0">
-          <button type="button" class="btn btn-sm" onclick="openEmojiPicker('se-new-em')" style="flex-shrink:0">😀 Выбрать</button>
+          <button type="button" class="btn btn-sm" onclick="openEmojiPicker('se-new-em')" style="flex-shrink:0" data-i18n="prices.svc.emoji.pick">😀 Выбрать</button>
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Название RU *</label>
-        <input class="form-input" type="text" id="se-new-ru" placeholder="Название">
+        <label class="form-label" data-i18n="prices.svc.name.ru.lbl">Название RU *</label>
+        <input class="form-input" type="text" id="se-new-ru" data-i18n-ph="prices.svc.name.ph" placeholder="Название">
       </div>
       <div class="form-group">
         <label class="form-label">Nomi UZ *</label>
         <input class="form-input" type="text" id="se-new-uz" placeholder="Nomi">
       </div>
       <div class="form-group">
-        <label class="form-label">Порядок №</label>
+        <label class="form-label" data-i18n="prices.svc.order.lbl">Порядок №</label>
         <input class="form-input" type="number" id="se-new-ord" min="0" placeholder="0">
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-cancel" onclick="closeSvcNewModal()">Отмена</button>
-      <button class="btn btn-save" onclick="addSvc()">💾 Сохранить</button>
+      <button class="btn btn-cancel" onclick="closeSvcNewModal()" data-i18n="btn.cancel">Отмена</button>
+      <button class="btn btn-save" onclick="addSvc()" data-i18n="btn.save">💾 Сохранить</button>
     </div>
   </div>
 </div>
@@ -6799,9 +6799,30 @@ const _adminI18n = {
     'prices.svc.title':'Наименования услуг','prices.save.info':'Изменения сохраняются в базе данных и сразу отображаются на сайте и в боте.',
     'prices.new.svc':'+ Новая услуга','prices.th.name.ru':'Наим. RU',
     'prices.auto.disc':'Автоскидки','prices.disc.bring':'🏠 Клиент привозит','prices.disc.take':'🚪 Клиент забирает',
+    'prices.modal.edit.title':'Редактировать цену','prices.modal.add.title':'Добавить цену',
+    'prices.modal.svc.lbl':'Услуга *','prices.modal.type.lbl':'Тип *',
+    'prices.type.standard':'Стандартный','prices.type.express':'Быстрый',
+    'prices.modal.price.lbl':'Цена (сум) *',
+    'prices.svc.new.title':'Новая услуга','prices.svc.key.lbl':'Ключ (латиница) *',
+    'prices.svc.emoji.pick':'😀 Выбрать','prices.svc.name.ru.lbl':'Название RU *',
+    'prices.svc.name.ru.ph':'Название RU','prices.svc.order.lbl':'Порядок №','prices.svc.name.ph':'Название',
+    'prices.msg.fill.both.names':'Заполните оба названия','prices.msg.saved':'Сохранено','prices.msg.error':'Ошибка',
+    'prices.confirm.delete.svc':'Удалить услугу «{key}»?','prices.msg.deleted':'Удалено',
+    'prices.msg.fill.key.names':'Заполните ключ и оба названия','prices.msg.svc.added':'Услуга «{key}» добавлена',
+    'prices.err.load':'Ошибка загрузки','prices.err.load.prices':'⚠ Ошибка загрузки цен',
+    'prices.modal.select.svc.type':'Выберите услугу и тип','prices.modal.price.gt0':'Введите цену > 0',
+    'prices.err.save':'Ошибка сохранения',
     'units.desc':'Используются в ценах и калькуляторе. Заполняйте название и символ на русском и узбекском языках.',
     'units.th.name.ru':'Название (RU)','units.th.name.uz':'Название (UZ)','units.th.sym.ru':'Символ (RU)','units.th.sym.uz':'Символ (UZ)',
     'units.add.title':'Добавить единицу измерения','btn.execute':'Выполнить','btn.deselect.all':'Снять все',
+    'units.key.lbl':'Ключ (англ., без пробелов)',
+    'units.new.name.ru.lbl':'Название RU','units.new.name.uz.lbl':'Название UZ',
+    'units.new.sym.ru.lbl':'Символ RU','units.new.sym.uz.lbl':'Символ UZ',
+    'units.name.ru.ph':'Кубический метр',
+    'units.msg.fill.all':'Заполните все поля','units.msg.added':'Единица «{sym}» добавлена',
+    'units.err.save':'Ошибка сохранения',
+    'units.confirm.delete':'Удалить единицу измерения «{key}»? Цены, использующие её, придётся обновить вручную.',
+    'units.msg.deleted':'Единица «{key}» удалена','units.err.delete':'Ошибка удаления',
     'chat.tpl.desc':'Авто-сообщения (welcome, warn_timeout, bye_m, bye_f) и быстрые ответы (quick) для операторов. Ключи bye_m / bye_f используют пол сотрудника из БД.',
     'roles.desc':'Настройте, какие разделы видит каждая роль. Admin всегда видит всё.',
     'roles.th.section':'Раздел','roles.btn.reset':'↺ Сбросить к дефолту',
@@ -7528,9 +7549,30 @@ const _adminI18n = {
     'prices.svc.title':'Xizmat nomlari','prices.save.info':'Oʻzgarishlar bazaga saqlanadi va darhol sayt va botda koʻrinadi.',
     'prices.new.svc':'+ Yangi xizmat','prices.th.name.ru':'Nom RU',
     'prices.auto.disc':'Avtochegirmalar','prices.disc.bring':'🏠 Mijoz olib keladi','prices.disc.take':'🚪 Mijoz olib ketadi',
+    'prices.modal.edit.title':'Narxni tahrirlash','prices.modal.add.title':'Narx qoʻshish',
+    'prices.modal.svc.lbl':'Xizmat *','prices.modal.type.lbl':'Turi *',
+    'prices.type.standard':'Standart','prices.type.express':'Tezkor',
+    'prices.modal.price.lbl':'Narx (soʻm) *',
+    'prices.svc.new.title':'Yangi xizmat','prices.svc.key.lbl':'Kalit (lotin harflarida) *',
+    'prices.svc.emoji.pick':'😀 Tanlash','prices.svc.name.ru.lbl':'Nomi (RU) *',
+    'prices.svc.name.ru.ph':'Nomi (RU)','prices.svc.order.lbl':'Tartib raqami','prices.svc.name.ph':'Nomi',
+    'prices.msg.fill.both.names':'Ikkala nomni ham kiriting','prices.msg.saved':'Saqlandi','prices.msg.error':'Xatolik',
+    'prices.confirm.delete.svc':'«{key}» xizmatini oʻchirasizmi?','prices.msg.deleted':'Oʻchirildi',
+    'prices.msg.fill.key.names':'Kalit va ikkala nomni kiriting','prices.msg.svc.added':'«{key}» xizmati qoʻshildi',
+    'prices.err.load':'Yuklashda xatolik','prices.err.load.prices':'⚠ Narxlarni yuklashda xatolik',
+    'prices.modal.select.svc.type':'Xizmat va turini tanlang','prices.modal.price.gt0':'0 dan katta narx kiriting',
+    'prices.err.save':'Saqlashda xatolik',
     'units.desc':'Narxlar va kalkulyatorda ishlatiladi. Nom va belgini rus va oʻzbek tillarida toʻldiring.',
     'units.th.name.ru':'Nomi (RU)','units.th.name.uz':'Nomi (UZ)','units.th.sym.ru':'Belgi (RU)','units.th.sym.uz':'Belgi (UZ)',
     'units.add.title':'Oʻlchov birligini qoʻshish','btn.execute':'Bajarish','btn.deselect.all':'Barchasini bekor qilish',
+    'units.key.lbl':'Kalit (lotincha, boʻshliqsiz)',
+    'units.new.name.ru.lbl':'Nomi (RU)','units.new.name.uz.lbl':'Nomi (UZ)',
+    'units.new.sym.ru.lbl':'Belgi (RU)','units.new.sym.uz.lbl':'Belgi (UZ)',
+    'units.name.ru.ph':'Kub metr',
+    'units.msg.fill.all':'Barcha maydonlarni toʻldiring','units.msg.added':'«{sym}» birligi qoʻshildi',
+    'units.err.save':'Saqlashda xatolik',
+    'units.confirm.delete':'«{key}» oʻlchov birligini oʻchirasizmi? Uni ishlatuvchi narxlarni qoʻlda yangilashga toʻgʻri keladi.',
+    'units.msg.deleted':'«{key}» birligi oʻchirildi','units.err.delete':'Oʻchirishda xatolik',
     'chat.tpl.desc':'Avtoxabarlar (welcome, warn_timeout, bye_m, bye_f) va operatorlar uchun tezkor javoblar (quick). bye_m / bye_f kalitlari bazadagi xodim jinsidan foydalanadi.',
     'roles.desc':'Har bir rol qanday boʻlimlarni koʻrishini sozlang. Admin har doim hamma narsani koʻradi.',
     'roles.th.section':'Boʻlim','roles.btn.reset':'↺ Standartga qaytarish',
@@ -10382,7 +10424,7 @@ async function loadPrices() {
       apiGet('/admin/services'),
     ]);
   } catch(e) {
-    document.getElementById('pricesLoading').textContent = '⚠ ' + (e.message || 'Ошибка загрузки');
+    document.getElementById('pricesLoading').textContent = '⚠ ' + (e.message || _t('prices.err.load'));
     return;
   }
   // Загружаем услуги
@@ -10392,7 +10434,7 @@ async function loadPrices() {
   try { _renderServicesCard(services); } catch(e) { console.error('_renderServicesCard:', e); }
 
   if (!pricesData?.prices) {
-    document.getElementById('pricesLoading').textContent = pricesData?.detail || '⚠ Ошибка загрузки цен';
+    document.getElementById('pricesLoading').textContent = pricesData?.detail || _t('prices.err.load.prices');
     return;
   }
   unitsCache = unitsData?.units || [];
@@ -10459,7 +10501,7 @@ function _renderServicesCard(services) {
           <button type="button" onclick="openEmojiPicker('se-em-${s.key}')" class="btn btn-sm" style="padding:5px 7px">😀</button>
         </div>
       </td>
-      <td style="padding:4px">${inp(`se-ru-${s.key}`, s.name_ru, 'Название RU', '170px')}</td>
+      <td style="padding:4px">${inp(`se-ru-${s.key}`, s.name_ru, _t('prices.svc.name.ru.ph'), '170px')}</td>
       <td style="padding:4px">${inp(`se-uz-${s.key}`, s.name_uz, 'Nomi UZ', '170px')}</td>
       <td style="padding:4px"><input type="number" id="se-ord-${s.key}" value="${s.order_idx}"
         style="border:1.5px solid var(--border);border-radius:8px;padding:5px 6px;font-size:13px;background:var(--surface);color:var(--text);width:52px"></td>
@@ -10550,17 +10592,17 @@ async function saveSvc(key) {
   const name_uz  = document.getElementById(`se-uz-${key}`)?.value.trim();
   const emoji    = document.getElementById(`se-em-${key}`)?.value.trim() || '';
   const order_idx = parseInt(document.getElementById(`se-ord-${key}`)?.value) || 0;
-  if (!name_ru || !name_uz) { showToast('Заполните оба названия', 'error'); return; }
+  if (!name_ru || !name_uz) { showToast(_t('prices.msg.fill.both.names'), 'error'); return; }
   const res = await apiPut('/admin/services', { key, name_ru, name_uz, emoji, order_idx });
-  if (res?.ok) { showToast('Сохранено'); loadPrices(); }
-  else showToast(res?.detail || 'Ошибка', 'error');
+  if (res?.ok) { showToast(_t('prices.msg.saved')); loadPrices(); }
+  else showToast(res?.detail || _t('prices.msg.error'), 'error');
 }
 
 async function deleteSvc(key) {
-  if (!confirm(`Удалить услугу «${key}»?`)) return;
+  if (!confirm(_t('prices.confirm.delete.svc').replace('{key}', key))) return;
   const res = await apiDelete(`/admin/services/${key}`);
-  if (res?.ok) { showToast('Удалено'); loadPrices(); }
-  else showToast(res?.detail || 'Ошибка', 'error');
+  if (res?.ok) { showToast(_t('prices.msg.deleted')); loadPrices(); }
+  else showToast(res?.detail || _t('prices.msg.error'), 'error');
 }
 
 async function addSvc() {
@@ -10569,10 +10611,10 @@ async function addSvc() {
   const name_uz  = document.getElementById('se-new-uz')?.value.trim();
   const emoji    = document.getElementById('se-new-em')?.value.trim() || '';
   const order_idx = parseInt(document.getElementById('se-new-ord')?.value) || 0;
-  if (!key || !name_ru || !name_uz) { showToast('Заполните ключ и оба названия', 'error'); return; }
+  if (!key || !name_ru || !name_uz) { showToast(_t('prices.msg.fill.key.names'), 'error'); return; }
   const res = await apiPut('/admin/services', { key, name_ru, name_uz, emoji, order_idx });
-  if (res?.ok) { showToast(`Услуга «${key}» добавлена`); closeSvcNewModal(); loadPrices(); }
-  else showToast(res?.detail || 'Ошибка', 'error');
+  if (res?.ok) { showToast(_t('prices.msg.svc.added').replace('{key}', key)); closeSvcNewModal(); loadPrices(); }
+  else showToast(res?.detail || _t('prices.msg.error'), 'error');
 }
 
 function discountsEdit() {
@@ -10708,8 +10750,9 @@ function openPriceModal(svc, tp, price, unitKey, minOrder, minOrderTotal) {
   _pmSvc = svc; _pmTp = tp;
   const sd = _svcData[svc];
   const svcLabel = sd ? `${sd.emoji} ${sd.name_ru}`.trim() : (SVC_NAMES[svc] || svc);
-  document.getElementById('pmTitle').textContent = 'Редактировать цену';
-  document.getElementById('pmSvcLabel').textContent = `${svcLabel} — ${TYPE_NAMES[tp] || tp}`;
+  document.getElementById('pmTitle').textContent = _t('prices.modal.edit.title');
+  const tpName = (_adminLang === 'uz' ? TYPE_NAMES_UZ[tp] : TYPE_NAMES[tp]) || tp;
+  document.getElementById('pmSvcLabel').textContent = `${svcLabel} — ${tpName}`;
   document.getElementById('pmNewFields').style.display = 'none';
   document.getElementById('pm_price').value = price || '';
   document.getElementById('pm_min').value   = minOrder ?? '';
@@ -10721,7 +10764,7 @@ function openPriceModal(svc, tp, price, unitKey, minOrder, minOrderTotal) {
 
 function openPriceModalNew() {
   _pmSvc = null; _pmTp = null;
-  document.getElementById('pmTitle').textContent = 'Добавить цену';
+  document.getElementById('pmTitle').textContent = _t('prices.modal.add.title');
   document.getElementById('pmSvcLabel').textContent = '';
   document.getElementById('pmNewFields').style.display = '';
   // Заполняем услуги
@@ -10753,17 +10796,18 @@ async function savePriceModal() {
   const min_order = minRaw === '' ? null : parseFloat(minRaw);
   const minTotalRaw = document.getElementById('pm_min_total').value;
   const min_order_total = minTotalRaw === '' ? null : parseFloat(minTotalRaw);
-  if (!svc || !tp) { showToast('Выберите услугу и тип', 'error'); return; }
-  if (!price || price <= 0) { showToast('Введите цену > 0', 'error'); return; }
+  if (!svc || !tp) { showToast(_t('prices.modal.select.svc.type'), 'error'); return; }
+  if (!price || price <= 0) { showToast(_t('prices.modal.price.gt0'), 'error'); return; }
   const data = await apiPut('/admin/prices', { service_key: svc, type_key: tp, price, unit_key, min_order, min_order_total });
   if (data?.ok) {
     const sd = _svcData[svc];
     const svcLabel = sd ? `${sd.emoji} ${sd.name_ru}`.trim() : (SVC_NAMES[svc] || svc);
-    showToast(`${svcLabel} / ${TYPE_NAMES[tp]} = ${price.toLocaleString('ru-RU')} сум`);
+    const tpName = (_adminLang === 'uz' ? TYPE_NAMES_UZ[tp] : TYPE_NAMES[tp]) || tp;
+    showToast(`${svcLabel} / ${tpName} = ${price.toLocaleString('ru-RU')} ${_t('lbl.sum')}`);
     closePriceModal();
     loadPrices();
   } else {
-    showToast(data?.detail || 'Ошибка сохранения', 'error');
+    showToast(data?.detail || _t('prices.err.save'), 'error');
   }
 }
 
@@ -10797,23 +10841,23 @@ async function addUnit() {
   const symbolRu  = document.getElementById('newUnitSymbolRu').value.trim();
   const symbolUz  = document.getElementById('newUnitSymbolUz').value.trim();
   if (!key || !nameRu || !nameUz || !symbolRu || !symbolUz) {
-    showToast('Заполните все поля', 'error'); return;
+    showToast(_t('units.msg.fill.all'), 'error'); return;
   }
   const data = await apiPut('/admin/units', {
     key, name_ru: nameRu, name_uz: nameUz, symbol_ru: symbolRu, symbol_uz: symbolUz,
   });
   if (data?.ok) {
-    showToast(`Единица «${symbolRu}» добавлена`);
+    showToast(_t('units.msg.added').replace('{sym}', symbolRu));
     ['newUnitKey','newUnitNameRu','newUnitNameUz','newUnitSymbolRu','newUnitSymbolUz']
       .forEach(id => document.getElementById(id).value = '');
     loadUnits();
   } else {
-    showToast(data?.detail || 'Ошибка сохранения', 'error');
+    showToast(data?.detail || _t('units.err.save'), 'error');
   }
 }
 
 async function deleteUnit(key) {
-  if (!confirm(`Удалить единицу измерения «${key}»? Цены, использующие её, придётся обновить вручную.`)) return;
+  if (!confirm(_t('units.confirm.delete').replace('{key}', key))) return;
   const res = await fetch(`${API_BASE}/admin/units/${key}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${adminToken}` }
@@ -10821,10 +10865,10 @@ async function deleteUnit(key) {
   if (res.status === 401) { doLogout(); return; }
   const data = await res.json();
   if (data?.ok) {
-    showToast(`Единица «${key}» удалена`);
+    showToast(_t('units.msg.deleted').replace('{key}', key));
     loadUnits();
   } else {
-    showToast(data?.detail || 'Ошибка удаления', 'error');
+    showToast(data?.detail || _t('units.err.delete'), 'error');
   }
 }
 
