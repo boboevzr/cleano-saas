@@ -4083,7 +4083,7 @@
         <div class="section-header" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
           <h2>🗑️ Чистка БД</h2>
           <span style="font-size:11px;background:rgba(239,68,68,.15);color:#f87171;padding:3px 10px;border-radius:6px;font-weight:600;border:1px solid rgba(239,68,68,.3)">TEMP</span>
-          <button onclick="tempInit()" style="margin-left:auto;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px">🔄 Обновить</button>
+          <button onclick="tempInit()" style="margin-left:auto;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px" data-i18n="btn.refresh">🔄 Обновить</button>
         </div>
 
         <!-- Сводка: Без заказа (горизонтально) -->
@@ -4113,7 +4113,7 @@
             <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
               <button onclick="tempSelectAll(true)"  style="padding:5px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:12px" data-i18n="btn.select.all">Выбрать все</button>
               <button onclick="tempSelectAll(false)" style="padding:5px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:12px" data-i18n="btn.deselect.all">Снять все</button>
-              <button id="tempDelBtn" onclick="tempDeleteSelected()" style="padding:5px 14px;background:#dc2626;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;display:none">🗑 Удалить выбранные (<span id="tempDelCount">0</span>)</button>
+              <button id="tempDelBtn" onclick="tempDeleteSelected()" style="padding:5px 14px;background:#dc2626;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;display:none">🗑 <span data-i18n="temp.del.selected">Удалить выбранные</span> (<span id="tempDelCount">0</span>)</button>
             </div>
           </div>
           <!-- Таблица -->
@@ -4122,35 +4122,35 @@
 
         <!-- Панель: История чатов -->
         <div id="dbChatHistoryPanel" style="display:none;max-width:560px">
-          <div style="font-size:12px;color:var(--text2);margin-bottom:14px">Удаляются только <b>закрытые</b> сессии вместе со всеми сообщениями</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:14px"><span data-i18n="temp.chat.hint.pre">Удаляются только</span> <b data-i18n="temp.chat.hint.closed">закрытые</b> <span data-i18n="temp.chat.hint.post">сессии вместе со всеми сообщениями</span></div>
 
           <!-- Быстрые кнопки -->
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-            <button onclick="chatHistoryQuick(30)"  style="padding:5px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:12px">30 дней</button>
-            <button onclick="chatHistoryQuick(90)"  style="padding:5px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:12px">90 дней</button>
-            <button onclick="chatHistoryQuick(180)" style="padding:5px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:12px">6 месяцев</button>
-            <button onclick="chatHistoryQuick(365)" style="padding:5px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:12px">Год</button>
+            <button onclick="chatHistoryQuick(30)"  style="padding:5px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:12px" data-i18n="temp.chat.quick.30">30 дней</button>
+            <button onclick="chatHistoryQuick(90)"  style="padding:5px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:12px" data-i18n="temp.chat.quick.90">90 дней</button>
+            <button onclick="chatHistoryQuick(180)" style="padding:5px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:12px" data-i18n="temp.chat.quick.180">6 месяцев</button>
+            <button onclick="chatHistoryQuick(365)" style="padding:5px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:12px" data-i18n="temp.chat.quick.365">Год</button>
           </div>
 
           <!-- Пикеры дат -->
           <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px">
             <div>
-              <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">С</div>
+              <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px" data-i18n="lbl.from">С</div>
               <input type="date" id="chatHistoryFrom" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:#111;font-size:13px;color-scheme:light">
             </div>
             <div>
-              <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">По</div>
+              <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px" data-i18n="lbl.to">По</div>
               <input type="date" id="chatHistoryTo" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:#111;font-size:13px;color-scheme:light">
             </div>
-            <button onclick="chatHistoryCheck()" style="padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px">🔍 Проверить</button>
+            <button onclick="chatHistoryCheck()" style="padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px" data-i18n="temp.chat.check">🔍 Проверить</button>
           </div>
 
           <!-- Результат -->
           <div id="chatHistoryStats" style="display:none;padding:14px 16px;background:var(--surface2);border-radius:10px;border:1px solid var(--border)">
             <div style="font-size:13px;color:var(--text);margin-bottom:12px">
-              Найдено: <b id="chatStatSessions">0</b> сессий, <b id="chatStatMessages">0</b> сообщений
+              <span data-i18n="temp.chat.found.pre">Найдено:</span> <b id="chatStatSessions">0</b> <span data-i18n="temp.chat.found.mid">сессий,</span> <b id="chatStatMessages">0</b> <span data-i18n="temp.chat.found.post">сообщений</span>
             </div>
-            <button id="chatHistoryDelBtn" onclick="chatHistoryDelete()" style="padding:7px 18px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px">🗑 Удалить за период</button>
+            <button id="chatHistoryDelBtn" onclick="chatHistoryDelete()" style="padding:7px 18px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px" data-i18n="temp.chat.delete.btn">🗑 Удалить за период</button>
           </div>
         </div>
 
@@ -6817,6 +6817,22 @@ const _adminI18n = {
     'temp.tab.activity':'Активность','temp.tab.photos':'Фото','temp.tab.media':'Медиа позиций',
     'temp.tab.chats':'💬 История чатов','temp.only.no.order':'Только без заказа',
     'temp.records':'Записей:','temp.empty':'Нет записей',
+    'temp.del.selected':'Удалить выбранные','temp.err':'Ошибка',
+    'temp.deleting':'⏳ Удаляю…','temp.deleted.count':'Удалено:',
+    'temp.confirm.delete.orphans':'Удалить {n} записей из «{table}»? Это необратимо.',
+    'temp.th.order':'заказ','temp.order.no':'❌ нет','temp.order.yes':'✅ есть',
+    'temp.chat.hint.pre':'Удаляются только','temp.chat.hint.closed':'закрытые',
+    'temp.chat.hint.post':'сессии вместе со всеми сообщениями',
+    'temp.chat.quick.30':'30 дней','temp.chat.quick.90':'90 дней',
+    'temp.chat.quick.180':'6 месяцев','temp.chat.quick.365':'Год',
+    'temp.chat.check':'🔍 Проверить',
+    'temp.chat.found.pre':'Найдено:','temp.chat.found.mid':'сессий,','temp.chat.found.post':'сообщений',
+    'temp.chat.delete.btn':'🗑 Удалить за период','temp.chat.delete.btn.reset':'🗑 Удалить историю за период',
+    'temp.chat.select.period':'Выберите период',
+    'temp.chat.date.order.err':'Дата «С» не может быть позже «По»',
+    'temp.chat.none.found':'За этот период нет закрытых чатов',
+    'temp.chat.confirm.delete':'Удалить {n} сессий (и все сообщения в них) за период {from} — {to}?\nЭто необратимо.',
+    'temp.chat.deleted.count':'Удалено сессий:','temp.chat.delete.err':'Ошибка при удалении',
     'dept.modal.add':'Добавить отдел','dept.modal.edit':'Редактировать отдел',
     'pos.modal.add':'Добавить должность','pos.modal.edit':'Редактировать должность',
     'form.lbl.name':'Название *','form.lbl.desc':'Описание',
@@ -7511,6 +7527,22 @@ const _adminI18n = {
     'temp.tab.activity':'Faollik','temp.tab.photos':'Suratlar','temp.tab.media':'Elementlar mediali',
     'temp.tab.chats':'💬 Chat tarixi','temp.only.no.order':'Faqat buyurtmasiz',
     'temp.records':'Yozuvlar:','temp.empty':'Yozuvlar yoʻq',
+    'temp.del.selected':'Tanlanganlarni oʻchirish','temp.err':'Xatolik',
+    'temp.deleting':'⏳ Oʻchirilmoqda…','temp.deleted.count':'Oʻchirildi:',
+    'temp.confirm.delete.orphans':'«{table}» jadvalidan {n} ta yozuvni oʻchirasizmi? Bu qaytarib boʻlmaydi.',
+    'temp.th.order':'buyurtma','temp.order.no':'❌ yoʻq','temp.order.yes':'✅ bor',
+    'temp.chat.hint.pre':'Faqat','temp.chat.hint.closed':'yopilgan',
+    'temp.chat.hint.post':'sessiyalar barcha xabarlari bilan birga oʻchiriladi',
+    'temp.chat.quick.30':'30 kun','temp.chat.quick.90':'90 kun',
+    'temp.chat.quick.180':'6 oy','temp.chat.quick.365':'Yil',
+    'temp.chat.check':'🔍 Tekshirish',
+    'temp.chat.found.pre':'Topildi:','temp.chat.found.mid':'ta sessiya,','temp.chat.found.post':'ta xabar',
+    'temp.chat.delete.btn':'🗑 Davr uchun oʻchirish','temp.chat.delete.btn.reset':'🗑 Davr tarixini oʻchirish',
+    'temp.chat.select.period':'Davrni tanlang',
+    'temp.chat.date.order.err':'«Dan» sanasi «Gacha» sanasidan keyin boʻlishi mumkin emas',
+    'temp.chat.none.found':'Bu davrda yopilgan chatlar yoʻq',
+    'temp.chat.confirm.delete':'{from} — {to} davri uchun {n} ta sessiyani (va ulardagi barcha xabarlarni) oʻchirasizmi?\nBu qaytarib boʻlmaydi.',
+    'temp.chat.deleted.count':'Oʻchirilgan sessiyalar:','temp.chat.delete.err':'Oʻchirishda xatolik',
     'dept.modal.add':'Boʻlim qoʻshish','dept.modal.edit':'Boʻlimni tahrirlash',
     'pos.modal.add':'Lavozim qoʻshish','pos.modal.edit':'Lavozimni tahrirlash',
     'form.lbl.name':'Nomi *','form.lbl.desc':'Tavsif',
@@ -20716,7 +20748,7 @@ let _tempRows = [];
 
 async function tempInit() {
   const wrap = document.getElementById('tempSummary');
-  wrap.innerHTML = '<div style="color:var(--muted);font-size:13px">Загружаю…</div>';
+  wrap.innerHTML = `<div style="color:var(--muted);font-size:13px">${_t('lbl.loading')}</div>`;
   try {
     const r = await fetch(`${API_BASE}/admin/temp/orphan-counts`, { headers: { Authorization: 'Bearer ' + adminToken } });
     const d = await r.json();
@@ -20728,7 +20760,7 @@ async function tempInit() {
       </div>`;
     }).join('');
   } catch(e) {
-    wrap.innerHTML = `<div style="color:#dc2626;font-size:13px">Ошибка: ${e.message}</div>`;
+    wrap.innerHTML = `<div style="color:#dc2626;font-size:13px">${_t('temp.err')}: ${e.message}</div>`;
   }
   tempLoadTable();
 }
@@ -20751,7 +20783,7 @@ async function tempLoadTable() {
   const wrap = document.getElementById('tempTableWrap');
   const cnt  = document.getElementById('tempRecordCount');
   const orphansOnly = document.getElementById('tempOrphansOnly').checked;
-  wrap.innerHTML = '<div style="color:var(--muted);padding:12px">Загружаю…</div>';
+  wrap.innerHTML = `<div style="color:var(--muted);padding:12px">${_t('lbl.loading')}</div>`;
   cnt.textContent = '';
   try {
     const r = await fetch(`${API_BASE}/admin/temp/records/${_tempCurrentTable}?orphans_only=${orphansOnly}`, {
@@ -20761,7 +20793,7 @@ async function tempLoadTable() {
     _tempRows = d.rows || [];
     tempRenderTable();
   } catch(e) {
-    wrap.innerHTML = `<div style="color:#dc2626;padding:12px">Ошибка: ${e.message}</div>`;
+    wrap.innerHTML = `<div style="color:#dc2626;padding:12px">${_t('temp.err')}: ${e.message}</div>`;
   }
 }
 
@@ -20789,7 +20821,7 @@ function tempRenderTable() {
         <tr style="background:var(--surface);text-align:left">
           <th style="padding:7px 8px;border:1px solid var(--border)"><input type="checkbox" onchange="tempSelectAll(this.checked)" id="tempChkAll"></th>
           ${cols.map(c => `<th style="padding:7px 8px;border:1px solid var(--border);white-space:nowrap">${c}</th>`).join('')}
-          <th style="padding:7px 8px;border:1px solid var(--border)">заказ</th>
+          <th style="padding:7px 8px;border:1px solid var(--border)">${_t('temp.th.order')}</th>
         </tr>
       </thead>
       <tbody>
@@ -20800,7 +20832,7 @@ function tempRenderTable() {
             </td>
             ${cols.map(c => `<td style="padding:7px 8px;border:1px solid var(--border);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${String(row[c]??'')}">${fmt(row[c])}</td>`).join('')}
             <td style="padding:7px 8px;border:1px solid var(--border)">
-              ${row.is_orphan ? '<span style="color:#dc2626;font-size:11px;font-weight:600">❌ нет</span>' : '<span style="color:#16a34a;font-size:11px">✅ есть</span>'}
+              ${row.is_orphan ? `<span style="color:#dc2626;font-size:11px;font-weight:600">${_t('temp.order.no')}</span>` : `<span style="color:#16a34a;font-size:11px">${_t('temp.order.yes')}</span>`}
             </td>
           </tr>`).join('')}
       </tbody>
@@ -20825,9 +20857,9 @@ async function tempDeleteSelected() {
   const checked = [...document.querySelectorAll('.temp-chk:checked')];
   const ids = checked.map(c => parseInt(c.dataset.id));
   if (!ids.length) return;
-  if (!confirm(`Удалить ${ids.length} записей из «${_TEMP_TABLES[_tempCurrentTable]}»? Это необратимо.`)) return;
+  if (!confirm(_t('temp.confirm.delete.orphans').replace('{n}', ids.length).replace('{table}', _TEMP_TABLES[_tempCurrentTable]))) return;
   const btn = document.getElementById('tempDelBtn');
-  btn.disabled = true; btn.textContent = '⏳ Удаляю…';
+  btn.disabled = true; btn.textContent = _t('temp.deleting');
   try {
     const r = await fetch(`${API_BASE}/admin/temp/records/${_tempCurrentTable}`, {
       method: 'DELETE',
@@ -20838,13 +20870,13 @@ async function tempDeleteSelected() {
     if (d.ok) {
       ids.forEach(id => document.getElementById('tmprow-' + id)?.remove());
       _tempRows = _tempRows.filter(r => !ids.includes(r.id));
-      showToast(`Удалено: ${d.deleted}`, 'success');
+      showToast(`${_t('temp.deleted.count')} ${d.deleted}`, 'success');
       document.getElementById('tempRecordCount').textContent = `${_t('temp.records')} ${_tempRows.length}`;
       tempInit(); // обновить сводку
-    } else { showToast('Ошибка', 'error'); }
-  } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+    } else { showToast(_t('temp.err'), 'error'); }
+  } catch(e) { showToast(`${_t('temp.err')}: ${e.message}`, 'error'); }
   btn.disabled = false;
-  btn.innerHTML = '🗑 Удалить выбранные (<span id="tempDelCount">0</span>)';
+  btn.innerHTML = `🗑 ${_t('temp.del.selected')} (<span id="tempDelCount">0</span>)`;
   btn.style.display = 'none';
 }
 // ── END TEMP ──────────────────────────────────────────────────────────────
@@ -20862,8 +20894,8 @@ function chatHistoryQuick(days) {
 async function chatHistoryCheck() {
   const df = document.getElementById('chatHistoryFrom').value;
   const dt = document.getElementById('chatHistoryTo').value;
-  if (!df || !dt) { showToast('Выберите период', 'error'); return; }
-  if (df > dt)    { showToast('Дата «С» не может быть позже «По»', 'error'); return; }
+  if (!df || !dt) { showToast(_t('temp.chat.select.period'), 'error'); return; }
+  if (df > dt)    { showToast(_t('temp.chat.date.order.err'), 'error'); return; }
   const statsBox = document.getElementById('chatHistoryStats');
   statsBox.style.display = 'none';
   try {
@@ -20871,22 +20903,22 @@ async function chatHistoryCheck() {
       headers: { Authorization: 'Bearer ' + adminToken }
     });
     const d = await r.json();
-    if (!r.ok) { showToast(d.detail || 'Ошибка', 'error'); return; }
+    if (!r.ok) { showToast(d.detail || _t('temp.err'), 'error'); return; }
     document.getElementById('chatStatSessions').textContent = d.sessions;
     document.getElementById('chatStatMessages').textContent = d.messages;
     document.getElementById('chatHistoryDelBtn').style.display = d.sessions > 0 ? 'inline-block' : 'none';
     statsBox.style.display = 'block';
-    if (d.sessions === 0) showToast('За этот период нет закрытых чатов', 'success');
-  } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+    if (d.sessions === 0) showToast(_t('temp.chat.none.found'), 'success');
+  } catch(e) { showToast(`${_t('temp.err')}: ${e.message}`, 'error'); }
 }
 
 async function chatHistoryDelete() {
   const df = document.getElementById('chatHistoryFrom').value;
   const dt = document.getElementById('chatHistoryTo').value;
   const sessions = document.getElementById('chatStatSessions').textContent;
-  if (!confirm(`Удалить ${sessions} сессий (и все сообщения в них) за период ${df} — ${dt}?\nЭто необратимо.`)) return;
+  if (!confirm(_t('temp.chat.confirm.delete').replace('{n}', sessions).replace('{from}', df).replace('{to}', dt))) return;
   const btn = document.getElementById('chatHistoryDelBtn');
-  btn.disabled = true; btn.textContent = '⏳ Удаляю…';
+  btn.disabled = true; btn.textContent = _t('temp.deleting');
   try {
     const r = await fetch(`${API_BASE}/admin/chat/history`, {
       method: 'DELETE',
@@ -20895,11 +20927,11 @@ async function chatHistoryDelete() {
     });
     const d = await r.json();
     if (d.ok) {
-      showToast(`Удалено сессий: ${d.deleted_sessions}`, 'success');
+      showToast(`${_t('temp.chat.deleted.count')} ${d.deleted_sessions}`, 'success');
       document.getElementById('chatHistoryStats').style.display = 'none';
-    } else { showToast('Ошибка при удалении', 'error'); }
-  } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
-  btn.disabled = false; btn.textContent = '🗑 Удалить историю за период';
+    } else { showToast(_t('temp.chat.delete.err'), 'error'); }
+  } catch(e) { showToast(`${_t('temp.err')}: ${e.message}`, 'error'); }
+  btn.disabled = false; btn.textContent = _t('temp.chat.delete.btn.reset');
 }
 
 // ── Локация цеха филиала ─────────────────────────────────────────────────────
