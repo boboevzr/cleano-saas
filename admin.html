@@ -2758,21 +2758,21 @@
               <div class="form-group" id="slmFineReasonRow" style="display:none">
                 <label class="form-label" data-i18n="sal.lbl.fine.reason">Причина штрафа</label>
                 <select class="form-input" id="slmFineReason">
-                  <option value="Опоздание">Опоздание</option>
-                  <option value="Ранний уход">Ранний уход</option>
-                  <option value="Прогул">Прогул без предупреждения</option>
-                  <option value="Некачественная работа">Некачественная работа</option>
-                  <option value="Ошибка в работе">Ошибка в работе</option>
-                  <option value="Нарушение дисциплины">Нарушение дисциплины</option>
-                  <option value="Жалоба клиента">Жалоба клиента</option>
-                  <option value="Порча имущества">Порча имущества компании</option>
-                  <option value="Разглашение информации">Разглашение конфиденциальной информации</option>
-                  <option value="Другое">Другое</option>
+                  <option value="Опоздание" data-i18n="sal.reason.late">Опоздание</option>
+                  <option value="Ранний уход" data-i18n="sal.reason.early_leave">Ранний уход</option>
+                  <option value="Прогул" data-i18n="sal.reason.absence">Прогул без предупреждения</option>
+                  <option value="Некачественная работа" data-i18n="sal.reason.poor_quality">Некачественная работа</option>
+                  <option value="Ошибка в работе" data-i18n="sal.reason.mistake">Ошибка в работе</option>
+                  <option value="Нарушение дисциплины" data-i18n="sal.reason.discipline">Нарушение дисциплины</option>
+                  <option value="Жалоба клиента" data-i18n="sal.reason.complaint">Жалоба клиента</option>
+                  <option value="Порча имущества" data-i18n="sal.reason.damage">Порча имущества компании</option>
+                  <option value="Разглашение информации" data-i18n="sal.reason.disclosure">Разглашение конфиденциальной информации</option>
+                  <option value="Другое" data-i18n="sal.reason.other">Другое</option>
                 </select>
               </div>
               <div class="form-group" style="grid-column:1/-1">
-                <label class="form-label">Примечание</label>
-                <input class="form-input" type="text" id="slmNote" placeholder="Необязательно">
+                <label class="form-label" data-i18n="sal.lbl.note">Примечание</label>
+                <input class="form-input" type="text" id="slmNote" placeholder="Необязательно" data-i18n-ph="ph.optional">
               </div>
             </div>
             <div style="display:flex;gap:8px;margin-top:4px">
@@ -6819,6 +6819,28 @@ const _adminI18n = {
     'sal.type.bonus':'Бонус','sal.type.deduction':'Удержание',
     'sal.no.amount':'Укажите сумму штрафа','sal.fine.added':'Штраф добавлен',
     'sal.daily.title.prefix':'📊 Детально:','sal.fine.title.prefix':'Штраф —',
+    'sal.role.order':'Заказ',
+    'sal.lbl.worked':'Отработано:','sal.unit.hour':'ч','sal.unit.count':'ед.','sal.timesheet.label':'📅 Табель:',
+    'sal.bal.total':'Общий баланс','sal.bal.accrual.month':'Начислено в месяце',
+    'sal.bal.advances.month':'Авансов выдано','sal.bal.advance.limit':'Доступно к авансу',
+    'sal.ledger.empty':'Записей нет','sal.th.who':'Кто','sal.th.balance':'Остаток','sal.lbl.note':'Примечание',
+    'sal.type.fine':'Штраф','sal.type.adjustment':'Корректировка',
+    'sal.reason.late':'Опоздание','sal.reason.early_leave':'Ранний уход','sal.reason.absence':'Прогул без предупреждения',
+    'sal.reason.poor_quality':'Некачественная работа','sal.reason.mistake':'Ошибка в работе',
+    'sal.reason.discipline':'Нарушение дисциплины','sal.reason.complaint':'Жалоба клиента',
+    'sal.reason.damage':'Порча имущества компании','sal.reason.disclosure':'Разглашение конфиденциальной информации',
+    'sal.reason.other':'Другое',
+    'sal.err.generic':'Ошибка','sal.err.select.staff':'Выберите сотрудника',
+    'sal.err.fill.amount.period':'Заполните сумму и период','sal.msg.record.added':'Запись добавлена',
+    'sal.prompt.note':'Примечание:','sal.prompt.amount.sign':'Сумма (знак сохраняется):',
+    'sal.msg.changed':'Изменено','sal.confirm.del.record':'Удалить запись?','sal.msg.deleted':'Удалено',
+    'sal.err.select.staff.period':'Выберите сотрудника и период','sal.err.del':'Ошибка удаления',
+    'sal.msg.accruals.deleted.prefix':'Удалено начислений:',
+    'sal.confirm.accrue.now':'Начислить оклады за текущий месяц для всех сотрудников (пропустит уже начисленных)?',
+    'sal.msg.accrued.prefix':'✅ Начислено:','sal.lbl.staff.count':'сотрудников',
+    'sal.err.invalid.amount':'Неверная сумма','sal.msg.balance.updated':'Остаток обновлён',
+    'sal.daily.empty':'Нет данных за период',
+    'sal.err.invalid.value':'Неверное значение','sal.msg.global.advance.saved':'Глобальный аванс сохранён:',
     'sf.modal.add':'Добавить сотрудника','sf.modal.edit':'Редактировать сотрудника',
     'sf.section.personal':'Личные данные',
     'sf.lbl.fname':'Имя *','sf.lbl.lname':'Фамилия','sf.lbl.phone':'Телефон','sf.lbl.login':'Логин *',
@@ -7393,6 +7415,28 @@ const _adminI18n = {
     'sal.type.bonus':'Bonus','sal.type.deduction':'Ushlab qolish',
     'sal.no.amount':'Jarima summasini kiriting','sal.fine.added':'Jarima qoʻshildi',
     'sal.daily.title.prefix':'📊 Tafsilot:','sal.fine.title.prefix':'Jarima —',
+    'sal.role.order':'Buyurtma',
+    'sal.lbl.worked':'Ishlangan:','sal.unit.hour':'soat','sal.unit.count':'dona','sal.timesheet.label':'📅 Tabel:',
+    'sal.bal.total':'Umumiy balans','sal.bal.accrual.month':'Oyda hisoblangan',
+    'sal.bal.advances.month':'Berilgan avanslar','sal.bal.advance.limit':'Avans uchun mavjud',
+    'sal.ledger.empty':'Yozuvlar yoʻq','sal.th.who':'Kim','sal.th.balance':'Qoldiq','sal.lbl.note':'Izoh',
+    'sal.type.fine':'Jarima','sal.type.adjustment':'Tuzatish',
+    'sal.reason.late':'Kechikish','sal.reason.early_leave':'Erta ketish','sal.reason.absence':'Ogohlantirishsiz yoʻqlik',
+    'sal.reason.poor_quality':'Sifatsiz ish','sal.reason.mistake':'Ishdagi xato',
+    'sal.reason.discipline':'Intizom buzilishi','sal.reason.complaint':'Mijoz shikoyati',
+    'sal.reason.damage':'Kompaniya mulkini buzish','sal.reason.disclosure':'Maxfiy maʼlumotni oshkor qilish',
+    'sal.reason.other':'Boshqa',
+    'sal.err.generic':'Xatolik','sal.err.select.staff':'Xodimni tanlang',
+    'sal.err.fill.amount.period':'Summa va davrni toʻldiring','sal.msg.record.added':'Yozuv qoʻshildi',
+    'sal.prompt.note':'Izoh:','sal.prompt.amount.sign':'Summa (belgisi saqlanadi):',
+    'sal.msg.changed':'Oʻzgartirildi','sal.confirm.del.record':'Yozuvni oʻchirasizmi?','sal.msg.deleted':'Oʻchirildi',
+    'sal.err.select.staff.period':'Xodim va davrni tanlang','sal.err.del':'Oʻchirishda xatolik',
+    'sal.msg.accruals.deleted.prefix':'Oʻchirilgan hisoblashlar:',
+    'sal.confirm.accrue.now':'Joriy oy uchun barcha xodimlarga maosh hisoblansinmi? (hisoblanganlar oʻtkazib yuboriladi)',
+    'sal.msg.accrued.prefix':'✅ Hisoblandi:','sal.lbl.staff.count':'xodim',
+    'sal.err.invalid.amount':'Notoʻgʻri summa','sal.msg.balance.updated':'Qoldiq yangilandi',
+    'sal.daily.empty':'Davr uchun maʼlumot yoʻq',
+    'sal.err.invalid.value':'Notoʻgʻri qiymat','sal.msg.global.advance.saved':'Global avans saqlandi:',
     'sf.modal.add':'Xodim qoʻshish','sf.modal.edit':'Xodimni tahrirlash',
     'sf.section.personal':'Shaxsiy maʼlumotlar',
     'sf.lbl.fname':'Ism *','sf.lbl.lname':'Familiya','sf.lbl.phone':'Telefon','sf.lbl.login':'Login *',
@@ -11886,6 +11930,10 @@ function _getFineReasons() {
   ];
 }
 const MON_NAMES = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+// "X дн из Y" — порядок слов различается в RU/UZ, поэтому строится по _adminLang, а не через _t()
+function _salDaysOfLine(wd, nd) {
+  return _adminLang === 'uz' ? `${wd} kun / ${nd} kun` : `${wd} дн из ${nd}`;
+}
 
 // ═══ ЗАРПЛАТА ЗА МЕСЯЦ ═══════════════════════════════════════════════════════
 const SAL_TYPE_LABELS = {
@@ -11908,9 +11956,9 @@ async function _loadGlobalAdvancePct() {
 async function salSaveGlobalPct() {
   const el = document.getElementById('salGlobalAdvancePct');
   const pct = parseFloat(el?.value || '50');
-  if (isNaN(pct) || pct < 0 || pct > 100) { showToast('Неверное значение', 'error'); return; }
+  if (isNaN(pct) || pct < 0 || pct > 100) { showToast(_t('sal.err.invalid.value'), 'error'); return; }
   const r = await apiPatch('/admin/salary/advance-percent', {advance_max_percent: pct}).catch(()=>null);
-  if (r?.ok) showToast(`Глобальный аванс: ${pct}% сохранён`);
+  if (r?.ok) showToast(`${_t('sal.msg.global.advance.saved')} ${pct}%`);
 }
 
 function _salCalcInitPeriod() {
@@ -11968,14 +12016,16 @@ function salCalcRender() {
     let totalHtml = `<span style="color:var(--text2);font-size:12px">${_t('sal.not.calc')}</span>`;
 
     const _PCT_ROLE_LABEL = {
-      washing:'🧹 Мойка', pickup:'🚗 Забор', delivery:'🚚 Доставка',
-      lead:'📋 Лид', order:'📦 Заказ', packing:'📦 Упаковка',
+      washing:'🧹 ' + _t('sal.role.washing'), pickup:'🚗 ' + _t('sal.role.pickup'), delivery:'🚚 ' + _t('sal.role.delivery'),
+      lead:'📋 ' + _t('sal.role.lead'), order:'📦 ' + _t('sal.role.order'), packing:'📦 ' + _t('sal.role.packing'),
     };
     function _salPctLines(lines) {
       return Object.entries(lines).filter(([k])=>k!=='fixed').map(([role, d]) => {
         const lbl = _PCT_ROLE_LABEL[role] || role;
-        const cntHtml = (d.count || 0) > 0 ? `${d.count} ед. × ` : '';
-        return `<div>${lbl}: ${cntHtml}${d.pct}% от <span style="color:var(--text2)">${Math.round(d.base).toLocaleString('ru-RU')}</span> = <b>${Math.round(d.earn).toLocaleString('ru-RU')}</b> сум</div>`;
+        const cntHtml = (d.count || 0) > 0 ? `${d.count} ${_t('sal.unit.count')} × ` : '';
+        const baseHtml = `<span style="color:var(--text2)">${Math.round(d.base).toLocaleString('ru-RU')}</span>`;
+        const pctOfHtml = _adminLang === 'uz' ? `${baseHtml} dan ${d.pct}%` : `${d.pct}% от ${baseHtml}`;
+        return `<div>${lbl}: ${cntHtml}${pctOfHtml} = <b>${Math.round(d.earn).toLocaleString('ru-RU')}</b> ${_t('pay.currency')}</div>`;
       });
     }
 
@@ -11992,14 +12042,14 @@ function salCalcRender() {
         const nd  = c.norm_days || 26;
         const base = (s.base_amount||0).toLocaleString('ru-RU');
         calcHtml  = `<div style="font-size:12px;line-height:1.8;color:var(--text2)">
-          <div>Оклад: ${base} сум / ${nh} ч</div>
-          <div>Отработано: <b style="color:var(--text)">${wh} ч</b> (${wd} дн из ${nd})</div>
+          <div>${_t('sal.type.fixed')}: ${base} ${_t('pay.currency')} / ${nh} ${_t('sal.unit.hour')}</div>
+          <div>${_t('sal.lbl.worked')} <b style="color:var(--text)">${wh} ${_t('sal.unit.hour')}</b> (${_salDaysOfLine(wd, nd)})</div>
         </div>`;
-        totalHtml = `<b>${Math.round(s.total).toLocaleString('ru-RU')}</b> сум`;
+        totalHtml = `<b>${Math.round(s.total).toLocaleString('ru-RU')}</b> ${_t('pay.currency')}`;
         grandTotal += s.total;
       } else {
-        calcHtml  = `<span style="font-size:12px;color:var(--text2)">Оклад</span>`;
-        totalHtml = `<b>${(s.base_amount||0).toLocaleString('ru-RU')}</b> сум`;
+        calcHtml  = `<span style="font-size:12px;color:var(--text2)">${_t('sal.type.fixed')}</span>`;
+        totalHtml = `<b>${(s.base_amount||0).toLocaleString('ru-RU')}</b> ${_t('pay.currency')}`;
         grandTotal += s.base_amount || 0;
       }
 
@@ -12015,25 +12065,25 @@ function salCalcRender() {
         if (lines.fixed) {
           const wh = (c.work_hours||0).toLocaleString('ru-RU', {maximumFractionDigits:1});
           const nh = (c.norm_hours||0).toLocaleString('ru-RU', {maximumFractionDigits:0});
-          parts.push(`<div>Оклад: <b>${Math.round(lines.fixed.earn).toLocaleString('ru-RU')}</b> сум (${wh}/${nh}ч)</div>`);
+          parts.push(`<div>${_t('sal.type.fixed')}: <b>${Math.round(lines.fixed.earn).toLocaleString('ru-RU')}</b> ${_t('pay.currency')} (${wh}/${nh}${_t('sal.unit.hour')})</div>`);
         }
         parts.push(..._salPctLines(lines));
         calcHtml  = `<div style="font-size:12px;line-height:1.8">${parts.join('')||'—'}</div>`;
-        totalHtml = `<b>${Math.round(s.total||0).toLocaleString('ru-RU')}</b> сум`;
+        totalHtml = `<b>${Math.round(s.total||0).toLocaleString('ru-RU')}</b> ${_t('pay.currency')}`;
         grandTotal += s.total || 0;
       }
 
     } else if (s.salary_type === 'per_point') {
       const c = s.calc || {};
       const pLine = c.pickup_count > 0
-        ? `<div>🚗 Забор: ${c.pickup_count} × ${(c.pickup_rate||0).toLocaleString('ru-RU')} = <b>${(c.pickup_count*(c.pickup_rate||0)).toLocaleString('ru-RU')}</b></div>`
-        : `<div style="color:var(--text2)">🚗 Забор: 0</div>`;
+        ? `<div>🚗 ${_t('sal.role.pickup')}: ${c.pickup_count} × ${(c.pickup_rate||0).toLocaleString('ru-RU')} = <b>${(c.pickup_count*(c.pickup_rate||0)).toLocaleString('ru-RU')}</b></div>`
+        : `<div style="color:var(--text2)">🚗 ${_t('sal.role.pickup')}: 0</div>`;
       const dLine = c.delivery_count > 0
-        ? `<div>🚚 Доставка: ${c.delivery_count} × ${(c.delivery_rate||0).toLocaleString('ru-RU')} = <b>${(c.delivery_count*(c.delivery_rate||0)).toLocaleString('ru-RU')}</b></div>`
-        : `<div style="color:var(--text2)">🚚 Доставка: 0</div>`;
+        ? `<div>🚚 ${_t('sal.role.delivery')}: ${c.delivery_count} × ${(c.delivery_rate||0).toLocaleString('ru-RU')} = <b>${(c.delivery_count*(c.delivery_rate||0)).toLocaleString('ru-RU')}</b></div>`
+        : `<div style="color:var(--text2)">🚚 ${_t('sal.role.delivery')}: 0</div>`;
       calcHtml  = `<div style="font-size:12px;line-height:1.8">${pLine}${dLine}</div>`;
       const tot = s.total || 0;
-      totalHtml = `<b>${tot.toLocaleString('ru-RU')}</b> сум`;
+      totalHtml = `<b>${tot.toLocaleString('ru-RU')}</b> ${_t('pay.currency')}`;
       grandTotal += tot;
 
     } else if (s.salary_type === 'percent') {
@@ -12042,7 +12092,7 @@ function salCalcRender() {
       const parts = _salPctLines(lines);
       if (parts.length) {
         calcHtml  = `<div style="font-size:12px;line-height:1.8">${parts.join('')}</div>`;
-        totalHtml = `<b>${Math.round(s.total||0).toLocaleString('ru-RU')}</b> сум`;
+        totalHtml = `<b>${Math.round(s.total||0).toLocaleString('ru-RU')}</b> ${_t('pay.currency')}`;
         grandTotal += s.total || 0;
       } else {
         calcHtml  = `<span style="color:var(--text2);font-size:12px">${_t('sal.no.data')}</span>`;
@@ -12060,7 +12110,7 @@ function salCalcRender() {
       const wh = (c2.work_hours||0).toLocaleString('ru-RU', {maximumFractionDigits:1});
       const wd = c2.work_days || 0;
       const nd = c2.norm_days || 26;
-      const tsLine = `<div style="font-size:11px;color:var(--text2);margin-top:4px;padding-top:4px;border-top:1px solid var(--border)">📅 Табель: <b style="color:var(--text)">${wh} ч</b> (${wd} дн из ${nd})</div>`;
+      const tsLine = `<div style="font-size:11px;color:var(--text2);margin-top:4px;padding-top:4px;border-top:1px solid var(--border)">${_t('sal.timesheet.label')} <b style="color:var(--text)">${wh} ${_t('sal.unit.hour')}</b> (${_salDaysOfLine(wd, nd)})</div>`;
       calcHtml = calcHtml + tsLine;
     }
 
@@ -12091,7 +12141,7 @@ function salCalcRender() {
 
   if (totalEl) {
     if (grandKnown && rows.length) {
-      totalEl.textContent = `${_t('sal.grand.total')} ${grandTotal.toLocaleString('ru-RU')} сум`;
+      totalEl.textContent = `${_t('sal.grand.total')} ${grandTotal.toLocaleString('ru-RU')} ${_t('pay.currency')}`;
       totalEl.style.color = 'var(--text)';
     } else {
       totalEl.textContent = _t('sal.partial.warn');
@@ -12101,7 +12151,15 @@ function salCalcRender() {
 }
 
 // ── Salary Ledger (Регистр) ───────────────────────────────────────────────────
-const _SL_TYPE_LABEL = {accrual:'Начисление',advance:'Аванс',salary_payment:'Выплата ЗП',bonus:'Бонус',deduction:'Удержание',fine:'Штраф',adjustment:'Корректировка'};
+const _SL_TYPE_LABEL = {
+  get accrual()        { return _t('sal.type.accrual'); },
+  get advance()         { return _t('sal.type.advance'); },
+  get salary_payment()  { return _t('sal.type.payment'); },
+  get bonus()            { return _t('sal.type.bonus'); },
+  get deduction()        { return _t('sal.type.deduction'); },
+  get fine()              { return _t('sal.type.fine'); },
+  get adjustment()        { return _t('sal.type.adjustment'); },
+};
 const _SL_TYPE_COLOR = {accrual:'#15803d',advance:'#dc2626',salary_payment:'#dc2626',bonus:'#0284c7',deduction:'#dc2626',fine:'#b45309',adjustment:'#6366f1'};
 
 function salPageTab(tab) {
@@ -12161,20 +12219,20 @@ async function salLedgerLoad() {
     const limitColor = b.advance_limit > 0 ? '#15803d' : '#dc2626';
     balEl.innerHTML = `<div class="card" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
       <div style="flex:1;min-width:160px">
-        <div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Общий баланс</div>
-        <div style="font-size:22px;font-weight:800;color:${b.balance>=0?'#15803d':'#dc2626'}">${fmt(b.balance)} сум</div>
+        <div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${_t('sal.bal.total')}</div>
+        <div style="font-size:22px;font-weight:800;color:${b.balance>=0?'#15803d':'#dc2626'}">${fmt(b.balance)} ${_t('pay.currency')}</div>
       </div>
       <div style="flex:1;min-width:130px">
-        <div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Начислено в месяце</div>
+        <div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${_t('sal.bal.accrual.month')}</div>
         <div style="font-size:17px;font-weight:700;color:#15803d">+${fmt(b.accrual_month)}</div>
       </div>
       <div style="flex:1;min-width:130px">
-        <div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Авансов выдано</div>
+        <div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${_t('sal.bal.advances.month')}</div>
         <div style="font-size:17px;font-weight:700;color:#dc2626">−${fmt(b.advances_month)}</div>
       </div>
       <div style="flex:1;min-width:160px">
-        <div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Доступно к авансу (${b.advance_pct}%)</div>
-        <div style="font-size:17px;font-weight:700;color:${limitColor}">${fmt(b.advance_limit)} сум</div>
+        <div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${_t('sal.bal.advance.limit')} (${b.advance_pct}%)</div>
+        <div style="font-size:17px;font-weight:700;color:${limitColor}">${fmt(b.advance_limit)} ${_t('pay.currency')}</div>
       </div>
     </div>`;
   }
@@ -12183,19 +12241,19 @@ async function salLedgerLoad() {
   const tblEl = document.getElementById('salLedgerTable');
   const entries = entriesData?.entries || [];
   if (!entries.length) {
-    tblEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text2);font-size:13px">Записей нет</div>';
+    tblEl.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text2);font-size:13px">${_t('sal.ledger.empty')}</div>`;
     return;
   }
   const dtFmt = s => new Date(s).toLocaleString('ru',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   let running = 0;
   tblEl.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
     <thead><tr style="background:var(--surface2);color:var(--text2)">
-      <th style="padding:9px 12px;text-align:left;font-weight:600">Тип</th>
-      <th style="padding:9px 12px;text-align:left;font-weight:600">Примечание</th>
-      <th style="padding:9px 12px;text-align:left;font-weight:600">Кто</th>
-      <th style="padding:9px 12px;text-align:left;font-weight:600">Дата</th>
-      <th style="padding:9px 12px;text-align:right;font-weight:600">Сумма</th>
-      <th style="padding:9px 12px;text-align:right;font-weight:600">Остаток</th>
+      <th style="padding:9px 12px;text-align:left;font-weight:600">${_t('sal.lbl.type')}</th>
+      <th style="padding:9px 12px;text-align:left;font-weight:600">${_t('sal.lbl.note')}</th>
+      <th style="padding:9px 12px;text-align:left;font-weight:600">${_t('sal.th.who')}</th>
+      <th style="padding:9px 12px;text-align:left;font-weight:600">${_t('th.date')}</th>
+      <th style="padding:9px 12px;text-align:right;font-weight:600">${_t('th.amount')}</th>
+      <th style="padding:9px 12px;text-align:right;font-weight:600">${_t('sal.th.balance')}</th>
       <th style="padding:9px 4px"></th>
     </tr></thead>
     <tbody>
@@ -12226,57 +12284,63 @@ function salLedgerAddManual() {
 
 async function salLedgerSaveManual() {
   const staffId = document.getElementById('salLedgerStaff')?.value;
-  if (!staffId) { showToast('Выберите сотрудника', 'error'); return; }
+  if (!staffId) { showToast(_t('sal.err.select.staff'), 'error'); return; }
   const type      = document.getElementById('slmType')?.value;
   const rawAmt    = parseFloat(document.getElementById('slmAmount')?.value||'');
   const period    = document.getElementById('slmPeriod')?.value;
   const note      = document.getElementById('slmNote')?.value||'';
   const fineReason= type==='fine' ? (document.getElementById('slmFineReason')?.value||null) : null;
-  if (!rawAmt || !period) { showToast('Заполните сумму и период', 'error'); return; }
+  if (!rawAmt || !period) { showToast(_t('sal.err.fill.amount.period'), 'error'); return; }
   const debits = ['advance','salary_payment','deduction','fine'];
   const amount = debits.includes(type) ? -Math.abs(rawAmt) : Math.abs(rawAmt);
   const r = await apiPost('/admin/salary/ledger', {staff_id:staffId, period:period+'-01', type, amount, note, fine_reason:fineReason}).catch(()=>null);
-  if (!r?.ok) { showToast('Ошибка', 'error'); return; }
-  showToast('Запись добавлена');
+  if (!r?.ok) { showToast(_t('sal.err.generic'), 'error'); return; }
+  showToast(_t('sal.msg.record.added'));
   document.getElementById('salLedgerManualForm').style.display = 'none';
   salLedgerLoad();
 }
 
 async function salLedgerEdit(id, amount, note) {
-  const newNote = prompt('Примечание:', note) ?? note;
-  const newAmt  = parseFloat(prompt('Сумма (знак сохраняется):', amount) ?? amount);
+  const newNote = prompt(_t('sal.prompt.note'), note) ?? note;
+  const newAmt  = parseFloat(prompt(_t('sal.prompt.amount.sign'), amount) ?? amount);
   if (isNaN(newAmt)) return;
   const r = await apiPatch(`/admin/salary/ledger/${id}`, {amount:newAmt, note:newNote}).catch(()=>null);
-  if (!r?.ok) { showToast('Ошибка', 'error'); return; }
-  showToast('Изменено'); salLedgerLoad();
+  if (!r?.ok) { showToast(_t('sal.err.generic'), 'error'); return; }
+  showToast(_t('sal.msg.changed')); salLedgerLoad();
 }
 
 async function salLedgerDel(id) {
-  if (!confirm('Удалить запись?')) return;
+  if (!confirm(_t('sal.confirm.del.record'))) return;
   const r = await apiDelete(`/admin/salary/ledger/${id}`).catch(()=>null);
-  if (!r?.ok) { showToast('Ошибка', 'error'); return; }
-  showToast('Удалено'); salLedgerLoad();
+  if (!r?.ok) { showToast(_t('sal.err.generic'), 'error'); return; }
+  showToast(_t('sal.msg.deleted')); salLedgerLoad();
+}
+
+// Порядок слов в подтверждении удаления различается в RU/UZ — строится по _adminLang, а не через _t()
+function _salDelAccrualsConfirmMsg(monthLabel, year, staffName) {
+  return _adminLang === 'uz'
+    ? `${staffName} uchun ${monthLabel} ${year} davridagi barcha «Hisoblash» yozuvlarini oʻchirasizmi?\n\nBu amalni ortga qaytarib boʻlmaydi.`
+    : `Удалить все записи типа «Начисление» за ${monthLabel} ${year} для ${staffName}?\n\nЭто действие необратимо.`;
 }
 
 async function salDeleteMonthAccruals() {
   const staffId = document.getElementById('salLedgerStaff')?.value;
   const year    = document.getElementById('salLedgerYear')?.value;
   const month   = document.getElementById('salLedgerMonth')?.value;
-  if (!staffId || !year || !month) { showToast('Выберите сотрудника и период', 'error'); return; }
-  const months = ['','Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  if (!staffId || !year || !month) { showToast(_t('sal.err.select.staff.period'), 'error'); return; }
   const staffName = document.getElementById('salLedgerStaff')?.selectedOptions[0]?.text || '';
-  if (!confirm(`Удалить все записи типа «Начисление» за ${months[parseInt(month)]} ${year} для ${staffName}?\n\nЭто действие необратимо.`)) return;
+  if (!confirm(_salDelAccrualsConfirmMsg(_getMonNames()[parseInt(month)-1], year, staffName))) return;
   const r = await apiDelete(`/admin/salary/accruals?staff_id=${staffId}&year=${year}&month=${month}`).catch(()=>null);
-  if (!r?.ok) { showToast('Ошибка удаления', 'error'); return; }
-  showToast(`Удалено начислений: ${r.deleted}`);
+  if (!r?.ok) { showToast(_t('sal.err.del'), 'error'); return; }
+  showToast(`${_t('sal.msg.accruals.deleted.prefix')} ${r.deleted}`);
   salLedgerLoad();
 }
 
 async function salAccrueNow() {
-  if (!confirm('Начислить оклады за текущий месяц для всех сотрудников (пропустит уже начисленных)?')) return;
+  if (!confirm(_t('sal.confirm.accrue.now'))) return;
   const r = await apiPost('/admin/salary/accrue', {}).catch(()=>null);
-  if (!r?.ok) { showToast('Ошибка', 'error'); return; }
-  showToast(`✅ Начислено: ${r.count} сотрудников`);
+  if (!r?.ok) { showToast(_t('sal.err.generic'), 'error'); return; }
+  showToast(`${_t('sal.msg.accrued.prefix')} ${r.count} ${_t('sal.lbl.staff.count')}`);
   if (document.getElementById('salPane_ledger')?.style.display !== 'none') salLedgerLoad();
 }
 
@@ -12312,7 +12376,7 @@ async function salShowDaily(staffId, staffName, staffRole, year, month) {
 
   // Остаток на начало месяца в шапке
   const ob = data.opening_balance || 0;
-  document.getElementById('salDailyOpeningAmt').textContent = `${fmtN(ob)} сум`;
+  document.getElementById('salDailyOpeningAmt').textContent = `${fmtN(ob)} ${_t('pay.currency')}`;
   document.getElementById('salDailyOpeningAmt').style.color = ob >= 0 ? '#15803d' : '#dc2626';
   document.getElementById('salDailyOpeningInput').value = Math.round(ob);
 
@@ -12346,7 +12410,7 @@ async function salShowDaily(staffId, staffName, staffRole, year, month) {
       : `<span style="color:var(--sep)">—</span>`;
 
     const accrualHtml = d.accrual
-      ? `<span style="color:#15803d">+${fmtN(d.accrual)}</span>${d.hours ? `<br><span style="font-size:10px;color:var(--text2)">${d.hours}ч</span>` : ''}`
+      ? `<span style="color:#15803d">+${fmtN(d.accrual)}</span>${d.hours ? `<br><span style="font-size:10px;color:var(--text2)">${d.hours}${_t('sal.unit.hour')}</span>` : ''}`
       : `<span style="color:var(--sep)">—</span>`;
 
     const fineHtml = d.fine ? `<span style="color:#b45309">${fmtN(d.fine)}</span>` : `<span style="color:var(--sep)">—</span>`;
@@ -12361,15 +12425,15 @@ async function salShowDaily(staffId, staffName, staffRole, year, month) {
       <td style="padding:7px 10px;text-align:right;font-size:12px;font-variant-numeric:tabular-nums">${otherHtml}</td>
       <td style="padding:7px 10px;text-align:right;font-weight:700;font-size:12px;color:${closeColor};font-variant-numeric:tabular-nums">${fmtN(cl)}</td>
     </tr>`;
-  }).join('') || '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text2)">Нет данных за период</td></tr>';
+  }).join('') || `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text2)">${_t('sal.daily.empty')}</td></tr>`;
 
   // Подвал
   const finalBalance = (data.opening_balance||0) + (data.month_balance||0);
   const footer = document.getElementById('salDailyFooter');
   footer.style.display = 'flex';
-  document.getElementById('salDailyFooterAccrual').textContent = `+${fmtN(data.total_accrual||0)} сум`;
+  document.getElementById('salDailyFooterAccrual').textContent = `+${fmtN(data.total_accrual||0)} ${_t('pay.currency')}`;
   const finalEl = document.getElementById('salDailyFooterFinal');
-  finalEl.textContent = `${fmtN(finalBalance)} сум`;
+  finalEl.textContent = `${fmtN(finalBalance)} ${_t('pay.currency')}`;
   finalEl.style.color = finalBalance >= 0 ? '#15803d' : '#dc2626';
 }
 
@@ -12388,10 +12452,10 @@ function salDailyOpeningCancel() {
 async function salDailyOpeningSave() {
   const {staffId, year, month} = _salDailyCtx;
   const amount = parseFloat(document.getElementById('salDailyOpeningInput').value || '0');
-  if (isNaN(amount)) { showToast('Неверная сумма', 'error'); return; }
+  if (isNaN(amount)) { showToast(_t('sal.err.invalid.amount'), 'error'); return; }
   const r = await apiPost('/admin/salary/opening-balance', {staff_id: staffId, year, month, amount}).catch(()=>null);
-  if (!r?.ok) { showToast('Ошибка', 'error'); return; }
-  showToast('Остаток обновлён');
+  if (!r?.ok) { showToast(_t('sal.err.generic'), 'error'); return; }
+  showToast(_t('sal.msg.balance.updated'));
   salDailyOpeningCancel();
   salShowDaily(staffId, _salDailyCtx.staffName, year, month);
 }
@@ -12429,7 +12493,7 @@ async function salFineSubmit() {
     staff_id: staffId, period, type:'fine', amount:-Math.abs(rawAmt),
     note: note || reason, fine_reason: reason
   }).catch(()=>null);
-  if (!r?.ok) { showToast('Ошибка', 'error'); return; }
+  if (!r?.ok) { showToast(_t('sal.err.generic'), 'error'); return; }
   showToast(_t('sal.fine.added'));
   document.getElementById('modalSalFine').classList.add('hidden');
   salCalcLoad();
