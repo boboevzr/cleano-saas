@@ -4159,7 +4159,7 @@
       <!-- SMS: ГРУППЫ -->
       <div class="page" id="page-sms-groups">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-          <h2 style="margin:0">📂 Группы контактов SMS</h2>
+          <h2 style="margin:0" data-i18n="sms.grp.page.title">📂 Группы контактов SMS</h2>
           <button class="btn btn-primary btn-sm" onclick="smsGrpOpenCreate()" data-i18n="new.group">+ Новая группа</button>
         </div>
         <div id="smsGrpList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
@@ -4175,30 +4175,30 @@
       <div id="smsGrpModal" class="modal-overlay hidden">
         <div class="modal-box" style="max-width:460px;width:94%">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-            <h3 style="margin:0" id="smsGrpModalTitle">Новая группа</h3>
+            <h3 style="margin:0" id="smsGrpModalTitle" data-i18n="sms.grp.new.title">Новая группа</h3>
             <button onclick="smsGrpCloseModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2)">✕</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:12px">
             <div>
-              <label class="cfg-label">Название группы</label>
-              <input id="smsGrpName" class="price-input" style="width:100%" placeholder="Напр.: Клиенты Зарафшан">
+              <label class="cfg-label" data-i18n="sms.grp.name.lbl">Название группы</label>
+              <input id="smsGrpName" class="price-input" style="width:100%" data-i18n-ph="sms.grp.name.ph" placeholder="Напр.: Клиенты Зарафшан">
             </div>
             <div>
-              <label class="cfg-label">Описание (необязательно)</label>
-              <input id="smsGrpDesc" class="price-input" style="width:100%" placeholder="Краткое описание">
+              <label class="cfg-label" data-i18n="sms.grp.desc.lbl">Описание (необязательно)</label>
+              <input id="smsGrpDesc" class="price-input" style="width:100%" data-i18n-ph="sms.grp.desc.ph" placeholder="Краткое описание">
             </div>
             <div id="smsGrpCopyWrap">
-              <label class="cfg-label">Скопировать из Автодозвон-группы</label>
+              <label class="cfg-label" data-i18n="sms.grp.copyfrom.lbl">Скопировать из Автодозвон-группы</label>
               <select id="smsGrpCopyFrom" class="price-input" style="width:100%;font-size:13px">
-                <option value="">— не копировать —</option>
+                <option value="" data-i18n="sms.grp.nocopy">— не копировать —</option>
               </select>
-              <div style="font-size:11px;color:var(--text2);margin-top:4px">Контакты будут скопированы из выбранной группы автодозвона</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:4px" data-i18n="sms.grp.copyfrom.hint">Контакты будут скопированы из выбранной группы автодозвона</div>
             </div>
           </div>
           <div id="smsGrpModalErr" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;margin-top:12px;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5"></div>
           <div style="display:flex;gap:8px;margin-top:18px">
-            <button onclick="smsGrpSave()" class="btn btn-primary" style="flex:1">💾 Создать</button>
-            <button onclick="smsGrpCloseModal()" class="btn btn-sm" style="background:var(--surface2);color:var(--text)">Отмена</button>
+            <button onclick="smsGrpSave()" class="btn btn-primary" style="flex:1" data-i18n="sms.grp.create.btn">💾 Создать</button>
+            <button onclick="smsGrpCloseModal()" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" data-i18n="btn.cancel">Отмена</button>
           </div>
         </div>
       </div>
@@ -4816,9 +4816,9 @@
       <!-- SMS: ТАРИФЫ -->
       <div class="page" id="page-sms-pricing">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-          <h2 style="margin:0">💰 Тарифы SMS</h2>
+          <h2 style="margin:0" data-i18n="sms.price.page.title">💰 Тарифы SMS</h2>
           <div style="display:flex;gap:8px">
-            <button onclick="smsPricingLoad()" class="btn btn-sm" style="background:var(--surface2);color:var(--text)">🔄 Обновить</button>
+            <button onclick="smsPricingLoad()" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" data-i18n="btn.refresh">🔄 Обновить</button>
           </div>
         </div>
         <div style="font-size:13px;color:var(--text2);margin-bottom:16px;background:var(--surface2);padding:10px 14px;border-radius:10px">
@@ -4836,7 +4836,7 @@
               </tr>
             </thead>
             <tbody id="smsPricingBody">
-              <tr><td colspan="5" style="padding:30px;text-align:center;color:var(--text2)">⏳ Загрузка...</td></tr>
+              <tr><td colspan="5" style="padding:30px;text-align:center;color:var(--text2)" data-i18n="sms.cnt.loading">⏳ Загрузка...</td></tr>
             </tbody>
           </table>
         </div>
@@ -6749,6 +6749,9 @@ const _adminI18n = {
     'sms.pricing.info':'Тарифы Eskiz (сум за 1 SMS, 160 символов Latin / 70 символов Unicode). Обновите вручную при изменении тарифов оператора.',
     'th.operator':'Оператор','th.prefixes':'Префиксы (+998)',
     'th.svc.price':'Сервисный (сум)','th.adv.price':'Рекламный (сум)',
+    'sms.price.page.title':'💰 Тарифы SMS','sms.price.name.lbl':'Название',
+    'sms.price.pfx.lbl':'Префиксы (через запятую)',
+    'sms.price.updated':'✅ Тариф обновлён','sms.price.err':'❌ Ошибка',
     'sms.cfg.status.ok':'✅ Email и пароль настроены. Токен обновляется автоматически.',
     'sms.cfg.sender.lbl':'Имя отправителя (alpha-name)',
     'sms.cfg.sender.hint':'Должно быть зарегистрировано в кабинете Eskiz.uz',
@@ -6996,6 +6999,20 @@ const _adminI18n = {
     'sms.grp.dispatch.lbl':'Название рассылки','sms.grp.recipients.lbl':'Группа получателей',
     'sms.grp.select.ph':'— выберите группу —','sms.grp.time.lbl':'Время отправки',
     'sms.grp.now':'Сейчас','sms.grp.schedule':'🕐 По расписанию',
+    'sms.grp.page.title':'📂 Группы контактов SMS','sms.grp.new.title':'Новая группа',
+    'sms.grp.name.lbl':'Название группы','sms.grp.name.ph':'Напр.: Клиенты Зарафшан',
+    'sms.grp.desc.lbl':'Описание (необязательно)','sms.grp.desc.ph':'Краткое описание',
+    'sms.grp.copyfrom.lbl':'Скопировать из Автодозвон-группы','sms.grp.nocopy':'— не копировать —',
+    'sms.grp.copyfrom.hint':'Контакты будут скопированы из выбранной группы автодозвона',
+    'sms.grp.create.btn':'💾 Создать','sms.grp.count.suffix':'конт.','sms.grp.contacts.btn':'👤 Контакты',
+    'sms.grp.fromad.title':'Добавить из Автодозвона','sms.grp.fromad.btn':'📥 Из АД',
+    'sms.grp.import.title':'Импорт CSV','sms.grp.csv.btn':'📥 CSV','sms.grp.export.title':'Экспорт CSV',
+    'sms.grp.err.name':'Введите название','sms.grp.err.create':'❌ Ошибка создания',
+    'sms.grp.created':'✅ Группа создана',
+    'sms.grp.confirm.delete':'Удалить группу «{name}» и все её контакты?',
+    'sms.grp.deleted':'🗑️ Группа удалена','sms.grp.no.ad.groups':'Нет групп автодозвона',
+    'sms.grp.choose.ad.prompt':'Выберите номер группы Автодозвона для копирования:',
+    'sms.grp.copied.count':'✅ Скопировано {n} контактов','sms.grp.err.copy':'❌ Ошибка копирования',
     'sms.cost.balance':'💳 Баланс','sms.cost.dispatch':'📤 Стоимость рассылки','sms.cost.left':'✅ Остаток',
     'sms.cnt.add.title':'Добавить контакт','sms.cnt.fio.lbl':'Ф.И.О (необязательно)','sms.cnt.add.btn':'💾 Добавить',
     'sms.imp.title':'📥 Импорт контактов CSV','sms.imp.group.lbl':'Группа для импорта',
@@ -7461,6 +7478,9 @@ const _adminI18n = {
     'sms.pricing.info':'Eskiz tariflari (1 SMS uchun soʻm, 160 belgi Latin / 70 belgi Unicode). Operator tariflari oʻzgarganda qoʻlda yangilang.',
     'th.operator':'Operator','th.prefixes':'Prefikslar (+998)',
     'th.svc.price':'Xizmat (soʻm)','th.adv.price':'Reklama (soʻm)',
+    'sms.price.page.title':'💰 SMS tariflari','sms.price.name.lbl':'Nomi',
+    'sms.price.pfx.lbl':'Prefikslar (vergul bilan)',
+    'sms.price.updated':'✅ Tarif yangilandi','sms.price.err':'❌ Xatolik',
     'sms.cfg.status.ok':'✅ Email va parol sozlangan. Token avtomatik yangilanadi.',
     'sms.cfg.sender.lbl':'Yuboruvchi nomi (alpha-name)',
     'sms.cfg.sender.hint':'Eskiz.uz kabinetida roʻyxatdan oʻtgan boʻlishi kerak',
@@ -7708,6 +7728,20 @@ const _adminI18n = {
     'sms.grp.dispatch.lbl':'Tarqatma nomi','sms.grp.recipients.lbl':'Oluvchilar guruhi',
     'sms.grp.select.ph':'— guruhni tanlang —','sms.grp.time.lbl':'Yuborish vaqti',
     'sms.grp.now':'Hozir','sms.grp.schedule':'🕐 Jadvallash',
+    'sms.grp.page.title':'📂 SMS kontakt guruhlari','sms.grp.new.title':'Yangi guruh',
+    'sms.grp.name.lbl':'Guruh nomi','sms.grp.name.ph':'Masalan: Zarafshon mijozlari',
+    'sms.grp.desc.lbl':'Tavsif (ixtiyoriy)','sms.grp.desc.ph':'Qisqacha tavsif',
+    'sms.grp.copyfrom.lbl':'Avtouzatish guruhidan nusxalash','sms.grp.nocopy':'— nusxalanmasin —',
+    'sms.grp.copyfrom.hint':'Kontaktlar tanlangan avtouzatish guruhidan nusxalanadi',
+    'sms.grp.create.btn':'💾 Yaratish','sms.grp.count.suffix':'kontakt','sms.grp.contacts.btn':'👤 Kontaktlar',
+    'sms.grp.fromad.title':'Avtouzatishdan qoʻshish','sms.grp.fromad.btn':'📥 AUdan',
+    'sms.grp.import.title':'CSV import','sms.grp.csv.btn':'📥 CSV','sms.grp.export.title':'CSV eksport',
+    'sms.grp.err.name':'Nomni kiriting','sms.grp.err.create':'❌ Yaratishda xatolik',
+    'sms.grp.created':'✅ Guruh yaratildi',
+    'sms.grp.confirm.delete':'«{name}» guruhini va barcha kontaktlarini oʻchirasizmi?',
+    'sms.grp.deleted':'🗑️ Guruh oʻchirildi','sms.grp.no.ad.groups':'Avtouzatish guruhlari yoʻq',
+    'sms.grp.choose.ad.prompt':'Nusxalash uchun Avtouzatish guruhi raqamini tanlang:',
+    'sms.grp.copied.count':'✅ {n} ta kontakt nusxalandi','sms.grp.err.copy':'❌ Nusxalashda xatolik',
     'sms.cost.balance':'💳 Balans','sms.cost.dispatch':'📤 Tarqatma narxi','sms.cost.left':'✅ Qoldiq',
     'sms.cnt.add.title':'Kontakt qoʻshish','sms.cnt.fio.lbl':'F.I.O (ixtiyoriy)','sms.cnt.add.btn':'💾 Qoʻshish',
     'sms.imp.title':'📥 CSV kontaktlarni import qilish','sms.imp.group.lbl':'Import uchun guruh',
@@ -23857,28 +23891,28 @@ async function smsGrpLoad() {
           <div style="font-weight:600;font-size:15px">📂 ${_esc(g.name)}</div>
           ${g.description ? `<div style="font-size:12px;color:var(--text2);margin-top:2px">${_esc(g.description)}</div>` : ''}
         </div>
-        <span style="font-size:12px;padding:3px 10px;border-radius:20px;background:var(--surface2);color:var(--text2);white-space:nowrap">${g.member_count||0} конт.</span>
+        <span style="font-size:12px;padding:3px 10px;border-radius:20px;background:var(--surface2);color:var(--text2);white-space:nowrap">${g.member_count||0} ${_t('sms.grp.count.suffix')}</span>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button onclick="smsCntGoGroup(${g.id})" class="btn btn-primary btn-sm" style="flex:1">👤 Контакты</button>
-        <button onclick="smsGrpCopyFromAd(${g.id})" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="Добавить из Автодозвона">📥 Из АД</button>
-        <button onclick="smsCntImportOpen(${g.id})" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="Импорт CSV">📥 CSV</button>
-        <button onclick="smsGrpExportCsv(${g.id},'${_esc(g.name)}')" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="Экспорт CSV">📤</button>
-        <button onclick="smsGrpDelete(${g.id},'${_esc(g.name)}')" class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5" title="Удалить">🗑️</button>
+        <button onclick="smsCntGoGroup(${g.id})" class="btn btn-primary btn-sm" style="flex:1">${_t('sms.grp.contacts.btn')}</button>
+        <button onclick="smsGrpCopyFromAd(${g.id})" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="${_t('sms.grp.fromad.title')}">${_t('sms.grp.fromad.btn')}</button>
+        <button onclick="smsCntImportOpen(${g.id})" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="${_t('sms.grp.import.title')}">${_t('sms.grp.csv.btn')}</button>
+        <button onclick="smsGrpExportCsv(${g.id},'${_esc(g.name)}')" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="${_t('sms.grp.export.title')}">📤</button>
+        <button onclick="smsGrpDelete(${g.id},'${_esc(g.name)}')" class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5" title="${_t('btn.delete')}">🗑️</button>
       </div>
     </div>`).join('');
 }
 
 async function smsGrpOpenCreate() {
   _smsGrpEditId = null;
-  document.getElementById('smsGrpModalTitle').textContent = 'Новая группа';
+  document.getElementById('smsGrpModalTitle').textContent = _t('sms.grp.new.title');
   document.getElementById('smsGrpName').value = '';
   document.getElementById('smsGrpDesc').value = '';
   document.getElementById('smsGrpModalErr').style.display = 'none';
   // Загрузить autodial группы в селект
   const adGrps = await apiGet('/admin/autodial/groups') || [];
   document.getElementById('smsGrpCopyFrom').innerHTML =
-    '<option value="">— не копировать —</option>' +
+    `<option value="">${_t('sms.grp.nocopy')}</option>` +
     adGrps.map(g => `<option value="${g.id}">${_esc(g.name)} (${g.member_count})</option>`).join('');
   document.getElementById('smsGrpModal').classList.remove('hidden');
 }
@@ -23892,42 +23926,42 @@ async function smsGrpSave() {
   const desc    = document.getElementById('smsGrpDesc').value.trim();
   const copyFrom = document.getElementById('smsGrpCopyFrom').value;
   const errEl   = document.getElementById('smsGrpModalErr');
-  if (!name) { errEl.style.display=''; errEl.textContent='Введите название'; return; }
+  if (!name) { errEl.style.display=''; errEl.textContent=_t('sms.grp.err.name'); return; }
   errEl.style.display = 'none';
   const res = await apiPost('/admin/sms/groups', { name, description: desc });
-  if (!res?.id) { errEl.style.display=''; errEl.textContent='❌ Ошибка создания'; return; }
+  if (!res?.id) { errEl.style.display=''; errEl.textContent=_t('sms.grp.err.create'); return; }
   if (copyFrom) {
     await fetch(`${API_BASE}/admin/sms/groups/${res.id}/copy-from-autodial/${copyFrom}`, {
       method: 'POST', headers: { Authorization: `Bearer ${adminToken}` }
     });
   }
   smsGrpCloseModal();
-  showToast('✅ Группа создана', 'success');
+  showToast(_t('sms.grp.created'), 'success');
   await smsGrpLoad();
 }
 
 async function smsGrpDelete(id, name) {
-  if (!confirm(`Удалить группу «${name}» и все её контакты?`)) return;
+  if (!confirm(_t('sms.grp.confirm.delete').replace('{name}', name))) return;
   await fetch(`${API_BASE}/admin/sms/groups/${id}`, { method:'DELETE', headers:{Authorization:`Bearer ${adminToken}`} });
-  showToast('🗑️ Группа удалена', 'info');
+  showToast(_t('sms.grp.deleted'), 'info');
   await smsGrpLoad();
 }
 
 async function smsGrpCopyFromAd(gid) {
   const adGrps = await apiGet('/admin/autodial/groups') || [];
-  if (!adGrps.length) { showToast('Нет групп автодозвона', 'error'); return; }
+  if (!adGrps.length) { showToast(_t('sms.grp.no.ad.groups'), 'error'); return; }
   const sel = adGrps.map((g,i) => `${i+1}. ${g.name} (${g.member_count})`).join('\n');
-  const inp = prompt(`Выберите номер группы Автодозвона для копирования:\n\n${sel}`);
+  const inp = prompt(`${_t('sms.grp.choose.ad.prompt')}\n\n${sel}`);
   const idx = parseInt(inp) - 1;
   if (isNaN(idx) || idx < 0 || idx >= adGrps.length) return;
   const res = await fetch(`${API_BASE}/admin/sms/groups/${gid}/copy-from-autodial/${adGrps[idx].id}`, {
     method: 'POST', headers: { Authorization: `Bearer ${adminToken}` }
   }).then(r => r.json()).catch(() => null);
   if (res?.ok) {
-    showToast(`✅ Скопировано ${res.added} контактов`, 'success');
+    showToast(_t('sms.grp.copied.count').replace('{n}', res.added), 'success');
     await smsGrpLoad();
   } else {
-    showToast('❌ Ошибка копирования', 'error');
+    showToast(_t('sms.grp.err.copy'), 'error');
   }
 }
 
@@ -24141,7 +24175,7 @@ async function smsPricingLoad() {
   const tbody = document.getElementById('smsPricingBody');
   if (!tbody) return;
   if (!_smsPricingData.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--text2)">Нет данных</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--text2)">${_t('lbl.no.data')}</td></tr>`;
     return;
   }
   tbody.innerHTML = _smsPricingData.map(op => {
@@ -24158,15 +24192,15 @@ async function smsPricingLoad() {
     <tr id="smsPricingEditRow-${op.id}" style="display:none;background:var(--surface2)">
       <td colspan="5" style="padding:14px 16px">
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-          <div><label class="cfg-label" style="font-size:11px">Название</label>
+          <div><label class="cfg-label" style="font-size:11px">${_t('sms.price.name.lbl')}</label>
             <input id="smsPE_name_${op.id}" class="price-input" style="width:120px;font-size:13px" value="${_esc(op.display_name)}"></div>
-          <div><label class="cfg-label" style="font-size:11px">Префиксы (через запятую)</label>
+          <div><label class="cfg-label" style="font-size:11px">${_t('sms.price.pfx.lbl')}</label>
             <input id="smsPE_pfx_${op.id}" class="price-input" style="width:150px;font-size:13px" value="${pfx}"></div>
-          <div><label class="cfg-label" style="font-size:11px">Сервисный (сум)</label>
+          <div><label class="cfg-label" style="font-size:11px">${_t('th.svc.price')}</label>
             <input id="smsPE_svc_${op.id}" type="number" class="price-input" style="width:100px;font-size:13px" value="${op.price_service||0}"></div>
-          <div><label class="cfg-label" style="font-size:11px">Рекламный (сум)</label>
+          <div><label class="cfg-label" style="font-size:11px">${_t('th.adv.price')}</label>
             <input id="smsPE_ad_${op.id}" type="number" class="price-input" style="width:100px;font-size:13px" value="${op.price_ad||0}"></div>
-          <button onclick="smsPricingSave(${op.id})" class="btn btn-primary btn-sm">💾 Сохранить</button>
+          <button onclick="smsPricingSave(${op.id})" class="btn btn-primary btn-sm">${_t('btn.save')}</button>
           <button onclick="smsPricingCancelEdit(${op.id})" class="btn btn-sm" style="background:var(--surface2);color:var(--text)">✕</button>
         </div>
       </td>
@@ -24189,8 +24223,8 @@ async function smsPricingSave(id) {
     price_service: parseInt(document.getElementById(`smsPE_svc_${id}`).value) || 0,
     price_ad:      parseInt(document.getElementById(`smsPE_ad_${id}`).value)  || 0,
   });
-  if (res?.id) { showToast('✅ Тариф обновлён', 'success'); await smsPricingLoad(); }
-  else showToast('❌ Ошибка', 'error');
+  if (res?.id) { showToast(_t('sms.price.updated'), 'success'); await smsPricingLoad(); }
+  else showToast(_t('sms.price.err'), 'error');
 }
 
 // ── Расчёт стоимости рассылки ──────────────────────────────────────────
