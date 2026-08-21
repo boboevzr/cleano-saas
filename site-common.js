@@ -2408,6 +2408,20 @@
       sPills.forEach(b => b.classList.remove('active'));
     }
 
+    // Сбрасываем "Подробную" форму — Тип услуги/Дату/Время вывоза, иначе при
+    // повторном открытии в той же сессии остаются выбранными от прошлой заявки.
+    // (Ниже есть отдельный префилл из калькулятора — он намеренно может снова
+    // выставить тип услуги, это не конфликтует со сбросом здесь.)
+    selectServiceType('standard');
+    selectedDateOpt = null;
+    selectedDateValue = null;
+    selectedTimeOpt = null;
+    document.querySelectorAll('#dateGroup .pill-btn, #timeGroup .pill-btn').forEach(b => b.classList.remove('active'));
+    const miniCalEl = document.getElementById('miniCal');
+    if (miniCalEl) miniCalEl.style.display = 'none';
+    const customTimePickerEl = document.getElementById('customTimePicker');
+    if (customTimePickerEl) customTimePickerEl.style.display = 'none';
+
     // Pre-fill name and phone if user is logged in
     if (currentUser) {
       const sName = document.getElementById('sName');

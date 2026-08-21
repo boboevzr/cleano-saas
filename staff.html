@@ -4242,6 +4242,9 @@ function openConvertToOrderModal(leadId) {
   document.getElementById('or_short_address').value = lead.short_address || '';
   document.getElementById('or_address').value       = lead.address       || '';
   document.getElementById('or_note').value    = lead.note         || '';
+  document.getElementById('or_service').value = lead.service      || '';
+  orSetPickupType(lead.pickup_type || 'courier');
+  orSetDeliveryType(lead.delivery_type || 'courier');
   document.getElementById('or_lead_id').value = leadId;
   // передаём локацию из лида
   const locEl     = document.getElementById('or_location');
@@ -8577,6 +8580,18 @@ document.addEventListener('click', e => {
           <div id="so_address" style="font-size:12px;color:#555;margin-top:2px"></div>
           <a id="so_location_link" href="#" target="_blank" style="display:none;font-size:12px;color:#163E3B;font-weight:500;margin-top:3px">📍 <span id="soLocationLinkLbl">Открыть геолокацию</span></a>
         </div>
+        <div id="so_service_row" style="grid-column:1/-1;display:none;margin-top:6px">
+          <div style="font-size:11px;color:#888;margin-bottom:2px">🧺 Услуга</div>
+          <div id="so_service_name" style="font-size:13px;font-weight:600;color:#1a1a1a"></div>
+        </div>
+        <div id="so_pickup_dt_row" style="grid-column:1/-1;display:none;margin-top:6px">
+          <div style="font-size:11px;color:#888;margin-bottom:2px">📅 Дата/время вывоза</div>
+          <div id="so_pickup_dt" style="font-size:13px;font-weight:600;color:#1a1a1a"></div>
+        </div>
+        <div id="so_note_row" style="grid-column:1/-1;display:none;margin-top:6px">
+          <div style="font-size:11px;color:#888;margin-bottom:2px">💬 Примечание</div>
+          <div id="so_note_text" style="font-size:13px;color:#555;white-space:pre-wrap"></div>
+        </div>
       </div>
       <!-- Workflow кнопки -->
       <div id="so_workflow_row" style="padding:6px 20px;border-top:1px solid #f0f0f0;flex-shrink:0;display:none"></div>
@@ -9177,6 +9192,17 @@ async function staffOpenOrder(orderId) {
   document.getElementById('so_date').textContent   = '';
   document.getElementById('so_short_address').textContent = o.short_address || '—';
   document.getElementById('so_address').textContent= o.address || '';
+  const soSvcRow = document.getElementById('so_service_row');
+  if (o.service) { soSvcRow.style.display = ''; document.getElementById('so_service_name').textContent = o.service; }
+  else { soSvcRow.style.display = 'none'; }
+  const soPickupRow = document.getElementById('so_pickup_dt_row');
+  if (o.pickup_date || o.pickup_time) {
+    soPickupRow.style.display = '';
+    document.getElementById('so_pickup_dt').textContent = [o.pickup_date, o.pickup_time].filter(Boolean).join(' · ');
+  } else { soPickupRow.style.display = 'none'; }
+  const soNoteRow = document.getElementById('so_note_row');
+  if (o.note) { soNoteRow.style.display = ''; document.getElementById('so_note_text').textContent = o.note; }
+  else { soNoteRow.style.display = 'none'; }
   const locLink = document.getElementById('so_location_link');
   if (o.location) {
     const [_la, _lo] = o.location.replace('http', '').includes(',')
