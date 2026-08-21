@@ -3559,24 +3559,6 @@
               </div>
             </div>
 
-            <!-- Шаблон уведомления в группу водителей (общий; ID групп — в карточках филиалов ниже) -->
-            <div class="card" id="card-tg-delivery" style="margin-bottom:14px">
-              <div class="cfg-title-row">
-                <h3 class="cfg-title" data-i18n="tg.card.delivery">🚗 Уведомления водителям / доставщикам</h3>
-                <button class="btn s-edit-btn" onclick="editCard('card-tg-delivery')">✏️</button>
-              </div>
-              <div class="cfg-field" style="margin-top:8px">
-                <label>📝 Шаблон уведомления в группу</label>
-                <textarea id="cfg_delivery_group_template" class="form-input" disabled rows="2" style="font-family:monospace;font-size:12px;resize:vertical" placeholder="🚗 {route_name}-{count} — {route_type} · {date} {time}"></textarea>
-                <div style="font-size:11px;color:var(--text2);margin-top:4px">Переменные: <code>{route_name}</code> <code>{count}</code> <code>{route_type}</code> <code>{date}</code> <code>{time}</code> · Список всегда идёт в канал.</div>
-              </div>
-              <div class="cfg-actions">
-                <button class="btn btn-primary s-save-btn" onclick="saveCard('card-tg-delivery',['delivery_group_template'])" style="display:none;">💾 Сохранить</button>
-                <button class="btn btn-ghost   s-cancel-btn" onclick="cancelCard('card-tg-delivery',['delivery_group_template'])" style="display:none;">Отмена</button>
-                <span class="s-msg" id="msg_card-tg-delivery"></span>
-              </div>
-            </div>
-
             <div id="branchContactsContainer"></div>
             <button class="btn btn-primary" onclick="openAddBranchModal()" style="margin-top:12px" data-i18n="cs.branches.add">+ Добавить филиал</button>
           </div>
@@ -6043,19 +6025,6 @@
       </div>
       <div class="tg-group-card">
         <div class="tg-group-head">
-          <span class="tg-group-icon">🚗</span>
-          <div><div class="tg-group-title" data-i18n="cs.branches.tg.drivers">Группа водителей</div><div class="tg-group-desc" data-i18n="cs.branches.tg.drivers.desc">Маршруты и доставка</div></div>
-        </div>
-        <div class="tg-group-inputs">
-          <div class="tg-id-row">
-            <input class="form-input" id="bf_tg_delivery_group_id" placeholder="-100..." inputmode="numeric">
-            <button class="btn btn-ghost btn-sm" type="button" onclick="tgCheckId('bf_tg_delivery_group_id','tgn_delivery_bf')">🔍</button>
-          </div>
-          <span class="tg-chat-name" id="tgn_delivery_bf"></span>
-        </div>
-      </div>
-      <div class="tg-group-card">
-        <div class="tg-group-head">
           <span class="tg-group-icon">📢</span>
           <div><div class="tg-group-title" data-i18n="cs.branches.tg.delivery">Канал доставки</div><div class="tg-group-desc" data-i18n="cs.branches.tg.delivery.desc">Список маршрутов для водителей</div></div>
         </div>
@@ -6529,7 +6498,6 @@ const _adminI18n = {
     'cs.branches.tg.groups':'Telegram — группы и каналы',
     'cs.branches.tg.leads':'Группа лидов','cs.branches.tg.leads.desc':'Новые заявки из CRM',
     'cs.branches.tg.orders':'Группа заказов','cs.branches.tg.orders.desc':'Приём и статусы заказов',
-    'cs.branches.tg.drivers':'Группа водителей','cs.branches.tg.drivers.desc':'Маршруты и доставка',
     'cs.branches.tg.delivery':'Канал доставки','cs.branches.tg.delivery.desc':'Список маршрутов для водителей',
     'cs.branches.empty':'Нет филиалов. Добавьте первый.',
     'cs.branches.modal.add':'Добавить филиал','cs.branches.modal.edit':'Редактировать филиал',
@@ -7078,7 +7046,7 @@ const _adminI18n = {
     'tg.card.welcome_video':'🎬 Видео-инструкция при первом входе',
     'tg.welcome_video.hint':'Отправляется автоматически один раз каждому новому клиенту бота, сразу после выбора языка — отдельное от видео-карточки на сайте. До 19 МБ.',
     'tg.card.cash':'💵 Канал кассы','tg.card.leads':'🎯 Группа Лидов',
-    'tg.card.delivery':'🚗 Группа водителей / доставщиков','tg.card.new.clients':'👤 Новые пользователи сайта',
+    'tg.card.new.clients':'👤 Новые пользователи сайта',
     'tg.field.link':'Ссылка',
     'tg.field.group.id':'ID группы','tg.field.group.fallback':'ID общей группы (fallback)','tg.field.channel.id':'ID канала',
     'tg.field.new.clients.group':'ID группы «Новые клиенты»',
@@ -7279,7 +7247,6 @@ const _adminI18n = {
     'cs.branches.tg.groups':'Telegram — guruhlar va kanallar',
     'cs.branches.tg.leads':'Lidlar guruhi','cs.branches.tg.leads.desc':"CRM'dan yangi arizalar",
     'cs.branches.tg.orders':'Buyurtmalar guruhi','cs.branches.tg.orders.desc':'Qabul va buyurtma holatlari',
-    'cs.branches.tg.drivers':'Haydovchilar guruhi','cs.branches.tg.drivers.desc':'Marshrut va yetkazib berish',
     'cs.branches.tg.delivery':'Yetkazib berish kanali','cs.branches.tg.delivery.desc':"Haydovchilar uchun marshrutlar ro'yxati",
     'cs.branches.empty':"Filiallar yo'q. Birinchisini qo'shing.",
     'cs.branches.modal.add':"Filial qo'shish",'cs.branches.modal.edit':'Filialni tahrirlash',
@@ -7828,7 +7795,7 @@ const _adminI18n = {
     'tg.card.welcome_video':"🎬 Birinchi kirishda video-yo'riqnoma",
     'tg.welcome_video.hint':"Botning har bir yangi mijoziga til tanlangandan keyin bir marta avtomatik yuboriladi — saytdagi video-kartochkadan alohida. 19 MB gacha.",
     'tg.card.cash':'💵 Kassa kanali','tg.card.leads':'🎯 Lidlar guruhi',
-    'tg.card.delivery':'🚗 Haydovchilar / yetkazuvchilar guruhi','tg.card.new.clients':'👤 Yangi sayt foydalanuvchilari',
+    'tg.card.new.clients':'👤 Yangi sayt foydalanuvchilari',
     'tg.field.link':'Havola',
     'tg.field.group.id':'Guruh IDsi','tg.field.group.fallback':'Umumiy guruh IDsi (fallback)','tg.field.channel.id':'Kanal IDsi',
     'tg.field.new.clients.group':'Yangi mijozlar guruhi IDsi',
@@ -8393,7 +8360,6 @@ function renderBranchContactCards() {
       <div style="margin-top:8px">
         ${_brTgCard('🧑‍💼', _t('cs.branches.tg.leads'),    _t('cs.branches.tg.leads.desc'),    b.tg_leads_group_id)}
         ${_brTgCard('📦',  _t('cs.branches.tg.orders'),   _t('cs.branches.tg.orders.desc'),   b.tg_orders_channel_id)}
-        ${_brTgCard('🚗',  _t('cs.branches.tg.drivers'),  _t('cs.branches.tg.drivers.desc'),  b.tg_delivery_group_id)}
         ${_brTgCard('📢',  _t('cs.branches.tg.delivery'), _t('cs.branches.tg.delivery.desc'), b.tg_delivery_channel_id)}
       </div>
     </div>`;
@@ -8490,8 +8456,8 @@ function _computeSetupGaps() {
     if (!b.tg_leads_group_id) {
       required.push({ kind: 'nav', label: `Филиал «${label}»: Telegram-группа заявок`, hint: 'Куда присылать уведомления о новых заявках', fix: () => _setupGoToBranch(b.id) });
     }
-    if (!b.tg_orders_channel_id || !b.tg_delivery_group_id || !b.tg_delivery_channel_id) {
-      recommended.push({ kind: 'nav', label: `Филиал «${label}»: остальные Telegram-группы`, hint: 'Заказы, водители, доставка — по желанию', fix: () => _setupGoToBranch(b.id) });
+    if (!b.tg_orders_channel_id || !b.tg_delivery_channel_id) {
+      recommended.push({ kind: 'nav', label: `Филиал «${label}»: остальные Telegram-группы`, hint: 'Заказы, доставка — по желанию', fix: () => _setupGoToBranch(b.id) });
     }
   });
   return { required, recommended };
@@ -8619,7 +8585,7 @@ function _bfOpenForm(mode, b) {
     ['bf_name_ru','bf_name_uz','bf_slug','bf_city_coords','bf_workshop_coords',
      'bf_phone1','bf_phone2',
      'bf_tg_leads_group_id','bf_tg_orders_channel_id',
-     'bf_tg_delivery_group_id','bf_tg_delivery_channel_id',
+     'bf_tg_delivery_channel_id',
     ].forEach(id => set(id, ''));
   } else {
     const phones = _brPhones(b.phones);
@@ -8633,7 +8599,6 @@ function _bfOpenForm(mode, b) {
     set('bf_phone2', ph2);
     set('bf_tg_leads_group_id', b.tg_leads_group_id);
     set('bf_tg_orders_channel_id', b.tg_orders_channel_id);
-    set('bf_tg_delivery_group_id', b.tg_delivery_group_id);
     set('bf_tg_delivery_channel_id', b.tg_delivery_channel_id);
   }
   bfTab('main');
@@ -8661,7 +8626,6 @@ async function saveBranchForm() {
     lat, lon, workshop_lat, workshop_lon, phones,
     tg_leads_group_id: intOrNull(g('bf_tg_leads_group_id')),
     tg_orders_channel_id: intOrNull(g('bf_tg_orders_channel_id')),
-    tg_delivery_group_id: intOrNull(g('bf_tg_delivery_group_id')),
     tg_delivery_channel_id: intOrNull(g('bf_tg_delivery_channel_id')),
   };
   try {
@@ -13096,7 +13060,6 @@ const SITE_KEYS = [
   'tg_group_sms_id',
   'leads_group_enabled','lead_notify_ru','callback_overdue_minutes',
   'new_clients_group_id',
-  'delivery_group_id', 'delivery_group_template',
   'eskiz_email','eskiz_password','eskiz_from',
   'sms_text_register','sms_text_login','sms_text_reset',
   'sheets_url',
