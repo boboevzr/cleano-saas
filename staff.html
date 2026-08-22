@@ -4641,7 +4641,9 @@ async function _claimAndOpenMeasure(orderId, itemId, btn) {
 }
 
 async function _openOrderForMeasureReview(orderId, itemId) {
+  _skipFilterReset = true;
   gotoPage('orders');
+  _skipFilterReset = false;
   await loadOrders();
   setTimeout(async () => {
     await staffOpenOrder(orderId);
