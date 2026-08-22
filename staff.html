@@ -12103,7 +12103,10 @@ async function staffOpenMeasure(itemId) {
   _smFullMeasure = !isAdminMeasure && canMeasure && canApproveMeasure;
 
   const localIdx = _sItemsCache.findIndex(i => i.id === itemId) + 1;
-  document.getElementById('sm_modal_title').textContent = `📐 ${t('sm.position')} #${localIdx}`;
+  const _smClientName = [_sOrderCache?.client_first_name, _sOrderCache?.client_last_name].filter(Boolean).join(' ');
+  const _smClientAddr = _sOrderCache?.short_address || _sOrderCache?.address || '';
+  const _smTitleSuffix = [_smClientName, _smClientAddr].filter(Boolean).join(', ');
+  document.getElementById('sm_modal_title').textContent = `📐 ${t('sm.position')} #${localIdx}` + (_smTitleSuffix ? ` — ${_smTitleSuffix}` : '');
 
   // Show/hide unified service section
   const isWasher = currentStaff?.role === 'washer';
@@ -14726,9 +14729,13 @@ function staffChatSend() {
           <span id="smMediaTitle" style="font-size:13px;font-weight:700;color:#163E3B">Фото / видео замера</span>
         </div>
         <div id="sm_media_grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin-bottom:10px;min-height:0"></div>
-        <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label id="sm_camera_label" style="flex-shrink:0;display:flex;align-items:center;gap:6px;padding:10px 16px;border:2px solid #4a7aff;border-radius:12px;font-size:13px;font-weight:600;color:#fff;cursor:pointer;background:#4a7aff;white-space:nowrap">
+            <span style="font-size:18px">📸</span> <span id="smCameraLabel">Камера</span>
+            <input type="file" accept="image/*,video/*" capture="environment" onchange="smUploadMedia(this)" style="display:none">
+          </label>
           <label id="sm_upload_label" style="flex-shrink:0;display:flex;align-items:center;gap:6px;padding:10px 16px;border:2px dashed #b8d0ff;border-radius:12px;font-size:13px;font-weight:600;color:#4a7aff;cursor:pointer;background:#eef3ff;white-space:nowrap">
-            <span style="font-size:18px">📷</span> Добавить фото или видео
+            <span style="font-size:18px">🖼</span> <span id="smGalleryLabel">Из галереи</span>
             <input type="file" accept="image/*,video/*" multiple onchange="smUploadMedia(this)" style="display:none">
           </label>
           <div id="sm_upload_hint" style="font-size:11px;color:#94a3b8;line-height:1.4">Сфотографируйте рулетку — начало и конец. Видео приветствуется.</div>

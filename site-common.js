@@ -2459,10 +2459,6 @@
     if (yandexMap){ try { yandexMap.destroy(); } catch(e){} yandexMap = null; yandexMarker = null; }
   };
 
-  orderModalOverlay.addEventListener('click', (e) => {
-    if (e.target === orderModalOverlay) closeOrderModal();
-  });
-
   // ── ВКЛАДКИ ──
   tabSimple.addEventListener('click', () => {
     tabSimple.classList.add('active');
