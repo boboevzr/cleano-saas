@@ -4737,7 +4737,7 @@ function _showDiscountBanner(req) {
   const existing = document.getElementById(`disc_banner_${req.id}`);
   if (existing) return;
   const amt = Number(req.requested_amount).toLocaleString('ru');
-  const orderNum = (req.order_num || '').replace('ARTEZ-','');
+  const orderNum = (req.order_num || '').replace(/^[A-Z0-9]+-/,'');
   const banner = document.createElement('div');
   banner.id = `disc_banner_${req.id}`;
   banner.style.cssText = `position:fixed;bottom:80px;right:20px;z-index:9999;background:#fff;border:2px solid #f59e0b;border-radius:16px;padding:14px 16px;max-width:320px;box-shadow:0 4px 24px rgba(0,0,0,.18)`;
@@ -4765,7 +4765,7 @@ async function _openDiscountModal(reqId) {
   const req = (data.requests || []).find(x => x.id === reqId);
   if (!req) { showToast('Запрос уже обработан'); return; }
   const amt = Number(req.requested_amount).toLocaleString('ru');
-  const orderNum = (req.order_num || '').replace('ARTEZ-','');
+  const orderNum = (req.order_num || '').replace(/^[A-Z0-9]+-/,'');
   const total = Number(req.order_total || 0).toLocaleString('ru');
   const modal = document.getElementById('discountReqModal');
   document.getElementById('drm_order').textContent = orderNum;
@@ -4887,7 +4887,7 @@ async function _pollDebtApprovals() {
 function _showDebtApprovalBanner(req) {
   if (document.getElementById(`debt_banner_${req.id}`)) return;
   const debt = Number(req.debt_amount).toLocaleString('ru');
-  const orderNum = (req.order_num || '').replace('ARTEZ-','');
+  const orderNum = (req.order_num || '').replace(/^[A-Z0-9]+-/,'');
   const client = [req.client_first_name, req.client_last_name].filter(Boolean).join(' ') || '—';
   const banner = document.createElement('div');
   banner.id = `debt_banner_${req.id}`;
@@ -4917,7 +4917,7 @@ function _openDebtApprovalModal(reqId) {
   const client  = [req.client_first_name, req.client_last_name].filter(Boolean).join(' ') || '—';
   const phone   = req.client_phone || '';
   const addr    = req.short_address || req.address || '—';
-  const orderNum = (req.order_num || '').replace('ARTEZ-','');
+  const orderNum = (req.order_num || '').replace(/^[A-Z0-9]+-/,'');
 
   document.getElementById('dam_order').textContent   = orderNum;
   document.getElementById('dam_client').textContent  = client;
@@ -6453,7 +6453,7 @@ function renderOrders() {
     return `<div class="list-item" onclick="${onclick}" style="cursor:pointer;${cardStyle}">
       ${_ordersSelectMode ? `<input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();toggleOrderSelect(${o.id},this.closest('.list-item'))" style="width:20px;height:20px;flex-shrink:0;accent-color:#163E3B">` : `<div class="li-icon" style="background:${isExpress?'#fef3c7':'var(--green-bg)'}">${isExpress?'⚡':'📦'}</div>`}
       <div class="li-body">
-        <div class="li-name">${sourceIcon(o.source)} #${(o.order_num||'').replace(/^ARTEZ-/,'')}${o.item_count > 0 ? `<span style="color:#888">/${o.item_count}</span>` : ''}${o.corrected_count > 0 ? `<span style="color:#f97316;font-size:11px;margin-left:5px">⚠️${o.corrected_count}</span>` : ''}${hasMeasure ? `<span style="background:#163E3B;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px">📐${measureCnt}</span>` : ''} ${_esc(o.client_first_name||'')} ${_esc(o.client_last_name||'')}</div>
+        <div class="li-name">${sourceIcon(o.source)} #${(o.order_num||'').replace(/^[A-Z0-9]+-/,'')}${o.item_count > 0 ? `<span style="color:#888">/${o.item_count}</span>` : ''}${o.corrected_count > 0 ? `<span style="color:#f97316;font-size:11px;margin-left:5px">⚠️${o.corrected_count}</span>` : ''}${hasMeasure ? `<span style="background:#163E3B;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px">📐${measureCnt}</span>` : ''} ${_esc(o.client_first_name||'')} ${_esc(o.client_last_name||'')}</div>
         <div class="li-sub">${o.client_phone ? `📞 ${_esc(o.client_phone)} · ` : ''}${_esc(o.service||'')}</div>
         ${(o.short_address || o.address) ? `<div class="li-sub" style="font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${_esc(o.short_address || o.address || '')}">📍 ${_esc(o.short_address || o.address)}</div>` : ''}
         <div class="li-sub" style="font-size:11px;margin-top:2px">${_payRow(o)}</div>
@@ -7720,7 +7720,7 @@ function _drvStopCard(stop, si, route) {
   const isPickupRoute = route?.type === 'pickup';
   const ordId = stop.order_id;
   const itemCount = stop.item_count || 0;
-  const rawNum = (stop.order_num || '').replace('ARTEZ-', '');
+  const rawNum = (stop.order_num || '').replace(/^[A-Z0-9]+-/, '');
   const num = rawNum ? `№${rawNum}${itemCount ? ` / ${itemCount}` : ''}` : `#${ordId}`;
   const client = [stop.client_first_name, stop.client_last_name].filter(Boolean).join(' ') || '—';
   const phone = stop.client_phone || '';
