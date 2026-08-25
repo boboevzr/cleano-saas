@@ -3807,7 +3807,7 @@ function openLeadCard(id) {
         <span style="font-size:22px">📞</span>
         <span style="font-size:16px;font-weight:700;color:#15803d">${lead.client_phone}</span>
       </a>
-      <button onclick="_saveContactFromLeadCard()" title="Сохранить контакт" style="flex-shrink:0;background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:12px 14px;font-size:20px;cursor:pointer">💾</button>
+      <button onclick="_saveContactFromLeadCard()" title="Сохранить контакт в телефон" style="flex-shrink:0;background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700;color:#15803d;cursor:pointer;white-space:nowrap">📇 Контакт</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
       ${lead.note ? `<div style="background:#fefce8;border-radius:10px;padding:10px 14px;font-size:14px;color:#92400e">💬 ${lead.note}</div>` : ''}
@@ -3861,7 +3861,7 @@ function openLeadDetail(id) {
         <div style="flex:1;min-width:0">
           ${code}
           <div class="detail-name">'${lead.client_name||t('lead.no_name')}'${lead.promo_id ? ` <span class="li-badge-promo">${t('promo.badge')}</span>` : ''}</div>
-          <div class="detail-phone" style="margin-top:6px;margin-bottom:16px">📞 <a href="tel:${lead.client_phone}">${lead.client_phone}</a> <button onclick="_saveContactFromLead()" title="Сохранить контакт" style="background:none;border:none;color:inherit;font-size:14px;cursor:pointer;padding:0;line-height:1;vertical-align:middle">💾</button></div>
+          <div class="detail-phone" style="margin-top:6px;margin-bottom:16px">📞 <a href="tel:${lead.client_phone}">${lead.client_phone}</a> <button onclick="_saveContactFromLead()" title="Сохранить контакт в телефон" style="background:none;border:1px solid var(--sep);border-radius:6px;padding:2px 8px;color:inherit;font-size:12px;font-weight:600;cursor:pointer;vertical-align:middle">📇 В контакты</button></div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px">
           ${!isAgentRole && !isConverted && (lead.assigned_to == null ? Number(lead.created_by) === Number(myId) : isMine) ? `<button onclick="openLeadEdit(${id})" style="background:none;border:1px solid var(--sep);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;color:var(--text2)">✏️</button>` : ''}
@@ -8585,7 +8585,7 @@ document.addEventListener('click', e => {
           <div id="so_client" style="font-weight:600;font-size:14px;color:#1a1a1a"></div>
           <a id="so_phone" href="#" style="font-size:13px;font-weight:600;color:#163E3B;text-decoration:none"></a>
           <div style="margin-top:6px;display:flex;align-items:center;gap:6px">
-            <button onclick="_saveContactFromOrder()" title="Сохранить контакт" style="flex-shrink:0;background:none;border:none;color:#163E3B;font-size:14px;cursor:pointer;padding:0;line-height:1">💾</button>
+            <button onclick="_saveContactFromOrder()" title="Сохранить контакт в телефон" style="flex-shrink:0;padding:4px 10px;background:#f3f4f6;border:1.5px solid #d1d5db;color:#374151;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">📇 В контакты</button>
             <button onclick="soNewOrderForClient()" id="so_new_order_btn" style="display:none;padding:4px 10px;background:#e8f4ff;border:1.5px solid #007aff;color:#007aff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer"><span id="soNewOrderBtnLbl">➕ Новый заказ</span></button>
           </div>
         </div>
@@ -9777,7 +9777,10 @@ function _sPmUpdateFinalBtn() {
   const hint = document.getElementById('s_purpose_final_hint');
   if (!btn) return;
   const noItems   = !_sPmOrderNet || _sPmOrderNet <= 0;
-  const earlyStatus = !_FINAL_ALLOWED_STATUSES.has(_sOrderCache?.status);
+  // Заказ, закрытый в долг (mark_order_delivered_with_debt), всегда получает
+  // debt_responsible_id атомарно вместе со status='delivered' — этого одного
+  // достаточно, чтобы разрешить "Расчёт" по нему, независимо от статуса.
+  const earlyStatus = !_FINAL_ALLOWED_STATUSES.has(_sOrderCache?.status) && !_sOrderCache?.debt_responsible_id;
   const disabled  = noItems || earlyStatus;
   btn.disabled    = disabled;
   btn.style.opacity   = disabled ? '0.4' : '1';
