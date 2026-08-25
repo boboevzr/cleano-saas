@@ -3607,6 +3607,7 @@ function fmtCallIcon(action) {
 }
 
 let _currentLeadId = null;
+let _currentLeadCardId = null;
 
 // ── BULK SELECT ──────────────────────────────────────────────────────
 function _resetLeadsSelect() {
@@ -3795,6 +3796,7 @@ async function confirmBulkOrdersDelete() {
 
 function openLeadCard(id) {
   const lead = leadsData.find(l => l.id === id); if (!lead) return;
+  _currentLeadCardId = id;
   const statusLabels = { new:t('status.new'), no_answer:t('status.no_answer'), callback:t('status.callback'), converted:t('status.converted_full'), lost:t('status.lost') };
   const code   = lead.lead_code ? `<span style="font-size:12px;color:#888;font-weight:600;margin-left:8px">${lead.lead_code}</span>` : '';
   const branch = branchLabel(lead.branch);
@@ -3805,7 +3807,7 @@ function openLeadCard(id) {
         <span style="font-size:22px">📞</span>
         <span style="font-size:16px;font-weight:700;color:#15803d">${lead.client_phone}</span>
       </a>
-      <button onclick="_saveVCard('${_escJs(lead.client_name||'')}','${_escJs(lead.client_phone||'')}')" title="Сохранить контакт" style="flex-shrink:0;background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:12px 14px;font-size:20px;cursor:pointer">💾</button>
+      <button onclick="_saveContactFromLeadCard()" title="Сохранить контакт" style="flex-shrink:0;background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:12px 14px;font-size:20px;cursor:pointer">💾</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
       ${lead.note ? `<div style="background:#fefce8;border-radius:10px;padding:10px 14px;font-size:14px;color:#92400e">💬 ${lead.note}</div>` : ''}
@@ -3859,7 +3861,7 @@ function openLeadDetail(id) {
         <div style="flex:1;min-width:0">
           ${code}
           <div class="detail-name">'${lead.client_name||t('lead.no_name')}'${lead.promo_id ? ` <span class="li-badge-promo">${t('promo.badge')}</span>` : ''}</div>
-          <div class="detail-phone" style="margin-top:6px;margin-bottom:16px">📞 <a href="tel:${lead.client_phone}">${lead.client_phone}</a> <button onclick="_saveVCard('${_escJs(lead.client_name||'')}','${_escJs(lead.client_phone||'')}')" title="Сохранить контакт" style="background:none;border:none;color:inherit;font-size:14px;cursor:pointer;padding:0;line-height:1;vertical-align:middle">💾</button></div>
+          <div class="detail-phone" style="margin-top:6px;margin-bottom:16px">📞 <a href="tel:${lead.client_phone}">${lead.client_phone}</a> <button onclick="_saveContactFromLead()" title="Сохранить контакт" style="background:none;border:none;color:inherit;font-size:14px;cursor:pointer;padding:0;line-height:1;vertical-align:middle">💾</button></div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px">
           ${!isAgentRole && !isConverted && (lead.assigned_to == null ? Number(lead.created_by) === Number(myId) : isMine) ? `<button onclick="openLeadEdit(${id})" style="background:none;border:1px solid var(--sep);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;color:var(--text2)">✏️</button>` : ''}
@@ -11570,8 +11572,10 @@ function openPostponeModal() {
 function _escJs(s) { return String(s).replace(/'/g, "\\'"); }
 function _saveVCard(name, phone) {
   if (!phone) return;
-  const safeName = (name || phone).trim();
-  const vcard = 'BEGIN:VCARD\r\nVERSION:3.0\r\nN:;' + safeName + ';;;\r\nFN:' + safeName + '\r\nTEL;TYPE=CELL:' + phone + '\r\nEND:VCARD\r\n';
+  const clean = s => String(s || '').replace(/[\r\n]+/g, ' ').replace(/\\/g, '\\\\').replace(/[;,]/g, '\\$&').trim();
+  const safeName  = clean(name) || clean(phone);
+  const safePhone = clean(phone);
+  const vcard = 'BEGIN:VCARD\r\nVERSION:3.0\r\nN:;' + safeName + ';;;\r\nFN:' + safeName + '\r\nTEL;TYPE=CELL:' + safePhone + '\r\nEND:VCARD\r\n';
   const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -11586,6 +11590,14 @@ function _saveContactFromOrder() {
   const o = _sOrderCache; if (!o || !o.client_phone) return;
   const name = [o.client_first_name, o.client_last_name].filter(Boolean).join(' ');
   _saveVCard(name, o.client_phone);
+}
+function _saveContactFromLead() {
+  const lead = leadsData.find(l => l.id === _currentLeadId); if (!lead || !lead.client_phone) return;
+  _saveVCard(lead.client_name, lead.client_phone);
+}
+function _saveContactFromLeadCard() {
+  const lead = leadsData.find(l => l.id === _currentLeadCardId); if (!lead || !lead.client_phone) return;
+  _saveVCard(lead.client_name, lead.client_phone);
 }
 function _postponeSetPreset(text, btn) {
   document.getElementById('postpone_reason').value = text;
