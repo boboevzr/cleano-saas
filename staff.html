@@ -3800,10 +3800,13 @@ function openLeadCard(id) {
   const branch = branchLabel(lead.branch);
   document.getElementById('lcTitle').innerHTML = `🎯 ${lead.client_name||t('lead.no_name')}${code}`;
   document.getElementById('lcBody').innerHTML = `
-    <a href="tel:${lead.client_phone}" style="display:flex;align-items:center;gap:10px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:12px 14px;margin-bottom:14px;text-decoration:none">
-      <span style="font-size:22px">📞</span>
-      <span style="font-size:16px;font-weight:700;color:#15803d">${lead.client_phone}</span>
-    </a>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <a href="tel:${lead.client_phone}" style="flex:1;display:flex;align-items:center;gap:10px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:12px 14px;text-decoration:none">
+        <span style="font-size:22px">📞</span>
+        <span style="font-size:16px;font-weight:700;color:#15803d">${lead.client_phone}</span>
+      </a>
+      <button onclick="_saveVCard('${_escJs(lead.client_name||'')}','${_escJs(lead.client_phone||'')}')" title="Сохранить контакт" style="flex-shrink:0;background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:12px 14px;font-size:20px;cursor:pointer">💾</button>
+    </div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
       ${lead.note ? `<div style="background:#fefce8;border-radius:10px;padding:10px 14px;font-size:14px;color:#92400e">💬 ${lead.note}</div>` : ''}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -3856,7 +3859,7 @@ function openLeadDetail(id) {
         <div style="flex:1;min-width:0">
           ${code}
           <div class="detail-name">'${lead.client_name||t('lead.no_name')}'${lead.promo_id ? ` <span class="li-badge-promo">${t('promo.badge')}</span>` : ''}</div>
-          <div class="detail-phone" style="margin-top:6px;margin-bottom:16px">📞 <a href="tel:${lead.client_phone}">${lead.client_phone}</a></div>
+          <div class="detail-phone" style="margin-top:6px;margin-bottom:16px">📞 <a href="tel:${lead.client_phone}">${lead.client_phone}</a> <button onclick="_saveVCard('${_escJs(lead.client_name||'')}','${_escJs(lead.client_phone||'')}')" title="Сохранить контакт" style="background:none;border:none;color:inherit;font-size:14px;cursor:pointer;padding:0;line-height:1;vertical-align:middle">💾</button></div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px">
           ${!isAgentRole && !isConverted && (lead.assigned_to == null ? Number(lead.created_by) === Number(myId) : isMine) ? `<button onclick="openLeadEdit(${id})" style="background:none;border:1px solid var(--sep);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;color:var(--text2)">✏️</button>` : ''}
@@ -8578,7 +8581,10 @@ document.addEventListener('click', e => {
         <div>
           <div id="soLblClient" style="font-size:11px;color:#888;margin-bottom:2px">Клиент</div>
           <div id="so_client" style="font-weight:600;font-size:14px;color:#1a1a1a"></div>
-          <a id="so_phone" href="#" style="font-size:13px;font-weight:600;color:#163E3B;text-decoration:none"></a>
+          <span style="display:inline-flex;align-items:center;gap:6px">
+            <a id="so_phone" href="#" style="font-size:13px;font-weight:600;color:#163E3B;text-decoration:none"></a>
+            <button onclick="_saveContactFromOrder()" title="Сохранить контакт" style="background:none;border:none;color:#163E3B;font-size:14px;cursor:pointer;padding:0;line-height:1">💾</button>
+          </span>
           <div style="margin-top:6px">
             <button onclick="soNewOrderForClient()" id="so_new_order_btn" style="display:none;padding:4px 10px;background:#e8f4ff;border:1.5px solid #007aff;color:#007aff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer"><span id="soNewOrderBtnLbl">➕ Новый заказ</span></button>
           </div>
@@ -11562,6 +11568,25 @@ function openPostponeModal() {
   document.body.appendChild(div);
 }
 function _escJs(s) { return String(s).replace(/'/g, "\\'"); }
+function _saveVCard(name, phone) {
+  if (!phone) return;
+  const safeName = (name || phone).trim();
+  const vcard = 'BEGIN:VCARD\r\nVERSION:3.0\r\nN:;' + safeName + ';;;\r\nFN:' + safeName + '\r\nTEL;TYPE=CELL:' + phone + '\r\nEND:VCARD\r\n';
+  const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (safeName.replace(/[^\p{L}\p{N} _-]/gu, '').trim() || 'contact') + '.vcf';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function _saveContactFromOrder() {
+  const o = _sOrderCache; if (!o || !o.client_phone) return;
+  const name = [o.client_first_name, o.client_last_name].filter(Boolean).join(' ');
+  _saveVCard(name, o.client_phone);
+}
 function _postponeSetPreset(text, btn) {
   document.getElementById('postpone_reason').value = text;
   document.querySelectorAll('#postpone_presets .fchip').forEach(b => b.classList.remove('active'));
