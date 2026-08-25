@@ -9190,6 +9190,7 @@ async function staffOpenOrder(orderId) {
     fetch(`${API_BASE}/admin/orders/${orderId}`, { headers:{Authorization:`Bearer ${_staffToken()}`} }).then(r=>r.json()).catch(()=>null),
     fetch(`${API_BASE}/admin/orders/${orderId}/items`, { headers:{Authorization:`Bearer ${_staffToken()}`} }).then(r=>r.json()).catch(()=>({items:[]})),
     _loadWashers(),
+    _loadStaffPrices(),
   ]);
   if (!od || !od.ok) return;
   const o = od.order;
@@ -9530,6 +9531,7 @@ async function washerOpenOrder(orderId) {
   const [od, oi] = await Promise.all([
     fetch(`${API_BASE}/admin/orders/${orderId}`, { headers:{Authorization:`Bearer ${_staffToken()}`} }).then(r=>r.json()).catch(()=>null),
     fetch(`${API_BASE}/admin/orders/${orderId}/items`, { headers:{Authorization:`Bearer ${_staffToken()}`} }).then(r=>r.json()).catch(()=>({items:[]})),
+    _loadStaffPrices(),
   ]);
   if (!od || !od.ok) return;
   const o = od.order;
