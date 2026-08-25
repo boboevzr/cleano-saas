@@ -10675,6 +10675,13 @@ function _doOpenMap(type) {
   closeMapChoice();
 }
 
+// Статусы заказа, в которых обычный сотрудник (не admin) больше не может
+// редактировать позиции — общий источник правды для staffRenderItems() (что
+// показать — ✏️ или 👁) и staffOpenMeasure() (что реально разрешить внутри
+// модалки замера), иначе они расходятся: список правильно скрывает ✏️, а
+// модалка замера всё равно даёт редактировать/удалять фото через 👁.
+const _NONADMIN_ITEM_EDIT_LOCKED_STATUSES = new Set(['packing','ready','delivery','delivered','cancelled']);
+
 function staffRenderItems(items, containerEl) {
   const el = containerEl || document.getElementById('so_items');
   const isWasherContainer = !!containerEl; // washer passes explicit container
@@ -10703,7 +10710,7 @@ function staffRenderItems(items, containerEl) {
   const _isAdminItems     = currentStaff?.role === 'admin';
   const _editLockedByStatus = _isAdminItems
     ? ['delivered','cancelled'].includes(_sOrderStatus)
-    : ['packing','ready','delivery','delivered','cancelled'].includes(_sOrderStatus);
+    : _NONADMIN_ITEM_EDIT_LOCKED_STATUSES.has(_sOrderStatus);
   const canEdit           = !_editLockedByStatus && currentStaff?.can_edit_items !== false;
   const canMeasure        = !!currentStaff?.can_measure;
   const canApproveMeasure = !!currentStaff?.can_approve_measure;
@@ -10749,7 +10756,10 @@ function staffRenderItems(items, containerEl) {
       : parseFloat(it.total_sum || 0);
   });
   const _svcBreakdownHtml = Object.values(_svcGroups).map(g => {
-    const label = g.unitKey === 'pcs' ? `${g.count} ${t('unit.pcs')}` : `${g.sqm.toFixed(2)} ${t('unit.m2')}`;
+    // Для штучных услуг поле sqm хранит фактическое количество (шт), а не g.count
+    // (число позиций-строк) — иначе при нескольких позициях одной услуги сводка
+    // показывала бы число позиций вместо суммарного количества штук.
+    const label = g.unitKey === 'pcs' ? `${Math.round(g.sqm)} ${t('unit.pcs')}` : `${g.sqm.toFixed(2)} ${t('unit.m2')}`;
     return `<div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;padding:2px 0">
       <span>${_esc(g.label)}</span><span>${label}</span>
     </div>`;
@@ -12189,7 +12199,7 @@ async function staffOpenMeasure(itemId) {
   }
   const isAdminMeasure     = currentStaff?.role === 'admin';
   const _adminCanEdit      = isAdminMeasure && !['delivered','cancelled'].includes(_sOrderStatus);
-  const _overrideMeasure   = !isAdminMeasure && !!currentStaff?.can_override_measure && !['delivered','cancelled'].includes(_sOrderStatus);
+  const _overrideMeasure   = !isAdminMeasure && !!currentStaff?.can_override_measure && !_NONADMIN_ITEM_EDIT_LOCKED_STATUSES.has(_sOrderStatus);
   const _canEnterMeasure   = canMeasure && item.washer_login === myLogin;
   _smCanEdit     = _adminCanEdit || _overrideMeasure || (_canEnterMeasure && _sOrderStatus === 'washing' && (ms === 'pending' || ms === 'rejected'));
   _smIsAdminEdit = _adminCanEdit || _overrideMeasure;
