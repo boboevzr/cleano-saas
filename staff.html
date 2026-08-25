@@ -364,7 +364,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 /* ── СТРАНИЦА: ЛИДЫ / ЗАЯВКИ ── */
 .page-header{
   display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:14px;
+  margin-bottom:14px;flex-wrap:wrap;row-gap:8px;
 }
 .search-bar{
   background:var(--card);border-radius:var(--radius-sm);
@@ -3149,7 +3149,7 @@ function pageLeads() {
     ` : `
     <div class="page-header">
       <div class="section-title" style="margin-bottom:0">${t('leads.title')}</div>
-      <div style="display:flex;gap:6px;align-items:center">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
         <button id="lfTogBtn" onclick="_toggleLeadsFilters()" style="background:${(_leadsFiltersOpen||(leadsOwnerFilter!=='all'||leadsSourceFilter!=='all'||leadsDateFilter!=='all'))?'var(--accent)':'none'};color:${(_leadsFiltersOpen||(leadsOwnerFilter!=='all'||leadsSourceFilter!=='all'||leadsDateFilter!=='all'))?'#fff':'var(--text2)'};border:1.5px solid ${(_leadsFiltersOpen||(leadsOwnerFilter!=='all'||leadsSourceFilter!=='all'||leadsDateFilter!=='all'))?'var(--accent)':'var(--sep)'};border-radius:10px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer">${t('leads.filters')}</button>
         <button onclick="_resetLeadsFilters()" style="background:none;border:1.5px solid var(--sep);border-radius:10px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer" title="${t('leads.reset')}">${t('leads.reset')}</button>
         <button id="leadsSelectBtn" onclick="toggleLeadsSelectMode()" style="background:none;border:1.5px solid var(--sep);border-radius:10px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer">${t('leads.select')}</button>
@@ -6053,7 +6053,7 @@ function pageOrders() {
   return `
     <div class="page-header">
       <div class="section-title" style="margin-bottom:0">${t('ord.title')}</div>
-      <div style="display:flex;align-items:center;gap:6px">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
         ${!_isWasherPage ? `<button id="ofTogBtn" onclick="_toggleOrdersFilters()" style="background:${(_ordersFiltersOpen||(ordersOwnerFilter!=='all'||ordersDateFilter!=='all'||!!ordersStaffFilter))?'var(--accent)':'none'};color:${(_ordersFiltersOpen||(ordersOwnerFilter!=='all'||ordersDateFilter!=='all'||!!ordersStaffFilter))?'#fff':'var(--text2)'};border:1.5px solid ${(_ordersFiltersOpen||(ordersOwnerFilter!=='all'||ordersDateFilter!=='all'||!!ordersStaffFilter))?'var(--accent)':'var(--sep)'};border-radius:10px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer">${t('ord.filters')}</button>` : ''}
         ${hasPermission('orders') && !_isWasherPage ? `
           <span id="bulkOrdersCount" style="display:none;font-size:13px;font-weight:600;color:#374151"></span>
