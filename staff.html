@@ -8583,11 +8583,9 @@ document.addEventListener('click', e => {
         <div>
           <div id="soLblClient" style="font-size:11px;color:#888;margin-bottom:2px">Клиент</div>
           <div id="so_client" style="font-weight:600;font-size:14px;color:#1a1a1a"></div>
-          <span style="display:inline-flex;align-items:center;gap:6px">
-            <a id="so_phone" href="#" style="font-size:13px;font-weight:600;color:#163E3B;text-decoration:none"></a>
-            <button onclick="_saveContactFromOrder()" title="Сохранить контакт" style="background:none;border:none;color:#163E3B;font-size:14px;cursor:pointer;padding:0;line-height:1">💾</button>
-          </span>
-          <div style="margin-top:6px">
+          <a id="so_phone" href="#" style="font-size:13px;font-weight:600;color:#163E3B;text-decoration:none"></a>
+          <div style="margin-top:6px;display:flex;align-items:center;gap:6px">
+            <button onclick="_saveContactFromOrder()" title="Сохранить контакт" style="flex-shrink:0;background:none;border:none;color:#163E3B;font-size:14px;cursor:pointer;padding:0;line-height:1">💾</button>
             <button onclick="soNewOrderForClient()" id="so_new_order_btn" style="display:none;padding:4px 10px;background:#e8f4ff;border:1.5px solid #007aff;color:#007aff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer"><span id="soNewOrderBtnLbl">➕ Новый заказ</span></button>
           </div>
         </div>
@@ -8617,6 +8615,15 @@ document.addEventListener('click', e => {
         <div id="so_note_row" style="grid-column:1/-1;display:none;margin-top:6px">
           <div style="font-size:11px;color:#888;margin-bottom:2px">💬 Примечание</div>
           <div id="so_note_text" style="font-size:13px;color:#555;white-space:pre-wrap"></div>
+        </div>
+        <div id="so_price_summary_row" style="grid-column:1/-1;display:none;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0">
+          <div id="so_svc_breakdown" style="margin-bottom:6px"></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280;padding:2px 0">
+            <span>Цена по факту</span><span id="so_price_raw">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:#1a1a1a;padding:4px 0 0">
+            <span>Цена к оплате</span><span id="so_price_final">—</span>
+          </div>
         </div>
       </div>
       <!-- Workflow кнопки -->
@@ -9210,7 +9217,7 @@ async function staffOpenOrder(orderId) {
   document.getElementById('so_status').innerHTML   =
     `<span style="background:#e8f1ff;color:#007aff;border-radius:8px;padding:2px 10px;font-size:12px;font-weight:600">${statusLabel(o.status)}</span>${_pickupBadge}${_deliveryBadge}${_promoBadge}${_postponeBadge}`;
   document.getElementById('so_client').textContent = [o.client_first_name,o.client_last_name].filter(Boolean).join(' ') || '—';
-  document.getElementById('so_phone').textContent  = o.client_phone || '';
+  document.getElementById('so_phone').textContent  = _fmtUzPhone(o.client_phone);
   document.getElementById('so_phone').href         = `tel:${o.client_phone}`;
   const _newOrdBtn = document.getElementById('so_new_order_btn');
   if (_newOrdBtn) _newOrdBtn.style.display = hasPermission('orders') ? '' : 'none';
@@ -10680,7 +10687,12 @@ function staffRenderItems(items, containerEl) {
   }
   if (!items.length) {
     el.innerHTML = `<div style="text-align:center;color:#aaa;padding:20px;font-size:14px">${t('items.empty')}</div>`;
-    if (!isWasherContainer) { _sItemsTotal = 0; sUpdatePaymentDisplay(); }
+    if (!isWasherContainer) {
+      _sItemsTotal = 0;
+      sUpdatePaymentDisplay();
+      const _psRow = document.getElementById('so_price_summary_row');
+      if (_psRow) _psRow.style.display = 'none';
+    }
     return;
   }
   const myLogin           = currentStaff?.login || '';
@@ -10753,6 +10765,11 @@ function staffRenderItems(items, containerEl) {
     total += (groupMin && qty < groupMin && catalogInfo?.price) ? groupMin * catalogInfo.price : g.clampedTotal;
   });
   items.forEach(it => { if (!it.service) total += parseFloat(it.total_sum || 0); }); // позиции без услуги — вне групп
+
+  // Сырая сумма (без учёта мин. по позиции/заказу) — для показа "Цена по факту" на вкладке Инфо.
+  let rawTotal = 0;
+  Object.values(_svcGroups).forEach(g => { rawTotal += g.rawTotal; });
+  items.forEach(it => { if (!it.service) rawTotal += parseFloat(it.total_sum || 0); });
 
   el.innerHTML = items.map((it,i) => {
     // Позиционный минимум (мин. по позиции) — только для отображения СВОЕЙ строки.
@@ -10900,6 +10917,17 @@ function staffRenderItems(items, containerEl) {
   _sItemsTotal = total;
   if (!isWasherContainer) {
     sUpdatePaymentDisplay();
+    const _psRow = document.getElementById('so_price_summary_row');
+    if (_psRow) {
+      if (total > 0) {
+        _psRow.style.display = '';
+        document.getElementById('so_svc_breakdown').innerHTML = _svcBreakdownHtml;
+        document.getElementById('so_price_raw').textContent   = Number(rawTotal).toLocaleString('ru') + ' ' + t('unit.sum');
+        document.getElementById('so_price_final').textContent = Number(total).toLocaleString('ru') + ' ' + t('unit.sum');
+      } else {
+        _psRow.style.display = 'none';
+      }
+    }
   }
 }
 
@@ -11572,6 +11600,11 @@ function openPostponeModal() {
   document.body.appendChild(div);
 }
 function _escJs(s) { return String(s).replace(/'/g, "\\'"); }
+function _fmtUzPhone(phone) {
+  const d = String(phone || '').replace(/\D/g, '');
+  if (d.length !== 12 || !d.startsWith('998')) return phone || '';
+  return `+${d.slice(0,3)} ${d.slice(3,5)} ${d.slice(5,8)}-${d.slice(8,10)}-${d.slice(10,12)}`;
+}
 function _saveVCard(name, phone) {
   if (!phone) return;
   const clean = s => String(s || '').replace(/[\r\n]+/g, ' ').replace(/\\/g, '\\\\').replace(/[;,]/g, '\\$&').trim();
