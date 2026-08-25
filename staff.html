@@ -3123,6 +3123,16 @@ let _selectedLeads    = new Set();
 let _ordersSelectMode = false;
 let _selectedOrders   = new Set();
 
+function _syncClearBtn(inputId, btnId) {
+  const inp = document.getElementById(inputId), btn = document.getElementById(btnId);
+  if (btn) btn.style.display = (inp && inp.value) ? '' : 'none';
+}
+function _clearSearchField(inputId, btnId) {
+  const inp = document.getElementById(inputId);
+  if (inp) { inp.value = ''; inp.focus(); }
+  _syncClearBtn(inputId, btnId);
+}
+
 function pageLeads() {
   const isAgent = currentStaff?.role === 'agent';
   const statuses = ['all','new','callback','converted','lost'];
@@ -3162,7 +3172,8 @@ function pageLeads() {
     `}
     <div class="search-bar">
       <span style="color:var(--text2)">🔍</span>
-      <input id="leadsSearch" placeholder="${t('leads.search_ph')}" oninput="_saveLeadsFilters();renderLeads()">
+      <input id="leadsSearch" inputmode="search" placeholder="${t('leads.search_ph')}" oninput="_saveLeadsFilters();renderLeads();_syncClearBtn('leadsSearch','leadsSearchClear')">
+      <button id="leadsSearchClear" onclick="_clearSearchField('leadsSearch','leadsSearchClear');_saveLeadsFilters();renderLeads()" style="display:none;background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0">✕</button>
     </div>
     <div class="filter-chips">
       ${statuses.map(s=>`<button class="fchip ${s===leadsFilter?'active':''}" id="fc_${s}" onclick="setLeadsFilter('${s}')">${leadStatusLabel(s)}</button>`).join('')}
@@ -3200,6 +3211,7 @@ async function loadLeads(silent = false) {
       leadsData = (await res.json()).leads || [];
       const _sfSearch = JSON.parse(sessionStorage.getItem('sf_leads')||'null')?.s||'';
       if (_sfSearch) { const si = document.getElementById('leadsSearch'); if (si && !si.value) si.value = _sfSearch; }
+      _syncClearBtn('leadsSearch','leadsSearchClear');
       renderLeads(); updateCallbackBadge(); _updateLeadsFilterBtn();
     }
   } catch { if (!silent && el) el.innerHTML = `<div class="empty-box">${t('leads.load_error')}</div>`; }
@@ -3272,6 +3284,7 @@ function _resetLeadsFilters() {
   document.querySelectorAll('.fchip[id^="fc_"]').forEach(b => b.classList.remove('active'));
   const fc = document.getElementById('fc_all'); if (fc) fc.classList.add('active');
   const si = document.getElementById('leadsSearch'); if (si) si.value = '';
+  _syncClearBtn('leadsSearch','leadsSearchClear');
   if (typeof _resetLeadsOwnerFilter === 'function') _resetLeadsOwnerFilter();
   setLeadsSourceFilter('all');
   _updateLeadsFilterBtn();
@@ -6063,7 +6076,8 @@ function pageOrders() {
     <div id="ordersDateFilterRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:8px;flex-wrap:nowrap"></div>`}
     <div class="search-bar">
       <span style="color:var(--text2)">🔍</span>
-      <input id="ordersSearch" placeholder="${t('ord.search_ph')}" oninput="_saveOrdersFilters();renderOrders()">
+      <input id="ordersSearch" inputmode="search" placeholder="${t('ord.search_ph')}" oninput="_saveOrdersFilters();renderOrders();_syncClearBtn('ordersSearch','ordersSearchClear')">
+      <button id="ordersSearchClear" onclick="_clearSearchField('ordersSearch','ordersSearchClear');_saveOrdersFilters();renderOrders()" style="display:none;background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0">✕</button>
     </div>
     <div class="filter-chips">
       ${statuses.map(s=>`<button class="fchip ${s===ordersFilter?'active':''}" id="ofc_${s}" onclick="setOrdersFilter('${s}')">${s==='all'?t('ord.all'):statusLabel(s)}</button>`).join('')}
@@ -6112,6 +6126,7 @@ async function loadOrders(silent = false) {
       ordersTotal = isDebt ? 0 : (data.total || 0);
       const _sfSearch = JSON.parse(sessionStorage.getItem('sf_orders')||'null')?.s||'';
       if (_sfSearch) { const si = document.getElementById('ordersSearch'); if (si && !si.value) si.value = _sfSearch; }
+      _syncClearBtn('ordersSearch','ordersSearchClear');
       renderOrders(); _updateOrdersFilterBtn();
     }
   } catch {}
@@ -6207,6 +6222,7 @@ function _resetOrdersFilters() {
   document.querySelectorAll('.fchip[id^="ofc_"]').forEach(b => b.classList.remove('active'));
   const fc = document.getElementById('ofc_new'); if (fc) fc.classList.add('active');
   const si = document.getElementById('ordersSearch'); if (si) si.value = '';
+  _syncClearBtn('ordersSearch','ordersSearchClear');
   setOrdersOwnerFilter('all');
   _updateOrdersFilterBtn();
   _saveOrdersFilters();
