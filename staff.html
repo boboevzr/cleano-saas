@@ -1447,6 +1447,8 @@ const _i18n = {
     'so.photo.before':'До','so.photo.after':'После','so.photo.damage':'Повр.','so.photo.uploading':'⏳ Загрузка…',
     'so.lbl.total':'Сумма позиций','so.lbl.net':'К оплате','so.selfpickup':'🏠 Клиент привозит','so.selfdelivery':'🏠 Клиент забирает',
     'so.lbl.discount':'Скидка','so.lbl.paid':'Оплачено','so.lbl.debt':'Долг','so.lbl.pending':'На проверке',
+    'so.lbl.price_raw':'Цена по факту','so.lbl.price_final':'Цена к оплате','so.lbl.save_contact':'📇 В контакты',
+    'so.notif_empty':'Пока нет уведомлений','so.notif_loading':'Загрузка…',
     'svc.carpet':'Чистка ковра','svc.carpet_home':'Чистка ковра на дому','svc.sofa':'Диван, кресло','svc.mattress':'Матрас, одеяло','svc.curtains':'Шторы',
     'svc.type.standard':'Стандарт','svc.type.express':'Экспресс',
     'items.empty':'Нет позиций — нажмите «+ Добавить»','items.total':'Итого:','items.enter_count':'Введите количество',
@@ -1723,6 +1725,8 @@ const _i18n = {
     'so.photo.before':'Oldin','so.photo.after':'Keyin','so.photo.damage':'Shikast.','so.photo.uploading':'⏳ Yuklanmoqda…',
     'so.lbl.total':'Pozitsiyalar summasi','so.lbl.net':`Toʻlash kerak`,'so.selfpickup':'🏠 Mijoz olib keladi','so.selfdelivery':'🏠 Mijoz olib ketadi',
     'so.lbl.discount':'Chegirma','so.lbl.paid':`Toʻlangan`,'so.lbl.debt':'Qarz','so.lbl.pending':'Tekshirilmoqda',
+    'so.lbl.price_raw':'Amaldagi narx','so.lbl.price_final':`Toʻlanadigan narx`,'so.lbl.save_contact':'📇 Kontaktga',
+    'so.notif_empty':`Hozircha bildirishnoma yoʻq`,'so.notif_loading':'Yuklanmoqda…',
     'svc.carpet':'Gilam tozalash','svc.carpet_home':'Uyda gilam tozalash','svc.sofa':'Divan, kreslo','svc.mattress':`Matras, koʻrpa`,'svc.curtains':'Pardalar',
     'svc.type.standard':'Standart','svc.type.express':'Ekspress',
     'items.empty':`Pozitsiya yoʻq — «+ Qoʻshish» tugmasini bosing`,'items.total':'Jami:','items.enter_count':'Miqdorni kiriting',
@@ -3807,7 +3811,7 @@ function openLeadCard(id) {
         <span style="font-size:22px">📞</span>
         <span style="font-size:16px;font-weight:700;color:#15803d">${lead.client_phone}</span>
       </a>
-      <button onclick="_saveContactFromLeadCard()" title="Сохранить контакт в телефон" style="flex-shrink:0;background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700;color:#15803d;cursor:pointer;white-space:nowrap">📇 Контакт</button>
+      <button onclick="_saveContactFromLeadCard()" title="Сохранить контакт в телефон" style="flex-shrink:0;background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700;color:#15803d;cursor:pointer;white-space:nowrap">${t('so.lbl.save_contact')}</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
       ${lead.note ? `<div style="background:#fefce8;border-radius:10px;padding:10px 14px;font-size:14px;color:#92400e">💬 ${lead.note}</div>` : ''}
@@ -3861,7 +3865,7 @@ function openLeadDetail(id) {
         <div style="flex:1;min-width:0">
           ${code}
           <div class="detail-name">'${lead.client_name||t('lead.no_name')}'${lead.promo_id ? ` <span class="li-badge-promo">${t('promo.badge')}</span>` : ''}</div>
-          <div class="detail-phone" style="margin-top:6px;margin-bottom:16px">📞 <a href="tel:${lead.client_phone}">${lead.client_phone}</a> <button onclick="_saveContactFromLead()" title="Сохранить контакт в телефон" style="background:none;border:1px solid var(--sep);border-radius:6px;padding:2px 8px;color:inherit;font-size:12px;font-weight:600;cursor:pointer;vertical-align:middle">📇 В контакты</button></div>
+          <div class="detail-phone" style="margin-top:6px;margin-bottom:16px">📞 <a href="tel:${lead.client_phone}">${lead.client_phone}</a> <button onclick="_saveContactFromLead()" title="Сохранить контакт в телефон" style="background:none;border:1px solid var(--sep);border-radius:6px;padding:2px 8px;color:inherit;font-size:12px;font-weight:600;cursor:pointer;vertical-align:middle">${t('so.lbl.save_contact')}</button></div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px">
           ${!isAgentRole && !isConverted && (lead.assigned_to == null ? Number(lead.created_by) === Number(myId) : isMine) ? `<button onclick="openLeadEdit(${id})" style="background:none;border:1px solid var(--sep);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;color:var(--text2)">✏️</button>` : ''}
@@ -5772,6 +5776,9 @@ function _applyOrderCardI18n() {
   _s('soLblCreated',        t('so.lbl.created'));
   _s('soLblDeadline',       t('so.lbl.deadline'));
   _s('soLblAddress',        t('so.lbl.address'));
+  _s('soSaveContactBtnLbl', t('so.lbl.save_contact'));
+  _s('soLblPriceRaw',       t('so.lbl.price_raw'));
+  _s('soLblPriceFinal',     t('so.lbl.price_final'));
   _s('soLocationLinkLbl',   t('so.open_geo'));
   _s('soHistoryTitle',      t('so.history'));
   _s('soBulkLbl',           t('so.bulk.label'));
@@ -8585,7 +8592,7 @@ document.addEventListener('click', e => {
           <div id="so_client" style="font-weight:600;font-size:14px;color:#1a1a1a"></div>
           <a id="so_phone" href="#" style="font-size:13px;font-weight:600;color:#163E3B;text-decoration:none"></a>
           <div style="margin-top:6px;display:flex;align-items:center;gap:6px">
-            <button onclick="_saveContactFromOrder()" title="Сохранить контакт в телефон" style="flex-shrink:0;padding:4px 10px;background:#f3f4f6;border:1.5px solid #d1d5db;color:#374151;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">📇 В контакты</button>
+            <button onclick="_saveContactFromOrder()" title="Сохранить контакт в телефон" style="flex-shrink:0;padding:4px 10px;background:#f3f4f6;border:1.5px solid #d1d5db;color:#374151;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap"><span id="soSaveContactBtnLbl">📇 В контакты</span></button>
             <button onclick="soNewOrderForClient()" id="so_new_order_btn" style="display:none;padding:4px 10px;background:#e8f4ff;border:1.5px solid #007aff;color:#007aff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer"><span id="soNewOrderBtnLbl">➕ Новый заказ</span></button>
           </div>
         </div>
@@ -8619,10 +8626,10 @@ document.addEventListener('click', e => {
         <div id="so_price_summary_row" style="grid-column:1/-1;display:none;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0">
           <div id="so_svc_breakdown" style="margin-bottom:6px"></div>
           <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280;padding:2px 0">
-            <span>Цена по факту</span><span id="so_price_raw">—</span>
+            <span id="soLblPriceRaw">Цена по факту</span><span id="so_price_raw">—</span>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:#1a1a1a;padding:4px 0 0">
-            <span>Цена к оплате</span><span id="so_price_final">—</span>
+            <span id="soLblPriceFinal">Цена к оплате</span><span id="so_price_final">—</span>
           </div>
         </div>
       </div>
@@ -9082,9 +9089,9 @@ const _NOTIF_ACTIONS = ['sms_sent', 'sms_failed', 'tg_sent'];
 async function _sRenderNotifications() {
   const el = document.getElementById('so_notif_list');
   if (!el) return;
-  el.innerHTML = '<div style="color:#aaa">Загрузка…</div>';
+  el.innerHTML = `<div style="color:#aaa">${t('so.notif_loading')}</div>`;
   const acts = (await _sFetchActivity()).filter(a => _NOTIF_ACTIONS.includes(a.action));
-  if (!acts.length) { el.innerHTML = '<div style="color:#aaa">Пока нет уведомлений</div>'; return; }
+  if (!acts.length) { el.innerHTML = `<div style="color:#aaa">${t('so.notif_empty')}</div>`; return; }
   el.innerHTML = acts.map(a => {
     const dt = (_parseUTC(a.created_at)||new Date()).toLocaleString('ru',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:_TZ});
     const icon = a.action === 'tg_sent' ? '🔔' : (a.action === 'sms_failed' ? '❌' : '📲');
