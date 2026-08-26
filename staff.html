@@ -271,8 +271,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
   #ordersList .list-card{display:flex;flex-direction:column;gap:0;background:none;box-shadow:none;border-radius:0;overflow:visible}
   #ordersList .list-card .list-item{border-bottom:none;border:1.5px solid var(--sep);border-radius:14px;background:var(--card)}
   #ordersList .list-card .list-item:last-child{border-bottom:none}
-  /* Фильтры — полный wrap на десктопе */
-  .filter-chips{flex-wrap:wrap;overflow-x:visible;padding-bottom:0}
   /* Свёрнутый sidebar */
   .desk-sidebar.nav-collapsed{width:58px}
   .desk-sidebar.nav-collapsed .desk-logo-mark{display:none}
@@ -390,6 +388,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 @media(max-width:540px){
   .filter-chips{display:grid;grid-template-columns:repeat(3,1fr);overflow-x:visible;gap:4px;padding-bottom:0}
   .fchip{padding:8px 4px;font-size:11px;text-align:center;border-radius:14px;white-space:normal;line-height:1.2}
+}
+/* Десктоп: чипы переносятся на новую строку вместо горизонтальной прокрутки
+   со скрытым скроллбаром — иначе при увеличении масштаба браузера строка не
+   вмещалась и лишние чипы уходили за край экрана незаметно для пользователя.
+   Правило объявлено ПОСЛЕ базового .filter-chips (та же специфичность —
+   иначе более раннее в тексте правило внутри @media проигрывает более
+   позднему безусловному при равной специфичности). */
+@media (min-width: 900px) {
+  .filter-chips{flex-wrap:wrap;overflow-x:visible;padding-bottom:0}
 }
 
 .fab{
