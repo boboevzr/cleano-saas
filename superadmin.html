@@ -1774,7 +1774,20 @@ async function api(path, method = 'GET', body = null) {
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(API + path, opts);
   const d = await r.json();
-  if (!r.ok) throw new Error(d.detail || 'Ошибка ' + r.status);
+  if (!r.ok) {
+    // Токен истёк/невалиден (кроме самого /saas/auth — там 401 = неверный пароль,
+    // не истёкшая сессия) — сбрасываем и возвращаем на экран логина вместо того,
+    // чтобы оставлять "залогиненный" экран с ошибкой вместо данных.
+    if (r.status === 401 && path !== '/saas/auth') {
+      localStorage.removeItem(LS_KEY);
+      _token = '';
+      document.getElementById('mainScreen').classList.remove('visible');
+      document.getElementById('loginScreen').style.display = '';
+      const err = document.getElementById('loginErr');
+      if (err) err.textContent = 'Сессия истекла — войдите заново';
+    }
+    throw new Error(d.detail || 'Ошибка ' + r.status);
+  }
   return d;
 }
 
