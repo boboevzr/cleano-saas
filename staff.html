@@ -12541,10 +12541,26 @@ async function smSubmitAndApprove() {
 }
 
 async function smApprove() {
+  const _body = { action: 'approve' };
+  // Если поля были редактируемые (_smCanEdit) — проверяющий мог поправить
+  // размеры/количество прямо перед утверждением, отправляем актуальные
+  // значения из полей, а не просто утверждаем как есть.
+  if (_smCanEdit) {
+    if (_smIsPcs) {
+      const qty = parseFloat(document.getElementById('sm_actual_qty')?.value) || 0;
+      if (!qty) { showToast('Введите количество', 'error'); return; }
+      _body.quantity = qty;
+    } else {
+      const w = parseFloat(document.getElementById('sm_actual_w')?.value) || 0;
+      const l = parseFloat(document.getElementById('sm_actual_l')?.value) || 0;
+      if (!w || !l) { showToast('Введите ширину и длину', 'error'); return; }
+      _body.actual_width_cm = w; _body.actual_length_cm = l;
+    }
+  }
   const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items/${_measureItemId}/measure`, {
     method: 'PATCH',
     headers: { 'Content-Type':'application/json', Authorization:`Bearer ${_staffToken()}` },
-    body: JSON.stringify({ action:'approve' }),
+    body: JSON.stringify(_body),
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); showToast(e.detail||'Ошибка', 'error'); return; }
   const d = await res.json();
