@@ -5989,8 +5989,22 @@
 
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2);margin:14px 0 8px" data-i18n="bf.section.phones">📞 Телефоны</div>
     <div class="form-grid">
-      <div class="form-group"><label class="form-label" data-i18n="cs.branches.phone1">Номер 1</label><input class="form-input" id="bf_phone1" placeholder="+998 88 000-00-00" inputmode="tel"></div>
-      <div class="form-group"><label class="form-label" data-i18n="cs.branches.phone2">Номер 2</label><input class="form-input" id="bf_phone2" placeholder="+998 ..."></div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="cs.branches.phone1">Номер 1</label>
+        <input class="form-input" id="bf_phone1" placeholder="+998 88 000-00-00" inputmode="tel">
+        <div style="display:flex;gap:14px;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);cursor:pointer"><input type="checkbox" id="bf_phone1_site" checked> <span data-i18n="bf.phone.site">🌐 Сайт</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);cursor:pointer"><input type="checkbox" id="bf_phone1_bot" checked> <span data-i18n="bf.phone.bot">🤖 Бот</span></label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="cs.branches.phone2">Номер 2</label>
+        <input class="form-input" id="bf_phone2" placeholder="+998 ...">
+        <div style="display:flex;gap:14px;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);cursor:pointer"><input type="checkbox" id="bf_phone2_site" checked> <span data-i18n="bf.phone.site">🌐 Сайт</span></label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);cursor:pointer"><input type="checkbox" id="bf_phone2_bot" checked> <span data-i18n="bf.phone.bot">🤖 Бот</span></label>
+        </div>
+      </div>
     </div>
 
 
@@ -6506,6 +6520,7 @@ const _adminI18n = {
     'bf.section.main':'Основное','bf.name.ru':'Название (RU) *','bf.name.uz':'Название (UZ)',
     'bf.slug':'Slug * (латиница, уникальный)','bf.city.center':'Центр города / района',
     'bf.map':'📍 Карта','bf.section.phones':'📞 Телефоны',
+    'bf.phone.site':'🌐 Сайт','bf.phone.bot':'🤖 Бот',
     'bf.tg.hint':'ℹ️ Добавьте бота в группу/канал как участника, введите ID и нажмите 🔍 для проверки.',
     'bf.map.title':'Выбрать на карте','bf.map.hint':'Нажмите на карту чтобы поставить метку',
     'bf.map.done':'✅ Готово',
@@ -7255,6 +7270,7 @@ const _adminI18n = {
     'bf.section.main':'Asosiy','bf.name.ru':'Nomi (RU) *','bf.name.uz':'Nomi (UZ)',
     'bf.slug':"Slug * (lotin harflarida, noyob)",'bf.city.center':'Shahar/tuman markazi',
     'bf.map':'📍 Xarita','bf.section.phones':'📞 Telefonlar',
+    'bf.phone.site':'🌐 Sayt','bf.phone.bot':'🤖 Bot',
     'bf.tg.hint':"ℹ️ Botni guruh/kanalga a'zo sifatida qo'shing, ID ni kiriting va tekshirish uchun 🔍 tugmasini bosing.",
     'bf.map.title':'Xaritadan tanlang','bf.map.hint':"Belgi qo'yish uchun xaritaga bosing",
     'bf.map.done':'✅ Tayyor',
@@ -8577,6 +8593,7 @@ function _bfOpenForm(mode, b) {
   document.getElementById('bfSlugRow').style.display = mode === 'add' ? '' : 'none';
   document.getElementById('bfSaveBtn').textContent = mode === 'add' ? _t('cs.branches.modal.create') : _t('btn.save');
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+  const setChk = (id, v) => { const el = document.getElementById(id); if (el) el.checked = v; };
   ['tgn_leads_bf','tgn_orders_bf','tgn_delivery_bf','tgn_dchannel_bf'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.textContent = ''; el.className = 'tg-chat-name'; }
@@ -8587,16 +8604,23 @@ function _bfOpenForm(mode, b) {
      'bf_tg_leads_group_id','bf_tg_orders_channel_id',
      'bf_tg_delivery_channel_id',
     ].forEach(id => set(id, ''));
+    ['bf_phone1_site','bf_phone1_bot','bf_phone2_site','bf_phone2_bot'].forEach(id => setChk(id, true));
   } else {
     const phones = _brPhones(b.phones);
-    const ph1 = phones[0] ? (typeof phones[0]==='object' ? phones[0].n : phones[0]) : '';
-    const ph2 = phones[1] ? (typeof phones[1]==='object' ? phones[1].n : phones[1]) : '';
+    // Старые записи телефона были просто строкой (без {n,receipt,site}) — оборачиваем,
+    // чтобы .site/.bot ниже безопасно читались как undefined (=> дефолт "показывать").
+    const p1 = phones[0] ? (typeof phones[0]==='object' ? phones[0] : { n: phones[0] }) : {};
+    const p2 = phones[1] ? (typeof phones[1]==='object' ? phones[1] : { n: phones[1] }) : {};
     set('bf_name_ru', b.name_ru);
     set('bf_name_uz', b.name_uz);
     set('bf_city_coords', (b.lat && b.lon) ? `${b.lat}, ${b.lon}` : '');
     set('bf_workshop_coords', (b.workshop_lat && b.workshop_lon) ? `${b.workshop_lat}, ${b.workshop_lon}` : '');
-    set('bf_phone1', ph1);
-    set('bf_phone2', ph2);
+    set('bf_phone1', p1.n || '');
+    set('bf_phone2', p2.n || '');
+    setChk('bf_phone1_site', p1.site !== false);
+    setChk('bf_phone1_bot',  p1.bot  !== false);
+    setChk('bf_phone2_site', p2.site !== false);
+    setChk('bf_phone2_bot',  p2.bot  !== false);
     set('bf_tg_leads_group_id', b.tg_leads_group_id);
     set('bf_tg_orders_channel_id', b.tg_orders_channel_id);
     set('bf_tg_delivery_channel_id', b.tg_delivery_channel_id);
@@ -8616,10 +8640,11 @@ async function saveBranchForm() {
   if (_bfMode === 'add' && !g('bf_slug')) { showToast('Заполните slug', 'error'); return; }
   const [lat, lon] = _nbParseCoords(g('bf_city_coords'));
   const [workshop_lat, workshop_lon] = _nbParseCoords(g('bf_workshop_coords'));
+  const gc = id => document.getElementById(id)?.checked !== false;
   const ph1 = g('bf_phone1'), ph2 = g('bf_phone2');
   const phones = [];
-  if (ph1) phones.push({ n: ph1, receipt: true, site: true });
-  if (ph2) phones.push({ n: ph2, receipt: false, site: true });
+  if (ph1) phones.push({ n: ph1, receipt: true,  site: gc('bf_phone1_site'), bot: gc('bf_phone1_bot') });
+  if (ph2) phones.push({ n: ph2, receipt: false, site: gc('bf_phone2_site'), bot: gc('bf_phone2_bot') });
   const intOrNull = v => v ? (parseInt(v) || null) : null;
   const body = {
     name_ru, name_uz: g('bf_name_uz'),
