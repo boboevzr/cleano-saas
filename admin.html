@@ -9961,21 +9961,29 @@ window.addEventListener('DOMContentLoaded', () => {
   // в этом браузере (иначе, если тут раньше логинились в другую компанию, adminToken
   // ниже молча откроет СТАРУЮ компанию вместо той, что указана в ссылке).
   const qsSlug = new URLSearchParams(location.search).get('company_slug');
+  const qsFresh = new URLSearchParams(location.search).get('fresh') === '1';
+  // ?fresh=1 — ссылка "Войти" с cleano.uz или из бота @cleanouz_bot: неизвестно, чья это
+  // компания и авторизован ли вообще посетитель, поэтому сбрасываем ВСЮ кэшированную
+  // сессию, включая сам adminToken (не только slug/name) — иначе валидный токен, уже
+  // сохранённый в этом браузере от ЛЮБОЙ ранее открытой компании, продолжал бы молча
+  // авторизовывать ниже (раньше проверка adminToken шла ПЕРЕД этим блоком, из-за чего
+  // fresh=1 никогда не срабатывал, если в браузере уже был кэширован хоть какой-то токен).
+  // history.replaceState — ПОСЛЕДНИМ шагом, после того как qsSlug/qsFresh уже прочитаны
+  // из location.search, иначе следующая строка получила бы пустую query-строку.
+  if (qsFresh) {
+    adminToken = null;
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem('admin_company_slug');
+    localStorage.removeItem('admin_company_name');
+  }
   if (qsSlug && qsSlug !== localStorage.getItem('admin_company_slug')) {
     adminToken = null;
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem('admin_company_slug');
     localStorage.removeItem('admin_company_name');
   }
+  if (qsFresh) history.replaceState({}, '', location.pathname);
   if (adminToken) { showAdmin(); return; }
-  // ?fresh=1 — ссылка "Войти" с cleano.uz: неизвестно, чья это компания и авторизован ли
-  // вообще посетитель, поэтому сбрасываем ранее кэшированный slug и всегда показываем
-  // экран ввода slug, а не логин/пароль от компании, которая была открыта тут раньше.
-  if (new URLSearchParams(location.search).get('fresh') === '1') {
-    localStorage.removeItem('admin_company_slug');
-    localStorage.removeItem('admin_company_name');
-    history.replaceState({}, '', location.pathname);
-  }
   if (qsSlug && !localStorage.getItem('admin_company_slug')) {
     fetch(`${API_BASE}/company/resolve?slug=${encodeURIComponent(qsSlug)}`)
       .then(res => res.json().then(data => ({ ok: res.ok, data })))
