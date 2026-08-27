@@ -1195,7 +1195,7 @@
         <div class="field"><label>ИНН / ПИНФЛ</label><input id="ec_inn" placeholder="123456789"></div>
         <div class="field" style="grid-column:1/-1"><label>Адрес</label><input id="ec_address" placeholder="г. Навои, ул. Мустакиллик, 1"></div>
         <div class="field"><label>Ответственное лицо</label><input id="ec_contact_name" placeholder="Иванов Иван"></div>
-        <div class="field"><label>Телефон (ответств. лицо)</label><input id="ec_contact_phone" placeholder="+998 90 000-00-00"></div>
+        <div class="field"><label>Телефон (ответств. лицо)</label><input id="ec_contact_phone" placeholder="+998 90 000-00-00"><div class="modal-err" id="ecPhoneErr" style="min-height:0;margin-top:4px"></div></div>
         <div class="field" style="grid-column:1/-1"><label>Email</label><input id="ec_contact_email" placeholder="info@company.uz" autocomplete="off"></div>
         <div class="field"><label>Короткий номер</label><input id="ec_contact_short" placeholder="1221"></div>
         <div class="field"><label>Основной номер</label><input id="ec_contact_main" placeholder="+998 XX XXX-XX-XX"></div>
@@ -2558,8 +2558,20 @@ async function saveEditCompany() {
     tg_admin_id:      parseInt(document.getElementById('ec_tg_admin_id').value) || null,
   };
   document.getElementById('ecErr').textContent = '';
+  document.getElementById('ecPhoneErr').textContent = '';
   try {
     await api(`/saas/companies/${_currentCompanyId}`, 'PUT', body);
+  } catch(e) {
+    // Конфликт телефона показываем прямо под полем, а не в общей ошибке формы
+    // внизу — иначе на длинной форме легко не заметить, почему сохранение не прошло.
+    if (/телефон/i.test(e.message)) {
+      document.getElementById('ecPhoneErr').textContent = e.message;
+    } else {
+      document.getElementById('ecErr').textContent = e.message;
+    }
+    return;
+  }
+  try {
     await api(`/saas/companies/${_currentCompanyId}/config`, 'PUT', {
       contact_short: document.getElementById('ec_contact_short').value.trim(),
       contact_main:  document.getElementById('ec_contact_main').value.trim(),
