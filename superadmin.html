@@ -393,6 +393,22 @@
           <div id="gs_cleano_bot_webhook_status" style="font-size:12px;margin-top:8px"></div>
         </div>
 
+        <div class="card" style="max-width:720px;margin-top:16px">
+          <div class="card-title-row">
+            <div class="card-title">👥 Клиенты бота Cleano</div>
+            <button class="btn btn-ghost btn-sm" onclick="loadCleanoBotClients()" title="Обновить">🔄</button>
+          </div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Кто подтверждал номер телефона через @cleanouz_bot. "Компания" — если этот Telegram уже привязан к зарегистрированной компании.</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Телефон</th><th>Способ</th><th>Telegram ID</th><th>Подтверждён</th><th>Компания</th></tr>
+              </thead>
+              <tbody id="cleanoBotClientsBody"><tr><td colspan="5" class="empty">Нажмите 🔄, чтобы загрузить</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
         <div class="card demo-video-card" style="max-width:900px;margin-top:16px">
           <div class="card-title">🎥 Демо-видео (лендинг cleano.uz)</div>
           <p style="font-size:12px;color:var(--text2);margin-bottom:16px">Видео в "бирке" на главной странице cleano.uz — отдельное для русского и узбекского языка, проигрывается автоматически в зависимости от выбранного языка. Хранится в Telegram, файл до <strong>19 МБ</strong>.</p>
@@ -1915,6 +1931,26 @@ async function saveCleanoBot() {
     }
     gsLockCard('cleanobot');
   } catch(e) { alert(e.message); }
+}
+
+async function loadCleanoBotClients() {
+  const tb = document.getElementById('cleanoBotClientsBody');
+  tb.innerHTML = '<tr><td colspan="5" class="empty">Загрузка…</td></tr>';
+  try {
+    const d = await api('/saas/cleano-bot-clients');
+    const list = d.clients || [];
+    if (!list.length) { tb.innerHTML = '<tr><td colspan="5" class="empty">Пока никто не подтверждал телефон</td></tr>'; return; }
+    tb.innerHTML = list.map(c => `
+      <tr>
+        <td>${escHtml(c.phone)}</td>
+        <td>${escHtml(c.method || '')}</td>
+        <td style="font-family:monospace">${escHtml(String(c.tg_id))}</td>
+        <td>${c.verified_at ? new Date(c.verified_at).toLocaleString('ru-RU') : ''}</td>
+        <td>${c.company_id ? `${escHtml(c.company_name)} <span style="color:var(--text2)">(${escHtml(c.company_slug)})</span>` : '<span style="color:var(--text2)">—</span>'}</td>
+      </tr>`).join('');
+  } catch(e) {
+    tb.innerHTML = `<tr><td colspan="5" class="empty" style="color:var(--red)">${escHtml(e.message)}</td></tr>`;
+  }
 }
 
 function _setDemoVideoPreview(lang, uploaded) {
