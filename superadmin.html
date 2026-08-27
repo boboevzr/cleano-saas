@@ -1161,6 +1161,7 @@
     </div>
     <div class="field"><label>Макс. филиалов</label><input id="co_branches" type="number" value="5"></div>
     <div class="field"><label>Макс. сотрудников</label><input id="co_staff" type="number" value="50"></div>
+    <div class="field"><label>Телефон (ответств. лицо, необязательно)</label><input id="co_contact_phone" placeholder="+998 90 000-00-00"><div class="modal-err" id="coPhoneErr" style="min-height:0;margin-top:4px"></div></div>
     <div class="field">
       <label>Доступ</label>
       <div style="display:flex;gap:14px;align-items:center;padding:8px 0">
@@ -1190,6 +1191,13 @@
       <table class="cred-table" id="coCredTable"></table>
       <div style="font-size:11px;color:var(--text2);margin-top:8px;padding:8px;background:var(--surface2);border-radius:6px">
         ⚠️ Логин и пароль совпадают с названием роли. Клиент должен сменить пароль после первого входа.
+      </div>
+      <div id="coTgLinkBlock" style="display:none;margin-top:12px;padding:8px;background:var(--surface2);border-radius:6px">
+        <div style="font-size:12px;margin-bottom:4px" id="coTgLinkStatus"></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <code id="coTgLink" style="font-size:11px;word-break:break-all;flex:1"></code>
+          <button class="btn btn-ghost btn-sm" onclick="copyCoTgLink()">📋</button>
+        </div>
       </div>
       <div class="modal-actions" style="margin-top:16px">
         <button class="btn btn-ghost" onclick="copyCredentials()">📋 Скопировать</button>
@@ -2470,14 +2478,17 @@ function renderCompanies(list) {
 
   // Stats
   const total = list.length;
-  const active = list.filter(c => c.active !== false).length;
+  const archived = list.filter(c => c.archived_at).length;
+  const active = list.filter(c => c.active !== false && !c.archived_at).length;
+  const disabled = list.filter(c => c.active === false && !c.archived_at).length;
   const byPlan = {};
-  list.forEach(c => { byPlan[c.plan] = (byPlan[c.plan]||0)+1; });
+  list.filter(c => !c.archived_at).forEach(c => { byPlan[c.plan] = (byPlan[c.plan]||0)+1; });
   const statStyle = 'background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;white-space:nowrap';
   document.getElementById('companiesStats').innerHTML = [
     `<span style="${statStyle}">🏢 Всего: <b>${total}</b></span>`,
     `<span style="${statStyle};color:var(--green)">✅ Активных: <b>${active}</b></span>`,
-    total - active ? `<span style="${statStyle};color:var(--red)">❌ Откл.: <b>${total-active}</b></span>` : '',
+    disabled ? `<span style="${statStyle};color:var(--red)">❌ Откл.: <b>${disabled}</b></span>` : '',
+    archived ? `<span style="${statStyle};color:var(--text2)">🗄 Архив: <b>${archived}</b></span>` : '',
     ...Object.entries(byPlan).map(([p,n]) => `<span style="${statStyle}">📦 ${p}: <b>${n}</b></span>`),
   ].join('');
 
@@ -2492,15 +2503,19 @@ function renderCompanies(list) {
       <td class="mono">${escHtml(c.slug)}</td>
       <td style="font-size:12px;color:var(--text2)">${escHtml(c.contact_name||'—')}<br><span style="font-size:11px">${escHtml(c.contact_phone||'')}</span></td>
       <td><span class="badge badge-blue">${c.plan}</span><br><span style="font-size:11px;color:var(--text2)">${c.max_branches||0} фил.</span></td>
-      <td>${c.active !== false
-        ? '<span class="badge badge-green">Активна</span>'
-        : '<span class="badge badge-red">Отключена</span>'}</td>
+      <td>${c.archived_at
+        ? '<span class="badge" style="background:var(--surface2);color:var(--text2)">🗄 Архивирована</span>'
+        : (c.active !== false
+          ? '<span class="badge badge-green">Активна</span>'
+          : '<span class="badge badge-red">Отключена</span>')}</td>
       <td class="mono" style="font-size:12px;color:var(--text2)">${createdAt}</td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" onclick="openEditCompany(${c.id})">✏️</button>
         <button class="btn btn-ghost btn-sm" onclick="impersonateCompany(${c.id})" title="Войти как admin этой компании">🔑</button>
         <a class="btn btn-ghost btn-sm" href="${c.slug === 'artez' ? 'https://artez.uz/' : `https://${encodeURIComponent(c.slug)}.cleano.uz/`}" target="_blank" title="Открыть сайт компании">🌐</a>
-        <button class="btn btn-sm" onclick="deleteCompany(${c.id})" style="background:#dc3545;color:#fff;border:none" title="Удалить компанию и все данные">🗑️</button>
+        ${c.archived_at
+          ? `<button class="btn btn-sm" onclick="restoreCompany(${c.id})" style="background:var(--green);color:#fff;border:none" title="Вернуть из архива">♻️</button>`
+          : `<button class="btn btn-sm" onclick="deleteCompany(${c.id})" style="background:#dc3545;color:#fff;border:none" title="Архивировать компанию">🗄️</button>`}
       </td>
     </tr>`
   }).join('');
@@ -2631,7 +2646,9 @@ async function saveEditCompany() {
 }
 
 async function openCreateCompany() {
-  ['co_name','co_slug'].forEach(id => document.getElementById(id).value = '');
+  ['co_name','co_slug','co_contact_phone'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('coPhoneErr').textContent = '';
+  document.getElementById('coTgLinkBlock').style.display = 'none';
   document.getElementById('co_branches').value = '5';
   document.getElementById('co_staff').value = '50';
   document.querySelector('input[name="co_sub_mode"][value="demo"]').checked = true;
@@ -2657,10 +2674,12 @@ async function createCompany() {
   const max_staff    = parseInt(document.getElementById('co_staff').value) || 50;
   const subscription_mode   = document.querySelector('input[name="co_sub_mode"]:checked')?.value || 'demo';
   const subscription_months = parseInt(document.getElementById('co_sub_months').value) || 1;
+  const contact_phone       = document.getElementById('co_contact_phone').value.trim() || null;
   document.getElementById('coErr').textContent = '';
+  document.getElementById('coPhoneErr').textContent = '';
   if (!name || !slug) { document.getElementById('coErr').textContent = 'Заполните название и slug'; return; }
   try {
-    const d = await api('/saas/companies', 'POST', { name, slug, plan, max_branches, max_staff, admin_password: 'admin', subscription_mode, subscription_months });
+    const d = await api('/saas/companies', 'POST', { name, slug, plan, max_branches, max_staff, admin_password: 'admin', subscription_mode, subscription_months, contact_phone });
     const creds = d.credentials || [];
     _lastCreatedCredentials = creds;
     const roleLabel = {
@@ -2681,10 +2700,37 @@ async function createCompany() {
     document.getElementById('coForm').style.display = 'none';
     document.getElementById('coFormActions').style.display = 'none';
     document.getElementById('coCredPanel').style.display = '';
+    if (contact_phone) {
+      const block = document.getElementById('coTgLinkBlock');
+      const statusEl = document.getElementById('coTgLinkStatus');
+      block.style.display = '';
+      statusEl.textContent = d.phone_linked
+        ? '✅ Telegram уже привязан (подтверждение через бота нашлось заранее)'
+        : '⚠️ Телефон сохранён, но Telegram ещё не подтверждён — отправьте клиенту ссылку ниже, чтобы он подтвердил номер через @cleanouz_bot:';
+      statusEl.style.color = d.phone_linked ? 'var(--green)' : 'var(--text2)';
+      if (!d.phone_linked) {
+        try {
+          const link = await api(`/saas/companies/${d.company.id}/telegram-link`);
+          document.getElementById('coTgLink').textContent = link.link;
+        } catch(e) { document.getElementById('coTgLink').textContent = '⚠️ ' + e.message; }
+      } else {
+        document.getElementById('coTgLink').textContent = '';
+      }
+    }
     await loadCompanies();
   } catch(e) {
-    document.getElementById('coErr').textContent = e.message;
+    if (/телефон/i.test(e.message)) {
+      document.getElementById('coPhoneErr').textContent = e.message;
+    } else {
+      document.getElementById('coErr').textContent = e.message;
+    }
   }
+}
+
+function copyCoTgLink() {
+  const text = document.getElementById('coTgLink').textContent;
+  if (!text || text.startsWith('⚠️')) return;
+  navigator.clipboard?.writeText(text);
 }
 
 async function migrateAdminLogins() {
@@ -2766,9 +2812,19 @@ async function createBranchForCompany() {
 async function deleteCompany(id) {
   const c = _companiesCache.find(x => x.id === id);
   const name = c?.name || `#${id}`;
-  if (!confirm(`⚠️ Удалить компанию "${name}"?\n\nВСЕ данные (заказы, лиды, сотрудники, филиалы, настройки) будут БЕЗВОЗВРАТНО удалены!\n\nНажмите OK для подтверждения.`)) return;
+  if (!confirm(`🗄 Архивировать компанию "${name}"?\n\nОна пропадёт из активного использования (вход в admin.html будет заблокирован), но все данные останутся — компанию можно будет восстановить.`)) return;
   try {
     await api(`/saas/companies/${id}`, 'DELETE');
+    await loadCompanies();
+  } catch(e) { alert(e.message); }
+}
+
+async function restoreCompany(id) {
+  const c = _companiesCache.find(x => x.id === id);
+  const name = c?.name || `#${id}`;
+  if (!confirm(`♻️ Восстановить компанию "${name}" из архива?`)) return;
+  try {
+    await api(`/saas/companies/${id}/restore`, 'POST');
     await loadCompanies();
   } catch(e) { alert(e.message); }
 }
