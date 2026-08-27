@@ -3303,13 +3303,17 @@
   }
 
   // ===== SCROLL TO TOP BUTTON =====
-  (function() {
+  // DOMContentLoaded обязателен: <script src="site-common.js"> подключается раньше,
+  // чем в разметке появляется сама кнопка #scrollTopBtn (секция FLOATING BUTTON
+  // ближе к концу body) — без этого getElementById не находил элемент, и слушатель
+  // скролла никогда не вешался (кнопка всегда оставалась invisible).
+  document.addEventListener('DOMContentLoaded', function() {
     const btn = document.getElementById('scrollTopBtn');
     if (!btn) return;
     window.addEventListener('scroll', () => {
       btn.classList.toggle('visible', window.scrollY > 300);
     }, { passive: true });
-  })();
+  });
 
   // ===== SCROLL PROGRESS BAR =====
   (function() {
