@@ -3493,7 +3493,11 @@
     if (!currentUser) {
       closeContactModal();
       showOrderAlert(t('cb.needLogin'));
-      setTimeout(() => openDrawer('orders'), 400);
+      // Раньше тут открывался openDrawer('orders') — вкладка "Мои заказы" кабинета,
+      // которая для неавторизованного пользователя всегда пуста (нечего показывать).
+      // Нужна форма входа, а не список заказов — она открывается переходом на #cabinet
+      // (та же секция, куда ведёт кнопка "Войти" в шапке).
+      setTimeout(() => { location.hash = 'cabinet'; }, 400);
       return;
     }
     _cbBranch = branch || _activeBranch || (_siteBranches[0] && _siteBranches[0].slug) || null;
