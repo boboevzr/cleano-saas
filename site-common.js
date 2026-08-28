@@ -3192,14 +3192,25 @@
     s = s || {}; branches = branches || [];
     const lines = ['Вам позвонят с номеров:'];
     const linesUz = ["Sizga quyidagi raqamlardan qo'ng'iroq qilinadi:"];
-    if (s.contact_short) { lines.push(`☎️ ${s.contact_short}`); linesUz.push(`☎️ ${s.contact_short}`); }
-    if (s.contact_main)  { lines.push(`📞 ${_fmtPhone(s.contact_main)}`); linesUz.push(`📞 ${_fmtPhone(s.contact_main)}`); }
+    let hasAnyPhone = false;
+    if (s.contact_short) { lines.push(`☎️ ${s.contact_short}`); linesUz.push(`☎️ ${s.contact_short}`); hasAnyPhone = true; }
+    if (s.contact_main)  { lines.push(`📞 ${_fmtPhone(s.contact_main)}`); linesUz.push(`📞 ${_fmtPhone(s.contact_main)}`); hasAnyPhone = true; }
     branches.forEach(c => {
       const phones = (c.phones || []).filter(Boolean).map(_fmtPhone).join(' / ');
-      if (phones) { lines.push(`\n${_branchName(c)}: ${phones}`); linesUz.push(`\n${_branchName(c)}: ${phones}`); }
+      if (phones) { lines.push(`\n${_branchName(c)}: ${phones}`); linesUz.push(`\n${_branchName(c)}: ${phones}`); hasAnyPhone = true; }
     });
-    I18N.ru['order.successText'] = lines.join('\n');
-    I18N.uz['order.successText'] = linesUz.join('\n');
+    // Свежесозданная компания без единого настроенного номера (ни short/main, ни номеров
+    // филиалов) — раньше тут молча оставался статичный HTML-плейсхолдер с номерами ARTEZ
+    // прод-версии (текст с data-i18n="order.successText" без записи в I18N.ru показывал
+    // исходную вёрстку как есть). Теперь — явное сообщение вместо чужих номеров.
+    I18N.ru['order.successText'] = hasAnyPhone ? lines.join('\n')
+      : 'Ведутся технические работы. Пожалуйста, попробуйте позже — мы свяжемся с вами, как только сможем.';
+    I18N.uz['order.successText'] = hasAnyPhone ? linesUz.join('\n')
+      : "Texnik ishlar olib borilmoqda. Iltimos, keyinroq urinib ko'ring — imkon boricha tez orada siz bilan bog'lanamiz.";
+    // I18N-объект обновлён асинхронно (после загрузки настроек/филиалов) — без повторного
+    // applyI18n() модалка так и осталась бы со статичным HTML-плейсхолдером из вёрстки,
+    // рендер ни разу не обновился бы новым значением.
+    applyI18n();
 
     // Ссылки на TG-бота в шаге регистрации «через Telegram» — раньше были
     // жёстко зашиты на прод-бот ARTEZ (@artez_orders_bot) везде, независимо

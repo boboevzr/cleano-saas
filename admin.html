@@ -8086,6 +8086,9 @@ async function doLogin() {
     if (!res.ok) throw new Error(data.detail || 'Ошибка входа');
     adminToken = data.token;
     localStorage.setItem(TOKEN_KEY, adminToken);
+    // Свежий вход по логину/паролю всегда начинается с Дашборда — localStorage
+    // "admin_page" иначе резюмирует последнюю открытую вкладку прошлой сессии.
+    localStorage.setItem('admin_page', 'dashboard');
     showAdmin();
   } catch (e) {
     err.textContent = e.message;
