@@ -86,6 +86,7 @@
       'auth.tgVar2': 'Скопируйте ссылку и откройте в Telegram',
       'auth.tgVar3Html': 'Откройте <a href="https://t.me/artez_orders_bot" target="_blank" rel="noopener" style="color:#229ED9;text-decoration:none;font-weight:600">@artez_orders_bot</a>, в меню нажмите <b>👤 Мой профиль</b> → <b>📞 Привязать номер</b>',
       'auth.tgReturnHint': 'Вернитесь на сайт и нажмите кнопку ниже',
+      'auth.regUnavailable': 'Регистрация временно недоступна — ведутся технические работы. Попробуйте позже.',
       'auth.tgPhoneVerified': 'Номер подтверждён через Telegram',
       'auth.tgRegBtn': 'Зарегистрироваться',
       'auth.verifyTitle': 'Подтверждение номера', 'auth.verifySub': 'Мы отправили код на',
@@ -298,6 +299,7 @@
       'auth.tgVar2': 'Havolani nusxa oling va Telegramda oching',
       'auth.tgVar3Html': '<a href="https://t.me/artez_orders_bot" target="_blank" rel="noopener" style="color:#229ED9;text-decoration:none;font-weight:600">@artez_orders_bot</a> ni oching, menyuda <b>👤 Mening profilim</b> → <b>📞 Raqam ulash</b> ni bosing',
       'auth.tgReturnHint': 'Saytga qayting va quyidagi tugmani bosing',
+      'auth.regUnavailable': "Roʻyxatdan oʻtish vaqtincha mavjud emas — texnik ishlar olib borilmoqda. Keyinroq urinib koʻring.",
       'auth.tgPhoneVerified': 'Raqam Telegram orqali tasdiqlandi',
       'auth.tgRegBtn': 'Ro\'yxatdan o\'tish',
       'auth.verifyTitle': 'Raqamni tasdiqlash', 'auth.verifySub': 'Biz kodni quyidagi raqamga yubordik:',
@@ -691,6 +693,7 @@
   let pendingViaTg = false; // был ли код отправлен через Telegram
   let _regTgBotUsername = 'artez_orders_bot'; // дефолт до загрузки настроек компании
   let _smsRegAvailable = true; // дефолт до загрузки настроек — см. sms_registration_available
+  let _tgRegAvailable = true; // дефолт до загрузки настроек — см. order_bot_username
   function copyTgBotLink() {
     const link = `https://t.me/${_regTgBotUsername}?start=link_phone`;
     navigator.clipboard.writeText(link).then(() => {
@@ -708,7 +711,15 @@
   // недоступна (тогл выключен / Eskiz не настроен / баланс исчерпан) — пикер с
   // единственным вариантом не показываем, сразу открываем Telegram-метод.
   function pickRegMethod(method) {
-    if (method === null && !_smsRegAvailable) method = 'tg';
+    if (method === null && !_smsRegAvailable && _tgRegAvailable) method = 'tg';
+    if (method === null && !_smsRegAvailable && !_tgRegAvailable) {
+      // Ни SMS, ни Telegram-бот компании не настроены (новая компания, настройки
+      // ещё не заполнены) — раньше тут всё равно форсировался Telegram-метод,
+      // показывавший ссылку/номер бота ARTEZ по умолчанию (_regTgBotUsername так
+      // и оставался 'artez_orders_bot', пока order_bot_username не задан).
+      showOrderAlert(t('auth.regUnavailable'));
+      return;
+    }
     document.getElementById('regStepPicker').style.display = method === null ? '' : 'none';
     document.getElementById('regStepSms').style.display    = method === 'sms' ? '' : 'none';
     document.getElementById('regStepTg').style.display     = method === 'tg'  ? '' : 'none';
@@ -3217,6 +3228,7 @@
     // от компании. Каждая компания подключает СВОЙ бот (order_bot_username).
     const botUsername = s.order_bot_username || '';
     const tgMethodBtn = document.getElementById('regMethodTgBtn');
+    _tgRegAvailable = !!botUsername;
     if (!botUsername) {
       if (tgMethodBtn) tgMethodBtn.style.display = 'none';
     } else {
