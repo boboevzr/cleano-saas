@@ -1372,19 +1372,35 @@
   var pvVerifiedFor  = null;
 
   // Пришли по кнопке "📝 Начать регистрацию" из @cleanouz_bot — номер уже подтверждён
-  // через бота. Открываем модалку регистрации сразу (по умолчанию видна только главная
-  // страница) И только ПОСЛЕ openReg() проставляем телефон — openReg() внутри вызывает
-  // resetRegForm(), который иначе стёр бы префилл (regForm.reset() + resetPhoneVerify()).
-  // Тихая автопроверка (без showPhoneVerified — та ещё и авто-сабмитит форму, что здесь
-  // не нужно на только что открытой пустой форме).
+  // через бота. Кнопка эта показывается в боте только когда Telegram НЕ привязан ни к
+  // одной компании (contact_tg_id) — но телефон мог УЖЕ быть занят другой компанией
+  // отдельно (напр. superadmin вписал его вручную в contact_phone, минуя бота, см. фикс
+  // check_company_field_exists) — поэтому проверяем ДУБЛЬ ТЕЛЕФОНА до открытия формы,
+  // а не только на сабмите (там 409 уже ловится, но после того как человек заполнит всю
+  // форму — здесь можно сказать сразу).
   (function(){
     var prefillPhone = new URLSearchParams(location.search).get('phone');
     if (!prefillPhone) return;
-    openReg();
-    pvPhoneInput.value = prefillPhone;
-    fetch(API_BASE + '/saas/phone-verify-status?phone=' + encodeURIComponent(prefillPhone))
+    fetch(API_BASE + '/saas/check-availability?field=phone&value=' + encodeURIComponent(prefillPhone))
       .then(function(r){ return r.json(); })
-      .then(function(d){ if (d.verified) { pvVerified = true; pvVerifiedFor = prefillPhone; } })
+      .then(function(d){
+        if (d.exists) {
+          alert('⚠️ Компания с этим номером телефона уже зарегистрирована. Если это ошибка — обратитесь в поддержку Cleano.'
+            + '\n\n⚠️ Bu telefon raqami bilan kompaniya allaqachon roʻyxatdan oʻtgan. Agar bu xato boʻlsa — Cleano qoʻllab-quvvatlash xizmatiga murojaat qiling.');
+          return;
+        }
+        // Открываем модалку регистрации сразу (по умолчанию видна только главная страница)
+        // И только ПОСЛЕ openReg() проставляем телефон — openReg() внутри вызывает
+        // resetRegForm(), который иначе стёр бы префилл (regForm.reset() + resetPhoneVerify()).
+        openReg();
+        pvPhoneInput.value = prefillPhone;
+        // Тихая автопроверка (без showPhoneVerified — та ещё и авто-сабмитит форму, что
+        // здесь не нужно на только что открытой пустой форме).
+        fetch(API_BASE + '/saas/phone-verify-status?phone=' + encodeURIComponent(prefillPhone))
+          .then(function(r){ return r.json(); })
+          .then(function(d2){ if (d2.verified) { pvVerified = true; pvVerifiedFor = prefillPhone; } })
+          .catch(function(){});
+      })
       .catch(function(){});
   })();
 
