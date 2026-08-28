@@ -1372,11 +1372,15 @@
   var pvVerifiedFor  = null;
 
   // Пришли по кнопке "📝 Начать регистрацию" из @cleanouz_bot — номер уже подтверждён
-  // через бота, префилл + тихая автопроверка (без showPhoneVerified — та ещё и
-  // авто-сабмитит форму, что здесь не нужно на пустой ещё форме).
+  // через бота. Открываем модалку регистрации сразу (по умолчанию видна только главная
+  // страница) И только ПОСЛЕ openReg() проставляем телефон — openReg() внутри вызывает
+  // resetRegForm(), который иначе стёр бы префилл (regForm.reset() + resetPhoneVerify()).
+  // Тихая автопроверка (без showPhoneVerified — та ещё и авто-сабмитит форму, что здесь
+  // не нужно на только что открытой пустой форме).
   (function(){
     var prefillPhone = new URLSearchParams(location.search).get('phone');
     if (!prefillPhone) return;
+    openReg();
     pvPhoneInput.value = prefillPhone;
     fetch(API_BASE + '/saas/phone-verify-status?phone=' + encodeURIComponent(prefillPhone))
       .then(function(r){ return r.json(); })
