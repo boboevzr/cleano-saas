@@ -1385,8 +1385,25 @@
       .then(function(r){ return r.json(); })
       .then(function(d){
         if (d.exists) {
-          alert('⚠️ Компания с этим номером телефона уже зарегистрирована. Если это ошибка — обратитесь в поддержку Cleano.'
-            + '\n\n⚠️ Bu telefon raqami bilan kompaniya allaqachon roʻyxatdan oʻtgan. Agar bu xato boʻlsa — Cleano qoʻllab-quvvatlash xizmatiga murojaat qiling.');
+          // Номер прошёл проверку через бота (иначе сюда не попали бы вообще — ссылка
+          // ?phone= выдаётся ботом только после подтверждения номера) — значит человек
+          // реально им владеет, и раз он уже занят компанией, это, скорее всего, ОН и
+          // есть её владелец. Вместо тупика — сразу предлагаем войти в её admin.html.
+          fetch(API_BASE + '/saas/company-by-verified-phone?phone=' + encodeURIComponent(prefillPhone))
+            .then(function(r2){ return r2.json(); })
+            .then(function(d2){
+              if (d2.slug) {
+                alert('✅ Компания с этим номером уже зарегистрирована: ' + d2.name
+                  + '\nСейчас вы перейдёте на страницу входа.'
+                  + '\n\n✅ Bu raqam bilan kompaniya allaqachon roʻyxatdan oʻtgan: ' + d2.name
+                  + '\nHozir kirish sahifasiga o\'tasiz.');
+                location.href = 'https://cleano.uz/admin.html?company_slug=' + encodeURIComponent(d2.slug) + '&fresh=1';
+              } else {
+                alert('⚠️ Компания с этим номером телефона уже зарегистрирована. Если это ошибка — обратитесь в поддержку Cleano.'
+                  + '\n\n⚠️ Bu telefon raqami bilan kompaniya allaqachon roʻyxatdan oʻtgan. Agar bu xato boʻlsa — Cleano qoʻllab-quvvatlash xizmatiga murojaat qiling.');
+              }
+            })
+            .catch(function(){});
           return;
         }
         // Открываем модалку регистрации сразу (по умолчанию видна только главная страница)
