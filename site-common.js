@@ -1252,6 +1252,28 @@
       const { settings: s } = await r.json();
       if (!s) return null;
 
+      // Тогл "техработ" сайта (admin.html → Настройки сайта) — у новой компании включён
+      // по умолчанию, пока владелец не заполнил реальные контакты/номера/бота. Перекрывает
+      // ВЕСЬ сайт одним экраном — без этого посетитель видел бы то пустые данные, то
+      // (хуже) чужие ARTEZ-заглушки в разных местах сайта (см. фиксы order.successText,
+      // auth.tgVar3Html этой же сессии — maintenance-режим закрывает весь этот класс
+      // проблем разом, а не по одному месту за раз). Остальной код продолжает
+      // отрабатывать как обычно под оверлеем — это просто визуальная блокировка.
+      if (s.site_maintenance_mode === 'true' && !document.getElementById('siteMaintenanceOverlay')) {
+        const ov = document.createElement('div');
+        ov.id = 'siteMaintenanceOverlay';
+        ov.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0e1210;color:#fff;'
+          + 'display:flex;flex-direction:column;align-items:center;justify-content:center;'
+          + 'text-align:center;padding:24px;gap:14px';
+        ov.innerHTML = '<div style="font-size:52px">🚧</div>'
+          + '<div style="font-size:21px;font-weight:700;max-width:440px">Сайт временно на техническом обслуживании</div>'
+          + '<div style="font-size:15px;opacity:.7;max-width:440px">Скоро вернёмся!</div>'
+          + '<div style="font-size:15px;font-weight:700;max-width:440px;margin-top:10px">Sayt vaqtincha texnik ishlar tufayli ishlamayapti</div>'
+          + '<div style="font-size:15px;opacity:.7;max-width:440px">Tez orada qaytamiz!</div>';
+        document.body.appendChild(ov);
+        document.body.style.overflow = 'hidden';
+      }
+
       // Форматирование номера для отображения
       function fmtPhone(raw) {
         const d = (raw||'').replace(/\D/g,'');

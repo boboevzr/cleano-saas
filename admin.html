@@ -2859,6 +2859,7 @@
         <div style="display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:20px;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
 
           <button class="s-tab active" data-stab="staff-mgmt" onclick="switchStab(this);staffMgmtLoad()" data-i18n="cfg.tab.staff">👤 Сотрудники</button>
+          <button class="s-tab"        data-stab="maintenance" onclick="switchStab(this);loadMaintenanceMode()" data-i18n="cfg.tab.maintenance">🚧 Техработы</button>
           <button class="s-tab"        data-stab="eskiz"    onclick="switchStab(this)" data-i18n="cfg.tab.sms">📨 SMS (Eskiz)</button>
           <button class="s-tab"        data-stab="sheets"     onclick="switchStab(this)" data-i18n="cfg.tab.sheets">📊 Google Sheets</button>
           <button class="s-tab"        data-stab="agents"     onclick="switchStab(this)" data-i18n="cfg.tab.agents">🤝 Агенты</button>
@@ -2881,6 +2882,38 @@
                 <button class="btn btn-primary btn-sm" onclick="staffMgmtOpenCreate()">+ Добавить</button>
               </div>
               <div id="staffMgmtList" style="margin-top:12px;font-size:14px"><div style="color:var(--text2)">Загрузка…</div></div>
+            </div>
+          </div>
+
+          <!-- ─── Режим техработ ─── -->
+          <div class="s-panel" id="stab-maintenance" style="display:none;">
+            <div class="card">
+              <div class="cfg-title-row">
+                <h3 class="cfg-title">🚧 Режим технических работ</h3>
+              </div>
+              <p class="cfg-hint">Пока настройки не заполнены (контакты, филиалы, бот), реальные посетители видят пустые данные вместо чего-то полезного. Включите оба тогла на время настройки — сайт и бот покажут одно сообщение "ведутся технические работы" вместо неготового контента. Выключите, когда всё будет готово к реальным клиентам.</p>
+
+              <div class="sys-sms-card" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+                <div>
+                  <label style="font-size:13px;font-weight:600;color:var(--text)">🌐 Сайт компании</label>
+                  <div style="font-size:12px;color:var(--text2);margin-top:2px">Вместо всего сайта — один экран "ведутся технические работы"</div>
+                </div>
+                <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+                  <input type="checkbox" id="cfg_site_maintenance" onchange="siteMaintenanceToggle(this.checked)" style="opacity:0;width:0;height:0">
+                  <span id="cfg_site_maintenance_track" style="position:absolute;inset:0;background:var(--border);border-radius:24px;cursor:pointer;transition:.2s"></span>
+                </label>
+              </div>
+
+              <div class="sys-sms-card" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+                <div>
+                  <label style="font-size:13px;font-weight:600;color:var(--text)">🤖 Telegram-бот компании</label>
+                  <div style="font-size:12px;color:var(--text2);margin-top:2px">На любое сообщение боту — одно сообщение "ведутся технические работы"</div>
+                </div>
+                <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+                  <input type="checkbox" id="cfg_bot_maintenance" onchange="botMaintenanceToggle(this.checked)" style="opacity:0;width:0;height:0">
+                  <span id="cfg_bot_maintenance_track" style="position:absolute;inset:0;background:var(--border);border-radius:24px;cursor:pointer;transition:.2s"></span>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -6451,6 +6484,7 @@ const _adminI18n = {
     'exp.bal.advances':'💸 Авансов:','exp.bal.available':'✅ Доступно:','exp.bal.over.limit':'⚠️ Превышает лимит',
     'exp.th.category':'Категория',
     'cfg.tab.contacts':'📞 Контакты','cfg.tab.staff':'👤 Сотрудники',
+    'cfg.tab.maintenance':'🚧 Техработы',
     'cfg.tab.sms':'📨 SMS (Eskiz)','cfg.tab.sheets':'📊 Google Sheets',
     'cfg.tab.agents':'🤝 Агенты','cfg.tab.receipt':'🧾 Чек',
     'cfg.tab.slides':'🖼️ Слайдер','cfg.tab.video':'🎥 Видео','cfg.tab.stats':'📊 Статистика',
@@ -7201,6 +7235,7 @@ const _adminI18n = {
     'exp.bal.advances':'💸 Avanslar:','exp.bal.available':'✅ Mavjud:','exp.bal.over.limit':'⚠️ Limitdan oshadi',
     'exp.th.category':'Kategoriya',
     'cfg.tab.contacts':'📞 Kontaktlar','cfg.tab.staff':'👤 Xodimlar',
+    'cfg.tab.maintenance':'🚧 Texnik ishlar',
     'cfg.tab.sms':'📨 SMS (Eskiz)','cfg.tab.sheets':'📊 Google Sheets',
     'cfg.tab.agents':'🤝 Agentlar','cfg.tab.receipt':'🧾 Chek',
     'cfg.tab.slides':'🖼️ Slayder','cfg.tab.video':'🎥 Video','cfg.tab.stats':'📊 Statistika',
@@ -8932,6 +8967,36 @@ function _siteVideoRenderToggle(checked) {
 async function siteVideoToggleEnabled(checked) {
   _siteVideoRenderToggle(checked);
   await apiPut('/admin/settings/site', { site_video_enabled: checked ? 'true' : 'false' });
+}
+
+// ── Режим техработ (сайт + бот) ──────────────────────────────────────
+async function loadMaintenanceMode() {
+  const res = await apiGet('/admin/settings/site');
+  const s = res?.settings || {};
+  const siteEl = document.getElementById('cfg_site_maintenance');
+  if (siteEl) { siteEl.checked = s.site_maintenance_mode === 'true'; _siteMaintenanceRenderToggle(siteEl.checked); }
+  const botEl = document.getElementById('cfg_bot_maintenance');
+  if (botEl) { botEl.checked = s.bot_maintenance_mode === 'true'; _botMaintenanceRenderToggle(botEl.checked); }
+}
+function _siteMaintenanceRenderToggle(checked) {
+  const track = document.getElementById('cfg_site_maintenance_track');
+  if (!track) return;
+  track.style.background = checked ? '#e0a000' : 'var(--border)';
+  track.innerHTML = `<span style="position:absolute;top:2px;left:${checked?'22px':'2px'};width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s"></span>`;
+}
+function _botMaintenanceRenderToggle(checked) {
+  const track = document.getElementById('cfg_bot_maintenance_track');
+  if (!track) return;
+  track.style.background = checked ? '#e0a000' : 'var(--border)';
+  track.innerHTML = `<span style="position:absolute;top:2px;left:${checked?'22px':'2px'};width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s"></span>`;
+}
+async function siteMaintenanceToggle(checked) {
+  _siteMaintenanceRenderToggle(checked);
+  await apiPut('/admin/settings/site', { site_maintenance_mode: checked ? 'true' : 'false' });
+}
+async function botMaintenanceToggle(checked) {
+  _botMaintenanceRenderToggle(checked);
+  await apiPut('/admin/settings/site', { bot_maintenance_mode: checked ? 'true' : 'false' });
 }
 
 async function siteVideoSetPlacement(value) {
