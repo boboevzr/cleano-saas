@@ -1371,6 +1371,19 @@
   var pvVerified     = false;
   var pvVerifiedFor  = null;
 
+  // Пришли по кнопке "📝 Начать регистрацию" из @cleanouz_bot — номер уже подтверждён
+  // через бота, префилл + тихая автопроверка (без showPhoneVerified — та ещё и
+  // авто-сабмитит форму, что здесь не нужно на пустой ещё форме).
+  (function(){
+    var prefillPhone = new URLSearchParams(location.search).get('phone');
+    if (!prefillPhone) return;
+    pvPhoneInput.value = prefillPhone;
+    fetch(API_BASE + '/saas/phone-verify-status?phone=' + encodeURIComponent(prefillPhone))
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if (d.verified) { pvVerified = true; pvVerifiedFor = prefillPhone; } })
+      .catch(function(){});
+  })();
+
   function tr(key){ return (I18N[lang]||I18N.uz)[key] || ''; }
 
   // Модалка подтверждения телефона — закрывается ТОЛЬКО крестиком/Escape,
