@@ -544,13 +544,29 @@
 
           <div class="field">
             <label>Текст напоминания (RU)</label>
-            <textarea id="gs_sr_text_ru" rows="3" readonly placeholder="Доступны {name}, {end_date}, {days}" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
+            <textarea id="gs_sr_text_ru" rows="3" readonly placeholder="Доступны {name}, {end_date}, {days}" oninput="_gsSrUpdatePreview('ru')" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px" id="gs_sr_tpl_ru"></div>
+            <div style="margin-top:8px;padding:10px 12px;background:var(--bg);border:1px dashed var(--border);border-radius:8px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin-bottom:4px">👁 Так придёт реальная SMS (пример) — для заявки на одобрение в Eskiz</div>
+              <div id="gs_sr_preview_ru" style="font-size:14px;white-space:pre-wrap"></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+                <span id="gs_sr_len_ru" style="font-size:11px;color:var(--text2)"></span>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="_gsSrCopyPreview('ru')">📋 Копировать</button>
+              </div>
+            </div>
           </div>
           <div class="field" style="margin-top:12px">
             <label>Текст напоминания (UZ)</label>
-            <textarea id="gs_sr_text_uz" rows="3" readonly style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
+            <textarea id="gs_sr_text_uz" rows="3" readonly oninput="_gsSrUpdatePreview('uz')" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px" id="gs_sr_tpl_uz"></div>
+            <div style="margin-top:8px;padding:10px 12px;background:var(--bg);border:1px dashed var(--border);border-radius:8px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin-bottom:4px">👁 Так придёт реальная SMS (пример) — для заявки на одобрение в Eskiz</div>
+              <div id="gs_sr_preview_uz" style="font-size:14px;white-space:pre-wrap"></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+                <span id="gs_sr_len_uz" style="font-size:11px;color:var(--text2)"></span>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="_gsSrCopyPreview('uz')">📋 Копировать</button>
+              </div>
+            </div>
           </div>
 
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin:14px 0 6px">📲 Платформенный Eskiz-аккаунт (отдельный от компаний)</div>
@@ -3448,6 +3464,27 @@ const GS_SR_TEXT_UZ_DEFAULT = "Cleano: «{name}» kompaniyasining tarif muddati 
 
 function _gsSrInsertDefault(fieldId, text) {
   document.getElementById(fieldId).value = text;
+  _gsSrUpdatePreview(fieldId.endsWith('_uz') ? 'uz' : 'ru');
+}
+
+// Пример для предпросмотра — реалистичные значения вместо {name}/{end_date}/{days},
+// чтобы получившийся текст можно было скопировать и отправить в Eskiz как есть,
+// на одобрение шаблона (Eskiz модерирует ИМЕННО такой, с подставленными данными, текст).
+function _gsSrUpdatePreview(lang) {
+  const raw = document.getElementById('gs_sr_text_' + lang).value;
+  const d = new Date(); d.setDate(d.getDate() + 5);
+  const sample = raw
+    .replaceAll('{name}', 'TOZA GILAM')
+    .replaceAll('{end_date}', d.toLocaleDateString('ru-RU'))
+    .replaceAll('{days}', '5');
+  document.getElementById('gs_sr_preview_' + lang).textContent = sample || '—';
+  document.getElementById('gs_sr_len_' + lang).textContent = sample ? `${sample.length} символов` : '';
+}
+
+function _gsSrCopyPreview(lang) {
+  const text = document.getElementById('gs_sr_preview_' + lang).textContent;
+  if (!text || text === '—') return;
+  navigator.clipboard?.writeText(text);
 }
 
 async function loadSubReminderSettings() {
@@ -3465,6 +3502,8 @@ async function loadSubReminderSettings() {
     document.getElementById('gs_sr_tg_enabled').checked  = s.subscription_reminder_tg_enabled  !== 'false';
     document.getElementById('gs_sr_text_ru').value = s.subscription_reminder_text_ru || GS_SR_TEXT_RU_DEFAULT;
     document.getElementById('gs_sr_text_uz').value = s.subscription_reminder_text_uz || GS_SR_TEXT_UZ_DEFAULT;
+    _gsSrUpdatePreview('ru');
+    _gsSrUpdatePreview('uz');
     document.getElementById('gs_sr_eskiz_email').value    = s.platform_eskiz_email    || '';
     document.getElementById('gs_sr_eskiz_password').value = s.platform_eskiz_password || '';
     document.getElementById('gs_sr_eskiz_from').value     = s.platform_eskiz_from     || '';
