@@ -612,6 +612,12 @@
             <button class="btn btn-ghost btn-sm" id="gs_cancelbtn_subreminder" style="display:none" onclick="gsCancelCard('subreminder')">Отмена</button>
             <span id="gs_subreminder_msg" class="save-msg" style="display:none">✓ Сохранено</span>
           </div>
+
+          <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:14px">
+            <button class="btn btn-primary btn-sm" onclick="runSubReminderNow()">🚀 Отправить сейчас (тест/вручную)</button>
+            <p style="font-size:11px;color:var(--text2);margin:6px 0 0">Воркер по расписанию не подхватывает смену времени мгновенно (спит до заранее вычисленной цели) — эта кнопка шлёт напрямую, в обход расписания, и показывает по каждой компании в окне рассылки, ушло ли и почему нет.</p>
+            <div id="gs_sr_run_result" style="margin-top:10px"></div>
+          </div>
         </div>
       </div>
 
@@ -3598,6 +3604,34 @@ async function saveSubReminderSettings() {
     setTimeout(() => msg.style.display = 'none', 3000);
     gsLockCard('subreminder');
   } catch(e) { alert(e.message); }
+}
+
+async function runSubReminderNow() {
+  const el = document.getElementById('gs_sr_run_result');
+  el.innerHTML = '<span style="color:var(--text2);font-size:13px">Отправка…</span>';
+  const STATUS_LABEL = {
+    sent: '✅ Отправлено', failed: '❌ Ошибка отправки', skipped: '— выключено',
+    no_phone: '⚠️ нет телефона', no_telegram: '⚠️ Telegram не привязан', no_bot_token: '⚠️ не настроен токен бота',
+  };
+  try {
+    const d = await api('/saas/subscription-reminders/run-now', 'POST');
+    const results = d.results || [];
+    if (!results.length) {
+      el.innerHTML = '<span style="color:var(--text2);font-size:13px">Ни одна компания не попала в окно рассылки (проверьте "Дней до/после истечения" и реальные даты подписок).</span>';
+      return;
+    }
+    el.innerHTML = `<div style="background:var(--surface2);border-radius:8px;overflow:hidden">
+      ${results.map(r => `
+        <div style="display:flex;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;align-items:center">
+          <span style="font-weight:700;min-width:140px">${escHtml(r.company_name)} (#${r.company_id})</span>
+          <span style="color:var(--text2);min-width:80px">${r.days_left >= 0 ? r.days_left + ' дн. до конца' : Math.abs(r.days_left) + ' дн. просрочено'}</span>
+          <span>📲 ${STATUS_LABEL[r.sms] || r.sms}</span>
+          <span>🤖 ${STATUS_LABEL[r.tg] || r.tg}</span>
+        </div>`).join('')}
+    </div>`;
+  } catch(e) {
+    el.innerHTML = `<span style="color:var(--red);font-size:13px">${escHtml(e.message)}</span>`;
+  }
 }
 
 async function checkPlatformEskizBalance() {
