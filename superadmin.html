@@ -2741,7 +2741,7 @@ function renderCompanies(list) {
     return `
     <tr>
       <td class="mono">${c.id}</td>
-      <td style="font-weight:600;display:flex;align-items:center;gap:8px">${c.logo_url ? `<img src="${c.logo_url}" alt="" style="width:24px;height:24px;border-radius:6px;object-fit:cover;flex-shrink:0">` : ''}${escHtml(c.name)}</td>
+      <td style="font-weight:600;display:flex;align-items:center;gap:8px">${c.logo_url ? `<img src="${escHtml(c.logo_url)}" alt="" style="width:24px;height:24px;border-radius:6px;object-fit:cover;flex-shrink:0">` : ''}${escHtml(c.name)}</td>
       <td class="mono">${escHtml(c.slug)}</td>
       <td style="font-size:12px;color:var(--text2)">${escHtml(c.contact_name||'—')}<br><span style="font-size:11px">${escHtml(c.contact_phone||'')}</span></td>
       <td><span class="badge badge-blue">${c.plan}</span><br><span style="font-size:11px;color:var(--text2)">${c.max_branches||0} фил.</span></td>
@@ -5320,7 +5320,11 @@ function closeModal(id) {
     _coordYmap.destroy(); _coordYmap = null; _coordYmarker = null;
   }
 }
-function escHtml(s)     { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// Экранирует и кавычки тоже — не только &/</> — иначе значение, вставленное в
+// атрибут вида attr="${escHtml(x)}", всё ещё можно разорвать символом " и внедрить
+// произвольный HTML-атрибут/обработчик события (см. logo_url ниже — единственное
+// место в файле, где значение шло в src="..." БЕЗ escHtml вообще).
+function escHtml(s)     { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 // Modal closes only via buttons (not backdrop click)
 
