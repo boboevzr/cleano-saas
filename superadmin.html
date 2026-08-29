@@ -523,6 +523,38 @@
             </tbody>
           </table>
         </div>
+
+        <div class="card" style="max-width:640px;margin-top:20px">
+          <div class="card-title-row">
+            <div class="card-title">⏰ Напоминания об истечении подписки</div>
+            <button class="btn btn-ghost btn-sm" id="gs_pencil_subreminder" onclick="gsUnlockCard('subreminder')" title="Редактировать">✏️</button>
+          </div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Общие настройки для ВСЕХ компаний сразу. Ежедневно в 10:00 — SMS (с отдельного платформенного Eskiz-аккаунта, не аккаунта компании) и/или сообщение в Telegram от @cleanouz_bot ответственному лицу компании (если Telegram привязан).</p>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+            <div class="field"><label>Дней ДО истечения</label><input id="gs_sr_days_before" type="number" min="0" readonly></div>
+            <div class="field"><label>Дней ПОСЛЕ истечения</label><input id="gs_sr_days_after" type="number" min="0" readonly></div>
+          </div>
+
+          <div style="display:flex;gap:20px;margin:6px 0 14px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="gs_sr_sms_enabled" disabled> 📲 SMS</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="gs_sr_tg_enabled" disabled> 🤖 Telegram</label>
+          </div>
+
+          <div class="field"><label>Текст напоминания (RU)</label><textarea id="gs_sr_text_ru" rows="2" readonly placeholder="Доступны {name}, {end_date}, {days}"></textarea></div>
+          <div class="field"><label>Текст напоминания (UZ)</label><textarea id="gs_sr_text_uz" rows="2" readonly></textarea></div>
+
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin:14px 0 6px">📲 Платформенный Eskiz-аккаунт (отдельный от компаний)</div>
+          <div class="field"><label>Email</label><input id="gs_sr_eskiz_email" type="text" readonly autocomplete="off"></div>
+          <div class="field"><label>Пароль</label><input id="gs_sr_eskiz_password" type="password" readonly autocomplete="off"></div>
+          <div class="field"><label>Отправитель (from)</label><input id="gs_sr_eskiz_from" type="text" readonly></div>
+
+          <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+            <button class="btn btn-primary btn-sm" id="gs_savebtn_subreminder" style="display:none" onclick="saveSubReminderSettings()">💾 Сохранить</button>
+            <button class="btn btn-ghost btn-sm" id="gs_cancelbtn_subreminder" style="display:none" onclick="gsCancelCard('subreminder')">Отмена</button>
+            <span id="gs_subreminder_msg" class="save-msg" style="display:none">✓ Сохранено</span>
+          </div>
+        </div>
       </div>
 
       <!-- PAGE: Template Departments -->
@@ -1894,12 +1926,22 @@ const GS_CARD_FIELDS = {
   cleano:    ['gs_cleano_phone', 'gs_cleano_tg', 'gs_cleano_ig', 'gs_cleano_fb', 'gs_cleano_wa', 'gs_cleano_lat', 'gs_cleano_lng', 'gs_cleano_addr'],
   cleanobot: ['gs_cleano_bot_token', 'gs_cleano_bot_username'],
   cleanomenu: ['gs_cleano_about_ru', 'gs_cleano_about_uz'],
+  subreminder: ['gs_sr_days_before', 'gs_sr_days_after', 'gs_sr_sms_enabled', 'gs_sr_tg_enabled',
+                'gs_sr_text_ru', 'gs_sr_text_uz', 'gs_sr_eskiz_email', 'gs_sr_eskiz_password', 'gs_sr_eskiz_from'],
 };
+
+// checkbox не поддерживает readonly (браузер игнорирует, чекбокс остаётся кликабельным) —
+// для него блокируем через disabled, для остальных полей — как раньше, через readonly.
+function _gsSetFieldLocked(el, locked) {
+  if (el.type === 'checkbox') { el.disabled = locked; }
+  else if (locked) { el.setAttribute('readonly', ''); }
+  else { el.removeAttribute('readonly'); }
+}
 
 function gsLockCard(card) {
   (GS_CARD_FIELDS[card] || []).forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.setAttribute('readonly', '');
+    if (el) _gsSetFieldLocked(el, true);
   });
   const pencil = document.getElementById('gs_pencil_' + card);
   const save   = document.getElementById('gs_savebtn_' + card);
@@ -1917,7 +1959,10 @@ function gsUnlockCard(card) {
   const ids = GS_CARD_FIELDS[card] || [];
   ids.forEach(id => {
     const el = document.getElementById(id);
-    if (el) { el.dataset.orig = el.value; el.removeAttribute('readonly'); }
+    if (el) {
+      el.dataset.orig = el.type === 'checkbox' ? el.checked : el.value;
+      _gsSetFieldLocked(el, false);
+    }
   });
   const pencil = document.getElementById('gs_pencil_' + card);
   const save   = document.getElementById('gs_savebtn_' + card);
@@ -1936,7 +1981,10 @@ function gsUnlockCard(card) {
 function gsCancelCard(card) {
   (GS_CARD_FIELDS[card] || []).forEach(id => {
     const el = document.getElementById(id);
-    if (el && el.dataset.orig !== undefined) el.value = el.dataset.orig;
+    if (el && el.dataset.orig !== undefined) {
+      if (el.type === 'checkbox') el.checked = (el.dataset.orig === 'true');
+      else el.value = el.dataset.orig;
+    }
   });
   gsLockCard(card);
 }
@@ -3375,6 +3423,45 @@ async function loadPlans() {
   } catch(e) {
     document.getElementById('plansBody').innerHTML = `<tr><td colspan="6" class="empty" style="color:var(--red)">${e.message}</td></tr>`;
   }
+  loadSubReminderSettings();
+}
+
+async function loadSubReminderSettings() {
+  try {
+    const d = await api('/saas/global-settings');
+    const s = d.settings || {};
+    document.getElementById('gs_sr_days_before').value = s.subscription_reminder_days_before || '5';
+    document.getElementById('gs_sr_days_after').value  = s.subscription_reminder_days_after  || '5';
+    document.getElementById('gs_sr_sms_enabled').checked = s.subscription_reminder_sms_enabled !== 'false';
+    document.getElementById('gs_sr_tg_enabled').checked  = s.subscription_reminder_tg_enabled  !== 'false';
+    document.getElementById('gs_sr_text_ru').value = s.subscription_reminder_text_ru || '';
+    document.getElementById('gs_sr_text_uz').value = s.subscription_reminder_text_uz || '';
+    document.getElementById('gs_sr_eskiz_email').value    = s.platform_eskiz_email    || '';
+    document.getElementById('gs_sr_eskiz_password').value = s.platform_eskiz_password || '';
+    document.getElementById('gs_sr_eskiz_from').value     = s.platform_eskiz_from     || '';
+    gsLockCard('subreminder');
+  } catch(e) {}
+}
+
+async function saveSubReminderSettings() {
+  const msg = document.getElementById('gs_subreminder_msg');
+  msg.style.display = 'none';
+  try {
+    await api('/saas/global-settings', 'PUT', {
+      subscription_reminder_days_before: document.getElementById('gs_sr_days_before').value.trim() || '5',
+      subscription_reminder_days_after:  document.getElementById('gs_sr_days_after').value.trim()  || '5',
+      subscription_reminder_sms_enabled: document.getElementById('gs_sr_sms_enabled').checked ? 'true' : 'false',
+      subscription_reminder_tg_enabled:  document.getElementById('gs_sr_tg_enabled').checked  ? 'true' : 'false',
+      subscription_reminder_text_ru: document.getElementById('gs_sr_text_ru').value.trim(),
+      subscription_reminder_text_uz: document.getElementById('gs_sr_text_uz').value.trim(),
+      platform_eskiz_email:    document.getElementById('gs_sr_eskiz_email').value.trim(),
+      platform_eskiz_password: document.getElementById('gs_sr_eskiz_password').value.trim(),
+      platform_eskiz_from:     document.getElementById('gs_sr_eskiz_from').value.trim(),
+    });
+    msg.style.display = '';
+    setTimeout(() => msg.style.display = 'none', 3000);
+    gsLockCard('subreminder');
+  } catch(e) { alert(e.message); }
 }
 
 const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
