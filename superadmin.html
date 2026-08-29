@@ -1236,29 +1236,6 @@
 </div>
 
 <!-- MODAL: Edit company -->
-<!-- MODAL: Manual subscription edit -->
-<div class="modal-bg" id="modalSubEdit">
-  <div class="modal" style="width:380px">
-    <h3>✏️ Изменить подписку</h3>
-    <div class="field"><label>Дата окончания</label><input type="date" id="tpe_end"></div>
-    <div class="field"><label>Статус</label>
-      <select id="tpe_status">
-        <option value="trial">🎁 Тест</option>
-        <option value="active">● Активна</option>
-        <option value="expired">Истекла</option>
-        <option value="cancelled">Отменена</option>
-      </select>
-    </div>
-    <div class="field"><label>Баланс (сум)</label><input type="number" id="tpe_balance"></div>
-    <div class="field"><label>Примечание</label><input type="text" id="tpe_notes"></div>
-    <div class="modal-err" id="tpeErr"></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modalSubEdit')">Отмена</button>
-      <button class="btn btn-primary" onclick="saveSubEdit()">💾 Сохранить</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal-bg" id="modalEditCompany">
   <div class="modal" style="width:640px;max-height:90vh;overflow-y:auto">
     <h3>✏️ <span id="ecTitle">Редактировать компанию</span></h3>
@@ -1494,6 +1471,32 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('modalEditCompany')">Закрыть</button>
       <button class="btn btn-primary" id="ecSaveBtn" onclick="saveEditCompany()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Manual subscription edit — ПОСЛЕ modalEditCompany в разметке специально:
+     открывается кнопкой ✏️ ИЗНУТРИ этой модалки, обе .modal-bg делят один z-index (100),
+     при равном z-index позже объявленный в DOM элемент рисуется поверх — иначе новая
+     модалка пряталась бы за уже открытой "Редактировать компанию". -->
+<div class="modal-bg" id="modalSubEdit">
+  <div class="modal" style="width:380px">
+    <h3>✏️ Изменить подписку</h3>
+    <div class="field"><label>Дата окончания</label><input type="date" id="tpe_end"></div>
+    <div class="field"><label>Статус</label>
+      <select id="tpe_status">
+        <option value="trial">🎁 Тест</option>
+        <option value="active">● Активна</option>
+        <option value="expired">Истекла</option>
+        <option value="cancelled">Отменена</option>
+      </select>
+    </div>
+    <div class="field"><label>Баланс (сум)</label><input type="number" id="tpe_balance"></div>
+    <div class="field"><label>Примечание</label><input type="text" id="tpe_notes"></div>
+    <div class="modal-err" id="tpeErr"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modalSubEdit')">Отмена</button>
+      <button class="btn btn-primary" onclick="saveSubEdit()">💾 Сохранить</button>
     </div>
   </div>
 </div>
