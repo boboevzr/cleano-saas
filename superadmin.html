@@ -3439,28 +3439,22 @@ async function loadPlans() {
   loadSubReminderSettings();
 }
 
-// Готовые короткие варианты текста — SMS через Eskiz тарифицируется по сегментам
-// (~70 символов на кириллический сегмент), длинный текст дороже и может обрезаться.
-// Не сохраняются автоматически — просто подставляют текст в поле, дальше как обычно 💾.
-const GS_SR_TEMPLATES_RU = [
-  'Cleano: подписка «{name}» истекает {end_date}. Оплатите тариф в личном кабинете.',
-  'Cleano: у «{name}» осталось {days} дн. до окончания подписки. Продлите доступ.',
-];
-const GS_SR_TEMPLATES_UZ = [
-  "Cleano: «{name}» obunasi {end_date} da tugaydi. Shaxsiy kabinetda tarifni to'lang.",
-  "Cleano: «{name}» uchun {days} kun qoldi. Kirishni davom ettirish uchun to'lang.",
-];
+// Текст по умолчанию — та же формулировка, что и бэкенд-фолбэк в main.py
+// (_SUB_REMINDER_TEXT_RU/UZ_DEFAULT), на случай если поле ещё не заполнено суперадмином.
+// RU — кириллицей, UZ — латиницей (как реально пишут шаблоны для Eskiz в Узбекистане).
+// Без ограничения по длине под SMS-сегмент — по просьбе пользователя, важнее ясность текста.
+const GS_SR_TEXT_RU_DEFAULT = 'Cleano: до окончания тарифа компании «{name}» осталось {days} дн. (истекает {end_date}). Просим произвести оплату, чтобы сохранить доступ к сайту и боту.';
+const GS_SR_TEXT_UZ_DEFAULT = "Cleano: «{name}» kompaniyasining tarif muddati {days} kun ichida tugaydi (tugash sanasi: {end_date}). Sayt va botga kirishni saqlab qolish uchun to'lovni amalga oshirishingizni so'raymiz.";
 
-function _gsSrRenderTemplates() {
-  const mk = (list, targetId) => list.map((tpl, i) =>
-    `<button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('${targetId}').value=${JSON.stringify(tpl)}" title="${escHtml(tpl)}">Шаблон ${i+1}</button>`
-  ).join('');
-  document.getElementById('gs_sr_tpl_ru').innerHTML = mk(GS_SR_TEMPLATES_RU, 'gs_sr_text_ru');
-  document.getElementById('gs_sr_tpl_uz').innerHTML = mk(GS_SR_TEMPLATES_UZ, 'gs_sr_text_uz');
+function _gsSrInsertDefault(fieldId, text) {
+  document.getElementById(fieldId).value = text;
 }
 
 async function loadSubReminderSettings() {
-  _gsSrRenderTemplates();
+  document.getElementById('gs_sr_tpl_ru').innerHTML =
+    `<button type="button" class="btn btn-ghost btn-sm" onclick="_gsSrInsertDefault('gs_sr_text_ru', GS_SR_TEXT_RU_DEFAULT)">↺ Вставить пример текста</button>`;
+  document.getElementById('gs_sr_tpl_uz').innerHTML =
+    `<button type="button" class="btn btn-ghost btn-sm" onclick="_gsSrInsertDefault('gs_sr_text_uz', GS_SR_TEXT_UZ_DEFAULT)">↺ Вставить пример текста</button>`;
   try {
     const d = await api('/saas/global-settings');
     const s = d.settings || {};
@@ -3469,8 +3463,8 @@ async function loadSubReminderSettings() {
     document.getElementById('gs_sr_time').value = s.subscription_reminder_time || '10:00';
     document.getElementById('gs_sr_sms_enabled').checked = s.subscription_reminder_sms_enabled !== 'false';
     document.getElementById('gs_sr_tg_enabled').checked  = s.subscription_reminder_tg_enabled  !== 'false';
-    document.getElementById('gs_sr_text_ru').value = s.subscription_reminder_text_ru || '';
-    document.getElementById('gs_sr_text_uz').value = s.subscription_reminder_text_uz || '';
+    document.getElementById('gs_sr_text_ru').value = s.subscription_reminder_text_ru || GS_SR_TEXT_RU_DEFAULT;
+    document.getElementById('gs_sr_text_uz').value = s.subscription_reminder_text_uz || GS_SR_TEXT_UZ_DEFAULT;
     document.getElementById('gs_sr_eskiz_email').value    = s.platform_eskiz_email    || '';
     document.getElementById('gs_sr_eskiz_password').value = s.platform_eskiz_password || '';
     document.getElementById('gs_sr_eskiz_from').value     = s.platform_eskiz_from     || '';
