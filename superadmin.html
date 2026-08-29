@@ -303,11 +303,11 @@
           <table>
             <thead>
               <tr>
-                <th>ID</th><th>Название</th><th>Slug</th><th>Отв. лицо</th><th>План</th><th>Статус</th><th>Создан</th><th>Действия</th>
+                <th>ID</th><th>Название</th><th>Slug</th><th>Отв. лицо</th><th>План</th><th>Тариф до</th><th>Статус</th><th>Создан</th><th>Действия</th>
               </tr>
             </thead>
             <tbody id="companiesBody">
-              <tr><td colspan="8" class="empty">Загрузка…</td></tr>
+              <tr><td colspan="9" class="empty">Загрузка…</td></tr>
             </tbody>
           </table>
         </div>
@@ -2653,11 +2653,31 @@ async function loadCompanies() {
     renderCompanies(d.companies || []);
   } catch(e) {
     document.getElementById('companiesBody').innerHTML =
-      `<tr><td colspan="6" class="empty" style="color:var(--red)">${e.message}</td></tr>`;
+      `<tr><td colspan="9" class="empty" style="color:var(--red)">${e.message}</td></tr>`;
   }
 }
 
 let _companiesCache = [];
+
+// Показывает дату окончания тарифа компании в списке — чтобы видеть, у кого истёк
+// или истекает, не заходя в карточку каждой компании отдельно.
+function _companyTariffBadge(c) {
+  if (c.id === 1) return '<span style="color:var(--text2);font-size:12px">—</span>'; // ARTEZ, вне подписочной логики
+  if (!c.sub_end_date) return '<span style="color:var(--text2);font-size:12px">нет подписки</span>';
+  const end = new Date(c.sub_end_date);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const daysLeft = Math.round((end - today) / 86400000);
+  const dateStr = end.toLocaleDateString('ru-RU');
+  const STATUS_LABEL = {trial:'🎁 тест', active:'', expired:'', cancelled:'отменена'};
+  const label = STATUS_LABEL[c.sub_status] ?? '';
+  if (daysLeft < 0) {
+    return `<span class="badge badge-red">${dateStr}</span><br><span style="font-size:11px;color:var(--red)">истёк ${Math.abs(daysLeft)} дн. назад</span>`;
+  }
+  if (daysLeft <= 5) {
+    return `<span class="badge" style="background:#fef3c7;color:#92400e">${dateStr}</span><br><span style="font-size:11px;color:#92400e">осталось ${daysLeft} дн.</span>`;
+  }
+  return `<span style="font-size:13px">${dateStr}</span>${label ? `<br><span style="font-size:11px;color:var(--text2)">${label}</span>` : ''}`;
+}
 
 function renderCompanies(list) {
   _companiesCache = list;
@@ -2679,7 +2699,7 @@ function renderCompanies(list) {
   ].join('');
 
   const tb = document.getElementById('companiesBody');
-  if (!list.length) { tb.innerHTML = '<tr><td colspan="8" class="empty">Нет компаний</td></tr>'; return; }
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="9" class="empty">Нет компаний</td></tr>'; return; }
   tb.innerHTML = list.map(c => {
     const createdAt = c.created_at ? new Date(c.created_at).toLocaleDateString('ru-RU') : '—';
     return `
@@ -2689,6 +2709,7 @@ function renderCompanies(list) {
       <td class="mono">${escHtml(c.slug)}</td>
       <td style="font-size:12px;color:var(--text2)">${escHtml(c.contact_name||'—')}<br><span style="font-size:11px">${escHtml(c.contact_phone||'')}</span></td>
       <td><span class="badge badge-blue">${c.plan}</span><br><span style="font-size:11px;color:var(--text2)">${c.max_branches||0} фил.</span></td>
+      <td>${_companyTariffBadge(c)}</td>
       <td>${c.archived_at
         ? '<span class="badge" style="background:var(--surface2);color:var(--text2)">🗄 Архивирована</span>'
         : (c.active !== false
