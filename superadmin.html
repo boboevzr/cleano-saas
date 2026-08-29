@@ -529,11 +529,12 @@
             <div class="card-title">⏰ Напоминания об истечении подписки</div>
             <button class="btn btn-ghost btn-sm" id="gs_pencil_subreminder" onclick="gsUnlockCard('subreminder')" title="Редактировать">✏️</button>
           </div>
-          <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Общие настройки для ВСЕХ компаний сразу. Ежедневно в 10:00 — SMS (с отдельного платформенного Eskiz-аккаунта, не аккаунта компании) и/или сообщение в Telegram от @cleanouz_bot ответственному лицу компании (если Telegram привязан).</p>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Общие настройки для ВСЕХ компаний сразу. SMS (с отдельного платформенного Eskiz-аккаунта, не аккаунта компании) и/или сообщение в Telegram от @cleanouz_bot ответственному лицу компании (если Telegram привязан).</p>
 
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 16px">
             <div class="field"><label>Дней ДО истечения</label><input id="gs_sr_days_before" type="number" min="0" readonly></div>
             <div class="field"><label>Дней ПОСЛЕ истечения</label><input id="gs_sr_days_after" type="number" min="0" readonly></div>
+            <div class="field"><label>Время отправки</label><input id="gs_sr_time" type="time" readonly></div>
           </div>
 
           <div style="display:flex;gap:20px;margin:6px 0 14px">
@@ -541,13 +542,25 @@
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="gs_sr_tg_enabled" disabled> 🤖 Telegram</label>
           </div>
 
-          <div class="field"><label>Текст напоминания (RU)</label><textarea id="gs_sr_text_ru" rows="2" readonly placeholder="Доступны {name}, {end_date}, {days}"></textarea></div>
-          <div class="field"><label>Текст напоминания (UZ)</label><textarea id="gs_sr_text_uz" rows="2" readonly></textarea></div>
+          <div class="field">
+            <label>Текст напоминания (RU)</label>
+            <textarea id="gs_sr_text_ru" rows="3" readonly placeholder="Доступны {name}, {end_date}, {days}" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px" id="gs_sr_tpl_ru"></div>
+          </div>
+          <div class="field" style="margin-top:12px">
+            <label>Текст напоминания (UZ)</label>
+            <textarea id="gs_sr_text_uz" rows="3" readonly style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px" id="gs_sr_tpl_uz"></div>
+          </div>
 
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin:14px 0 6px">📲 Платформенный Eskiz-аккаунт (отдельный от компаний)</div>
           <div class="field"><label>Email</label><input id="gs_sr_eskiz_email" type="text" readonly autocomplete="off"></div>
           <div class="field"><label>Пароль</label><input id="gs_sr_eskiz_password" type="password" readonly autocomplete="off"></div>
           <div class="field"><label>Отправитель (from)</label><input id="gs_sr_eskiz_from" type="text" readonly></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+            <button class="btn btn-ghost btn-sm" onclick="checkPlatformEskizBalance()">💰 Проверить баланс</button>
+            <span id="gs_sr_eskiz_balance" style="font-size:13px;color:var(--text2)"></span>
+          </div>
 
           <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
             <button class="btn btn-primary btn-sm" id="gs_savebtn_subreminder" style="display:none" onclick="saveSubReminderSettings()">💾 Сохранить</button>
@@ -1926,7 +1939,7 @@ const GS_CARD_FIELDS = {
   cleano:    ['gs_cleano_phone', 'gs_cleano_tg', 'gs_cleano_ig', 'gs_cleano_fb', 'gs_cleano_wa', 'gs_cleano_lat', 'gs_cleano_lng', 'gs_cleano_addr'],
   cleanobot: ['gs_cleano_bot_token', 'gs_cleano_bot_username'],
   cleanomenu: ['gs_cleano_about_ru', 'gs_cleano_about_uz'],
-  subreminder: ['gs_sr_days_before', 'gs_sr_days_after', 'gs_sr_sms_enabled', 'gs_sr_tg_enabled',
+  subreminder: ['gs_sr_days_before', 'gs_sr_days_after', 'gs_sr_time', 'gs_sr_sms_enabled', 'gs_sr_tg_enabled',
                 'gs_sr_text_ru', 'gs_sr_text_uz', 'gs_sr_eskiz_email', 'gs_sr_eskiz_password', 'gs_sr_eskiz_from'],
 };
 
@@ -3426,12 +3439,34 @@ async function loadPlans() {
   loadSubReminderSettings();
 }
 
+// Готовые короткие варианты текста — SMS через Eskiz тарифицируется по сегментам
+// (~70 символов на кириллический сегмент), длинный текст дороже и может обрезаться.
+// Не сохраняются автоматически — просто подставляют текст в поле, дальше как обычно 💾.
+const GS_SR_TEMPLATES_RU = [
+  'Cleano: подписка «{name}» истекает {end_date}. Оплатите тариф в личном кабинете.',
+  'Cleano: у «{name}» осталось {days} дн. до окончания подписки. Продлите доступ.',
+];
+const GS_SR_TEMPLATES_UZ = [
+  "Cleano: «{name}» obunasi {end_date} da tugaydi. Shaxsiy kabinetda tarifni to'lang.",
+  "Cleano: «{name}» uchun {days} kun qoldi. Kirishni davom ettirish uchun to'lang.",
+];
+
+function _gsSrRenderTemplates() {
+  const mk = (list, targetId) => list.map((tpl, i) =>
+    `<button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('${targetId}').value=${JSON.stringify(tpl)}" title="${escHtml(tpl)}">Шаблон ${i+1}</button>`
+  ).join('');
+  document.getElementById('gs_sr_tpl_ru').innerHTML = mk(GS_SR_TEMPLATES_RU, 'gs_sr_text_ru');
+  document.getElementById('gs_sr_tpl_uz').innerHTML = mk(GS_SR_TEMPLATES_UZ, 'gs_sr_text_uz');
+}
+
 async function loadSubReminderSettings() {
+  _gsSrRenderTemplates();
   try {
     const d = await api('/saas/global-settings');
     const s = d.settings || {};
     document.getElementById('gs_sr_days_before').value = s.subscription_reminder_days_before || '5';
     document.getElementById('gs_sr_days_after').value  = s.subscription_reminder_days_after  || '5';
+    document.getElementById('gs_sr_time').value = s.subscription_reminder_time || '10:00';
     document.getElementById('gs_sr_sms_enabled').checked = s.subscription_reminder_sms_enabled !== 'false';
     document.getElementById('gs_sr_tg_enabled').checked  = s.subscription_reminder_tg_enabled  !== 'false';
     document.getElementById('gs_sr_text_ru').value = s.subscription_reminder_text_ru || '';
@@ -3450,6 +3485,7 @@ async function saveSubReminderSettings() {
     await api('/saas/global-settings', 'PUT', {
       subscription_reminder_days_before: document.getElementById('gs_sr_days_before').value.trim() || '5',
       subscription_reminder_days_after:  document.getElementById('gs_sr_days_after').value.trim()  || '5',
+      subscription_reminder_time: document.getElementById('gs_sr_time').value || '10:00',
       subscription_reminder_sms_enabled: document.getElementById('gs_sr_sms_enabled').checked ? 'true' : 'false',
       subscription_reminder_tg_enabled:  document.getElementById('gs_sr_tg_enabled').checked  ? 'true' : 'false',
       subscription_reminder_text_ru: document.getElementById('gs_sr_text_ru').value.trim(),
@@ -3462,6 +3498,17 @@ async function saveSubReminderSettings() {
     setTimeout(() => msg.style.display = 'none', 3000);
     gsLockCard('subreminder');
   } catch(e) { alert(e.message); }
+}
+
+async function checkPlatformEskizBalance() {
+  const el = document.getElementById('gs_sr_eskiz_balance');
+  el.textContent = '…';
+  try {
+    const d = await api('/saas/platform-eskiz-balance');
+    el.textContent = d.balance !== null && d.balance !== undefined
+      ? `Баланс: ${Number(d.balance).toLocaleString('ru-RU')} SMS`
+      : 'Не удалось получить баланс — проверьте email/пароль';
+  } catch(e) { el.textContent = 'Ошибка: ' + e.message; }
 }
 
 const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
