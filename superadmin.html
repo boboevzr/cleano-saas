@@ -542,6 +542,7 @@
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="gs_sr_tg_enabled" disabled> 🤖 Telegram</label>
           </div>
 
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin:4px 0 6px">⏳ До истечения (доступны {name}, {end_date}, {days})</div>
           <div class="field">
             <label>Текст напоминания (RU)</label>
             <textarea id="gs_sr_text_ru" rows="3" readonly placeholder="Доступны {name}, {end_date}, {days}" oninput="_gsSrUpdatePreview('ru')" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
@@ -565,6 +566,34 @@
               <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
                 <span id="gs_sr_len_uz" style="font-size:11px;color:var(--text2)"></span>
                 <button type="button" class="btn btn-ghost btn-sm" onclick="_gsSrCopyPreview('uz')">📋 Копировать</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin:18px 0 6px">🔒 После истечения — тариф уже просрочен (доступны {name}, {end_date}, {days}, {days_to_close})</div>
+          <div class="field">
+            <label>Текст напоминания (RU)</label>
+            <textarea id="gs_sr_text_expired_ru" rows="3" readonly oninput="_gsSrUpdatePreview('expired_ru')" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px" id="gs_sr_tpl_expired_ru"></div>
+            <div style="margin-top:8px;padding:10px 12px;background:var(--bg);border:1px dashed var(--border);border-radius:8px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin-bottom:4px">👁 Так придёт реальная SMS (пример) — для заявки на одобрение в Eskiz</div>
+              <div id="gs_sr_preview_expired_ru" style="font-size:14px;white-space:pre-wrap"></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+                <span id="gs_sr_len_expired_ru" style="font-size:11px;color:var(--text2)"></span>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="_gsSrCopyPreview('expired_ru')">📋 Копировать</button>
+              </div>
+            </div>
+          </div>
+          <div class="field" style="margin-top:12px">
+            <label>Текст напоминания (UZ)</label>
+            <textarea id="gs_sr_text_expired_uz" rows="3" readonly oninput="_gsSrUpdatePreview('expired_uz')" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px" id="gs_sr_tpl_expired_uz"></div>
+            <div style="margin-top:8px;padding:10px 12px;background:var(--bg);border:1px dashed var(--border);border-radius:8px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin-bottom:4px">👁 Так придёт реальная SMS (пример) — для заявки на одобрение в Eskiz</div>
+              <div id="gs_sr_preview_expired_uz" style="font-size:14px;white-space:pre-wrap"></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+                <span id="gs_sr_len_expired_uz" style="font-size:11px;color:var(--text2)"></span>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="_gsSrCopyPreview('expired_uz')">📋 Копировать</button>
               </div>
             </div>
           </div>
@@ -1956,7 +1985,8 @@ const GS_CARD_FIELDS = {
   cleanobot: ['gs_cleano_bot_token', 'gs_cleano_bot_username'],
   cleanomenu: ['gs_cleano_about_ru', 'gs_cleano_about_uz'],
   subreminder: ['gs_sr_days_before', 'gs_sr_days_after', 'gs_sr_time', 'gs_sr_sms_enabled', 'gs_sr_tg_enabled',
-                'gs_sr_text_ru', 'gs_sr_text_uz', 'gs_sr_eskiz_email', 'gs_sr_eskiz_password', 'gs_sr_eskiz_from'],
+                'gs_sr_text_ru', 'gs_sr_text_uz', 'gs_sr_text_expired_ru', 'gs_sr_text_expired_uz',
+                'gs_sr_eskiz_email', 'gs_sr_eskiz_password', 'gs_sr_eskiz_from'],
 };
 
 // checkbox не поддерживает readonly (браузер игнорирует, чекбокс остаётся кликабельным) —
@@ -3482,22 +3512,35 @@ async function loadPlans() {
 // Без ограничения по длине под SMS-сегмент — по просьбе пользователя, важнее ясность текста.
 const GS_SR_TEXT_RU_DEFAULT = 'Cleano: до окончания тарифа компании «{name}» осталось {days} дн. (истекает {end_date}). Просим произвести оплату, чтобы сохранить доступ к сайту и боту.';
 const GS_SR_TEXT_UZ_DEFAULT = "Cleano: «{name}» kompaniyasining tarif muddati {days} kun ichida tugaydi (tugash sanasi: {end_date}). Sayt va botga kirishni saqlab qolish uchun to'lovni amalga oshirishingizni so'raymiz.";
+// Отдельный текст для УЖЕ просроченных — не "осталось N дней", а обратный отсчёт
+// до полного закрытия доступа ({days_to_close} = дней до конца грейс-периода).
+const GS_SR_TEXT_EXPIRED_RU_DEFAULT = 'Cleano: тариф компании «{name}» истёк {days} дн. назад ({end_date}). Через {days_to_close} дн. доступ к сайту и боту будет полностью закрыт. Пожалуйста, произведите оплату как можно скорее.';
+const GS_SR_TEXT_EXPIRED_UZ_DEFAULT = "Cleano: «{name}» kompaniyasining tarifi {days} kun oldin tugadi ({end_date}). {days_to_close} kundan so'ng sayt va botga kirish to'liq yopiladi. Iltimos, imkon qadar tezroq to'lovni amalga oshiring.";
 
-function _gsSrInsertDefault(fieldId, text) {
-  document.getElementById(fieldId).value = text;
-  _gsSrUpdatePreview(fieldId.endsWith('_uz') ? 'uz' : 'ru');
+const GS_SR_LANGS = {
+  ru: {field: 'gs_sr_text_ru', tpl: 'gs_sr_tpl_ru', def: () => GS_SR_TEXT_RU_DEFAULT},
+  uz: {field: 'gs_sr_text_uz', tpl: 'gs_sr_tpl_uz', def: () => GS_SR_TEXT_UZ_DEFAULT},
+  expired_ru: {field: 'gs_sr_text_expired_ru', tpl: 'gs_sr_tpl_expired_ru', def: () => GS_SR_TEXT_EXPIRED_RU_DEFAULT},
+  expired_uz: {field: 'gs_sr_text_expired_uz', tpl: 'gs_sr_tpl_expired_uz', def: () => GS_SR_TEXT_EXPIRED_UZ_DEFAULT},
+};
+
+function _gsSrInsertDefault(lang) {
+  document.getElementById(GS_SR_LANGS[lang].field).value = GS_SR_LANGS[lang].def();
+  _gsSrUpdatePreview(lang);
 }
 
-// Пример для предпросмотра — реалистичные значения вместо {name}/{end_date}/{days},
-// чтобы получившийся текст можно было скопировать и отправить в Eskiz как есть,
-// на одобрение шаблона (Eskiz модерирует ИМЕННО такой, с подставленными данными, текст).
+// Пример для предпросмотра — реалистичные значения вместо {name}/{end_date}/{days}/
+// {days_to_close}, чтобы получившийся текст можно было скопировать и отправить в
+// Eskiz как есть, на одобрение шаблона (Eskiz модерирует ИМЕННО такой, с
+// подставленными данными, текст).
 function _gsSrUpdatePreview(lang) {
-  const raw = document.getElementById('gs_sr_text_' + lang).value;
+  const raw = document.getElementById(GS_SR_LANGS[lang].field).value;
   const d = new Date(); d.setDate(d.getDate() + 5);
   const sample = raw
     .replaceAll('{name}', 'TOZA GILAM')
     .replaceAll('{end_date}', d.toLocaleDateString('ru-RU'))
-    .replaceAll('{days}', '5');
+    .replaceAll('{days}', '5')
+    .replaceAll('{days_to_close}', '3');
   document.getElementById('gs_sr_preview_' + lang).textContent = sample || '—';
   document.getElementById('gs_sr_len_' + lang).textContent = sample ? `${sample.length} символов` : '';
 }
@@ -3509,10 +3552,10 @@ function _gsSrCopyPreview(lang) {
 }
 
 async function loadSubReminderSettings() {
-  document.getElementById('gs_sr_tpl_ru').innerHTML =
-    `<button type="button" class="btn btn-ghost btn-sm" onclick="_gsSrInsertDefault('gs_sr_text_ru', GS_SR_TEXT_RU_DEFAULT)">↺ Вставить пример текста</button>`;
-  document.getElementById('gs_sr_tpl_uz').innerHTML =
-    `<button type="button" class="btn btn-ghost btn-sm" onclick="_gsSrInsertDefault('gs_sr_text_uz', GS_SR_TEXT_UZ_DEFAULT)">↺ Вставить пример текста</button>`;
+  Object.keys(GS_SR_LANGS).forEach(lang => {
+    document.getElementById(GS_SR_LANGS[lang].tpl).innerHTML =
+      `<button type="button" class="btn btn-ghost btn-sm" onclick="_gsSrInsertDefault('${lang}')">↺ Вставить пример текста</button>`;
+  });
   try {
     const d = await api('/saas/global-settings');
     const s = d.settings || {};
@@ -3523,8 +3566,9 @@ async function loadSubReminderSettings() {
     document.getElementById('gs_sr_tg_enabled').checked  = s.subscription_reminder_tg_enabled  !== 'false';
     document.getElementById('gs_sr_text_ru').value = s.subscription_reminder_text_ru || GS_SR_TEXT_RU_DEFAULT;
     document.getElementById('gs_sr_text_uz').value = s.subscription_reminder_text_uz || GS_SR_TEXT_UZ_DEFAULT;
-    _gsSrUpdatePreview('ru');
-    _gsSrUpdatePreview('uz');
+    document.getElementById('gs_sr_text_expired_ru').value = s.subscription_reminder_text_expired_ru || GS_SR_TEXT_EXPIRED_RU_DEFAULT;
+    document.getElementById('gs_sr_text_expired_uz').value = s.subscription_reminder_text_expired_uz || GS_SR_TEXT_EXPIRED_UZ_DEFAULT;
+    Object.keys(GS_SR_LANGS).forEach(_gsSrUpdatePreview);
     document.getElementById('gs_sr_eskiz_email').value    = s.platform_eskiz_email    || '';
     document.getElementById('gs_sr_eskiz_password').value = s.platform_eskiz_password || '';
     document.getElementById('gs_sr_eskiz_from').value     = s.platform_eskiz_from     || '';
@@ -3544,6 +3588,8 @@ async function saveSubReminderSettings() {
       subscription_reminder_tg_enabled:  document.getElementById('gs_sr_tg_enabled').checked  ? 'true' : 'false',
       subscription_reminder_text_ru: document.getElementById('gs_sr_text_ru').value.trim(),
       subscription_reminder_text_uz: document.getElementById('gs_sr_text_uz').value.trim(),
+      subscription_reminder_text_expired_ru: document.getElementById('gs_sr_text_expired_ru').value.trim(),
+      subscription_reminder_text_expired_uz: document.getElementById('gs_sr_text_expired_uz').value.trim(),
       platform_eskiz_email:    document.getElementById('gs_sr_eskiz_email').value.trim(),
       platform_eskiz_password: document.getElementById('gs_sr_eskiz_password').value.trim(),
       platform_eskiz_from:     document.getElementById('gs_sr_eskiz_from').value.trim(),
