@@ -3913,6 +3913,16 @@
         <h3 style="margin:0 0 12px;font-size:15px;font-weight:700" data-i18n="tariff.available">Доступные тарифы</h3>
         <div id="tariffPlansGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:20px"></div>
 
+        <div class="card" style="margin-bottom:20px">
+          <div class="cfg-title-row">
+            <h3 class="cfg-title" data-i18n="tariff.history">📜 История</h3>
+          </div>
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin:4px 0 6px" data-i18n="tariff.history.subs">Подписки</div>
+          <div id="tariffSubHistory" style="color:var(--text2);font-size:13px" data-i18n="lbl.loading">Загрузка…</div>
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin:16px 0 6px" data-i18n="tariff.history.payments">Оплаты</div>
+          <div id="tariffPayHistory" style="color:var(--text2);font-size:13px" data-i18n="lbl.loading">Загрузка…</div>
+        </div>
+
         <div class="card">
           <div class="cfg-title-row">
             <h3 class="cfg-title" data-i18n="tariff.support">💬 Поддержка</h3>
@@ -6573,6 +6583,8 @@ const _adminI18n = {
     'tariff.current':'Текущий тариф','tariff.until':'до','tariff.branches.up.to':'филиалов до',
     'tariff.staff.up.to':'сотрудников до','tariff.no.sub':'Активной подписки не найдено — выберите тариф ниже.',
     'tariff.err.load':'Ошибка загрузки тарифа',
+    'tariff.history':'📜 История','tariff.history.subs':'Подписки','tariff.history.payments':'Оплаты',
+    'tariff.history.empty':'Пока пусто',
     'tariff.branches.word':'филиал(ов)','tariff.staff.word':'сотрудников','tariff.per.month':'/мес',
     'tariff.current.plan':'Текущий тариф','tariff.choose':'Выбрать','tariff.none.found':'Тарифы не найдены',
     'tariff.modal.title':'Тариф','tariff.applied':'Тариф применён (тестовый режим)',
@@ -7324,6 +7336,8 @@ const _adminI18n = {
     'tariff.current':'Joriy tarif','tariff.until':'muddati','tariff.branches.up.to':'filiallar',
     'tariff.staff.up.to':'xodimlar', 'tariff.no.sub':"Faol obuna topilmadi — quyidan tarif tanlang.",
     'tariff.err.load':'Tarifni yuklashda xatolik',
+    'tariff.history':'📜 Tarix','tariff.history.subs':'Obunalar','tariff.history.payments':'Toʻlovlar',
+    'tariff.history.empty':'Hozircha boʻsh',
     'tariff.branches.word':'filial','tariff.staff.word':'xodim','tariff.per.month':'/oy',
     'tariff.current.plan':'Joriy tarif','tariff.choose':'Tanlash','tariff.none.found':'Tariflar topilmadi',
     'tariff.modal.title':'Tarif','tariff.applied':"Tarif qo'llanildi (test rejimi)",
@@ -8845,6 +8859,34 @@ async function loadTariffPage() {
   } catch(e) {
     if (curEl) curEl.textContent = _t('tariff.err.load');
   }
+  loadTariffHistory();
+}
+
+async function loadTariffHistory() {
+  const subEl = document.getElementById('tariffSubHistory');
+  const payEl = document.getElementById('tariffPayHistory');
+  const STATUS = {active:'● Активна', trial:'🎁 Тест', expired:'Истекла', cancelled:'Отменена'};
+  try {
+    const d = await apiGet('/company/subscriptions');
+    const subs = (d?.ok && d.subscriptions) || [];
+    subEl.innerHTML = subs.length
+      ? subs.map(s => `<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="font-weight:700;min-width:100px">${_esc(s.plan_name||'—')}</span>
+          <span style="flex:1">${_esc(s.start_date)} → ${_esc(s.end_date)}</span>
+          <span style="font-weight:700">${STATUS[s.status]||_esc(s.status)}</span>
+        </div>`).join('')
+      : _t('tariff.history.empty');
+  } catch(e) { subEl.textContent = _t('tariff.err.load'); }
+  try {
+    const d = await apiGet('/company/payments');
+    const pays = (d?.ok && d.payments) || [];
+    payEl.innerHTML = pays.length
+      ? pays.map(p => `<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="flex:1">${_esc(p.payment_date)}</span>
+          <span style="font-weight:700">${Number(p.amount).toLocaleString('ru-RU')} сум</span>
+        </div>`).join('')
+      : _t('tariff.history.empty');
+  } catch(e) { payEl.textContent = _t('tariff.err.load'); }
 }
 
 function renderTariffPlans(plans, currentSub) {
