@@ -521,10 +521,18 @@
         </div>
 
         <div class="card" style="max-width:640px">
-          <div class="card-title">📲 Платформенный Eskiz-аккаунт (отдельный от компаний)</div>
+          <div class="card-title-row">
+            <div class="card-title">📲 Платформенный Eskiz-аккаунт (отдельный от компаний)</div>
+            <button class="btn btn-ghost btn-sm" id="gs_pencil_subreminder_eskiz" onclick="gsUnlockCard('subreminder_eskiz')" title="Редактировать">✏️</button>
+          </div>
           <div class="field"><label>Email</label><input id="gs_sr_eskiz_email" type="text" readonly autocomplete="off"></div>
           <div class="field"><label>Пароль</label><input id="gs_sr_eskiz_password" type="password" readonly autocomplete="off"></div>
           <div class="field" style="margin-bottom:0"><label>Отправитель (from)</label><input id="gs_sr_eskiz_from" type="text" readonly></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
+            <button class="btn btn-primary btn-sm" id="gs_savebtn_subreminder_eskiz" style="display:none" onclick="saveSubReminderEskiz()">💾 Сохранить</button>
+            <button class="btn btn-ghost btn-sm" id="gs_cancelbtn_subreminder_eskiz" style="display:none" onclick="gsCancelCard('subreminder_eskiz')">Отмена</button>
+            <span id="gs_subreminder_eskiz_msg" class="save-msg" style="display:none">✓ Сохранено</span>
+          </div>
         </div>
 
         <div class="table-wrap">
@@ -543,7 +551,7 @@
         <div class="card" style="max-width:640px;margin-top:20px">
           <div class="card-title-row">
             <div class="card-title">⏰ Напоминания об истечении подписки</div>
-            <button class="btn btn-ghost btn-sm" id="gs_pencil_subreminder" onclick="gsUnlockCard('subreminder')" title="Редактировать">✏️</button>
+            <button class="btn btn-ghost btn-sm" id="gs_pencil_subreminder_general" onclick="gsUnlockCard('subreminder_general')" title="Редактировать">✏️</button>
           </div>
           <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Общие настройки для ВСЕХ компаний сразу. SMS (с отдельного платформенного Eskiz-аккаунта, не аккаунта компании) и/или сообщение в Telegram от @cleanouz_bot ответственному лицу компании (если Telegram привязан).</p>
 
@@ -553,14 +561,23 @@
             <div class="field"><label>Время отправки</label><input id="gs_sr_time" type="time" readonly></div>
           </div>
 
-          <div style="display:flex;gap:20px;margin:6px 0 4px">
+          <div style="display:flex;gap:20px;margin:6px 0 14px">
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="gs_sr_sms_enabled" disabled> 📲 SMS</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="gs_sr_tg_enabled" disabled> 🤖 Telegram</label>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="btn btn-primary btn-sm" id="gs_savebtn_subreminder_general" style="display:none" onclick="saveSubReminderGeneral()">💾 Сохранить</button>
+            <button class="btn btn-ghost btn-sm" id="gs_cancelbtn_subreminder_general" style="display:none" onclick="gsCancelCard('subreminder_general')">Отмена</button>
+            <span id="gs_subreminder_general_msg" class="save-msg" style="display:none">✓ Сохранено</span>
           </div>
         </div>
 
         <div class="card" style="max-width:640px">
-          <div class="card-title">⏳ До истечения (доступны {name}, {end_date}, {days})</div>
+          <div class="card-title-row">
+            <div class="card-title">⏳ До истечения (доступны {name}, {end_date}, {days})</div>
+            <button class="btn btn-ghost btn-sm" id="gs_pencil_subreminder_before" onclick="gsUnlockCard('subreminder_before')" title="Редактировать">✏️</button>
+          </div>
           <div class="field">
             <label>Текст напоминания (RU)</label>
             <textarea id="gs_sr_text_ru" rows="3" readonly placeholder="Доступны {name}, {end_date}, {days}" oninput="_gsSrUpdatePreview('ru')" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
@@ -590,10 +607,19 @@
               </div>
             </div>
           </div>
+
+          <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+            <button class="btn btn-primary btn-sm" id="gs_savebtn_subreminder_before" style="display:none" onclick="saveSubReminderBefore()">💾 Сохранить</button>
+            <button class="btn btn-ghost btn-sm" id="gs_cancelbtn_subreminder_before" style="display:none" onclick="gsCancelCard('subreminder_before')">Отмена</button>
+            <span id="gs_subreminder_before_msg" class="save-msg" style="display:none">✓ Сохранено</span>
+          </div>
         </div>
 
         <div class="card" style="max-width:640px">
-          <div class="card-title">🔒 После истечения — тариф уже просрочен (доступны {name}, {end_date}, {days}, {days_to_close})</div>
+          <div class="card-title-row">
+            <div class="card-title">🔒 После истечения — тариф уже просрочен (доступны {name}, {end_date}, {days}, {days_to_close})</div>
+            <button class="btn btn-ghost btn-sm" id="gs_pencil_subreminder_after" onclick="gsUnlockCard('subreminder_after')" title="Редактировать">✏️</button>
+          </div>
           <div class="field">
             <label>Текст напоминания (RU)</label>
             <textarea id="gs_sr_text_expired_ru" rows="3" readonly oninput="_gsSrUpdatePreview('expired_ru')" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
@@ -623,16 +649,16 @@
               </div>
             </div>
           </div>
+
+          <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+            <button class="btn btn-primary btn-sm" id="gs_savebtn_subreminder_after" style="display:none" onclick="saveSubReminderAfter()">💾 Сохранить</button>
+            <button class="btn btn-ghost btn-sm" id="gs_cancelbtn_subreminder_after" style="display:none" onclick="gsCancelCard('subreminder_after')">Отмена</button>
+            <span id="gs_subreminder_after_msg" class="save-msg" style="display:none">✓ Сохранено</span>
+          </div>
         </div>
 
         <div class="card" style="max-width:640px">
-          <div style="display:flex;align-items:center;gap:12px">
-            <button class="btn btn-primary btn-sm" id="gs_savebtn_subreminder" style="display:none" onclick="saveSubReminderSettings()">💾 Сохранить</button>
-            <button class="btn btn-ghost btn-sm" id="gs_cancelbtn_subreminder" style="display:none" onclick="gsCancelCard('subreminder')">Отмена</button>
-            <span id="gs_subreminder_msg" class="save-msg" style="display:none">✓ Сохранено</span>
-          </div>
-
-          <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:14px">
+          <div>
             <button class="btn btn-primary btn-sm" onclick="runSubReminderNow()">🚀 Отправить сейчас (тест/вручную)</button>
             <p style="font-size:11px;color:var(--text2);margin:6px 0 0">Воркер по расписанию не подхватывает смену времени мгновенно (спит до заранее вычисленной цели) — эта кнопка шлёт напрямую, в обход расписания, и показывает по каждой компании в окне рассылки, ушло ли и почему нет.</p>
             <div id="gs_sr_run_result" style="margin-top:10px"></div>
@@ -2009,10 +2035,12 @@ const GS_CARD_FIELDS = {
   cleano:    ['gs_cleano_phone', 'gs_cleano_tg', 'gs_cleano_ig', 'gs_cleano_fb', 'gs_cleano_wa', 'gs_cleano_lat', 'gs_cleano_lng', 'gs_cleano_addr'],
   cleanobot: ['gs_cleano_bot_token', 'gs_cleano_bot_username'],
   cleanomenu: ['gs_cleano_about_ru', 'gs_cleano_about_uz'],
-  subreminder: ['gs_sr_days_before', 'gs_sr_days_after', 'gs_sr_time', 'gs_sr_sms_enabled', 'gs_sr_tg_enabled',
-                'gs_sr_text_ru', 'gs_sr_text_uz', 'gs_sr_text_expired_ru', 'gs_sr_text_expired_uz',
-                'gs_sr_eskiz_email', 'gs_sr_eskiz_password', 'gs_sr_eskiz_from'],
+  subreminder_general: ['gs_sr_days_before', 'gs_sr_days_after', 'gs_sr_time', 'gs_sr_sms_enabled', 'gs_sr_tg_enabled'],
+  subreminder_before:  ['gs_sr_text_ru', 'gs_sr_text_uz'],
+  subreminder_after:   ['gs_sr_text_expired_ru', 'gs_sr_text_expired_uz'],
+  subreminder_eskiz:   ['gs_sr_eskiz_email', 'gs_sr_eskiz_password', 'gs_sr_eskiz_from'],
 };
+const GS_SUBREMINDER_CARDS = ['subreminder_general', 'subreminder_before', 'subreminder_after', 'subreminder_eskiz'];
 
 // checkbox не поддерживает readonly (браузер игнорирует, чекбокс остаётся кликабельным) —
 // для него блокируем через disabled, для остальных полей — как раньше, через readonly.
@@ -3597,32 +3625,50 @@ async function loadSubReminderSettings() {
     document.getElementById('gs_sr_eskiz_email').value    = s.platform_eskiz_email    || '';
     document.getElementById('gs_sr_eskiz_password').value = s.platform_eskiz_password || '';
     document.getElementById('gs_sr_eskiz_from').value     = s.platform_eskiz_from     || '';
-    gsLockCard('subreminder');
+    GS_SUBREMINDER_CARDS.forEach(gsLockCard);
   } catch(e) {}
 }
 
-async function saveSubReminderSettings() {
-  const msg = document.getElementById('gs_subreminder_msg');
-  msg.style.display = 'none';
+async function _saveSubReminderCard(card, payload) {
+  const msg = document.getElementById('gs_' + card + '_msg');
+  if (msg) msg.style.display = 'none';
   try {
-    await api('/saas/global-settings', 'PUT', {
-      subscription_reminder_days_before: document.getElementById('gs_sr_days_before').value.trim() || '5',
-      subscription_reminder_days_after:  document.getElementById('gs_sr_days_after').value.trim()  || '5',
-      subscription_reminder_time: document.getElementById('gs_sr_time').value || '10:00',
-      subscription_reminder_sms_enabled: document.getElementById('gs_sr_sms_enabled').checked ? 'true' : 'false',
-      subscription_reminder_tg_enabled:  document.getElementById('gs_sr_tg_enabled').checked  ? 'true' : 'false',
-      subscription_reminder_text_ru: document.getElementById('gs_sr_text_ru').value.trim(),
-      subscription_reminder_text_uz: document.getElementById('gs_sr_text_uz').value.trim(),
-      subscription_reminder_text_expired_ru: document.getElementById('gs_sr_text_expired_ru').value.trim(),
-      subscription_reminder_text_expired_uz: document.getElementById('gs_sr_text_expired_uz').value.trim(),
-      platform_eskiz_email:    document.getElementById('gs_sr_eskiz_email').value.trim(),
-      platform_eskiz_password: document.getElementById('gs_sr_eskiz_password').value.trim(),
-      platform_eskiz_from:     document.getElementById('gs_sr_eskiz_from').value.trim(),
-    });
-    msg.style.display = '';
-    setTimeout(() => msg.style.display = 'none', 3000);
-    gsLockCard('subreminder');
+    await api('/saas/global-settings', 'PUT', payload);
+    if (msg) { msg.style.display = ''; setTimeout(() => msg.style.display = 'none', 3000); }
+    gsLockCard(card);
   } catch(e) { alert(e.message); }
+}
+
+function saveSubReminderGeneral() {
+  return _saveSubReminderCard('subreminder_general', {
+    subscription_reminder_days_before: document.getElementById('gs_sr_days_before').value.trim() || '5',
+    subscription_reminder_days_after:  document.getElementById('gs_sr_days_after').value.trim()  || '5',
+    subscription_reminder_time: document.getElementById('gs_sr_time').value || '10:00',
+    subscription_reminder_sms_enabled: document.getElementById('gs_sr_sms_enabled').checked ? 'true' : 'false',
+    subscription_reminder_tg_enabled:  document.getElementById('gs_sr_tg_enabled').checked  ? 'true' : 'false',
+  });
+}
+
+function saveSubReminderBefore() {
+  return _saveSubReminderCard('subreminder_before', {
+    subscription_reminder_text_ru: document.getElementById('gs_sr_text_ru').value.trim(),
+    subscription_reminder_text_uz: document.getElementById('gs_sr_text_uz').value.trim(),
+  });
+}
+
+function saveSubReminderAfter() {
+  return _saveSubReminderCard('subreminder_after', {
+    subscription_reminder_text_expired_ru: document.getElementById('gs_sr_text_expired_ru').value.trim(),
+    subscription_reminder_text_expired_uz: document.getElementById('gs_sr_text_expired_uz').value.trim(),
+  });
+}
+
+function saveSubReminderEskiz() {
+  return _saveSubReminderCard('subreminder_eskiz', {
+    platform_eskiz_email:    document.getElementById('gs_sr_eskiz_email').value.trim(),
+    platform_eskiz_password: document.getElementById('gs_sr_eskiz_password').value.trim(),
+    platform_eskiz_from:     document.getElementById('gs_sr_eskiz_from').value.trim(),
+  });
 }
 
 async function runSubReminderNow() {
