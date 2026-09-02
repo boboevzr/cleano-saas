@@ -512,15 +512,6 @@
           <div class="page-title" style="margin:0">📦 Тарифные планы</div>
         </div>
 
-        <div style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);border-radius:16px;padding:24px 24px 20px;color:#fff;position:relative;overflow:hidden;max-width:520px;margin-bottom:20px">
-          <div style="position:absolute;bottom:-28px;right:-28px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,0.08);pointer-events:none"></div>
-          <div style="position:absolute;top:10px;right:80px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.05);pointer-events:none"></div>
-          <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;opacity:0.75;margin-bottom:6px">💰 Баланс платформенного Eskiz.uz</div>
-          <div id="sa_eskiz_bal_amount" style="font-size:34px;font-weight:700;letter-spacing:-0.5px;line-height:1.1;min-height:40px">—</div>
-          <div id="sa_eskiz_bal_updated" style="font-size:12px;opacity:0.65;margin-top:8px">Загрузка…</div>
-          <button onclick="saRefreshEskizBalance()" id="sa_eskiz_bal_btn" style="position:absolute;top:18px;right:18px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:9px;color:#fff;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.2s;white-space:nowrap" onmouseover="this.style.background='rgba(255,255,255,0.28)'" onmouseout="this.style.background='rgba(255,255,255,0.18)'">🔄 Обновить</button>
-        </div>
-
         <div class="table-wrap">
           <table>
             <thead>
@@ -547,12 +538,14 @@
             <div class="field"><label>Время отправки</label><input id="gs_sr_time" type="time" readonly></div>
           </div>
 
-          <div style="display:flex;gap:20px;margin:6px 0 14px">
+          <div style="display:flex;gap:20px;margin:6px 0 4px">
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="gs_sr_sms_enabled" disabled> 📲 SMS</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="gs_sr_tg_enabled" disabled> 🤖 Telegram</label>
           </div>
+        </div>
 
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin:4px 0 6px">⏳ До истечения (доступны {name}, {end_date}, {days})</div>
+        <div class="card" style="max-width:640px">
+          <div class="card-title">⏳ До истечения (доступны {name}, {end_date}, {days})</div>
           <div class="field">
             <label>Текст напоминания (RU)</label>
             <textarea id="gs_sr_text_ru" rows="3" readonly placeholder="Доступны {name}, {end_date}, {days}" oninput="_gsSrUpdatePreview('ru')" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
@@ -566,7 +559,10 @@
               </div>
             </div>
           </div>
-          <div class="field" style="margin-top:12px">
+
+          <div style="border-top:2px solid var(--border);margin:20px 0"></div>
+
+          <div class="field">
             <label>Текст напоминания (UZ)</label>
             <textarea id="gs_sr_text_uz" rows="3" readonly oninput="_gsSrUpdatePreview('uz')" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px" id="gs_sr_tpl_uz"></div>
@@ -579,8 +575,10 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin:18px 0 6px">🔒 После истечения — тариф уже просрочен (доступны {name}, {end_date}, {days}, {days_to_close})</div>
+        <div class="card" style="max-width:640px">
+          <div class="card-title">🔒 После истечения — тариф уже просрочен (доступны {name}, {end_date}, {days}, {days_to_close})</div>
           <div class="field">
             <label>Текст напоминания (RU)</label>
             <textarea id="gs_sr_text_expired_ru" rows="3" readonly oninput="_gsSrUpdatePreview('expired_ru')" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
@@ -594,7 +592,10 @@
               </div>
             </div>
           </div>
-          <div class="field" style="margin-top:12px">
+
+          <div style="border-top:2px solid var(--border);margin:20px 0"></div>
+
+          <div class="field">
             <label>Текст напоминания (UZ)</label>
             <textarea id="gs_sr_text_expired_uz" rows="3" readonly oninput="_gsSrUpdatePreview('expired_uz')" style="width:100%;box-sizing:border-box;font-size:15px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical"></textarea>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px" id="gs_sr_tpl_expired_uz"></div>
@@ -607,17 +608,25 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin:14px 0 6px">📲 Платформенный Eskiz-аккаунт (отдельный от компаний)</div>
+        <div class="card" style="max-width:640px">
+          <div class="card-title">📲 Платформенный Eskiz-аккаунт (отдельный от компаний)</div>
           <div class="field"><label>Email</label><input id="gs_sr_eskiz_email" type="text" readonly autocomplete="off"></div>
           <div class="field"><label>Пароль</label><input id="gs_sr_eskiz_password" type="password" readonly autocomplete="off"></div>
-          <div class="field"><label>Отправитель (from)</label><input id="gs_sr_eskiz_from" type="text" readonly></div>
-          <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
-            <button class="btn btn-ghost btn-sm" onclick="checkPlatformEskizBalance()">💰 Проверить баланс</button>
-            <span id="gs_sr_eskiz_balance" style="font-size:13px;color:var(--text2)"></span>
-          </div>
+          <div class="field" style="margin-bottom:0"><label>Отправитель (from)</label><input id="gs_sr_eskiz_from" type="text" readonly></div>
 
-          <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+          <div style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);border-radius:14px;padding:20px 20px 16px;color:#fff;position:relative;overflow:hidden;margin-top:18px">
+            <div style="position:absolute;bottom:-28px;right:-28px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.08);pointer-events:none"></div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;opacity:0.75;margin-bottom:6px">💰 Баланс платформенного Eskiz.uz</div>
+            <div id="sa_eskiz_bal_amount" style="font-size:30px;font-weight:700;letter-spacing:-0.5px;line-height:1.1;min-height:36px">—</div>
+            <div id="sa_eskiz_bal_updated" style="font-size:12px;opacity:0.65;margin-top:8px">Загрузка…</div>
+            <button onclick="saRefreshEskizBalance()" id="sa_eskiz_bal_btn" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:9px;color:#fff;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.2s;white-space:nowrap" onmouseover="this.style.background='rgba(255,255,255,0.28)'" onmouseout="this.style.background='rgba(255,255,255,0.18)'">🔄 Обновить</button>
+          </div>
+        </div>
+
+        <div class="card" style="max-width:640px">
+          <div style="display:flex;align-items:center;gap:12px">
             <button class="btn btn-primary btn-sm" id="gs_savebtn_subreminder" style="display:none" onclick="saveSubReminderSettings()">💾 Сохранить</button>
             <button class="btn btn-ghost btn-sm" id="gs_cancelbtn_subreminder" style="display:none" onclick="gsCancelCard('subreminder')">Отмена</button>
             <span id="gs_subreminder_msg" class="save-msg" style="display:none">✓ Сохранено</span>
@@ -3642,17 +3651,6 @@ async function runSubReminderNow() {
   } catch(e) {
     el.innerHTML = `<span style="color:var(--red);font-size:13px">${escHtml(e.message)}</span>`;
   }
-}
-
-async function checkPlatformEskizBalance() {
-  const el = document.getElementById('gs_sr_eskiz_balance');
-  el.textContent = '…';
-  try {
-    const d = await api('/saas/platform-eskiz-balance');
-    el.textContent = d.balance !== null && d.balance !== undefined
-      ? `Баланс: ${Number(d.balance).toLocaleString('ru-RU')} SMS`
-      : 'Не удалось получить баланс — проверьте email/пароль';
-  } catch(e) { el.textContent = 'Ошибка: ' + e.message; }
 }
 
 async function saRefreshEskizBalance() {
