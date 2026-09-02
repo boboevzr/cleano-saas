@@ -512,6 +512,21 @@
           <div class="page-title" style="margin:0">📦 Тарифные планы</div>
         </div>
 
+        <div style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);border-radius:14px;padding:20px 20px 16px;color:#fff;position:relative;overflow:hidden;max-width:640px;margin-bottom:20px">
+          <div style="position:absolute;bottom:-28px;right:-28px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.08);pointer-events:none"></div>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;opacity:0.75;margin-bottom:6px">💰 Баланс платформенного Eskiz.uz</div>
+          <div id="sa_eskiz_bal_amount" style="font-size:30px;font-weight:700;letter-spacing:-0.5px;line-height:1.1;min-height:36px">—</div>
+          <div id="sa_eskiz_bal_updated" style="font-size:12px;opacity:0.65;margin-top:8px">Загрузка…</div>
+          <button onclick="saRefreshEskizBalance()" id="sa_eskiz_bal_btn" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:9px;color:#fff;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.2s;white-space:nowrap" onmouseover="this.style.background='rgba(255,255,255,0.28)'" onmouseout="this.style.background='rgba(255,255,255,0.18)'">🔄 Обновить</button>
+        </div>
+
+        <div class="card" style="max-width:640px">
+          <div class="card-title">📲 Платформенный Eskiz-аккаунт (отдельный от компаний)</div>
+          <div class="field"><label>Email</label><input id="gs_sr_eskiz_email" type="text" readonly autocomplete="off"></div>
+          <div class="field"><label>Пароль</label><input id="gs_sr_eskiz_password" type="password" readonly autocomplete="off"></div>
+          <div class="field" style="margin-bottom:0"><label>Отправитель (from)</label><input id="gs_sr_eskiz_from" type="text" readonly></div>
+        </div>
+
         <div class="table-wrap">
           <table>
             <thead>
@@ -607,21 +622,6 @@
                 <button type="button" class="btn btn-ghost btn-sm" onclick="_gsSrCopyPreview('expired_uz')">📋 Копировать</button>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div class="card" style="max-width:640px">
-          <div class="card-title">📲 Платформенный Eskiz-аккаунт (отдельный от компаний)</div>
-          <div class="field"><label>Email</label><input id="gs_sr_eskiz_email" type="text" readonly autocomplete="off"></div>
-          <div class="field"><label>Пароль</label><input id="gs_sr_eskiz_password" type="password" readonly autocomplete="off"></div>
-          <div class="field" style="margin-bottom:0"><label>Отправитель (from)</label><input id="gs_sr_eskiz_from" type="text" readonly></div>
-
-          <div style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);border-radius:14px;padding:20px 20px 16px;color:#fff;position:relative;overflow:hidden;margin-top:18px">
-            <div style="position:absolute;bottom:-28px;right:-28px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.08);pointer-events:none"></div>
-            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;opacity:0.75;margin-bottom:6px">💰 Баланс платформенного Eskiz.uz</div>
-            <div id="sa_eskiz_bal_amount" style="font-size:30px;font-weight:700;letter-spacing:-0.5px;line-height:1.1;min-height:36px">—</div>
-            <div id="sa_eskiz_bal_updated" style="font-size:12px;opacity:0.65;margin-top:8px">Загрузка…</div>
-            <button onclick="saRefreshEskizBalance()" id="sa_eskiz_bal_btn" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:9px;color:#fff;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.2s;white-space:nowrap" onmouseover="this.style.background='rgba(255,255,255,0.28)'" onmouseout="this.style.background='rgba(255,255,255,0.18)'">🔄 Обновить</button>
           </div>
         </div>
 
