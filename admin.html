@@ -8251,7 +8251,7 @@ function renderRtBranchPills() {
   const wrap = document.getElementById('rtBranchPills');
   if (!wrap) return;
   wrap.innerHTML = (window._BRANCHES || []).map(b =>
-    `<button data-v="${_esc(b.slug)}" class="rt-pill" onclick="rtSetBranch('${_esc(b.slug)}')">🏢 ${_esc((_adminLang === 'uz' && b.name_uz) ? b.name_uz : b.name_ru)}</button>`
+    `<button data-v="${_escAttr(b.slug)}" class="rt-pill" onclick="rtSetBranch('${_esc(b.slug)}')">🏢 ${_esc((_adminLang === 'uz' && b.name_uz) ? b.name_uz : b.name_ru)}</button>`
   ).join('');
 }
 
@@ -8550,7 +8550,7 @@ function _renderSetupWizard(gaps) {
         <div style="flex:1"><div style="font-weight:600;font-size:13px">${_esc(g.label)}</div><div style="font-size:11px;color:var(--text2)">${_esc(g.hint)}</div></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <input class="form-input" id="setupWizardInput${i}" placeholder="${_esc(g.placeholder || '')}" style="flex:1;min-width:0">
+        <input class="form-input" id="setupWizardInput${i}" placeholder="${_escAttr(g.placeholder || '')}" style="flex:1;min-width:0">
         <button class="btn btn-primary btn-sm" style="flex-shrink:0" onclick="_setupInlineSave(${i})" id="setupWizardSaveBtn${i}">💾</button>
       </div>
     </div>`;
@@ -8735,8 +8735,8 @@ let _supportContact = { telegram: '', phone: '' };
 
 function _supportBtnsHtml() {
   const btns = [];
-  if (_supportContact.telegram) btns.push(`<a class="btn btn-ghost btn-sm" href="${_esc(_supportContact.telegram)}" target="_blank" rel="noopener">✈️ Telegram</a>`);
-  if (_supportContact.phone) btns.push(`<a class="btn btn-ghost btn-sm" href="tel:${_esc(_supportContact.phone.replace(/\s/g,''))}">📞 ${_esc(_supportContact.phone)}</a>`);
+  if (_supportContact.telegram) btns.push(`<a class="btn btn-ghost btn-sm" href="${_escAttr(_supportContact.telegram)}" target="_blank" rel="noopener">✈️ Telegram</a>`);
+  if (_supportContact.phone) btns.push(`<a class="btn btn-ghost btn-sm" href="tel:${_escAttr(_supportContact.phone.replace(/\s/g,''))}">📞 ${_esc(_supportContact.phone)}</a>`);
   return btns.join('');
 }
 
@@ -9190,7 +9190,7 @@ function renderSlidesList() {
   if (!wrap) return;
   wrap.innerHTML = _slides.map(s => `
     <div class="card" style="margin-bottom:10px;display:flex;gap:12px;align-items:center">
-      <img src="${_esc(s.image_url)}" style="width:90px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;background:var(--bg2)">
+      <img src="${_escAttr(s.image_url)}" style="width:90px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;background:var(--bg2)">
       <div style="flex:1;min-width:0">
         <div style="font-weight:700;font-size:14px">${_esc(s.title_ru || '(без заголовка)')}</div>
         <div style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_esc(s.eyebrow_ru || '')}</div>
@@ -9299,19 +9299,19 @@ function renderStatsList() {
       <div class="contacts-grid">
         <div class="cfg-field">
           <label>${_t('stats.f.value.ru')}</label>
-          <input type="text" class="form-input" id="stat_value_ru_${s.id}" value="${_esc(s.value_ru)}" placeholder="Бесплатно">
+          <input type="text" class="form-input" id="stat_value_ru_${s.id}" value="${_escAttr(s.value_ru)}" placeholder="Бесплатно">
         </div>
         <div class="cfg-field">
           <label>${_t('stats.f.value.uz')}</label>
-          <input type="text" class="form-input" id="stat_value_uz_${s.id}" value="${_esc(s.value_uz)}" placeholder="Bepul">
+          <input type="text" class="form-input" id="stat_value_uz_${s.id}" value="${_escAttr(s.value_uz)}" placeholder="Bepul">
         </div>
         <div class="cfg-field">
           <label>${_t('stats.f.label.ru')}</label>
-          <input type="text" class="form-input" id="stat_label_ru_${s.id}" value="${_esc(s.label_ru)}" placeholder="клиентов в год">
+          <input type="text" class="form-input" id="stat_label_ru_${s.id}" value="${_escAttr(s.label_ru)}" placeholder="клиентов в год">
         </div>
         <div class="cfg-field">
           <label>${_t('stats.f.label.uz')}</label>
-          <input type="text" class="form-input" id="stat_label_uz_${s.id}" value="${_esc(s.label_uz)}" placeholder="yiliga mijozlar">
+          <input type="text" class="form-input" id="stat_label_uz_${s.id}" value="${_escAttr(s.label_uz)}" placeholder="yiliga mijozlar">
         </div>
       </div>
     </div>
@@ -16748,7 +16748,7 @@ async function adminLoadBlacklist() {
       const dt = e.created_at ? new Date(e.created_at).toLocaleDateString('ru') : '—';
       return `<tr>
         <td>${_adminBlacklistOffset + i + 1}</td>
-        <td data-label="Телефон"><a href="tel:${_esc(e.phone)}">${_esc(e.phone)}</a></td>
+        <td data-label="Телефон"><a href="tel:${_escAttr(e.phone)}">${_esc(e.phone)}</a></td>
         <td data-label="Имя и Фамилия">${_esc(e.name || '—')}</td>
         <td data-label="Причина">${_esc(e.note || '—')}</td>
         <td data-label="Кто добавил">${_esc(e.added_by || '—')}</td>
@@ -23399,8 +23399,8 @@ function _adsCidOpenForm(item) {
   document.getElementById('adsCidForm')?.remove();
   const el = document.getElementById('adsCidList');
   el.insertAdjacentHTML('afterbegin', `<div id="adsCidForm" style="display:flex;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:10px;border:1.5px solid var(--accent);align-items:center;margin-bottom:6px">
-    <input id="adsCidNum" class="price-input" style="width:100px" placeholder="2001" value="${_esc(item?.number||'')}">
-    <input id="adsCidLbl" class="price-input" style="flex:1" placeholder="Оператор 1" value="${_esc(item?.label||'')}">
+    <input id="adsCidNum" class="price-input" style="width:100px" placeholder="2001" value="${_escAttr(item?.number||'')}">
+    <input id="adsCidLbl" class="price-input" style="flex:1" placeholder="Оператор 1" value="${_escAttr(item?.label||'')}">
     <button class="btn btn-primary btn-sm" onclick="adsCidSave(${item?.id||'null'})">✓</button>
     <button class="btn btn-sm" style="background:var(--surface2)" onclick="document.getElementById('adsCidForm')?.remove()">✕</button>
   </div>`);
@@ -23466,8 +23466,8 @@ function _adsIvrOpenForm(item, group) {
   if (!listEl) return;
   document.querySelectorAll('[id^="adsIvrForm"]').forEach(el => el.remove());
   listEl.insertAdjacentHTML('afterbegin', `<div id="adsIvrForm-${group}" style="display:flex;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:10px;border:1.5px solid var(--accent);align-items:center;margin-bottom:6px">
-    <input id="adsIvrExten" class="price-input" style="width:90px" placeholder="7001" value="${_esc(item?.exten||'')}">
-    <input id="adsIvrLbl" class="price-input" style="flex:1" placeholder="Название записи" value="${_esc(item?.label||'')}">
+    <input id="adsIvrExten" class="price-input" style="width:90px" placeholder="7001" value="${_escAttr(item?.exten||'')}">
+    <input id="adsIvrLbl" class="price-input" style="flex:1" placeholder="Название записи" value="${_escAttr(item?.label||'')}">
     <button class="btn btn-primary btn-sm" onclick="adsIvrSave(${item?.id||'null'},'${group}')">✓</button>
     <button class="btn btn-sm" style="background:var(--surface2)" onclick="document.querySelectorAll('[id^=adsIvrForm]').forEach(e=>e.remove())">✕</button>
   </div>`);
@@ -23497,7 +23497,7 @@ async function grLoad() {
   const byGroup = {};
   ivrs.forEach(v => { (byGroup[v.ivr_group] = byGroup[v.ivr_group]||[]).push(v); });
   const grouped = _IVR_GROUPS.map(g => {
-    const opts = (byGroup[g.key]||[]).map(v=>`<option value="${_esc(v.exten)}">${_esc(v.exten)}${v.label?' — '+_esc(v.label):''}</option>`).join('');
+    const opts = (byGroup[g.key]||[]).map(v=>`<option value="${_escAttr(v.exten)}">${_esc(v.exten)}${v.label?' — '+_esc(v.label):''}</option>`).join('');
     return opts ? `<optgroup label="${g.label}">${opts}</optgroup>` : '';
   }).join('');
   const fallback = '<option value="7011">7011</option>';
@@ -23626,7 +23626,7 @@ function _adCampaignCard(c) {
         }
         <button onclick="adOpenDetail(${c.id})" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="Детали / лог">📋</button>
         <button onclick="adOpenEdit(${c.id})" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="Редактировать">✏️</button>
-        <button onclick="adDeleteCampaign(${c.id},'${_esc(c.name)}')" class="btn btn-sm" style="background:var(--surface2);color:#dc2626" title="Удалить">🗑</button>
+        <button onclick="adDeleteCampaign(${c.id},'${_esc(c.name).replace(/'/g,"\\'")}')" class="btn btn-sm" style="background:var(--surface2);color:#dc2626" title="Удалить">🗑</button>
         ${(c.answered_count || 0) > 0
           ? `<button onclick="adImportActive(${c.id},${c.answered_count||0},this)" class="btn btn-sm" style="background:#dcfce7;color:#16a34a;border:1px solid #86efac" title="Добавить дозвонившихся в единую базу актуальных контактов">📥 В актуальные</button>`
           : ''}
@@ -23772,7 +23772,7 @@ async function _adLoadExtenSels() {
   const byGroup = {};
   ivrs.forEach(v => { (byGroup[v.ivr_group] = byGroup[v.ivr_group]||[]).push(v); });
   ivrSel.innerHTML = _IVR_GROUPS.map(g => {
-    const opts = (byGroup[g.key]||[]).map(v => `<option value="${_esc(v.exten)}">${_esc(v.exten)}${v.label?' — '+_esc(v.label):''}</option>`).join('');
+    const opts = (byGroup[g.key]||[]).map(v => `<option value="${_escAttr(v.exten)}">${_esc(v.exten)}${v.label?' — '+_esc(v.label):''}</option>`).join('');
     return opts ? `<optgroup label="${g.label}">${opts}</optgroup>` : '';
   }).join('');
   if (!ivrSel.options.length) ivrSel.innerHTML = '<option value="7001">7001</option>';
@@ -24047,8 +24047,8 @@ async function smsGrpLoad() {
         <button onclick="smsCntGoGroup(${g.id})" class="btn btn-primary btn-sm" style="flex:1">${_t('sms.grp.contacts.btn')}</button>
         <button onclick="smsGrpCopyFromAd(${g.id})" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="${_t('sms.grp.fromad.title')}">${_t('sms.grp.fromad.btn')}</button>
         <button onclick="smsCntImportOpen(${g.id})" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="${_t('sms.grp.import.title')}">${_t('sms.grp.csv.btn')}</button>
-        <button onclick="smsGrpExportCsv(${g.id},'${_esc(g.name)}')" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="${_t('sms.grp.export.title')}">📤</button>
-        <button onclick="smsGrpDelete(${g.id},'${_esc(g.name)}')" class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5" title="${_t('btn.delete')}">🗑️</button>
+        <button onclick="smsGrpExportCsv(${g.id},'${_esc(g.name).replace(/'/g,"\\'")}')" class="btn btn-sm" style="background:var(--surface2);color:var(--text)" title="${_t('sms.grp.export.title')}">📤</button>
+        <button onclick="smsGrpDelete(${g.id},'${_esc(g.name).replace(/'/g,"\\'")}')" class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5" title="${_t('btn.delete')}">🗑️</button>
       </div>
     </div>`).join('');
 }
@@ -24343,7 +24343,7 @@ async function smsPricingLoad() {
       <td colspan="5" style="padding:14px 16px">
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
           <div><label class="cfg-label" style="font-size:11px">${_t('sms.price.name.lbl')}</label>
-            <input id="smsPE_name_${op.id}" class="price-input" style="width:120px;font-size:13px" value="${_esc(op.display_name)}"></div>
+            <input id="smsPE_name_${op.id}" class="price-input" style="width:120px;font-size:13px" value="${_escAttr(op.display_name)}"></div>
           <div><label class="cfg-label" style="font-size:11px">${_t('sms.price.pfx.lbl')}</label>
             <input id="smsPE_pfx_${op.id}" class="price-input" style="width:150px;font-size:13px" value="${pfx}"></div>
           <div><label class="cfg-label" style="font-size:11px">${_t('th.svc.price')}</label>
@@ -25314,7 +25314,7 @@ async function _adTestLoadIvr() {
   ivrs.forEach(v => { (byGroup[v.ivr_group] = byGroup[v.ivr_group] || []).push(v); });
   sel.innerHTML = _IVR_GROUPS.map(g => {
     const opts = (byGroup[g.key] || []).map(v =>
-      `<option value="${_esc(v.exten)}">${_esc(v.exten)}${v.label ? ' — ' + _esc(v.label) : ''}</option>`
+      `<option value="${_escAttr(v.exten)}">${_esc(v.exten)}${v.label ? ' — ' + _esc(v.label) : ''}</option>`
     ).join('');
     return opts ? `<optgroup label="${g.label}">${opts}</optgroup>` : '';
   }).join('');
