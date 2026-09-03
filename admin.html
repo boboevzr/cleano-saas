@@ -3454,6 +3454,17 @@
                 <span class="s-msg" id="msg_card-footer-about"></span>
               </div>
             </div>
+
+            <!-- Смена мастер-пароля admin -->
+            <div class="card" id="card-master-pass" style="margin-top:20px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <div>
+                  <div style="font-weight:700;font-size:14px" data-i18n="tg.master.title">🔐 Мастер-пароль admin.html</div>
+                  <div style="font-size:12px;color:var(--text2);margin-top:3px" data-i18n="tg.master.desc">Пароль для подтверждения удалений в admin.html (не для входа — вход по логину/паролю сотрудника)</div>
+                </div>
+                <button class="btn" style="background:var(--accent);color:#fff;white-space:nowrap;flex-shrink:0" onclick="openMasterPassModal()" data-i18n="tg.master.btn">🔑 Сменить пароль</button>
+              </div>
+            </div>
           </div>
 
           <!-- ─── Контакты ─── -->
@@ -3631,17 +3642,6 @@
             <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
               <button class="btn" style="background:#2563eb;color:#fff;gap:6px" onclick="botBroadcastRestart()" data-i18n="tg.btn.restart.bot">🔄 Перезапустить бот для всех</button>
               <span style="font-size:12px;color:var(--text2)" data-i18n="tg.btn.restart.desc">Отправит всем клиентам сообщение «Нажмите /start»</span>
-            </div>
-          </div>
-
-          <!-- Смена мастер-пароля admin -->
-          <div class="card" id="card-master-pass" style="margin-bottom:14px">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-              <div>
-                <div style="font-weight:700;font-size:14px" data-i18n="tg.master.title">🔐 Мастер-пароль admin.html</div>
-                <div style="font-size:12px;color:var(--text2);margin-top:3px" data-i18n="tg.master.desc">Пароль для подтверждения удалений в admin.html (не для входа — вход по логину/паролю сотрудника)</div>
-              </div>
-              <button class="btn" style="background:var(--accent);color:#fff;white-space:nowrap;flex-shrink:0" onclick="openMasterPassModal()" data-i18n="tg.master.btn">🔑 Сменить пароль</button>
             </div>
           </div>
 
