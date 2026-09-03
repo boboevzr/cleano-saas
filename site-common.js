@@ -1274,6 +1274,24 @@
         document.body.style.overflow = 'hidden';
       }
 
+      // Полное закрытие доступа за неоплату (subscription_reminder_days_after дней после
+      // истечения тарифа) — отдельный от techработ оверлей, другая причина/текст. Владелец
+      // не может выключить это сам, только оплатой (продление — вручную суперадмином).
+      if (s.subscription_closed === true && !document.getElementById('subscriptionClosedOverlay')) {
+        const ov2 = document.createElement('div');
+        ov2.id = 'subscriptionClosedOverlay';
+        ov2.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0e1210;color:#fff;'
+          + 'display:flex;flex-direction:column;align-items:center;justify-content:center;'
+          + 'text-align:center;padding:24px;gap:14px';
+        ov2.innerHTML = '<div style="font-size:52px">🔒</div>'
+          + '<div style="font-size:21px;font-weight:700;max-width:440px">Сайт временно недоступен</div>'
+          + '<div style="font-size:15px;opacity:.7;max-width:440px">Обратитесь к администрации сервиса Cleano</div>'
+          + '<div style="font-size:15px;font-weight:700;max-width:440px;margin-top:10px">Sayt vaqtincha ishlamayapti</div>'
+          + '<div style="font-size:15px;opacity:.7;max-width:440px">Cleano administratsiyasiga murojaat qiling</div>';
+        document.body.appendChild(ov2);
+        document.body.style.overflow = 'hidden';
+      }
+
       // Форматирование номера для отображения
       function fmtPhone(raw) {
         const d = (raw||'').replace(/\D/g,'');
