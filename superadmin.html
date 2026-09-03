@@ -1430,8 +1430,9 @@
           <code id="ecTgLink" class="mono" style="flex:1;background:var(--surface2);padding:6px 10px;border-radius:6px;font-size:12px;word-break:break-all;color:var(--text)">—</code>
           <button class="btn btn-ghost btn-sm" onclick="copyTgLink()" title="Скопировать ссылку">📋</button>
           <button class="btn btn-ghost btn-sm" onclick="loadTgLinkStatus()" title="Обновить статус">🔄</button>
+          <button class="btn btn-ghost btn-sm" onclick="regenTgLink()" title="Сделать новую ссылку — старая перестанет работать">🔁</button>
         </div>
-        <div style="font-size:11px;color:var(--text2);margin-top:4px">Отправьте эту ссылку клиенту (WhatsApp/SMS/лично) — при переходе и нажатии «Поделиться номером» в боте компания привяжется автоматически.</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">Отправьте эту ссылку клиенту (WhatsApp/SMS/лично) — при переходе и нажатии «Поделиться номером» в боте компания привяжется автоматически. Ссылка содержит секретный токен — если её увидел посторонний, нажмите 🔁, чтобы старая перестала работать.</div>
       </div>
       <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:10px">
         <div style="font-size:11px;color:var(--text2);margin-bottom:4px">🔐 Мастер-пароль (подтверждение удалений в admin.html)</div>
@@ -2867,6 +2868,15 @@ async function loadTgLinkStatus() {
     statusEl.textContent = '⚠️ ' + e.message;
     statusEl.className = 'badge badge-red';
   }
+}
+
+async function regenTgLink() {
+  if (!confirm('Старая ссылка перестанет работать. Создать новую?')) return;
+  const linkEl = document.getElementById('ecTgLink');
+  try {
+    const d = await api(`/saas/companies/${_currentCompanyId}/telegram-link/regenerate`, 'POST');
+    linkEl.textContent = d.link;
+  } catch(e) { alert(e.message); }
 }
 
 function copyTgLink() {
