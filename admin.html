@@ -16052,8 +16052,8 @@ function noPhoneSearch(q) {
       const nm = [c.last_name, c.first_name].filter(Boolean).join(' ');
       const enc = encodeURIComponent(JSON.stringify(c));
       return `<div onmousedown="noPhoneSelect('${enc}')" style="padding:10px 12px;cursor:pointer;border-bottom:1px solid #2d3148;font-size:13px" onmouseover="this.style.background='#2d3148'" onmouseout="this.style.background=''">
-        <div style="font-weight:700">${c.phone}${nm ? ' · <span style="font-weight:400">' + nm + '</span>' : ''}</div>
-        ${c.short_address ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">📍 ${c.short_address}</div>` : ''}
+        <div style="font-weight:700">${_esc(c.phone)}${nm ? ' · <span style="font-weight:400">' + _esc(nm) + '</span>' : ''}</div>
+        ${c.short_address ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">📍 ${_esc(c.short_address)}</div>` : ''}
       </div>`;
     }).join('');
     drop.style.display = 'block';
@@ -16192,8 +16192,8 @@ function nlPhoneSearch(q) {
       const nm = [c.last_name, c.first_name, c.middle_name].filter(Boolean).join(' ');
       const enc = encodeURIComponent(JSON.stringify(c));
       return `<div onmousedown="nlPhoneSelect('${enc}')" style="padding:10px 12px;cursor:pointer;border-bottom:1px solid #2d3148;font-size:13px" onmouseover="this.style.background='#2d3148'" onmouseout="this.style.background=''">
-        <div style="font-weight:700">${c.phone}${nm ? ' · <span style="font-weight:400">' + nm + '</span>' : ''}</div>
-        ${c.short_address ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">📍 ${c.short_address}</div>` : ''}
+        <div style="font-weight:700">${_esc(c.phone)}${nm ? ' · <span style="font-weight:400">' + _esc(nm) + '</span>' : ''}</div>
+        ${c.short_address ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">📍 ${_esc(c.short_address)}</div>` : ''}
       </div>`;
     }).join('');
     drop.style.display = 'block';
@@ -16227,14 +16227,14 @@ async function checkCrmClientByPhone(prefix) {
     if (d1?.client) {
       const name = [d1.client.first_name, d1.client.last_name].filter(Boolean).join(' ') || 'Без имени';
       _crmWarnClient[prefix] = d1.client;
-      msgs.push(`👤 <b>${name}</b> в базе клиентов`
+      msgs.push(`👤 <b>${_esc(name)}</b> в базе клиентов`
         + ` <a href="#" onclick="applyCrmClient('${prefix}');return false;" style="color:#60a5fa;font-weight:700;text-decoration:underline">заполнить данными →</a>`);
     }
   } catch(e) {}
   try {
     const d2 = await apiGet(`/staff/check-phone?phone=${encodeURIComponent(phone)}`);
-    if (d2?.order) msgs.push(`📦 Заказ <b>${d2.order.order_num}</b> (${d2.order.client_first_name||''} ${d2.order.client_last_name||''})`);
-    if (d2?.lead)  msgs.push(`🎯 Лид <b>${d2.lead.name||'Без имени'}</b> · ${d2.lead.status}`);
+    if (d2?.order) msgs.push(`📦 Заказ <b>${_esc(d2.order.order_num)}</b> (${_esc(d2.order.client_first_name||'')} ${_esc(d2.order.client_last_name||'')})`);
+    if (d2?.lead)  msgs.push(`🎯 Лид <b>${_esc(d2.lead.name||'Без имени')}</b> · ${_esc(d2.lead.status)}`);
   } catch(e) {}
   if (msgs.length) {
     warn.style.display = '';
