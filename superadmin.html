@@ -3573,11 +3573,11 @@ async function loadPlans() {
 // (_SUB_REMINDER_TEXT_RU/UZ_DEFAULT), на случай если поле ещё не заполнено суперадмином.
 // RU — кириллицей, UZ — латиницей (как реально пишут шаблоны для Eskiz в Узбекистане).
 // Без ограничения по длине под SMS-сегмент — по просьбе пользователя, важнее ясность текста.
-const GS_SR_TEXT_RU_DEFAULT = 'Cleano: до окончания тарифа компании «{name}» осталось {days} дн. (истекает {end_date}). Просим произвести оплату, чтобы сохранить доступ к сайту и боту.';
+const GS_SR_TEXT_RU_DEFAULT = 'Cleano: do okonchaniya tarifa "{name}" ostalos {days} dn. (do {end_date}). Prosim oplatit, chtoby sohranit dostup k saytu i botu.';
 const GS_SR_TEXT_UZ_DEFAULT = "Cleano: «{name}» kompaniyasining tarif muddati {days} kun ichida tugaydi (tugash sanasi: {end_date}). Sayt va botga kirishni saqlab qolish uchun to'lovni amalga oshirishingizni so'raymiz.";
 // Отдельный текст для УЖЕ просроченных — не "осталось N дней", а обратный отсчёт
 // до полного закрытия доступа ({days_to_close} = дней до конца грейс-периода).
-const GS_SR_TEXT_EXPIRED_RU_DEFAULT = 'Cleano: тариф компании «{name}» истёк {days} дн. назад ({end_date}). Через {days_to_close} дн. доступ к сайту и боту будет полностью закрыт. Пожалуйста, произведите оплату как можно скорее.';
+const GS_SR_TEXT_EXPIRED_RU_DEFAULT = 'Cleano: tarif "{name}" istek {days} dn. nazad ({end_date}). Cherez {days_to_close} dn. dostup budet zakryt. Prosim oplatit poskoree.';
 const GS_SR_TEXT_EXPIRED_UZ_DEFAULT = "Cleano: «{name}» kompaniyasining tarifi {days} kun oldin tugadi ({end_date}). {days_to_close} kundan so'ng sayt va botga kirish to'liq yopiladi. Iltimos, imkon qadar tezroq to'lovni amalga oshiring.";
 
 const GS_SR_LANGS = {
