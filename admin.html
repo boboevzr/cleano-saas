@@ -16141,6 +16141,8 @@ function _clearAdminNewLead() {
   });
   document.getElementById('nl_branch').value = '';
   document.getElementById('nlPhoneDrop').style.display = 'none';
+  document.getElementById('nl_crmWarn').style.display = 'none';
+  _crmWarnClient['nl'] = null;
 }
 
 function _clearAdminNewOrder() {
@@ -16149,6 +16151,8 @@ function _clearAdminNewOrder() {
   });
   document.getElementById('no_branch').value = '';
   document.getElementById('noPhoneDrop').style.display = 'none';
+  document.getElementById('no_crmWarn').style.display = 'none';
+  _crmWarnClient['no'] = null;
 }
 
 async function openAdminNewLeadModal() {
@@ -16203,6 +16207,48 @@ function nlPhoneSelect(enc) {
   document.getElementById('nl_short_address').value = c.short_address || '';
   document.getElementById('nl_address').value       = c.address || '';
   document.getElementById('nlPhoneDrop').style.display = 'none';
+}
+
+// Подсказка "уже есть клиент" по CRM-истории (/clients/by-phone + /staff/check-phone) —
+// отдельно от noPhoneSearch/nlPhoneSearch выше, которые ищут только в справочнике
+// "Контакты" (отдельная таблица, не все клиенты там числятся). Клиент, который просто
+// оформлял заказы/лиды раньше, но не заносился в справочник вручную, находится ЗДЕСЬ.
+let _crmWarnClient = {};
+
+async function checkCrmClientByPhone(prefix) {
+  const phone = document.getElementById(prefix + '_phone')?.value.trim();
+  const warn  = document.getElementById(prefix + '_crmWarn');
+  if (!warn) return;
+  _crmWarnClient[prefix] = null;
+  if (!phone || phone.length < 9) { warn.style.display = 'none'; return; }
+  const msgs = [];
+  try {
+    const d1 = await apiGet(`/clients/by-phone/${encodeURIComponent(phone)}`);
+    if (d1?.client) {
+      const name = [d1.client.first_name, d1.client.last_name].filter(Boolean).join(' ') || 'Без имени';
+      _crmWarnClient[prefix] = d1.client;
+      msgs.push(`👤 <b>${name}</b> в базе клиентов`
+        + ` <a href="#" onclick="applyCrmClient('${prefix}');return false;" style="color:#60a5fa;font-weight:700;text-decoration:underline">заполнить данными →</a>`);
+    }
+  } catch(e) {}
+  try {
+    const d2 = await apiGet(`/staff/check-phone?phone=${encodeURIComponent(phone)}`);
+    if (d2?.order) msgs.push(`📦 Заказ <b>${d2.order.order_num}</b> (${d2.order.client_first_name||''} ${d2.order.client_last_name||''})`);
+    if (d2?.lead)  msgs.push(`🎯 Лид <b>${d2.lead.name||'Без имени'}</b> · ${d2.lead.status}`);
+  } catch(e) {}
+  if (msgs.length) {
+    warn.style.display = '';
+    warn.innerHTML = `⚠️ Уже есть: ${msgs.join(' | ')}`;
+  } else { warn.style.display = 'none'; }
+}
+
+function applyCrmClient(prefix) {
+  const c = _crmWarnClient[prefix];
+  if (!c) return;
+  const fullName = [c.first_name, c.last_name].filter(Boolean).join(' ');
+  const n  = document.getElementById(prefix + '_name');          if (n)  n.value  = fullName;
+  const sa = document.getElementById(prefix + '_short_address'); if (sa) sa.value = c.short_address || '';
+  const a  = document.getElementById(prefix + '_address');       if (a)  a.value  = c.address || '';
 }
 
 async function submitAdminNewLead() {
@@ -21725,9 +21771,10 @@ function confirmBranchLoc() {
     <div style="margin-bottom:12px">
       <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Телефон *</label>
       <div style="position:relative">
-        <input class="price-input" style="width:100%" id="no_phone" placeholder="+998 90 000-00-00" oninput="noPhoneSearch(this.value)" onblur="setTimeout(()=>{document.getElementById('noPhoneDrop').style.display='none'},200)" inputmode="tel" autocomplete="off">
+        <input class="price-input" style="width:100%" id="no_phone" placeholder="+998 90 000-00-00" oninput="noPhoneSearch(this.value)" onblur="setTimeout(()=>{document.getElementById('noPhoneDrop').style.display='none'},200);checkCrmClientByPhone('no')" inputmode="tel" autocomplete="off">
         <div id="noPhoneDrop" style="display:none;position:absolute;z-index:9999;background:#1e2235;border:1px solid #4a5080;border-radius:8px;width:100%;max-height:220px;overflow-y:auto;top:calc(100% + 4px);left:0;box-shadow:0 8px 24px rgba(0,0,0,.5)"></div>
       </div>
+      <div id="no_crmWarn" style="display:none;font-size:12px;color:#b45309;background:#3a2f14;padding:6px 10px;border-radius:8px;margin-top:6px"></div>
     </div>
 
     <div style="margin-bottom:12px">
@@ -21776,9 +21823,10 @@ function confirmBranchLoc() {
     <div style="margin-bottom:12px">
       <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Телефон *</label>
       <div style="position:relative">
-        <input class="price-input" style="width:100%" id="nl_phone" placeholder="+998 90 000-00-00" oninput="nlPhoneSearch(this.value)" onblur="setTimeout(()=>{document.getElementById('nlPhoneDrop').style.display='none'},200)" inputmode="tel" autocomplete="off">
+        <input class="price-input" style="width:100%" id="nl_phone" placeholder="+998 90 000-00-00" oninput="nlPhoneSearch(this.value)" onblur="setTimeout(()=>{document.getElementById('nlPhoneDrop').style.display='none'},200);checkCrmClientByPhone('nl')" inputmode="tel" autocomplete="off">
         <div id="nlPhoneDrop" style="display:none;position:absolute;z-index:9999;background:#1e2235;border:1px solid #4a5080;border-radius:8px;width:100%;max-height:220px;overflow-y:auto;top:calc(100% + 4px);left:0;box-shadow:0 8px 24px rgba(0,0,0,.5)"></div>
       </div>
+      <div id="nl_crmWarn" style="display:none;font-size:12px;color:#b45309;background:#3a2f14;padding:6px 10px;border-radius:8px;margin-top:6px"></div>
     </div>
 
     <div style="margin-bottom:12px">
