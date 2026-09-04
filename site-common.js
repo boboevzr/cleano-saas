@@ -1854,7 +1854,9 @@
     box = document.createElement('div');
     box.id = 'ocdLightbox';
     box.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:99999;align-items:center;justify-content:center;padding:16px';
-    box.innerHTML = '<div id="ocdLightboxInner" style="max-width:100%;max-height:100%" onclick="event.stopPropagation()"></div>';
+    box.innerHTML = '<button type="button" aria-label="Закрыть" onclick="event.stopPropagation();document.getElementById(\'ocdLightbox\').style.display=\'none\';document.getElementById(\'ocdLightboxInner\').innerHTML=\'\'" '
+      + 'style="position:absolute;top:16px;right:20px;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:26px;line-height:1;width:40px;height:40px;border-radius:50%;cursor:pointer;z-index:1">✕</button>'
+      + '<div id="ocdLightboxInner" style="max-width:100%;max-height:100%" onclick="event.stopPropagation()"></div>';
     box.onclick = () => { box.style.display = 'none'; document.getElementById('ocdLightboxInner').innerHTML = ''; };
     document.body.appendChild(box);
     return box;
