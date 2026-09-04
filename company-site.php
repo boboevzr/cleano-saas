@@ -18,21 +18,43 @@ $ogTitle = $defaultTitle;
 $ogDesc  = $defaultDesc;
 
 $apiBase = 'https://web-production-eef2a.up.railway.app/api';
-$ctx = stream_context_create(['http' => ['timeout' => 2]]);
 
-$resolveJson = @file_get_contents($apiBase . '/company/resolve?slug=' . urlencode($slug), false, $ctx);
-if ($resolveJson !== false) {
-    $company = json_decode($resolveJson, true);
-    if (is_array($company) && !empty($company['name'])) {
-        $ogTitle = $company['name'] . ' — Химчистка ковров и мебели на дому';
-
-        $settingsJson = @file_get_contents($apiBase . '/settings/site?company_slug=' . urlencode($slug), false, $ctx);
-        if ($settingsJson !== false) {
-            $settings = json_decode($settingsJson, true);
-            $about = $settings['settings']['footer_about_ru'] ?? null;
-            if (!empty($about)) $ogDesc = $about;
-        }
+// file_get_contents(url) требует allow_url_fopen — на части shared-хостингов он
+// выключен из соображений безопасности. cURL почти всегда доступен и не зависит
+// от этой настройки, поэтому он в приоритете; file_get_contents оставлен как
+// резервный вариант на случай хостинга без cURL.
+function _fetchJson(string $url): ?array {
+    $body = false;
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 3,
+            CURLOPT_CONNECTTIMEOUT => 2,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_HTTPHEADER     => ['Accept: application/json'],
+        ]);
+        $body = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($body === false || $code < 200 || $code >= 300) $body = false;
     }
+    if ($body === false && ini_get('allow_url_fopen')) {
+        $ctx = stream_context_create(['http' => ['timeout' => 3]]);
+        $body = @file_get_contents($url, false, $ctx);
+    }
+    if ($body === false) return null;
+    $data = json_decode($body, true);
+    return is_array($data) ? $data : null;
+}
+
+$company = _fetchJson($apiBase . '/company/resolve?slug=' . urlencode($slug));
+if ($company && !empty($company['name'])) {
+    $ogTitle = $company['name'] . ' — Химчистка ковров и мебели на дому';
+
+    $settings = _fetchJson($apiBase . '/settings/site?company_slug=' . urlencode($slug));
+    $about = $settings['settings']['footer_about_ru'] ?? null;
+    if (!empty($about)) $ogDesc = $about;
 }
 
 $html = @file_get_contents(__DIR__ . '/company-site.html');
