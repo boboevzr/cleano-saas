@@ -80,6 +80,32 @@ if ($ogTitle !== $defaultTitle || $ogDesc !== $defaultDesc) {
         '<meta property="og:description" id="metaOgDescription" content="' . htmlspecialchars($ogDesc, ENT_QUOTES) . '">',
         $html
     );
+    // <title> — та же замена, чтобы вкладка браузера тоже не мигала ARTEZ.
+    $html = str_replace(
+        '<title data-i18n="meta.title">' . $defaultTitle . '</title>',
+        '<title data-i18n="meta.title">' . htmlspecialchars($ogTitle, ENT_QUOTES) . '</title>',
+        $html
+    );
+}
+
+// Отдаём уже полученные от API данные компании прямо в JS (window.__PRESET_COMPANY__) —
+// site-common.js подхватывает их вместо повторного похода в API с браузера. Раньше между
+// первой отрисовкой (со статичным ARTEZ) и завершением JS-запроса к /company/resolve
+// проходило 1-2 секунды, за которые видно было название/логотип ARTEZ — теперь эти данные
+// уже в HTML при первой отрисовке.
+if ($company && !empty($company['name'])) {
+    $preset = json_encode([
+        'name'     => $company['name'],
+        'slug'     => $company['slug'] ?? $slug,
+        'logo_url' => $company['logo_url'] ?? null,
+        'site_template_key' => $company['site_template_key'] ?? null,
+        'site_palette_key'  => $company['site_palette_key'] ?? null,
+        'palette_colors'    => $company['palette_colors'] ?? null,
+    ], JSON_UNESCAPED_UNICODE);
+    // JSON_UNESCAPED_SLASHES сознательно НЕ включён — экранированный "\/" не даёт
+    // значению вида "</script>" (например, вредоносное название компании) преждевременно
+    // закрыть этот <script> тег; для JSON.parse/JS-литерала разницы в поведении нет.
+    $html = str_replace('<head>', "<head>\n<script>window.__PRESET_COMPANY__=" . $preset . ";</script>", $html);
 }
 
 header('Content-Type: text/html; charset=utf-8');

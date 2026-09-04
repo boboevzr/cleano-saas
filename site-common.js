@@ -1151,8 +1151,14 @@
   let _isAgent = false;
 
   // Общий fetch /company/resolve — переиспользуется дизайном и брендингом, чтобы не дублировать запрос.
-  window._companyResolvePromise = fetch(API_BASE + '/company/resolve?slug=' + encodeURIComponent(window.APP_COMPANY_SLUG||''))
-    .then(r => r.ok ? r.json() : null).catch(() => null);
+  // Если company-site.php уже получил эти данные на сервере (window.__PRESET_COMPANY__,
+  // видно сразу при первой отрисовке HTML) — используем их вместо повторного похода в API
+  // из браузера. Раньше между статичной ARTEZ-заглушкой и ответом этого fetch проходило
+  // 1-2 секунды, за которые пользователь видел чужой бренд.
+  window._companyResolvePromise = window.__PRESET_COMPANY__
+    ? Promise.resolve(window.__PRESET_COMPANY__)
+    : fetch(API_BASE + '/company/resolve?slug=' + encodeURIComponent(window.APP_COMPANY_SLUG||''))
+        .then(r => r.ok ? r.json() : null).catch(() => null);
 
   // ── Дизайн сайта: шаблон (CSS-скин) + палитра (CSS-переменные цветов) ──
   // preview_template/preview_palette в URL — для live-превью из admin.html (iframe), не сохраняются.
