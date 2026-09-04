@@ -13818,6 +13818,7 @@ const ADMIN_LEAD_STATUS = {
 
 let _orderModalId  = null;
 let _odItemsTotal  = 0;
+let _odItemsMeta   = {groups: [], order_total: null}; // мин.по.позиции/заказу — см. db.get_order_items_billing
 let _orderItemEdit = null;
 let _pricesCache   = null;
 let _orderItemsCache = [];
@@ -13917,6 +13918,7 @@ async function openOrderModal(orderId) {
   if (inp) inp.value = manualDisc || '';
 
   _orderItemsCache = oi?.items || [];
+  _odItemsMeta = {groups: oi?.groups || [], order_total: oi?.order_total ?? null};
   renderOrderItems(_orderItemsCache);
 
   // Фото/видео
@@ -13942,12 +13944,16 @@ function renderOrderItems(items) {
     if (breakdownEl) breakdownEl.innerHTML = '';
     return;
   }
-  let total = 0;
+  // billed_total/billed_sqm/pos_min/pos_clamped приходят с бэкенда (db.get_order_items_billing)
+  // и уже учитывают и мин.по.позиции, и корректировку менеджера (actual_sqm/actual_total_sum) —
+  // раньше эта функция сама суммировала total_sum/actual_total_sum БЕЗ учёта минимумов, из-за
+  // чего "Итого" в карточке расходилось и со списком заказов, и с реальным счётом клиента.
+  let fallbackTotal = 0;
   tbody.innerHTML = items.map((it, i) => {
     const isCorrected = it.measure_status === 'corrected';
-    const useTotal = isCorrected ? it.actual_total_sum : it.total_sum;
     const useSqm   = isCorrected ? it.actual_sqm : it.sqm;
-    total += parseFloat(useTotal || 0);
+    const useTotal = it.billed_total ?? (isCorrected ? it.actual_total_sum : it.total_sum);
+    fallbackTotal += parseFloat(useTotal || 0);
 
     const initDims = it.width_cm && it.length_cm ? `${it.width_cm}×${it.length_cm} см` : '—';
     let dimsCell = initDims;
@@ -13960,6 +13966,8 @@ function renderOrderItems(items) {
       sqmCell = `<span style="text-decoration:line-through;color:var(--text2);font-size:11px">${parseFloat(it.sqm).toFixed(2)}</span>
         <span style="color:#f59e0b;font-weight:700"> ${parseFloat(it.actual_sqm).toFixed(2)} м²</span>`;
     }
+    const minNote = it.pos_clamped
+      ? `<div style="font-size:10px;color:#b45309;margin-top:2px">мин. ${Number(it.pos_min).toFixed(2)} м²</div>` : '';
     const msIcon = it.measure_status === 'confirmed' ? ' <span style="color:#22c55e;font-size:11px">✓</span>'
                  : it.measure_status === 'corrected'  ? ' <span style="color:#f59e0b;font-size:11px">⚠</span>'
                  : it.measure_status === 'pending'    ? ' <span style="color:#94a3b8;font-size:11px">○</span>' : '';
@@ -13967,7 +13975,7 @@ function renderOrderItems(items) {
       <td style="color:var(--text2);text-align:center;padding:8px 4px">${i+1}</td>
       <td style="padding:8px"><b style="font-size:13px">${it.service}</b>${msIcon}</td>
       <td style="text-align:center;padding:8px;font-size:12px">${dimsCell}</td>
-      <td style="text-align:center;padding:8px;white-space:nowrap">${sqmCell}</td>
+      <td style="text-align:center;padding:8px;white-space:nowrap">${sqmCell}${minNote}</td>
       <td style="text-align:right;padding:8px;white-space:nowrap;color:var(--text2)">${Number(it.price_per_sqm).toLocaleString('ru')}</td>
       <td style="text-align:right;padding:8px;white-space:nowrap;font-weight:700">${Number(useTotal).toLocaleString('ru')} сум</td>
       <td style="text-align:center;padding:8px;white-space:nowrap">
@@ -13977,26 +13985,24 @@ function renderOrderItems(items) {
     </tr>`;
   }).join('');
 
-  // Разбивка по услугам — сумма площади (если замерена) или количество позиций (шт).
-  const svcGroups = {};
-  items.forEach(it => {
-    if (!it.service) return;
-    const isCorrected = it.measure_status === 'corrected';
-    const sqm = parseFloat((isCorrected ? it.actual_sqm : it.sqm) || 0);
-    if (!svcGroups[it.service]) svcGroups[it.service] = { count: 0, sqm: 0 };
-    svcGroups[it.service].count++;
-    svcGroups[it.service].sqm += sqm;
-  });
+  // Разбивка по услугам — из групп бэкенда (billed_sqm с учётом клампинга, min_order_total),
+  // а не пересчитана заново на клиенте.
   if (breakdownEl) {
-    breakdownEl.innerHTML = Object.entries(svcGroups).map(([name, g]) => {
-      const label = g.sqm > 0 ? `${g.sqm.toFixed(2)} м²` : `${g.count} шт`;
-      return `<div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--text2);padding:3px 4px">
-        <span>${_esc(name)}</span><span>${label}</span>
-      </div>`;
-    }).join('');
+    if (_odItemsMeta.groups && _odItemsMeta.groups.length) {
+      breakdownEl.innerHTML = _odItemsMeta.groups.map(g => {
+        const label = g.billed_sqm > 0 ? `${g.billed_sqm.toFixed(2)} м²` : `${g.count} шт`;
+        const minNote = g.group_clamped
+          ? ` <span style="color:#b45309">(мин. ${Number(g.min_order_total).toFixed(2)} м²)</span>` : '';
+        return `<div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--text2);padding:3px 4px">
+          <span>${_esc(g.label)}</span><span>${label}${minNote}</span>
+        </div>`;
+      }).join('');
+    } else {
+      breakdownEl.innerHTML = '';
+    }
   }
 
-  _odItemsTotal = total;
+  _odItemsTotal = _odItemsMeta.order_total ?? fallbackTotal;
   odUpdateTotal();
 }
 
@@ -14189,6 +14195,7 @@ async function saveOrderItemForm() {
   closeOrderItemForm();
   const data = await apiGet(`/admin/orders/${_orderModalId}/items`);
   _orderItemsCache = data?.items || [];
+  _odItemsMeta = {groups: data?.groups || [], order_total: data?.order_total ?? null};
   renderOrderItems(_orderItemsCache);
   showToast(_orderItemEdit ? 'Позиция обновлена' : 'Позиция добавлена');
 }
@@ -14905,6 +14912,7 @@ async function deleteOrderItem(itemId) {
   if (res.ok) {
     const data = await apiGet(`/admin/orders/${_orderModalId}/items`);
     _orderItemsCache = data?.items || [];
+    _odItemsMeta = {groups: data?.groups || [], order_total: data?.order_total ?? null};
     renderOrderItems(_orderItemsCache);
     showToast('Позиция удалена');
   }
