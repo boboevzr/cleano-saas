@@ -38,6 +38,9 @@
       'cabinet.btn.measureMedia': '📐 Фото/видео замера',
       'cabinet.btn.photos': '📷 До/После/Повреждено',
       'cabinet.noPositions': 'Нет позиций',
+      'cabinet.itemMinNote': 'Минимум по позиции {min} {unit} (замерено {raw} {unit})',
+      'cabinet.groupMinNote': '⚠️ Минимум по заказу «{service}»: {min} {unit} (по факту {raw} {unit})',
+      'cabinet.total': 'Итого',
       'cabinet.noMeasureMedia': 'Нет фото/видео замера',
       'cabinet.noPhotos': 'Нет фото',
       'cabinet.photoType.before': 'До',
@@ -251,6 +254,9 @@
       'cabinet.btn.measureMedia': "📐 O'lchov fotosi/videosi",
       'cabinet.btn.photos': '📷 Oldin/Keyin/Shikastlangan',
       'cabinet.noPositions': "Pozitsiya yo'q",
+      'cabinet.itemMinNote': 'Pozitsiya boʻyicha minimal {min} {unit} (oʻlchandi {raw} {unit})',
+      'cabinet.groupMinNote': '⚠️ «{service}» buyurtma boʻyicha minimal: {min} {unit} (aslida {raw} {unit})',
+      'cabinet.total': 'Jami',
       'cabinet.noMeasureMedia': "O'lchov fotosi/videosi yo'q",
       'cabinet.noPhotos': "Foto yo'q",
       'cabinet.photoType.before': 'Oldin',
@@ -1925,13 +1931,30 @@
     const data = await apiFetch('/orders/'+num+'/items', {headers:_ocdAuthHeaders()});
     const items = data.items || [];
     if (!items.length) return `<div class="orders-empty">${t('cabinet.noPositions')}</div>`;
-    return items.map((it,i) => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)">
+    const unit = t('unit.m2');
+    const rows = items.map((it,i) => {
+      const itemNote = it.pos_clamped
+        ? `<div style="font-size:11px;color:#b45309;margin-top:2px">${tFmt('cabinet.itemMinNote', {min:Number(it.pos_min).toFixed(2), raw:Number(it.sqm).toFixed(2), unit})}</div>`
+        : '';
+      const amount = it.billed_total ?? it.total_sum;
+      return `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)">
           <div>
             <div style="font-weight:600">${i+1}. ${_ocdEsc(_ocdSvcLabel(it)) || '—'}</div>
             ${_ocdItemMeta(it) ? `<div style="font-size:12px;color:var(--text2)">${_ocdItemMeta(it)}</div>` : ''}
+            ${itemNote}
           </div>
-          ${it.total_sum > 0 ? `<span style="font-weight:700">${formatSum(it.total_sum)} ${t('unit.sum')}</span>` : ''}
-        </div>`).join('');
+          ${amount > 0 ? `<span style="font-weight:700">${formatSum(amount)} ${t('unit.sum')}</span>` : ''}
+        </div>`;
+    }).join('');
+    const groupNotes = (data.groups || []).filter(g => g.group_clamped).map(g =>
+      `<div style="font-size:12px;color:#b45309;padding:6px 0">${tFmt('cabinet.groupMinNote', {service:_ocdEsc(g.label), min:Number(g.min_order_total).toFixed(2), raw:Number(g.raw_sqm).toFixed(2), unit})}</div>`
+    ).join('');
+    const totalHtml = data.order_total > 0
+      ? `<div style="display:flex;justify-content:space-between;padding:10px 0 0;font-weight:800;font-size:15px">
+           <span>${t('cabinet.total')}</span><span>${formatSum(data.order_total)} ${t('unit.sum')}</span>
+         </div>`
+      : '';
+    return rows + groupNotes + totalHtml;
   }
 
   async function _ocdRenderMedia(num){
