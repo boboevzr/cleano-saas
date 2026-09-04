@@ -6,6 +6,6 @@
 
 RewriteEngine On
 RewriteCond %{HTTP_HOST} !^(www\.)?cleano\.uz$ [NC]
-RewriteRule ^index\.html$ /company-site.html [L]
+RewriteRule ^index\.html$ /company-site.php [L]
 RewriteCond %{HTTP_HOST} !^(www\.)?cleano\.uz$ [NC]
-RewriteRule ^$ /company-site.html [L]
+RewriteRule ^$ /company-site.php [L]

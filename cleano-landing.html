@@ -8,7 +8,7 @@
   (function(){
     var slug = new URLSearchParams(location.search).get('company_slug');
     if (slug && slug !== 'artez') {
-      location.replace('/company-site.html' + location.search);
+      location.replace('/company-site.php' + location.search);
     }
   })();
 </script>
