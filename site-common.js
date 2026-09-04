@@ -38,8 +38,10 @@
       'cabinet.btn.measureMedia': '📐 Фото/видео замера',
       'cabinet.btn.photos': '📷 До/После/Повреждено',
       'cabinet.noPositions': 'Нет позиций',
+      'cabinet.minLabel': 'мин.',
       'cabinet.itemMinNote': 'Минимум по позиции {min} {unit} (замерено {raw} {unit})',
       'cabinet.groupMinNote': '⚠️ Минимум по заказу «{service}»: {min} {unit} (по факту {raw} {unit})',
+      'cabinet.groupMinInfo': 'Минимум по заказу «{service}»: {min} {unit}',
       'cabinet.total': 'Итого',
       'cabinet.noMeasureMedia': 'Нет фото/видео замера',
       'cabinet.noPhotos': 'Нет фото',
@@ -254,8 +256,10 @@
       'cabinet.btn.measureMedia': "📐 O'lchov fotosi/videosi",
       'cabinet.btn.photos': '📷 Oldin/Keyin/Shikastlangan',
       'cabinet.noPositions': "Pozitsiya yo'q",
+      'cabinet.minLabel': 'min.',
       'cabinet.itemMinNote': 'Pozitsiya boʻyicha minimal {min} {unit} (oʻlchandi {raw} {unit})',
       'cabinet.groupMinNote': '⚠️ «{service}» buyurtma boʻyicha minimal: {min} {unit} (aslida {raw} {unit})',
+      'cabinet.groupMinInfo': '«{service}» buyurtma boʻyicha minimal: {min} {unit}',
       'cabinet.total': 'Jami',
       'cabinet.noMeasureMedia': "O'lchov fotosi/videosi yo'q",
       'cabinet.noPhotos': "Foto yo'q",
@@ -1924,7 +1928,10 @@
     const dims = (it.width_cm && it.length_cm) ? `${it.width_cm}×${it.length_cm} ${t('unit.cm')} · ` : '';
     const sqm = it.sqm > 0 ? `${dims}${Number(it.sqm).toFixed(2)} ${t('unit.m2')}` : '';
     const price = it.price_per_sqm > 0 ? `${sqm ? ' · ' : ''}${formatSum(it.price_per_sqm)} ${t('unit.sum')}/${t('unit.m2')}` : '';
-    return sqm + price;
+    // Минимум по позиции показываем ВСЕГДА, когда он задан в прайсе (не только в момент,
+    // когда он реально сработал) — клиент видит правило целиком, а не только исключение.
+    const min = it.pos_min ? ` · ${t('cabinet.minLabel')} ${Number(it.pos_min).toFixed(2)} ${t('unit.m2')}` : '';
+    return sqm + price + min;
   }
 
   function _ocdFmtDt(v){
@@ -1952,9 +1959,13 @@
           ${amount > 0 ? `<span style="font-weight:700">${formatSum(amount)} ${t('unit.sum')}</span>` : ''}
         </div>`;
     }).join('');
-    const groupNotes = (data.groups || []).filter(g => g.group_clamped).map(g =>
-      `<div style="font-size:12px;color:#b45309;padding:6px 0">${tFmt('cabinet.groupMinNote', {service:_ocdEsc(g.label), min:Number(g.min_order_total).toFixed(2), raw:Number(g.raw_sqm).toFixed(2), unit})}</div>`
-    ).join('');
+    const groupNotes = (data.groups || []).filter(g => g.min_order_total).map(g => {
+      const text = g.group_clamped
+        ? tFmt('cabinet.groupMinNote', {service:_ocdEsc(g.label), min:Number(g.min_order_total).toFixed(2), raw:Number(g.raw_sqm).toFixed(2), unit})
+        : tFmt('cabinet.groupMinInfo', {service:_ocdEsc(g.label), min:Number(g.min_order_total).toFixed(2), unit});
+      const color = g.group_clamped ? '#b45309' : 'var(--text2)';
+      return `<div style="font-size:12px;color:${color};padding:6px 0">${text}</div>`;
+    }).join('');
     const totalHtml = data.order_total > 0
       ? `<div style="display:flex;justify-content:space-between;padding:10px 0 0;font-weight:800;font-size:15px">
            <span>${t('cabinet.total')}</span><span>${formatSum(data.order_total)} ${t('unit.sum')}</span>
