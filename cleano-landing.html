@@ -1027,6 +1027,13 @@
   // переключении RU/UZ звук иногда стартовал раньше, чем успевал отрисоваться кадр видео.
   video.addEventListener('canplaythrough', function(){
     if (video.dataset.loadToken != videoLoadToken) return; // устаревшая загрузка — язык уже переключили ещё раз
+    // На мобильных сетях видео часто догружается ПОСЛЕ таймаута ниже, который к этому
+    // моменту уже успел показать заглушку "Video tez orada" и навсегда спрятать <video>
+    // (display:none) — без этой строчки готовое видео так и оставалось скрытым за
+    // заглушкой, хотя само по себе оно рабочее (fullscreen-плеер не зависит от display).
+    clearTimeout(videoLoadTimer);
+    video.style.display = '';
+    fallback.style.display = 'none';
     video.play().catch(function(){});
   });
   function loadDemoVideo(l){
@@ -1040,7 +1047,7 @@
     video.load();
     videoLoadTimer = setTimeout(function(){
       if (video.readyState === 0) { video.style.display='none'; fallback.style.display='flex'; }
-    }, 3500);
+    }, 7000);
   }
   video.addEventListener('error', function(){ video.style.display='none'; fallback.style.display='flex'; }, true);
   video.addEventListener('loadedmetadata', function(){
