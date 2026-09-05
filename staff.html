@@ -10024,7 +10024,7 @@ async function sLoadPaymentModal() {
             ${!p.confirmed && !p.confirmed_at && canReview
               ? `<button onclick="_openPaymentReview(${_sOrderId},${p.id},window._sPmPaymentsMap[${p.id}])" style="font-size:11px;padding:2px 10px;border-radius:4px;border:1.5px solid #2563eb;background:#eff6ff;color:#1d4ed8;font-weight:700;cursor:pointer">${t('pm.review_btn')}</button>`
               : ''}
-            ${p.receipt_file_id
+            ${(p.receipt_file_id || p.receipt_url)
               ? `<button onclick="_viewDriverReceipt(${p.id})" style="font-size:11px;padding:2px 10px;border-radius:4px;border:1.5px solid #7c3aed;background:#f5f3ff;color:#7c3aed;font-weight:700;cursor:pointer">${t('pm.receipt_btn')}</button>`
               : ''}
           </div>` : ''}
@@ -12688,7 +12688,11 @@ function closePayReviewBanner() {
 async function _viewDriverReceipt(paymentId) {
   const token = localStorage.getItem(TOKEN_KEY);
   try {
-    const res = await fetch(`${API_BASE}/staff/payments/${paymentId}/receipt`, {
+    // /staff/payments/{id}/receipt отдаёт только receipt_file_id (фото от водителя из TG-бота);
+    // квитанции, загруженные через веб (admin.html/staff.html), лежат в receipt_url и через
+    // этот эндпоинт не отдавались — используем /admin/orders/.../receipt-file, который
+    // проверяет оба поля (тот же эндпоинт, что уже работает в admin.html).
+    const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/payments/${paymentId}/receipt-file`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) { showToast('Чек не найден', 'error'); return; }
