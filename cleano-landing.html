@@ -96,11 +96,32 @@
   .btn-ghost:hover { border-color: var(--teal); color: var(--teal-soft); }
   :root[data-theme="light"] .btn-ghost:hover { color: var(--teal); }
 
-  .header-login-group { display: flex; gap: 8px; }
   .header-login-btn { padding: 9px 16px; font-size: 13px; }
   @media (max-width: 480px) {
     .header-login-btn { padding: 8px 10px; font-size: 12px; }
   }
+
+  .header-login-dropdown { position: relative; }
+  .login-dropdown-menu { display: none; position: absolute; top: calc(100% + 8px); right: 0; flex-direction: column; gap: 2px; background: var(--surface2); border: 1px solid var(--line); border-radius: 12px; padding: 6px; min-width: 170px; box-shadow: 0 16px 40px -10px rgba(0,0,0,.45); z-index: 220; }
+  .login-dropdown-menu.open { display: flex; }
+  .login-dropdown-menu a { padding: 9px 12px; border-radius: 8px; font-size: 13.5px; font-weight: 600; text-decoration: none; color: var(--text); transition: background .15s, color .15s; }
+  .login-dropdown-menu a:hover { background: var(--ink); color: var(--teal-soft); }
+
+  .mob-menu-btn { display: none; }
+  @media (max-width: 860px) {
+    .header-login-dropdown { display: none; }
+    #themeToggle.icon-btn { display: none; }
+    .lang-switch#langSwitch { display: none; }
+    .mob-menu-btn { display: inline-flex; }
+  }
+
+  .mob-nav-overlay { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.55); }
+  .mob-nav-overlay.open { display: block; }
+  .mob-nav-panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(280px, 82vw); background: var(--ink); border-left: 1px solid var(--line); padding: 20px 18px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  .mob-nav-panel a { padding: 13px 4px; font-size: 15px; font-weight: 600; color: var(--text); text-decoration: none; }
+  .mob-nav-close { align-self: flex-end; margin-bottom: 8px; }
+  .mob-nav-sep { height: 1px; background: var(--line); margin: 10px 0; }
+  .mob-nav-controls { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
   .btn-copy-highlight { background: color-mix(in srgb, var(--teal) 16%, transparent); border-color: var(--teal); color: var(--teal-soft); animation: copyGlow 2.2s ease-in-out infinite; }
   .btn-copy-highlight:hover { background: color-mix(in srgb, var(--teal) 26%, transparent); color: var(--teal-soft); }
   :root[data-theme="light"] .btn-copy-highlight { color: var(--teal); }
@@ -436,18 +457,42 @@
       <a href="#how" data-i18n="nav.how">Qanday ishlaydi</a>
       <a href="#pricing" data-i18n="nav.pricing">Tariflar</a>
     </nav>
-    <div class="header-login-group">
-      <a class="btn btn-ghost header-login-btn" href="admin.html?fresh=1" target="_blank" rel="noopener" data-i18n="nav.login">👑 Admin</a>
-      <a class="btn btn-ghost header-login-btn" href="staff.html?fresh=1" target="_blank" rel="noopener" data-i18n="nav.staffLogin">👥 Xodimlar</a>
+    <div class="header-login-dropdown" id="loginDropdown">
+      <button type="button" class="btn btn-ghost header-login-btn" onclick="toggleLoginDropdown(event)" data-i18n="nav.loginMenu">Вход ▾</button>
+      <div class="login-dropdown-menu" id="loginDropdownMenu">
+        <a href="admin.html?fresh=1" target="_blank" rel="noopener" data-i18n="nav.login">👑 Admin</a>
+        <a href="staff.html?fresh=1" target="_blank" rel="noopener" data-i18n="nav.staffLogin">👥 Xodimlar</a>
+      </div>
     </div>
-    <button class="icon-btn" id="themeToggle" aria-label="Mavzuni almashtirish">🌙</button>
+    <button class="icon-btn theme-toggle-btn" id="themeToggle" aria-label="Mavzuni almashtirish">🌙</button>
     <div class="lang-switch" id="langSwitch">
       <button type="button" data-lang-btn="ru">RU</button>
       <button type="button" data-lang-btn="uz">UZ</button>
     </div>
     <a class="btn btn-accent" href="#cta" data-i18n="nav.tryFree" style="display:none" id="navCta">Bepul sinab ko'ring</a>
+    <button class="icon-btn mob-menu-btn" id="mobMenuBtn" onclick="toggleMobNav()" aria-label="Menyu">☰</button>
   </div>
 </header>
+
+<div class="mob-nav-overlay" id="mobNavOverlay">
+  <div class="mob-nav-panel">
+    <button class="icon-btn mob-nav-close" onclick="toggleMobNav()" aria-label="Yopish">✕</button>
+    <a href="#features" onclick="toggleMobNav()" data-i18n="nav.features">Imkoniyatlar</a>
+    <a href="#how" onclick="toggleMobNav()" data-i18n="nav.how">Qanday ishlaydi</a>
+    <a href="#pricing" onclick="toggleMobNav()" data-i18n="nav.pricing">Tariflar</a>
+    <div class="mob-nav-sep"></div>
+    <a href="admin.html?fresh=1" target="_blank" rel="noopener" data-i18n="nav.login">👑 Admin</a>
+    <a href="staff.html?fresh=1" target="_blank" rel="noopener" data-i18n="nav.staffLogin">👥 Xodimlar</a>
+    <div class="mob-nav-sep"></div>
+    <div class="mob-nav-controls">
+      <button type="button" class="icon-btn theme-toggle-btn" aria-label="Mavzuni almashtirish">🌙</button>
+      <div class="lang-switch">
+        <button type="button" data-lang-btn="ru">RU</button>
+        <button type="button" data-lang-btn="uz">UZ</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <section class="hero">
   <div class="steam-layer">
@@ -769,7 +814,7 @@
   var I18N = {
     ru: {
       'nav.features':'Возможности','nav.how':'Как это работает','nav.pricing':'Тарифы','nav.tryFree':'Попробовать бесплатно',
-      'nav.login':'👑 Админ','nav.staffLogin':'👥 Персонал',
+      'nav.login':'👑 Админ','nav.staffLogin':'👥 Персонал','nav.loginMenu':'Вход ▾',
       'hero.eyebrow':'SaaS-платформа для химчисток и прачечных',
       'hero.h1a':'Управляйте химчисткой или прачечной','hero.h1b':'из одного окна',
       'hero.lead':'Приём заказов, маршруты водителей, касса и зарплата, SMS и Telegram-уведомления клиентам, свой сайт для приёма заявок — всё в одной системе, без разработчиков и серверов.',
@@ -833,7 +878,7 @@
     },
     uz: {
       'nav.features':'Imkoniyatlar','nav.how':'Qanday ishlaydi','nav.pricing':'Tariflar','nav.tryFree':"Bepul sinab ko'ring",
-      'nav.login':'👑 Admin','nav.staffLogin':'👥 Xodimlar',
+      'nav.login':'👑 Admin','nav.staffLogin':'👥 Xodimlar','nav.loginMenu':'Kirish ▾',
       'hero.eyebrow':'Kimyoviy tozalash va kirxonalar uchun SaaS-platforma',
       'hero.h1a':'Kimyoviy tozalash yoki kirxonangizni','hero.h1b':'bitta oynadan boshqaring',
       'hero.lead':"Buyurtmalarni qabul qilish, haydovchilar marshruti, kassa va maosh, mijozlarga SMS va Telegram xabarnomalari, ariza qabul qilish uchun o'z saytingiz — hammasi bitta tizimda, dasturchi va serversiz.",
@@ -909,7 +954,7 @@
       var val = (I18N[lang] && I18N[lang][key]) || (I18N.uz[key]) || '';
       if (val) el.title = val;
     });
-    document.querySelectorAll('#langSwitch [data-lang-btn]').forEach(function(b){
+    document.querySelectorAll('[data-lang-btn]').forEach(function(b){
       b.classList.toggle('active', b.dataset.langBtn === lang);
     });
     var navCta = document.getElementById('navCta');
@@ -920,7 +965,7 @@
     lang = l; localStorage.setItem('cleano_lang', l); applyI18n();
     if (langChanged && typeof loadDemoVideo === 'function') loadDemoVideo(lang);
   }
-  document.querySelectorAll('#langSwitch [data-lang-btn]').forEach(function(b){
+  document.querySelectorAll('[data-lang-btn]').forEach(function(b){
     b.addEventListener('click', function(){ setLang(b.dataset.langBtn); });
   });
   applyI18n();
@@ -929,15 +974,41 @@
   var theme = localStorage.getItem('cleano_theme') || 'dark';
   function applyTheme(t){
     document.documentElement.setAttribute('data-theme', t);
-    var btn = document.getElementById('themeToggle');
-    if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+    document.querySelectorAll('.theme-toggle-btn').forEach(function(btn){
+      btn.textContent = t === 'dark' ? '☀️' : '🌙';
+    });
   }
   applyTheme(theme);
-  document.getElementById('themeToggle').addEventListener('click', function(){
-    theme = theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('cleano_theme', theme);
-    applyTheme(theme);
+  document.querySelectorAll('.theme-toggle-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      theme = theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('cleano_theme', theme);
+      applyTheme(theme);
+    });
   });
+
+  // ── HEADER: логин-дропдаун (десктоп) + мобильное меню ──
+  function toggleLoginDropdown(e){
+    if (e) e.stopPropagation();
+    var menu = document.getElementById('loginDropdownMenu');
+    if (menu) menu.classList.toggle('open');
+  }
+  document.addEventListener('click', function(e){
+    var menu = document.getElementById('loginDropdownMenu');
+    if (menu && menu.classList.contains('open') && !e.target.closest('.header-login-dropdown')) {
+      menu.classList.remove('open');
+    }
+  });
+  function toggleMobNav(){
+    var overlay = document.getElementById('mobNavOverlay');
+    if (overlay) overlay.classList.toggle('open');
+  }
+  var mobNavOverlay = document.getElementById('mobNavOverlay');
+  if (mobNavOverlay) {
+    mobNavOverlay.addEventListener('click', function(e){
+      if (e.target === mobNavOverlay) toggleMobNav();
+    });
+  }
 
   // ── VIDEO: своё видео на RU и UZ, проигрывается в зависимости от выбранного языка.
   // Рамка сама подстраивается под ориентацию загруженного видео (вертикальное 9:16 / горизонтальное 16:9). ──
