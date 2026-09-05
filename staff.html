@@ -12034,9 +12034,6 @@ async function smSaveAndClose() {
         body: JSON.stringify(_body),
       });
       if (res.ok) {
-        const d = await res.json();
-        const idx = _sItemsCache.findIndex(i => i.id === _measureItemId);
-        if (idx >= 0) _sItemsCache[idx] = { ..._sItemsCache[idx], ...d.item };
         approved = true;
       } else {
         const e = await res.json().catch(() => ({}));
@@ -12045,8 +12042,11 @@ async function smSaveAndClose() {
     }
   }
 
+  // См. комментарий в smSubmit() — перезапрашиваем целиком (billed_total/groups/
+  // order_total должны отражать и правку цены/услуги из smSaveItemInfo(), и, если
+  // сработало, только что проведённое утверждение выше), не патчим локально.
   _sActivityCache = null;
-  _reRenderItems();
+  await _refreshOpenOrderItems();
   soSwitchTab('items');
   _sRenderItemActivity();
   document.getElementById('staffModalMeasure').classList.remove('open');
@@ -12134,12 +12134,10 @@ async function svpConfirm() {
     })
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); showToast(e.detail||'Ошибка', 'error'); return; }
-  const d = await res.json().catch(()=>({}));
-  const idx = _sItemsCache.findIndex(i => i.id === itemId);
-  if (idx >= 0) _sItemsCache[idx] = d.item ? { ..._sItemsCache[idx], ...d.item } : { ..._sItemsCache[idx], service, service_ru, service_uz };
+  // См. комментарий в smSubmit() — перезапрашиваем целиком, не патчим одну позицию.
+  await _refreshOpenOrderItems();
 
   staffCloseServicePick();
-  _reRenderItems();
   await staffOpenMeasure(itemId);
 }
 
@@ -12495,10 +12493,11 @@ async function smSubmit() {
     body: JSON.stringify(_body),
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); if (await _reloadItemsOnNotFound(e.detail)) return; showToast(e.detail||'Ошибка', 'error'); return; }
-  const d = await res.json();
-  const idx = _sItemsCache.findIndex(i => i.id === _measureItemId);
-  if (idx >= 0) _sItemsCache[idx] = d.item;
-  _reRenderItems();
+  // Перезапрашиваем ВСЕ позиции целиком (не патчим одну локально из d.item) — иначе
+  // billed_total/groups/order_total (посчитанные бэкендом с учётом мин.по.позиции/
+  // по.заказу) остаются от ДО этого замера, и "Итого" визуально не меняется после
+  // отправки/утверждения замера, хотя реальная сумма в базе уже другая.
+  await _refreshOpenOrderItems();
   staffRenderWorkflow(_sOrderStatus || '', currentStaff?.permissions || []);
   document.getElementById('staffModalMeasure').classList.remove('open');
   showToast('Замер отправлен на проверку', 'success');
@@ -12527,12 +12526,10 @@ async function smSubmitAndApprove() {
     body: JSON.stringify(_body),
   });
   if (!res.ok) { const e = await res.json().catch(() => ({})); showToast(e.detail || 'Ошибка', 'error'); return; }
-  const d = await res.json();
-  const idx = _sItemsCache.findIndex(i => i.id === _measureItemId);
-  if (idx >= 0) _sItemsCache[idx] = d.item;
+  // См. комментарий в smSubmit() — перезапрашиваем целиком, не патчим одну позицию.
   _sActivityCache = null;
   document.getElementById('staffModalMeasure').classList.remove('open');
-  await _reRenderItems();
+  await _refreshOpenOrderItems();
   showToast('Замер проведён', 'success');
 }
 
@@ -12559,10 +12556,8 @@ async function smApprove() {
     body: JSON.stringify(_body),
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); showToast(e.detail||'Ошибка', 'error'); return; }
-  const d = await res.json();
-  const idx = _sItemsCache.findIndex(i => i.id === _measureItemId);
-  if (idx >= 0) _sItemsCache[idx] = d.item;
-  _reRenderItems();
+  // См. комментарий в smSubmit() — перезапрашиваем целиком, не патчим одну позицию.
+  await _refreshOpenOrderItems();
   document.getElementById('staffModalMeasure').classList.remove('open');
   showToast(t('sm.approved_toast'), 'success');
 }
@@ -13231,10 +13226,8 @@ async function smReject() {
     body: JSON.stringify({ action:'reject', note }),
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); showToast(e.detail||'Ошибка', 'error'); return; }
-  const d = await res.json();
-  const idx = _sItemsCache.findIndex(i => i.id === _measureItemId);
-  if (idx >= 0) _sItemsCache[idx] = d.item;
-  _reRenderItems();
+  // См. комментарий в smSubmit() — перезапрашиваем целиком, не патчим одну позицию.
+  await _refreshOpenOrderItems();
   document.getElementById('staffModalMeasure').classList.remove('open');
   showToast(t('sm.rejected_toast'), 'success');
 }
