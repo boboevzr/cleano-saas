@@ -439,7 +439,7 @@
 
 <header>
   <div class="wrap">
-    <div class="logo">
+    <div class="logo" onclick="location.href=location.pathname" style="cursor:pointer">
       <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
           <linearGradient id="tealatop" x1="10%" y1="0%" x2="90%" y2="100%">
@@ -1009,6 +1009,10 @@
       if (e.target === mobNavOverlay) toggleMobNav();
     });
   }
+  // весь скрипт обёрнут в IIFE — inline onclick="..." в разметке видит только window,
+  // поэтому функции нужно явно прокинуть наружу
+  window.toggleLoginDropdown = toggleLoginDropdown;
+  window.toggleMobNav = toggleMobNav;
 
   // ── VIDEO: своё видео на RU и UZ, проигрывается в зависимости от выбранного языка.
   // Рамка сама подстраивается под ориентацию загруженного видео (вертикальное 9:16 / горизонтальное 16:9). ──
