@@ -4120,7 +4120,15 @@ async function changeLeadStatus(leadId, status, note, scheduledAt) {
     body: JSON.stringify(body)
   });
   await loadLeads();
-  openLeadDetail(leadId);
+  if (status === 'lost' || status === 'callback') {
+    // Лид сменил статус (потерян/запланирован перезвон) — закрываем карточку
+    // и сразу открываем вкладку с этим статусом, вместо того чтобы оставаться
+    // на детальной странице уже неактуального (в этом статусе) лида.
+    gotoPage('leads');
+    setLeadsFilter(status);
+  } else {
+    openLeadDetail(leadId);
+  }
 }
 
 // ── НЕ ДОЗВОНИЛСЯ ──────────────────────────────────────────────────

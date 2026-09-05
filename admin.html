@@ -16010,11 +16010,19 @@ async function saveLeadStatus(status) {
   });
   if (res.ok) {
     _adminLeadCard.status = status;
-    const st = ADMIN_LEAD_STATUS[status] || ADMIN_LEAD_STATUS.new;
-    document.getElementById('lc_badge').innerHTML = `<span style="padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700;background:${st.bg};color:${st.color}">${st.label}</span>`;
-    _renderAdminLeadStatusBtns(status);
-    adminLoadLeads();
     showToast('Статус обновлён');
+    if (status === 'converted' || status === 'lost' || status === 'callback') {
+      // Лид сменил статус — карточке нечего больше показывать в прежнем виде,
+      // закрываем её и сразу открываем вкладку с этим статусом, чтобы было видно
+      // результат, а не оставаться на прежнем (уже неактуальном) фильтре.
+      document.getElementById('modalLeadCard').style.display = 'none';
+      _setAdminLeadsStatus(status);
+    } else {
+      const st = ADMIN_LEAD_STATUS[status] || ADMIN_LEAD_STATUS.new;
+      document.getElementById('lc_badge').innerHTML = `<span style="padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700;background:${st.bg};color:${st.color}">${st.label}</span>`;
+      _renderAdminLeadStatusBtns(status);
+      adminLoadLeads();
+    }
   }
 }
 
