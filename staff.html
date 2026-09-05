@@ -9016,6 +9016,20 @@ let _sItemEdit      = null;
 let _sOrderStatus   = null;
 let _sPrices        = null;
 let _sItemsCache    = [];
+// groups/order_total — то же самое, что уже billed_total/pos_min/pos_clamped на каждом
+// it в _sItemsCache: посчитано бэкендом (db.get_order_items_billing, с учётом мин. по
+// позиции/по заказу и company-scoped прайс-листа), держим рядом с items, чтобы
+// staffRenderItems() не пересчитывал их заново на клиенте по чужому/неверному прайсу.
+let _sItemsGroups     = [];
+let _sItemsOrderTotal = 0;
+// Общая точка синхронизации для всех мест, где позиции заказа перезагружаются с
+// /admin/orders/{id}/items — держит _sItemsGroups/_sItemsOrderTotal в паре с
+// _sItemsCache, чтобы их нельзя было забыть обновить в одном из мест по отдельности.
+function _sSyncItems(payload) {
+  _sItemsCache      = payload?.items || [];
+  _sItemsGroups     = payload?.groups || [];
+  _sItemsOrderTotal = payload?.order_total || 0;
+}
 let _sOrderCache    = null;
 let _sActivityCache = null;
 let _sActiveTab     = 'info';
@@ -9025,9 +9039,13 @@ function _staffToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
 async function _loadStaffPrices() {
   if (_sPrices) return _sPrices;
   try {
+    // /api/prices и /api/services — публичные (для сайта), без company_slug/токена
+    // молча отдают прайс company_id=1. Для сотрудника нужен ЕГО прайс — /api/staff/*
+    // резолвит company_id из токена (см. фикс staffRenderItems/этого бага).
+    const authHeaders = { Authorization: `Bearer ${_staffToken()}` };
     const [pr, sr] = await Promise.all([
-      fetch(`${API_BASE}/prices`).then(r => r.json()),
-      fetch(`${API_BASE}/services`).then(r => r.json()).catch(() => null),
+      fetch(`${API_BASE}/staff/prices`, { headers: authHeaders }).then(r => r.json()),
+      fetch(`${API_BASE}/staff/services`, { headers: authHeaders }).then(r => r.json()).catch(() => null),
     ]);
     _sPrices = pr.prices || pr || {};
     if (sr?.services) {
@@ -9286,7 +9304,7 @@ async function staffOpenOrder(orderId) {
 
   _sOrderStatus = o.status;
   _sOrderCache  = o;
-  _sItemsCache = oi?.items || [];
+  _sSyncItems(oi);
   staffRenderItems(_sItemsCache);
   // После мойки добавление позиций запрещено; для admin — до Доставлен
   const _isAdminOpening = currentStaff?.role === 'admin';
@@ -9324,7 +9342,7 @@ async function _refreshOpenOrderItems() {
     const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items`, { headers:{Authorization:`Bearer ${_staffToken()}`} });
     if (!res.ok) return;
     const d = await res.json();
-    _sItemsCache = d.items || [];
+    _sSyncItems(d);
     _reRenderItems();
   } catch(e) {}
 }
@@ -9342,7 +9360,7 @@ async function _pollOpenOrderState() {
     if (_sOrderId !== sid) return; // карточку успели закрыть/сменить, пока ждали ответ
     if (iRes.ok) {
       const di = await iRes.json();
-      _sItemsCache = di.items || [];
+      _sSyncItems(di);
       _reRenderItems();
     }
     if (oRes.ok) {
@@ -9591,7 +9609,7 @@ async function washerOpenOrder(orderId) {
 
   _sOrderStatus = o.status;
   _sOrderCache  = o;
-  _sItemsCache  = oi?.items || [];
+  _sSyncItems(oi);
   wmoRenderItems();
   staffRenderWorkflow(o.status, currentStaff?.permissions || [], 'wmo_workflow_row');
   staffLoadOrderPhotos(orderId);
@@ -9645,7 +9663,7 @@ async function _reloadItemsOnNotFound(errDetail) {
   // Перезагружаем позиции из API
   try {
     const r = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items`, { headers:{ Authorization:`Bearer ${_staffToken()}` } });
-    if (r.ok) { const d = await r.json(); _sItemsCache = d.items || []; }
+    if (r.ok) { const d = await r.json(); _sSyncItems(d); }
   } catch {}
   _reRenderItems();
   showToast('Позиция была удалена — список обновлён', 'warning');
@@ -10746,67 +10764,39 @@ function staffRenderItems(items, containerEl) {
     return m ? `${_svcName(m.svcKey)} — ${_typeName(m.typeKey)}` : it.service;
   };
 
-  // Разбивка по услугам — сумма площади (если замерена) или количество позиций (шт).
-  // Заодно копим сырую сумму (rawTotal) и позиционно-клампленную (clampedTotal) на
-  // группу — нужно ниже для "мин. по заказу" (группового минимума).
-  const _svcGroups = {};
-  items.forEach(it => {
-    if (!it.service) return;
-    const m = sifFindPriceMatch(it.service);
-    const gKey = it.service_ru || (m ? `${m.svcKey}::${m.typeKey}` : it.service);
-    if (!_svcGroups[gKey]) _svcGroups[gKey] = { label: _svcLabel(it), count: 0, sqm: 0, rawTotal: 0, clampedTotal: 0, unitKey: m ? ((_sPrices||{})[m.svcKey]?.[m.typeKey]?.unit_key || 'm2') : 'm2', match: m };
-    const g = _svcGroups[gKey];
-    g.count++;
-    g.sqm += parseFloat(it.sqm || 0);
-    g.rawTotal += parseFloat(it.total_sum || 0);
-    // Позиционный мин. по позиции — влияет и на свою строку (см. displayTotal ниже),
-    // и на вклад позиции в Итого группы (когда сама группа выше своего мин. по заказу).
-    const _posCatalogInfo = m ? (_sPrices||{})[m.svcKey]?.[m.typeKey] : null;
-    const _posMin = _posCatalogInfo?.min_order;
-    const _itSqm = parseFloat(it.sqm || 0);
-    const _itPrice = parseFloat(it.price_per_sqm || 0);
-    g.clampedTotal += (_posMin && _itSqm && _itSqm < _posMin && _itPrice)
-      ? _posMin * _itPrice
-      : parseFloat(it.total_sum || 0);
-  });
-  const _svcBreakdownHtml = Object.values(_svcGroups).map(g => {
-    // Для штучных услуг поле sqm хранит фактическое количество (шт), а не g.count
-    // (число позиций-строк) — иначе при нескольких позициях одной услуги сводка
-    // показывала бы число позиций вместо суммарного количества штук.
-    const label = g.unitKey === 'pcs' ? `${Math.round(g.sqm)} ${t('unit.pcs')}` : `${g.sqm.toFixed(2)} ${t('unit.m2')}`;
+  // Разбивка по услугам и "Итого" — берём ГОТОВЫЕ billed_total/groups/order_total,
+  // посчитанные бэкендом (db.get_order_items_billing, см. _sSyncItems). Раньше здесь был
+  // свой JS-пересчёт мин. по позиции/по заказу поверх _sPrices — а тот грузился ПУБЛИЧНЫМ
+  // /api/prices БЕЗ company_slug и токена, который в таком случае молча отдаёт прайс-лист
+  // company_id=1. Для любой компании, кроме первой, это означало: либо клампинг вообще
+  // не срабатывал (названия услуг из чужого прайса не совпадали с order_items.service),
+  // либо срабатывал по чужим ценам/минимумам — "Итого" в карточке расходилось со списком
+  // заказов (который всегда брал верное значение с бэкенда).
+  const _svcBreakdownHtml = (_sItemsGroups || []).map(g => {
+    const isPcs = g.unit_key === 'pcs';
+    const unitLabel = isPcs ? t('unit.pcs') : t('unit.m2');
+    const qtyLabel = isPcs ? `${Math.round(g.count || g.billed_sqm || 0)} ${unitLabel}` : `${Number(g.raw_sqm||0).toFixed(2)} ${unitLabel}`;
+    const minNote = g.group_clamped
+      ? ` <span style="color:#b45309">(мин. ${Number(g.min_order_total).toFixed(2)} ${unitLabel})</span>`
+      : '';
     return `<div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;padding:2px 0">
-      <span>${_esc(g.label)}</span><span>${label}</span>
+      <span>${_esc(g.label)}${minNote}</span><span>${qtyLabel}</span>
     </div>`;
   }).join('');
 
-  // "Итого" — не сумма total_sum по позициям, а по группам услуг:
-  // • если сырая сумма площади/штук услуги во ВСЕХ её позициях заказа меньше "мин. по
-  //   заказу" из прайса — вклад всей группы = мин_по_заказу × цена (а не факт).
-  // • иначе — сумма ПОЗИЦИОННО-клампленных total (clampedTotal): каждая позиция внутри
-  //   группы меньше своего "мин. по позиции" всё равно считается по этому минимуму.
-  let total = 0;
-  Object.values(_svcGroups).forEach(g => {
-    const catalogInfo = g.match ? (_sPrices||{})[g.match.svcKey]?.[g.match.typeKey] : null;
-    const groupMin = catalogInfo?.min_order_total || 0;
-    const qty = g.sqm > 0 ? g.sqm : g.count;
-    total += (groupMin && qty < groupMin && catalogInfo?.price) ? groupMin * catalogInfo.price : g.clampedTotal;
-  });
-  items.forEach(it => { if (!it.service) total += parseFloat(it.total_sum || 0); }); // позиции без услуги — вне групп
+  const total = _sItemsOrderTotal || 0;
 
   // Сырая сумма (без учёта мин. по позиции/заказу) — для показа "Цена по факту" на вкладке Инфо.
-  let rawTotal = 0;
-  Object.values(_svcGroups).forEach(g => { rawTotal += g.rawTotal; });
-  items.forEach(it => { if (!it.service) rawTotal += parseFloat(it.total_sum || 0); });
+  const rawTotal = items.reduce((s, it) => s + parseFloat(it.total_sum || 0), 0);
 
   el.innerHTML = items.map((it,i) => {
-    // Позиционный минимум (мин. по позиции) — только для отображения СВОЕЙ строки.
+    // Сумма строки — billed_total с бэкенда (уже учитывает мин. по позиции и
+    // корректировку менеджера, см. db.get_order_items_billing). _posUnitKey ниже —
+    // чисто косметический выбор подписи (шт/м²) для строки замера, берём его из
+    // локального прайса лишь для этого — на саму сумму он не влияет.
     const _mPos = it.service ? sifFindPriceMatch(it.service) : null;
-    const _posCatalogInfo = _mPos ? (_sPrices||{})[_mPos.svcKey]?.[_mPos.typeKey] : null;
-    const _posMinOrder = _posCatalogInfo?.min_order;
-    const _posUnitKey  = _posCatalogInfo?.unit_key || 'm2';
-    const displayTotal = (_posMinOrder && it.sqm && it.sqm < _posMinOrder && it.price_per_sqm)
-      ? _posMinOrder * it.price_per_sqm
-      : it.total_sum;
+    const _posUnitKey  = (_mPos ? (_sPrices||{})[_mPos.svcKey]?.[_mPos.typeKey]?.unit_key : null) || 'm2';
+    const displayTotal = it.billed_total ?? it.total_sum;
 
     const hasDims  = it.width_cm && it.length_cm;
     const isMine   = it.washer_login === myLogin;
@@ -10977,7 +10967,13 @@ async function staffBulkCreate() {
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); showToast(e.detail||'Ошибка', 'error'); return; }
   const d = await res.json();
-  _sItemsCache = [..._sItemsCache, ...d.items];
+  // Не просто добавляем сырые созданные позиции в кэш — у них ещё нет billed_total/
+  // groups/order_total (их отдаёт только billing-эндпоинт целиком) — перезагружаем всё,
+  // иначе Итого до следующего открытия карточки считалось бы по неполным данным.
+  const refreshed = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items`, {
+    headers:{ Authorization:`Bearer ${_staffToken()}` }
+  }).then(r=>r.json()).catch(()=>null);
+  if (refreshed) _sSyncItems(refreshed);
   _reRenderItems();
   if (inp) inp.value = '';
   showToast(`Создано ${d.count} позиций`, 'success');
@@ -11850,7 +11846,7 @@ async function staffSaveItemForm() {
   const data = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items`, {
     headers:{ Authorization:`Bearer ${_staffToken()}` }
   }).then(r=>r.json()).catch(()=>({items:[]}));
-  _sItemsCache = data?.items || [];
+  _sSyncItems(data);
   _reRenderItems();
   _sActivityCache = null;
   soSwitchTab('items');
@@ -11873,7 +11869,7 @@ async function staffDeleteItem(itemId) {
     const data = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items`, {
       headers:{ Authorization:`Bearer ${_staffToken()}` }
     }).then(r=>r.json()).catch(()=>({items:[]}));
-    _sItemsCache = data?.items || [];
+    _sSyncItems(data);
     _reRenderItems();
   }
 }
