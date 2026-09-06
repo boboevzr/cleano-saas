@@ -106,7 +106,7 @@ self.addEventListener('push', event => {
                order_id: data.order_id, item_id: data.item_id, type: data.type,
                driver_staff_id: data.driver_staff_id,
                push_title: title, push_body: body },
-    actions: (isMeasure || isMApproved || isMRejected || isPosReq || isNewItem || isPaymentReview)
+    actions: (isMeasure || isMApproved || isMRejected || isPosReq || isNewItem || isPaymentReview || isPaymentRejected || isDeliveryReload)
       ? [{ action: 'open', title: '📋 Открыть заказ' }, { action: 'dismiss', title: 'Закрыть' }]
       : isNewChat
       ? [{ action: 'open', title: '💬 Открыть чат' },   { action: 'dismiss', title: 'Закрыть' }]
