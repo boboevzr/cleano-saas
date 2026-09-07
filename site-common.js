@@ -126,7 +126,7 @@
       'agent.confirmReset': 'Отправить временный пароль на Telegram аккаунт {phone}?',
       'agent.resetSent': 'Временный пароль отправлен в Telegram. Войдите и сразу смените пароль.',
       'status.new': 'Новый', 'status.confirmed': 'Подтверждён', 'status.pickup': 'Вывоз',
-      'status.received': 'Принят', 'status.washing': 'В чистке', 'status.packing': 'Упаковка',
+      'status.received': 'Принят', 'status.washing': 'В чистке', 'status.drying': 'Сушка', 'status.packing': 'Упаковка',
       'status.ready': 'Готов', 'status.delivery': 'Доставка', 'status.delivered': 'Доставлен', 'status.cancelled': 'Отменён',
       'dd.orders': 'Мои заказы', 'dd.profile': 'Профиль', 'dd.settings': 'Настройки',
       'dd.logout': 'Выйти',
@@ -344,7 +344,7 @@
       "agent.confirmReset": "Telegram akkaunt {phone} ga vaqtinchalik parol yuborilsinmi?",
       "agent.resetSent": "Vaqtinchalik parol Telegramga yuborildi. Kiring va zudlik bilan parolni o'zgartiring.",
       'status.new': 'Yangi', 'status.confirmed': 'Tasdiqlangan', 'status.pickup': 'Olib ketish',
-      'status.received': 'Qabul qilindi', 'status.washing': 'Tozalanmoqda', 'status.packing': 'Qadoqlanmoqda',
+      'status.received': 'Qabul qilindi', 'status.washing': 'Tozalanmoqda', 'status.drying': 'Quritilmoqda', 'status.packing': 'Qadoqlanmoqda',
       'status.ready': 'Tayyor', 'status.delivery': 'Yetkazib berilmoqda', 'status.delivered': 'Yetkazildi', 'status.cancelled': 'Bekor qilindi',
       'dd.orders': 'Buyurtmalarim', 'dd.profile': 'Profil', 'dd.settings': 'Sozlamalar',
       'dd.logout': 'Chiqish',
@@ -1870,8 +1870,11 @@
     box = document.createElement('div');
     box.id = 'ocdLightbox';
     box.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:99999;align-items:center;justify-content:center;padding:16px';
+    // top/right учитывают safe-area (вырез/"остров" на iPhone) — без этого кнопка
+    // на некоторых моделях (Dynamic Island и т.п.) оказывалась под вырезом
+    // экрана и была невидима/некликабельна (сообщено с iOS).
     box.innerHTML = '<button type="button" aria-label="Закрыть" onclick="event.stopPropagation();document.getElementById(\'ocdLightbox\').style.display=\'none\';document.getElementById(\'ocdLightboxInner\').innerHTML=\'\'" '
-      + 'style="position:absolute;top:16px;right:20px;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:26px;line-height:1;width:40px;height:40px;border-radius:50%;cursor:pointer;z-index:1">✕</button>'
+      + 'style="position:absolute;top:max(16px,env(safe-area-inset-top));right:max(20px,env(safe-area-inset-right));background:rgba(255,255,255,.12);border:none;color:#fff;font-size:26px;line-height:1;width:40px;height:40px;border-radius:50%;cursor:pointer;z-index:1">✕</button>'
       + '<div id="ocdLightboxInner" style="max-width:100%;max-height:100%" onclick="event.stopPropagation()"></div>';
     box.onclick = () => { box.style.display = 'none'; document.getElementById('ocdLightboxInner').innerHTML = ''; };
     document.body.appendChild(box);
@@ -2244,6 +2247,7 @@
     } catch(err){
       if (ordersList) ordersList.innerHTML = `<div class="orders-empty">${err.message}</div>`;
     }
+    _startOrdersPolling();
 
     // Обновляем пункт меню: Стать Агентом → Кабинет Агента
     try {
@@ -2265,9 +2269,42 @@
     } catch(e) {}
   }
 
+  // ── Автообновление заказов в кабинете ──────────────────────────────────
+  // Раньше статус/цены/фото менялись только при следующем логине или перезагрузке
+  // страницы — клиент мог смотреть на устаревшую карточку заказа сколько угодно
+  // долго. Пока кабинет открыт (вкладка активна), тихо обновляем список каждые
+  // 20с — без спиннера/лоадера, чтобы не мешать чтению.
+  let _ordersPollTimer = null;
+  function _startOrdersPolling(){
+    if (_ordersPollTimer) return;
+    _ordersPollTimer = setInterval(async () => {
+      if (document.hidden || !currentUser) return;
+      try {
+        const token = localStorage.getItem('artez_token');
+        if (!token) return;
+        const data = await apiFetch('/orders', {headers:{'Authorization':`Bearer ${token}`}});
+        lastOrders = data.orders || [];
+        renderDashboardOrders();
+        // renderDrawerOrders() полностью перестраивает HTML списка и сворачивает
+        // любые раскрытые секции (Позиции/Замер/Фото) обратно — не трогаем её,
+        // пока клиент реально что-то смотрит развёрнутым, чтобы не сбивать его
+        // посреди просмотра. Секции всё равно всегда подгружают данные заново
+        // при каждом открытии (кэш ниже сбрасывается), так что открыв заново
+        // клиент сразу увидит актуальное.
+        const hasOpenSection = !!document.querySelector('.oc-details:not([style*="display: none"])');
+        if (!hasOpenSection) renderDrawerOrders();
+        if (typeof _ocdCache === 'object') { _ocdCache.items = {}; _ocdCache.media = {}; _ocdCache.photos = {}; }
+      } catch(e) {}
+    }, 20000);
+  }
+  function _stopOrdersPolling(){
+    if (_ordersPollTimer) { clearInterval(_ordersPollTimer); _ordersPollTimer = null; }
+  }
+
   // ── Выйти ──
   function doLogout(){
     localStorage.removeItem('artez_token');
+    _stopOrdersPolling();
     currentUser = null; lastOrders = null; currentFilter = 'all'; _isAgent = false;
     pendingPhone = null;
     closeDrawer(); closeDropdown();
