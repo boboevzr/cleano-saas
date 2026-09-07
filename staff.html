@@ -1454,6 +1454,11 @@ const _i18n = {
     'svp.cancel':'Отмена','svp.next':'Далее →',
     'pk.title':'📦 Передать в упаковку','pk.hint':'Назначить упаковщика или передать без назначения',
     'pk.none':'— без назначения —','pk.cancel':'Отмена','pk.submit':'📦 Передать',
+    'wf.mark_delivered':'✅ Доставлен',
+    'debt.title':'⚠️ Закрыть в долг','debt.amount_label':'Долг:','debt.due_hint':'Укажите дату возврата долга:',
+    'debt.cancel':'Отмена','debt.confirm':'✅ Подтвердить',
+    'deliver.confirm_text':'Пометить заказ как «Доставлен»?','gc.ok':'OK',
+    'err.status_change':'Ошибка при смене статуса','err.prefix':'Ошибка: ',
     'src.staff':'Сотрудник','src.site':'Сайт','src.bot':'Бот',
     'dash.title':'Разделы','dash.recent':'Последние заявки','dash.empty':'Нет заявок',
     'dash.orders.name':'Заявки','dash.orders.sub':'Все заказы','dash.leads.name':'Лиды','dash.leads.sub':'Новые обращения',
@@ -1758,6 +1763,11 @@ const _i18n = {
     'svp.cancel':'Bekor qilish','svp.next':'Keyingisi →',
     'pk.title':`📦 Qadoqlashga topshirish`,'pk.hint':`Qadoqlovchini tayinlash yoki tayinlamasdan topshirish`,
     'pk.none':'— tayinlanmagan —','pk.cancel':'Bekor qilish','pk.submit':`📦 Topshirish`,
+    'wf.mark_delivered':'✅ Yetkazildi',
+    'debt.title':'⚠️ Qarzga yopish','debt.amount_label':'Qarz:','debt.due_hint':'Qarz qaytarish sanasini koʻrsating:',
+    'debt.cancel':'Bekor qilish','debt.confirm':'✅ Tasdiqlash',
+    'deliver.confirm_text':`Buyurtmani «Yetkazildi» deb belgilashni tasdiqlaysizmi?`,'gc.ok':'OK',
+    'err.status_change':`Holatni oʻzgartirishda xatolik`,'err.prefix':'Xatolik: ',
     'src.staff':'Xodim','src.site':'Sayt','src.bot':'Bot',
     'dash.title':`Boʻlimlar`,'dash.recent':`Soʻnggi buyurtmalar`,'dash.empty':`Buyurtma yoʻq`,
     'dash.orders.name':'Buyurtmalar','dash.orders.sub':'Barcha buyurtmalar','dash.leads.name':'Lidlar','dash.leads.sub':'Yangi murojaatlar',
@@ -11449,7 +11459,7 @@ function staffRenderWorkflow(currentStatus, permissions, rowId) {
     else if (currentStatus === 'delivery') {
       const role = currentStaff?.role;
       const canDeliver = role === 'admin' || role === 'manager' || currentStaff?.can_approve_debt;
-      const deliveredBtn = canDeliver ? _wfBtn("staffMarkDelivered()", '#7c3aed', '✅ Доставлен') : '';
+      const deliveredBtn = canDeliver ? _wfBtn("staffMarkDelivered()", '#7c3aed', t('wf.mark_delivered')) : '';
       row.innerHTML = deliveredBtn;
     }
     else if (currentStatus === 'delivered') {
@@ -11633,6 +11643,17 @@ async function staffChangeStatus(newStatus, packerLogin) {
   // Обновить список платежей (влияет на показ кнопки удаления)
   sLoadPaymentModal();
 
+  if (!_showOcmModal(newStatus)) {
+    showToast('Статус обновлён', 'success');
+    loadOrders();
+  }
+}
+
+// Экран "Заказ подтверждён/передан/доставлен и т.п." — вынесен в отдельную
+// функцию, чтобы его же переиспользовать для staffMarkDelivered() (у него
+// свой отдельный эндпоинт mark-delivered, не общий PATCH .../status, поэтому
+// раньше после доставки просто молча переоткрывался заказ без этого экрана).
+function _showOcmModal(newStatus) {
   const _ocmCfg = {
     confirmed: { icon:'✅', title:t('ocm.confirmed_title'), btn1:t('ocm.confirmed_btn1'), filter2:'new',      label2:t('ocm.confirmed_label2') },
     pickup:    { icon:'🚗', title:t('ocm.pickup_title'),    btn1:t('ocm.pickup_btn1'),    filter2:'confirmed', label2:t('ocm.pickup_label2') },
@@ -11644,29 +11665,26 @@ async function staffChangeStatus(newStatus, packerLogin) {
     delivery:  { icon:'🚚', title:t('ocm.delivery_title'),  btn1:t('ocm.delivery_btn1'),  filter2:'ready',     label2:t('ocm.delivery_label2') },
     delivered: { icon:'🎉', title:t('ocm.delivered_title'), btn1:t('ocm.delivered_btn1'), filter2:'ready',     label2:t('ocm.delivered_label2') },
   };
-  if (_ocmCfg[newStatus]) {
-    _ocmOrderId   = _sOrderId;
-    _ocmNewStatus = newStatus;
-    const modal = document.getElementById('staffModalOrder');
-    if (modal) modal.classList.remove('open');
-    const orderNum = _sOrderCache?.order_num || '#' + _sOrderId;
-    const m   = document.getElementById('orderConfirmedModal');
-    const cfg = _ocmCfg[newStatus];
-    document.getElementById('ocm_icon').textContent  = cfg.icon;
-    document.getElementById('ocm_title').textContent = cfg.title;
-    document.getElementById('ocm_num').textContent   = orderNum;
-    document.getElementById('ocm_btn1').textContent  = cfg.btn1;
-    document.getElementById('ocm_btn2').textContent  = cfg.label2;
-    document.getElementById('ocm_btn2').onclick = () => { m.style.display='none'; setOrdersFilter(cfg.filter2); };
-    m.style.display = 'flex';
-    loadOrders();
-    if (newStatus === 'ready') {
-      _isSmsKindEnabled('ready').then(enabled => { if (enabled) _orOpenSmsConfirm(_sOrderId, 'ready'); });
-    }
-  } else {
-    showToast('Статус обновлён', 'success');
-    loadOrders();
+  if (!_ocmCfg[newStatus]) return false;
+  _ocmOrderId   = _sOrderId;
+  _ocmNewStatus = newStatus;
+  const modal = document.getElementById('staffModalOrder');
+  if (modal) modal.classList.remove('open');
+  const orderNum = _sOrderCache?.order_num || '#' + _sOrderId;
+  const m   = document.getElementById('orderConfirmedModal');
+  const cfg = _ocmCfg[newStatus];
+  document.getElementById('ocm_icon').textContent  = cfg.icon;
+  document.getElementById('ocm_title').textContent = cfg.title;
+  document.getElementById('ocm_num').textContent   = orderNum;
+  document.getElementById('ocm_btn1').textContent  = cfg.btn1;
+  document.getElementById('ocm_btn2').textContent  = cfg.label2;
+  document.getElementById('ocm_btn2').onclick = () => { m.style.display='none'; setOrdersFilter(cfg.filter2); };
+  m.style.display = 'flex';
+  loadOrders();
+  if (newStatus === 'ready') {
+    _isSmsKindEnabled('ready').then(enabled => { if (enabled) _orOpenSmsConfirm(_sOrderId, 'ready'); });
   }
+  return true;
 }
 
 let _ocmOrderId  = null;
@@ -11791,19 +11809,33 @@ async function staffMarkDelivered() {
     modal.id = '_deliverDebtModal';
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
     modal.innerHTML = `<div style="background:#fff;border-radius:16px;padding:24px;max-width:360px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2)">
-      <div style="font-size:16px;font-weight:700;margin-bottom:8px">⚠️ Закрыть в долг</div>
-      <div style="font-size:13px;color:#555;margin-bottom:16px">Долг: <b style="color:#b91c1c">${fmtMoney(debt)} сум</b>.<br>Укажите дату возврата долга:</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:8px">${t('debt.title')}</div>
+      <div style="font-size:13px;color:#555;margin-bottom:16px">${t('debt.amount_label')} <b style="color:#b91c1c">${fmtMoney(debt)}</b>.<br>${t('debt.due_hint')}</div>
       <input type="date" id="_ddDueDate" value="${defDateStr}" style="width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;box-sizing:border-box;margin-bottom:16px">
       <div style="display:flex;gap:8px">
-        <button onclick="document.getElementById('_deliverDebtModal').remove()" style="flex:1;padding:10px;background:#f3f4f6;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">Отмена</button>
-        <button onclick="_confirmMarkDelivered()" style="flex:1;padding:10px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">✅ Подтвердить</button>
+        <button onclick="document.getElementById('_deliverDebtModal').remove()" style="flex:1;padding:10px;background:#f3f4f6;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">${t('debt.cancel')}</button>
+        <button onclick="_confirmMarkDelivered()" style="flex:1;padding:10px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">${t('debt.confirm')}</button>
       </div>
     </div>`;
     document.body.appendChild(modal);
   } else {
-    if (!confirm('Пометить заказ как "Доставлен"?')) return;
-    await _confirmMarkDelivered();
+    _showDeliverConfirmModal();
   }
+}
+
+function _showDeliverConfirmModal() {
+  document.getElementById('_deliverConfirmModal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = '_deliverConfirmModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `<div style="background:#fff;border-radius:16px;padding:24px;max-width:340px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2);text-align:center">
+    <div style="font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:20px">${t('deliver.confirm_text')}</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="document.getElementById('_deliverConfirmModal').remove()" style="flex:1;padding:10px;background:#f3f4f6;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">${t('debt.cancel')}</button>
+      <button onclick="document.getElementById('_deliverConfirmModal').remove();_confirmMarkDelivered()" style="flex:1;padding:10px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">${t('gc.ok')}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
 }
 
 async function _confirmMarkDelivered() {
@@ -11820,10 +11852,11 @@ async function _confirmMarkDelivered() {
     const res = await r.json().catch(() => ({}));
     if (r.ok && res?.ok) {
       await staffOpenOrder(orderId);
+      _showOcmModal('delivered');
     } else {
-      alert(res?.detail || 'Ошибка при смене статуса');
+      alert(res?.detail || t('err.status_change'));
     }
-  } catch(e) { alert('Ошибка: ' + e.message); }
+  } catch(e) { alert(t('err.prefix') + e.message); }
 }
 
 function staffPrepareDrying() {
