@@ -2291,7 +2291,7 @@
         // посреди просмотра. Секции всё равно всегда подгружают данные заново
         // при каждом открытии (кэш ниже сбрасывается), так что открыв заново
         // клиент сразу увидит актуальное.
-        const hasOpenSection = !!document.querySelector('.oc-details:not([style*="display: none"])');
+        const hasOpenSection = Array.from(document.querySelectorAll('.oc-details')).some(el => el.style.display !== 'none');
         if (!hasOpenSection) renderDrawerOrders();
         if (typeof _ocdCache === 'object') { _ocdCache.items = {}; _ocdCache.media = {}; _ocdCache.photos = {}; }
       } catch(e) {}
