@@ -416,6 +416,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
   backdrop-filter:blur(2px);
 }
 .modal-overlay.open{display:flex}
+/* Печать чека (👁 Просмотр → 🖨) — прячем всё, кроме самой картинки чека;
+   visibility вместо display, чтобы не воевать с inline display/z-index
+   модалок — сама картинка вытаскивается в левый верхний угол страницы. */
+@media print {
+  body * { visibility: hidden; }
+  #receiptPreviewModalImg, #receiptPreviewModalImg * { visibility: visible; }
+  #receiptPreviewModalImg { position: fixed; top: 0; left: 0; width: 80mm; max-width: 100%; }
+  #bulkPrintArea, #bulkPrintArea * { visibility: visible; }
+  /* box-sizing + отступы по бокам — без них текст, прижатый вплотную к правому
+     краю (например статус заказа), падал в непечатаемую кромку принтера и
+     физически не печатался, независимо от того, flex это было или table. */
+  #bulkPrintArea { position: fixed; top: 0; left: 0; width: 80mm; padding: 0 4mm; box-sizing: border-box; }
+  @page { margin: 0; }
+}
 /* ── МОЯ КАССА (full-screen) ── */
 #myCashModal>.mc-inner{position:absolute;inset:0;background:#fff;display:flex;flex-direction:column;overflow:hidden}
 @media(min-width:560px){
@@ -1386,7 +1400,7 @@ const _i18n = {
     'perm.leads':'Лиды','perm.orders':'Заявки','perm.clients':'Клиенты','perm.status':'Статусы',
     'perm.staff':'Сотрудники','perm.reports':'Отчёты','perm.settings':'Настройки',
     'perm.orders_own':'Свои заявки','perm.status_delivery':'Статус доставки',
-    'ord.title':'Заявки','ord.filters':'🔽 Фильтры','ord.select_all':'Все','ord.delete':'🗑 Удалить','ord.reset':'↺ Сброс','ord.select':'☑️ Выбрать','ord.search_ph':'Номер, телефон…','ord.all':'🗂 Все','ord.mine':'👤 Мои','ord.debt':'💸 Долги','ord.pageSize':'На странице:',
+    'ord.title':'Заявки','ord.filters':'🔽 Фильтры','ord.select_all':'Все','ord.delete':'🗑 Удалить','ord.print':'🖨 Печать','ord.reset':'↺ Сброс','ord.select':'☑️ Выбрать','ord.search_ph':'Номер, телефон…','ord.all':'🗂 Все','ord.mine':'👤 Мои','ord.debt':'💸 Долги','ord.pageSize':'На странице:',
     'ord.date.all':'Все даты','ord.date.today':'Сегодня','ord.date.yesterday':'Вчера','ord.date.week':'Неделя','ord.date.month':'Месяц','ord.date.period':'Период',
     'ord.staff.all':'👤 Все сотрудники','ord.staff.pick':'Выбрать сотрудника','ord.staff.none':'Заявок от сотрудников нет','ord.staff.not_found':'Не найдено','ord.staff.search_ph':'Имя…',
     'ord.empty':'Заявок нет','ord.loading':'Загрузка…','ord.no_access':'Нет доступа','ord.tab.unavailable':'недоступна для вашей роли',
@@ -1695,7 +1709,7 @@ const _i18n = {
     'perm.leads':'Lidlar','perm.orders':'Buyurtmalar','perm.clients':'Mijozlar','perm.status':'Holatlar',
     'perm.staff':'Xodimlar','perm.reports':'Hisobotlar','perm.settings':'Sozlamalar',
     'perm.orders_own':'Mening buyurtmalarim','perm.status_delivery':'Yetkazish holati',
-    'ord.title':'Buyurtmalar','ord.filters':'🔽 Filtrlar','ord.select_all':'Barchasi','ord.delete':`🗑 Oʻchirish`,'ord.reset':`↺ Tozalash`,'ord.select':'☑️ Tanlash','ord.search_ph':'Raqam, telefon…','ord.all':'🗂 Barchasi','ord.mine':'👤 Mening','ord.debt':'💸 Qarzlar','ord.pageSize':'Sahifada:',
+    'ord.title':'Buyurtmalar','ord.filters':'🔽 Filtrlar','ord.select_all':'Barchasi','ord.delete':`🗑 Oʻchirish`,'ord.print':'🖨 Chop etish','ord.reset':`↺ Tozalash`,'ord.select':'☑️ Tanlash','ord.search_ph':'Raqam, telefon…','ord.all':'🗂 Barchasi','ord.mine':'👤 Mening','ord.debt':'💸 Qarzlar','ord.pageSize':'Sahifada:',
     'ord.date.all':'Barcha sana','ord.date.today':'Bugun','ord.date.yesterday':'Kecha','ord.date.week':'Hafta','ord.date.month':'Oy','ord.date.period':'Davr',
     'ord.staff.all':'👤 Barcha xodimlar','ord.staff.pick':'Xodim tanlash','ord.staff.none':`Xodimlardan buyurtma yoʻq`,'ord.staff.not_found':'Topilmadi','ord.staff.search_ph':'Ism…',
     'ord.empty':`Buyurtma yoʻq`,'ord.loading':'Yuklanmoqda…','ord.no_access':`Kirish yoʻq`,'ord.tab.unavailable':`sizning rolingiz uchun mavjud emas`,
@@ -3776,10 +3790,12 @@ function _resetOrdersSelect() {
   const cnt    = document.getElementById('bulkOrdersCount');
   const allBtn = document.getElementById('bulkOrdersSelectAllBtn');
   const delBtn = document.getElementById('bulkOrdersDeleteBtn');
+  const prBtn  = document.getElementById('bulkOrdersPrintBtn');
   if (btn)    { btn.innerHTML = '☑️ Выбрать'; btn.style.color = 'var(--text2)'; btn.style.background = 'none'; btn.style.borderColor = 'var(--sep)'; }
   if (cnt)    cnt.style.display = 'none';
   if (allBtn) allBtn.style.display = 'none';
   if (delBtn) delBtn.style.display = 'none';
+  if (prBtn)  prBtn.style.display = 'none';
 }
 function toggleOrdersSelectMode() {
   _ordersSelectMode = !_ordersSelectMode;
@@ -3788,11 +3804,13 @@ function toggleOrdersSelectMode() {
   const cnt    = document.getElementById('bulkOrdersCount');
   const allBtn = document.getElementById('bulkOrdersSelectAllBtn');
   const delBtn = document.getElementById('bulkOrdersDeleteBtn');
+  const prBtn  = document.getElementById('bulkOrdersPrintBtn');
   if (_ordersSelectMode) {
     if (btn)    { btn.innerHTML = '✕ Отмена'; btn.style.color = '#ef4444'; btn.style.background = '#fee2e2'; btn.style.borderColor = '#fca5a5'; }
     if (cnt)    { cnt.textContent = '0 выбрано'; cnt.style.display = ''; }
     if (allBtn) allBtn.style.display = '';
     if (delBtn) delBtn.style.display = '';
+    if (prBtn)  prBtn.style.display = '';
   } else {
     _resetOrdersSelect();
   }
@@ -3807,6 +3825,8 @@ function toggleOrderSelect(id, row) {
   if (el) el.textContent = `${_selectedOrders.size} выбрано`;
   const delBtn = document.getElementById('bulkOrdersDeleteBtn');
   if (delBtn) delBtn.style.display = _selectedOrders.size ? '' : 'none';
+  const prBtn = document.getElementById('bulkOrdersPrintBtn');
+  if (prBtn) prBtn.style.display = _selectedOrders.size ? '' : 'none';
 }
 function selectAllOrders() {
   const q = (document.getElementById('ordersSearch')?.value||'').toLowerCase();
@@ -3821,6 +3841,8 @@ function selectAllOrders() {
   if (el) el.textContent = `${_selectedOrders.size} выбрано`;
   const delBtn = document.getElementById('bulkOrdersDeleteBtn');
   if (delBtn) delBtn.style.display = _selectedOrders.size ? '' : 'none';
+  const prBtn = document.getElementById('bulkOrdersPrintBtn');
+  if (prBtn) prBtn.style.display = _selectedOrders.size ? '' : 'none';
   renderOrders();
 }
 async function applyBulkOrdersStatus() {
@@ -3866,6 +3888,128 @@ async function confirmBulkOrdersDelete() {
     alert(d.detail || 'Ошибка');
   }
 }
+
+function _fmtPhoneUZ(phone) {
+  const digits = (phone || '').replace(/\D/g, '');
+  const m = digits.match(/^998(\d{2})(\d{3})(\d{2})(\d{2})$/);
+  return m ? `+998 ${m[1]} ${m[2]} ${m[3]} ${m[4]}` : (phone || '—');
+}
+
+// "К оплате" — та же формула floor-до-1000, что в карточке заказа
+// (sUpdatePaymentDisplay/_sPmOrderNet) — иначе сумма в печати разойдётся
+// с тем, что видит сотрудник в самой карточке (254 500 → 254 000).
+function _orderPrintNet(o) {
+  const total = o.items_total ?? o.total_price ?? 0;
+  const discSum = parseFloat(o.discount_sum||0) + parseFloat(o.delivery_discount||0) + parseFloat(o.manual_discount||0);
+  const netRaw = Math.max(0, total - discSum);
+  return netRaw - (netRaw % 1000);
+}
+
+let _bulkPrintTemplateCache = null;
+async function _loadBulkPrintTemplate() {
+  if (_bulkPrintTemplateCache) return _bulkPrintTemplateCache;
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const r = await fetch(`${API_BASE}/staff/print-template`, { headers: { Authorization: `Bearer ${token}` } });
+    const d = await r.json();
+    _bulkPrintTemplateCache = d.blocks || [];
+  } catch(e) { _bulkPrintTemplateCache = []; }
+  return _bulkPrintTemplateCache;
+}
+
+function _bpBlockStyle(b) {
+  const parts = [];
+  if (b.fontSize)   parts.push(`font-size:${b.fontSize}px`);
+  if (b.fontFamily && b.fontFamily !== 'inherit') parts.push(`font-family:${b.fontFamily}`);
+  if (b.bold)       parts.push('font-weight:700');
+  if (b.italic)     parts.push('font-style:italic');
+  if (b.underline)  parts.push('text-decoration:underline');
+  if (b.marginTop != null)    parts.push(`margin-top:${b.marginTop}px`);
+  if (b.marginBottom != null) parts.push(`margin-bottom:${b.marginBottom}px`);
+  return parts.join(';');
+}
+
+// Печать списка выбранных заказов на 80мм-принтере (или "Сохранить как PDF"
+// через тот же системный диалог печати) — для передачи команды "что упаковать
+// после сушки". Формат настраивается в admin.html → 🖨 Печать заказов
+// (конструктор блоков), тот же механизм window.print()+@media print, что и у
+// чека заказа (см. printReceiptPreview).
+async function printSelectedOrders() {
+  if (!_selectedOrders.size) { alert('Ничего не выбрано'); return; }
+  const loadingEl = document.getElementById('bulkPrintLoading');
+  if (loadingEl) loadingEl.style.display = 'flex';
+  try {
+    await _printSelectedOrdersImpl();
+  } finally {
+    if (loadingEl) loadingEl.style.display = 'none';
+  }
+}
+async function _printSelectedOrdersImpl() {
+  const template = await _loadBulkPrintTemplate();
+  const token = localStorage.getItem(TOKEN_KEY);
+  // Печатаем по возрастанию номера заказа (1231, 1232, 1233…), а не в порядке
+  // выделения кликами.
+  const ids = [..._selectedOrders].sort((a, b) => {
+    const oa = ordersData.find(x => x.id === a), ob = ordersData.find(x => x.id === b);
+    const na = parseInt((oa?.order_num||'').replace(/\D/g,''), 10) || 0;
+    const nb = parseInt((ob?.order_num||'').replace(/\D/g,''), 10) || 0;
+    return na - nb;
+  });
+  const orderBlocks = [];
+  for (const id of ids) {
+    const o = ordersData.find(x => x.id === id);
+    if (!o) continue;
+    let groups = [];
+    try {
+      const r = await fetch(`${API_BASE}/admin/orders/${id}/items`, { headers: { Authorization: `Bearer ${token}` } });
+      const d = await r.json();
+      groups = d.groups || [];
+    } catch(e) {}
+    const address    = o.short_address || o.address || '—';
+    const clientName = `${o.client_first_name||''} ${o.client_last_name||''}`.trim() || '—';
+    const phone      = _fmtPhoneUZ(o.client_phone);
+    const net        = _orderPrintNet(o);
+    const paid       = o.paid_amount || 0;
+    const due        = Math.max(0, net - paid);
+    const itemsHtml = groups.map((g, i) => {
+      const isPcs = g.unit_key === 'pcs';
+      const qty   = Number(g.raw_sqm || 0).toFixed(isPcs ? 0 : 2).replace('.', ',');
+      const unit  = isPcs ? 'шт' : 'м²';
+      return `${i+1}. ${_esc(g.label)} / ${g.count} п. - ${qty} ${unit}`;
+    }).join('<br>');
+    const rowsHtml = template.map(b => {
+      if (!b.enabled) return '';
+      const style = _bpBlockStyle(b);
+      if (b.id === 'separator') {
+        return `<div style="border-top:${b.thickness||3}px solid #000;margin-top:${b.marginTop??6}px;margin-bottom:${b.marginBottom??6}px"></div>`;
+      }
+      let content = '';
+      // Термопринтеры (напр. XP-80) через GDI-драйвер часто не умеют печатать
+      // "две колонки на одной строке" (ни table, ни flex — оба варианта теряли
+      // статус ИМЕННО на физической печати, хотя в PDF-превью показывали верно) —
+      // драйвер, судя по всему, рассчитан только на простой однострочный текст.
+      // Гарантированно рабочий вариант — один текстовый узел без вложенной вёрстки.
+      if      (b.id === 'order_num')   content = `${_esc(o.order_num)} · ${_esc(statusLabel(o.status))}`;
+      else if (b.id === 'address')     content = `${b.prefix||''}${_esc(address)}`;
+      else if (b.id === 'items')       content = itemsHtml;
+      else if (b.id === 'client_name') content = `${b.prefix||''}${_esc(clientName)}`;
+      else if (b.id === 'phone')       content = `${b.prefix||''}${_esc(phone)}`;
+      else if (b.id === 'total')       content = `${b.prefix||''}${fmtMoney(net)}`;
+      else if (b.id === 'payment')     content = paid > 0 ? `Оплачено: ${fmtMoney(paid)} · К оплате: ${fmtMoney(due)}` : '';
+      if (!content) return '';
+      return `<div style="${style}">${content}</div>`;
+    }).join('');
+    orderBlocks.push(rowsHtml);
+  }
+  const area = document.getElementById('bulkPrintArea');
+  area.innerHTML = orderBlocks.join('');
+  area.style.display = 'block';
+  window.print();
+}
+window.addEventListener('afterprint', () => {
+  const area = document.getElementById('bulkPrintArea');
+  if (area) { area.style.display = 'none'; area.innerHTML = ''; }
+});
 
 function openLeadCard(id) {
   const lead = leadsData.find(l => l.id === id); if (!lead) return;
@@ -6148,6 +6292,7 @@ function pageOrders() {
           <span id="bulkOrdersCount" style="display:none;font-size:13px;font-weight:600;color:#374151"></span>
           <button id="bulkOrdersSelectAllBtn" onclick="selectAllOrders()" style="display:none;font-size:13px;font-weight:600;color:#163E3B;background:none;border:1.5px solid #163E3B;border-radius:10px;padding:5px 12px;cursor:pointer">${t('ord.select_all')}</button>
           <button id="bulkOrdersDeleteBtn" onclick="openBulkOrdersDeleteModal()" style="display:none;padding:6px 14px;border:none;border-radius:10px;background:#fee2e2;color:#ef4444;font-size:13px;font-weight:600;cursor:pointer">${t('ord.delete')}</button>
+          <button id="bulkOrdersPrintBtn" onclick="printSelectedOrders()" style="display:none;padding:6px 14px;border:none;border-radius:10px;background:#e0f2fe;color:#0369a1;font-size:13px;font-weight:600;cursor:pointer">${t('ord.print')}</button>
           <button onclick="_resetOrdersFilters()" style="background:none;border:1.5px solid var(--sep);border-radius:10px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer">${t('ord.reset')}</button>
           <button id="ordersSelectBtn" onclick="toggleOrdersSelectMode()" style="background:none;border:1.5px solid var(--sep);border-radius:10px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer">${t('ord.select')}</button>
         ` : ''}
@@ -11596,6 +11741,13 @@ function closeReceiptPreview() {
   if (_receiptPreviewBlobUrl) { URL.revokeObjectURL(_receiptPreviewBlobUrl); _receiptPreviewBlobUrl = null; }
 }
 
+function printReceiptPreview() {
+  // Чек уже готовый JPEG под 80мм термопринтер — печать через системный
+  // диалог печати даёт и печать на чековом/офисном принтере, и "Сохранить
+  // как PDF" без отдельной генерации PDF.
+  window.print();
+}
+
 async function staffChangeStatus(newStatus, packerLogin) {
   if (!_sOrderId || !newStatus) return;
   const btn = document.querySelector('[onclick*="staffChangeStatus"]');
@@ -15271,10 +15423,23 @@ function staffChatSend() {
   <div class="modal-box" style="border-radius:16px;max-width:400px;max-height:88dvh;padding:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-weight:700;font-size:15px">🧾 Чек</div>
-      <button onclick="closeReceiptPreview()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer;line-height:1">✕</button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="printReceiptPreview()" title="Печать" style="background:none;border:none;font-size:20px;color:#374151;cursor:pointer;line-height:1">🖨️</button>
+        <button onclick="closeReceiptPreview()" style="background:none;border:none;font-size:22px;color:#94a3b8;cursor:pointer;line-height:1">✕</button>
+      </div>
     </div>
     <img id="receiptPreviewModalImg" src="" style="width:100%;border-radius:8px;display:block">
   </div>
+</div>
+
+<!-- Печать списка выбранных заказов (см. printSelectedOrders) — вне модалок,
+     наполняется и показывается только непосредственно перед window.print() -->
+<div id="bulkPrintArea" style="display:none"></div>
+
+<!-- Оверлей "формируем список" — пока по каждому заказу подтягиваются позиции -->
+<div id="bulkPrintLoading" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.55);align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff">
+  <span style="font-size:34px;animation:spin .8s linear infinite;display:inline-block">⟳</span>
+  <div style="font-size:14px;font-weight:600">Формируем список для печати…</div>
 </div>
 
 <div class="modal-overlay" id="orderChangedModal" style="z-index:350;align-items:center;padding:0 16px">
