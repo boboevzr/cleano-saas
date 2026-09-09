@@ -2870,6 +2870,7 @@
           <button class="s-tab"        data-stab="reviews"    onclick="switchStab(this)" data-i18n="cfg.tab.reviews">⭐ Отзывы</button>
           <button class="s-tab"        data-stab="faq"        onclick="switchStab(this)" data-i18n="cfg.tab.faq">❓ FAQ</button>
           <button class="s-tab"        data-stab="rules"      onclick="switchStab(this);loadOrderRules()" data-i18n="cfg.tab.rules">📋 Правила приёма</button>
+          <button class="s-tab"        data-stab="bulkprint"  onclick="switchStab(this);loadBulkPrintTemplate()">🖨 Печать заказов</button>
         </div>
 
         <div style="max-width:660px;">
@@ -3309,6 +3310,32 @@
             <p class="cfg-hint">Показывается клиентам на сайте (ссылка рядом с согласием на обработку данных и в подвале сайта). Пункты защищены от случайного изменения — жмите «✏️ Редактировать», чтобы открыть нужный, и «💾 Сохранить», чтобы применить именно его.</p>
             <div id="orderRulesList"></div>
             <button type="button" class="btn btn-sm" onclick="addOrderRule()" style="margin-top:6px">➕ Добавить пункт</button>
+          </div>
+        </div>
+
+        <!-- ─── Конструктор печати списка заказов ─── -->
+        <div class="s-panel" id="stab-bulkprint" style="display:none;max-width:1100px;">
+          <div class="card">
+            <div class="cfg-title-row">
+              <h3 class="cfg-title">🖨 Печать списка заказов</h3>
+              <button class="btn s-edit-btn" id="bpEditBtn" onclick="bpStartEdit()">✏️</button>
+            </div>
+            <p class="cfg-hint">Формат печати выбранных заказов на 80мм-принтере — кнопка 🖨 в staff.html → Заявки → «☑️ Выбрать». Стрелками меняется порядок блоков. Изменения применяются сразу для всех сотрудников после сохранения.</p>
+            <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;margin-top:10px">
+              <div id="bpBlocksList" style="flex:1;min-width:320px"></div>
+              <div style="flex:1;min-width:280px;max-width:320px;position:sticky;top:12px">
+                <div class="cfg-hint" style="margin:0 0 6px">Предпросмотр (пример заказа):</div>
+                <div style="border:1px solid var(--border);border-radius:10px;padding:10px;background:#fff;color:#000">
+                  <div id="bpPreview"></div>
+                </div>
+              </div>
+            </div>
+            <div class="cfg-actions" style="margin-top:16px">
+              <button class="btn btn-primary  s-save-btn"   id="bpSaveBtn"   onclick="saveBulkPrintTemplate()" style="display:none">💾 Сохранить</button>
+              <button class="btn btn-ghost" id="bpResetBtn" onclick="resetBulkPrintTemplate()" style="display:none">↺ Сбросить к дефолту</button>
+              <button class="btn btn-ghost    s-cancel-btn" id="bpCancelBtn" onclick="bpCancelEdit()" style="display:none">Отмена</button>
+              <span class="s-msg" id="msg_bulkprint"></span>
+            </div>
           </div>
         </div>
 
@@ -13794,6 +13821,215 @@ async function _persistOrderRules() {
     body: JSON.stringify({ order_rules: JSON.stringify(payload) })
   });
   if (!res.ok) throw new Error(await res.text());
+}
+
+// ══════════════════════════════════════════
+// КОНСТРУКТОР ПЕЧАТИ СПИСКА ЗАКАЗОВ (staff.html → Заявки → ☑️ Выбрать → 🖨)
+// ══════════════════════════════════════════
+let _bpBlocks = [];
+let _bpEditing = false;
+let _bpSnapshot = null;
+// Именованные шрифты — только реально стоящие на Windows "из коробки" (принтер
+// у нас на Windows-машине, см. диагностику XP-80): Calibri/Arial с Office/Win10+,
+// Times New Roman всегда. Родовые (serif/sans-serif/monospace) — как запасной
+// вариант, если конкретного шрифта на машине не окажется.
+const _BP_FONT_OPTIONS = [
+  { v: 'inherit',    l: 'Обычный' },
+  { v: "'Calibri', sans-serif",         l: 'Calibri' },
+  { v: "'Arial', sans-serif",           l: 'Arial' },
+  { v: "'Times New Roman', serif",      l: 'Times New Roman' },
+  { v: 'monospace',  l: 'Моноширинный' },
+  { v: 'serif',      l: 'С засечками' },
+  { v: 'sans-serif', l: 'Без засечек' },
+];
+// Дефолт дублирует _DEFAULT_BULK_PRINT_TEMPLATE в CLEANO-SAAS-API/main.py — используется
+// и как fallback при первой загрузке, и для кнопки "Сбросить к дефолту".
+const _BP_DEFAULT_BLOCKS = [
+  { id:'order_num',   label:'Номер заказа',              enabled:true, fontSize:15, bold:true,  italic:false, underline:false, fontFamily:'inherit', marginTop:0, marginBottom:2 },
+  { id:'address',     label:'Адрес',                     enabled:true, fontSize:15, bold:true,  italic:false, underline:false, fontFamily:'inherit', marginTop:0, marginBottom:0, prefix:'Адрес: ' },
+  { id:'items',       label:'Позиции',                   enabled:true, fontSize:11, bold:false, italic:false, underline:false, fontFamily:'inherit', marginTop:0, marginBottom:0 },
+  { id:'client_name', label:'ФИО клиента',               enabled:true, fontSize:14, bold:true,  italic:true,  underline:false, fontFamily:'inherit', marginTop:7, marginBottom:0, prefix:'ФИО: ' },
+  { id:'phone',       label:'Телефон',                   enabled:true, fontSize:15, bold:true,  italic:false, underline:false, fontFamily:'inherit', marginTop:0, marginBottom:0, prefix:'Тел: ' },
+  { id:'total',       label:'Итого',                     enabled:true, fontSize:16, bold:true,  italic:false, underline:false, fontFamily:'inherit', marginTop:8, marginBottom:0, prefix:'Итого: ' },
+  { id:'payment',     label:'Оплачено/К оплате',         enabled:true, fontSize:13, bold:false, italic:false, underline:false, fontFamily:'inherit', marginTop:8, marginBottom:0 },
+  { id:'separator',   label:'Разделитель между заказами',enabled:true, thickness:3, marginTop:6, marginBottom:6 },
+];
+const _BP_SAMPLE_ORDER = {
+  order_num: 'ARTEZ-1231',
+  status: '🧼 Мойка',
+  address: 'Гулистон 12-34',
+  items: ['1. 🧺 Чистка ковра — Стандарт / 5 п. - 26,33 м²', '2. 🛏 Матрас, одеяло — Стандарт / 1 п. - 3 шт'],
+  client_name: 'Иванова Гульнора',
+  phone: '+998 97 366 13 00',
+  total: '254 000 сум',
+  paid: '130 000 сум',
+  due: '124 000 сум',
+};
+
+async function loadBulkPrintTemplate() {
+  try {
+    const res = await fetch(`${API_BASE}/admin/settings/site`, { headers: { Authorization: `Bearer ${adminToken}` } });
+    const data = await res.json();
+    let blocks = [];
+    try { blocks = JSON.parse((data.settings || {}).bulk_print_template || '[]'); } catch(e) { blocks = []; }
+    _bpBlocks = blocks.length ? blocks : _BP_DEFAULT_BLOCKS.map(b => ({...b}));
+    _bpEditing = false;
+    renderBpBlocksList();
+    _bpUpdateEditUI();
+  } catch(e) { console.error('loadBulkPrintTemplate', e); }
+}
+
+function _bpUpdateEditUI() {
+  const editBtn   = document.getElementById('bpEditBtn');
+  const saveBtn   = document.getElementById('bpSaveBtn');
+  const resetBtn  = document.getElementById('bpResetBtn');
+  const cancelBtn = document.getElementById('bpCancelBtn');
+  if (editBtn)   editBtn.style.display   = _bpEditing ? 'none' : '';
+  if (saveBtn)   saveBtn.style.display   = _bpEditing ? '' : 'none';
+  if (resetBtn)  resetBtn.style.display  = _bpEditing ? '' : 'none';
+  if (cancelBtn) cancelBtn.style.display = _bpEditing ? '' : 'none';
+}
+
+function bpStartEdit() {
+  _bpEditing = true;
+  _bpSnapshot = JSON.parse(JSON.stringify(_bpBlocks));
+  renderBpBlocksList();
+  _bpUpdateEditUI();
+}
+
+function bpCancelEdit() {
+  _bpEditing = false;
+  if (_bpSnapshot) _bpBlocks = JSON.parse(JSON.stringify(_bpSnapshot));
+  renderBpBlocksList();
+  _bpUpdateEditUI();
+}
+
+function renderBpBlocksList() {
+  const wrap = document.getElementById('bpBlocksList');
+  if (!wrap) return;
+  wrap.innerHTML = _bpBlocks.map((b, idx) => _bpBlockRowHtml(b, idx, _bpBlocks.length)).join('');
+  _renderBpPreview();
+}
+
+function _bpBlockRowHtml(b, idx, total) {
+  const isSep = b.id === 'separator';
+  const dis = _bpEditing ? '' : 'disabled';
+  return `
+  <div class="card" style="margin-bottom:10px;padding:12px 14px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <label style="display:flex;align-items:center;gap:6px;flex:1;font-weight:600;font-size:13px;cursor:pointer">
+        <input type="checkbox" ${dis} ${b.enabled ? 'checked' : ''} onchange="bpSetProp(${idx},'enabled',this.checked)">
+        ${_esc(b.label || b.id)}
+      </label>
+      <button type="button" class="btn btn-sm" onclick="bpMove(${idx},-1)" ${(!_bpEditing || idx===0)?'disabled':''} title="Выше">↑</button>
+      <button type="button" class="btn btn-sm" onclick="bpMove(${idx},1)" ${(!_bpEditing || idx===total-1)?'disabled':''} title="Ниже">↓</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:10px">
+      ${isSep ? `
+        <div><label style="font-size:11px;color:var(--text2)">Толщина линии</label>
+          <input type="number" ${dis} min="1" max="10" value="${b.thickness??3}" class="form-input" style="padding:5px 8px" onchange="bpSetProp(${idx},'thickness',parseInt(this.value)||1)"></div>
+      ` : `
+        <div><label style="font-size:11px;color:var(--text2)">Размер шрифта</label>
+          <input type="number" ${dis} min="8" max="28" value="${b.fontSize??13}" class="form-input" style="padding:5px 8px" onchange="bpSetProp(${idx},'fontSize',parseInt(this.value)||13)"></div>
+        <div><label style="font-size:11px;color:var(--text2)">Шрифт</label>
+          <select ${dis} class="form-input" style="padding:5px 8px" onchange="bpSetProp(${idx},'fontFamily',this.value)">
+            ${_BP_FONT_OPTIONS.map(f => `<option value="${f.v}" ${b.fontFamily===f.v?'selected':''}>${f.l}</option>`).join('')}
+          </select></div>
+        <div>
+          <label style="font-size:11px;color:var(--text2);display:block">Стиль</label>
+          <div style="display:flex;gap:4px">
+            <button type="button" class="btn btn-sm" ${dis} style="font-weight:800;${b.bold?'background:var(--accent);color:#fff':''}" onclick="bpToggleStyle(${idx},'bold')">Ж</button>
+            <button type="button" class="btn btn-sm" ${dis} style="font-style:italic;${b.italic?'background:var(--accent);color:#fff':''}" onclick="bpToggleStyle(${idx},'italic')">К</button>
+            <button type="button" class="btn btn-sm" ${dis} style="text-decoration:underline;${b.underline?'background:var(--accent);color:#fff':''}" onclick="bpToggleStyle(${idx},'underline')">Ч</button>
+          </div>
+        </div>
+      `}
+      <div><label style="font-size:11px;color:var(--text2)">Отступ сверху</label>
+        <input type="number" ${dis} min="0" max="40" value="${b.marginTop??0}" class="form-input" style="padding:5px 8px" onchange="bpSetProp(${idx},'marginTop',parseInt(this.value)||0)"></div>
+      <div><label style="font-size:11px;color:var(--text2)">Отступ снизу</label>
+        <input type="number" ${dis} min="0" max="40" value="${b.marginBottom??0}" class="form-input" style="padding:5px 8px" onchange="bpSetProp(${idx},'marginBottom',parseInt(this.value)||0)"></div>
+    </div>
+  </div>`;
+}
+
+function bpSetProp(idx, key, val) {
+  if (!_bpEditing || !_bpBlocks[idx]) return;
+  _bpBlocks[idx][key] = val;
+  renderBpBlocksList();
+}
+function bpToggleStyle(idx, key) {
+  if (!_bpEditing || !_bpBlocks[idx]) return;
+  _bpBlocks[idx][key] = !_bpBlocks[idx][key];
+  renderBpBlocksList();
+}
+function bpMove(idx, dir) {
+  if (!_bpEditing) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= _bpBlocks.length) return;
+  const [item] = _bpBlocks.splice(idx, 1);
+  _bpBlocks.splice(newIdx, 0, item);
+  renderBpBlocksList();
+}
+
+function _bpStyleStr(b) {
+  const parts = [];
+  if (b.fontSize) parts.push(`font-size:${b.fontSize}px`);
+  if (b.fontFamily && b.fontFamily !== 'inherit') parts.push(`font-family:${b.fontFamily}`);
+  if (b.bold) parts.push('font-weight:700');
+  if (b.italic) parts.push('font-style:italic');
+  if (b.underline) parts.push('text-decoration:underline');
+  if (b.marginTop != null) parts.push(`margin-top:${b.marginTop}px`);
+  if (b.marginBottom != null) parts.push(`margin-bottom:${b.marginBottom}px`);
+  return parts.join(';');
+}
+
+function _renderBpPreview() {
+  const el = document.getElementById('bpPreview');
+  if (!el) return;
+  const s = _BP_SAMPLE_ORDER;
+  const html = _bpBlocks.map(b => {
+    if (!b.enabled) return '';
+    if (b.id === 'separator') {
+      return `<div style="border-top:${b.thickness||3}px solid #000;margin-top:${b.marginTop??6}px;margin-bottom:${b.marginBottom??6}px"></div>`;
+    }
+    let content = '';
+    if      (b.id === 'order_num')   content = `${s.order_num} · ${s.status}`;
+    else if (b.id === 'address')     content = `${b.prefix||''}${s.address}`;
+    else if (b.id === 'items')       content = s.items.join('<br>');
+    else if (b.id === 'client_name') content = `${b.prefix||''}${s.client_name}`;
+    else if (b.id === 'phone')       content = `${b.prefix||''}${s.phone}`;
+    else if (b.id === 'total')       content = `${b.prefix||''}${s.total}`;
+    else if (b.id === 'payment')     content = `Оплачено: ${s.paid} · К оплате: ${s.due}`;
+    if (!content) return '';
+    return `<div style="${_bpStyleStr(b)}">${content}</div>`;
+  }).join('');
+  el.innerHTML = html || '<div style="color:var(--text2);font-size:12px">Все блоки скрыты</div>';
+}
+
+async function saveBulkPrintTemplate() {
+  const msg = document.getElementById('msg_bulkprint');
+  try {
+    const res = await fetch(`${API_BASE}/admin/settings/site`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ bulk_print_template: JSON.stringify(_bpBlocks) })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast('Сохранено');
+    if (msg) { msg.textContent = '✅ Сохранено'; setTimeout(() => msg.textContent = '', 2000); }
+    _bpEditing = false;
+    renderBpBlocksList();
+    _bpUpdateEditUI();
+  } catch(e) {
+    showToast('Ошибка: ' + e.message, 'error');
+  }
+}
+
+function resetBulkPrintTemplate() {
+  if (!_bpEditing) return;
+  if (!confirm('Сбросить формат печати к значениям по умолчанию? Не забудьте нажать «Сохранить».')) return;
+  _bpBlocks = _BP_DEFAULT_BLOCKS.map(b => ({...b}));
+  renderBpBlocksList();
 }
 
 // ══════════════════════════════════════════
