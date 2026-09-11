@@ -16,7 +16,10 @@
 <title>Cleano Staff</title>
 <link rel="manifest" href="staff-manifest.json">
 <script src="config.js"></script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<!-- Самохостинг вместо cdn.sheetjs.com — у части сотрудников CDN блокировался
+     сетью/провайдером (сообщение "XLSX is not defined" при экспорте/импорте
+     клиентов и заказов в Excel), собственный домен всегда доступен. -->
+<script src="/vendor/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -1400,7 +1403,7 @@ const _i18n = {
     'perm.leads':'Лиды','perm.orders':'Заявки','perm.clients':'Клиенты','perm.status':'Статусы',
     'perm.staff':'Сотрудники','perm.reports':'Отчёты','perm.settings':'Настройки',
     'perm.orders_own':'Свои заявки','perm.status_delivery':'Статус доставки',
-    'ord.title':'Заявки','ord.filters':'🔽 Фильтры','ord.select_all':'Все','ord.delete':'🗑 Удалить','ord.print':'🖨 Печать','ord.reset':'↺ Сброс','ord.select':'☑️ Выбрать','ord.search_ph':'Номер, телефон…','ord.all':'🗂 Все','ord.mine':'👤 Мои','ord.debt':'💸 Долги','ord.pageSize':'На странице:',
+    'ord.title':'Заявки','ord.filters':'🔽 Фильтры','ord.select_all':'Все','ord.delete':'🗑 Удалить','ord.print':'🖨 Печать','ord.excel':'📊 в Excel','ord.reset':'↺ Сброс','ord.select':'☑️ Выбрать','ord.search_ph':'Номер, телефон…','ord.all':'🗂 Все','ord.mine':'👤 Мои','ord.debt':'💸 Долги','ord.pageSize':'На странице:',
     'ord.date.all':'Все даты','ord.date.today':'Сегодня','ord.date.yesterday':'Вчера','ord.date.week':'Неделя','ord.date.month':'Месяц','ord.date.period':'Период',
     'ord.staff.all':'👤 Все сотрудники','ord.staff.pick':'Выбрать сотрудника','ord.staff.none':'Заявок от сотрудников нет','ord.staff.not_found':'Не найдено','ord.staff.search_ph':'Имя…',
     'ord.empty':'Заявок нет','ord.loading':'Загрузка…','ord.no_access':'Нет доступа','ord.tab.unavailable':'недоступна для вашей роли',
@@ -1709,7 +1712,7 @@ const _i18n = {
     'perm.leads':'Lidlar','perm.orders':'Buyurtmalar','perm.clients':'Mijozlar','perm.status':'Holatlar',
     'perm.staff':'Xodimlar','perm.reports':'Hisobotlar','perm.settings':'Sozlamalar',
     'perm.orders_own':'Mening buyurtmalarim','perm.status_delivery':'Yetkazish holati',
-    'ord.title':'Buyurtmalar','ord.filters':'🔽 Filtrlar','ord.select_all':'Barchasi','ord.delete':`🗑 Oʻchirish`,'ord.print':'🖨 Chop etish','ord.reset':`↺ Tozalash`,'ord.select':'☑️ Tanlash','ord.search_ph':'Raqam, telefon…','ord.all':'🗂 Barchasi','ord.mine':'👤 Mening','ord.debt':'💸 Qarzlar','ord.pageSize':'Sahifada:',
+    'ord.title':'Buyurtmalar','ord.filters':'🔽 Filtrlar','ord.select_all':'Barchasi','ord.delete':`🗑 Oʻchirish`,'ord.print':'🖨 Chop etish','ord.excel':'📊 Excelga','ord.reset':`↺ Tozalash`,'ord.select':'☑️ Tanlash','ord.search_ph':'Raqam, telefon…','ord.all':'🗂 Barchasi','ord.mine':'👤 Mening','ord.debt':'💸 Qarzlar','ord.pageSize':'Sahifada:',
     'ord.date.all':'Barcha sana','ord.date.today':'Bugun','ord.date.yesterday':'Kecha','ord.date.week':'Hafta','ord.date.month':'Oy','ord.date.period':'Davr',
     'ord.staff.all':'👤 Barcha xodimlar','ord.staff.pick':'Xodim tanlash','ord.staff.none':`Xodimlardan buyurtma yoʻq`,'ord.staff.not_found':'Topilmadi','ord.staff.search_ph':'Ism…',
     'ord.empty':`Buyurtma yoʻq`,'ord.loading':'Yuklanmoqda…','ord.no_access':`Kirish yoʻq`,'ord.tab.unavailable':`sizning rolingiz uchun mavjud emas`,
@@ -2245,6 +2248,7 @@ function startApp() {
     if (_sfO && _savedPage === 'orders') {
       ordersFilter=_sfO.st||'new'; ordersOwnerFilter=_sfO.ow||'all'; ordersDateFilter=_sfO.dt||'all';
       ordersDateFrom=_sfO.df||''; ordersDateTo=_sfO.dt2||''; ordersStaffFilter=_sfO.stf||null; _ordersFiltersOpen=!!_sfO.op;
+      ordersNumFrom=_sfO.nf||''; ordersNumTo=_sfO.nt||'';
       ordersPage=_sfO.pg||1; ordersPageSize=_sfO.ps||50;
       _skipFilterReset = true;
     }
@@ -3791,11 +3795,13 @@ function _resetOrdersSelect() {
   const allBtn = document.getElementById('bulkOrdersSelectAllBtn');
   const delBtn = document.getElementById('bulkOrdersDeleteBtn');
   const prBtn  = document.getElementById('bulkOrdersPrintBtn');
+  const xlsBtn = document.getElementById('bulkOrdersExcelBtn');
   if (btn)    { btn.innerHTML = '☑️ Выбрать'; btn.style.color = 'var(--text2)'; btn.style.background = 'none'; btn.style.borderColor = 'var(--sep)'; }
   if (cnt)    cnt.style.display = 'none';
   if (allBtn) allBtn.style.display = 'none';
   if (delBtn) delBtn.style.display = 'none';
   if (prBtn)  prBtn.style.display = 'none';
+  if (xlsBtn) xlsBtn.style.display = 'none';
 }
 function toggleOrdersSelectMode() {
   _ordersSelectMode = !_ordersSelectMode;
@@ -3805,12 +3811,14 @@ function toggleOrdersSelectMode() {
   const allBtn = document.getElementById('bulkOrdersSelectAllBtn');
   const delBtn = document.getElementById('bulkOrdersDeleteBtn');
   const prBtn  = document.getElementById('bulkOrdersPrintBtn');
+  const xlsBtn = document.getElementById('bulkOrdersExcelBtn');
   if (_ordersSelectMode) {
     if (btn)    { btn.innerHTML = '✕ Отмена'; btn.style.color = '#ef4444'; btn.style.background = '#fee2e2'; btn.style.borderColor = '#fca5a5'; }
     if (cnt)    { cnt.textContent = '0 выбрано'; cnt.style.display = ''; }
     if (allBtn) allBtn.style.display = '';
     if (delBtn) delBtn.style.display = '';
     if (prBtn)  prBtn.style.display = '';
+    if (xlsBtn) xlsBtn.style.display = '';
   } else {
     _resetOrdersSelect();
   }
@@ -3827,12 +3835,17 @@ function toggleOrderSelect(id, row) {
   if (delBtn) delBtn.style.display = _selectedOrders.size ? '' : 'none';
   const prBtn = document.getElementById('bulkOrdersPrintBtn');
   if (prBtn) prBtn.style.display = _selectedOrders.size ? '' : 'none';
+  const xlsBtn = document.getElementById('bulkOrdersExcelBtn');
+  if (xlsBtn) xlsBtn.style.display = _selectedOrders.size ? '' : 'none';
 }
 function selectAllOrders() {
   const q = (document.getElementById('ordersSearch')?.value||'').toLowerCase();
+  const _numFrom = parseInt(ordersNumFrom, 10), _numTo = parseInt(ordersNumTo, 10);
   const visible = ordersData.filter(o => {
     if (ordersFilter === 'debt' && !_orderHasDebt(o)) return false;
     if (ordersFilter !== 'all' && ordersFilter !== 'debt' && o.status !== ordersFilter) return false;
+    if (!isNaN(_numFrom) && _orderNumInt(o.order_num) < _numFrom) return false;
+    if (!isNaN(_numTo)   && _orderNumInt(o.order_num) > _numTo)   return false;
     if (q && !(o.order_num||'').toLowerCase().includes(q) && !(o.client_phone||'').includes(q) && !(o.client_first_name||'').toLowerCase().includes(q)) return false;
     return true;
   });
@@ -3843,6 +3856,8 @@ function selectAllOrders() {
   if (delBtn) delBtn.style.display = _selectedOrders.size ? '' : 'none';
   const prBtn = document.getElementById('bulkOrdersPrintBtn');
   if (prBtn) prBtn.style.display = _selectedOrders.size ? '' : 'none';
+  const xlsBtn = document.getElementById('bulkOrdersExcelBtn');
+  if (xlsBtn) xlsBtn.style.display = _selectedOrders.size ? '' : 'none';
   renderOrders();
 }
 async function applyBulkOrdersStatus() {
@@ -3887,6 +3902,12 @@ async function confirmBulkOrdersDelete() {
   } else {
     alert(d.detail || 'Ошибка');
   }
+}
+
+// Числовая часть номера заказа ("ARTEZ-1231" → 1231) — используется и для
+// сортировки при печати/экспорте, и для фильтра "№ от … до …".
+function _orderNumInt(order_num) {
+  return parseInt((order_num || '').replace(/\D/g, ''), 10) || 0;
 }
 
 function _fmtPhoneUZ(phone) {
@@ -3934,14 +3955,25 @@ function _bpBlockStyle(b) {
 // после сушки". Формат настраивается в admin.html → 🖨 Печать заказов
 // (конструктор блоков), тот же механизм window.print()+@media print, что и у
 // чека заказа (см. printReceiptPreview).
+function _showBulkLoading(text) {
+  const el = document.getElementById('bulkPrintLoading');
+  const txt = document.getElementById('bulkPrintLoadingText');
+  if (txt) txt.textContent = text;
+  if (el) el.style.display = 'flex';
+}
+function _hideBulkLoading() {
+  const el = document.getElementById('bulkPrintLoading');
+  if (el) el.style.display = 'none';
+}
 async function printSelectedOrders() {
   if (!_selectedOrders.size) { alert('Ничего не выбрано'); return; }
-  const loadingEl = document.getElementById('bulkPrintLoading');
-  if (loadingEl) loadingEl.style.display = 'flex';
+  _showBulkLoading('Формируем список для печати…');
   try {
     await _printSelectedOrdersImpl();
+  } catch(e) {
+    alert('Ошибка печати: ' + e.message);
   } finally {
-    if (loadingEl) loadingEl.style.display = 'none';
+    _hideBulkLoading();
   }
 }
 async function _printSelectedOrdersImpl() {
@@ -4010,6 +4042,81 @@ window.addEventListener('afterprint', () => {
   const area = document.getElementById('bulkPrintArea');
   if (area) { area.style.display = 'none'; area.innerHTML = ''; }
 });
+
+// Экспорт выбранных заказов в Excel — для ручного расчёта ЗП мойщиков без
+// логина (текучка кадров: не у всех есть доступ к системе). Каждая позиция
+// заказа — отдельная строка (не многострочная ячейка), поля самого заказа
+// (№/ФИО/Адрес/Телефон/Итого) заполнены только в первой строке заказа —
+// так "Кол-во"/"Цена"/"Итого по позициям" остаются числами, с ними
+// работают формулы прямо в Excel.
+async function exportSelectedOrdersExcel() {
+  if (!_selectedOrders.size) { alert('Ничего не выбрано'); return; }
+  _showBulkLoading('Формируем список заказов…');
+  try {
+    await _exportSelectedOrdersExcelImpl();
+  } catch(e) {
+    alert('Ошибка экспорта: ' + e.message);
+  } finally {
+    _hideBulkLoading();
+  }
+}
+async function _exportSelectedOrdersExcelImpl() {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const ids = [..._selectedOrders].sort((a, b) => {
+    const oa = ordersData.find(x => x.id === a), ob = ordersData.find(x => x.id === b);
+    return _orderNumInt(oa?.order_num) - _orderNumInt(ob?.order_num);
+  });
+  const rows = [];
+  for (const id of ids) {
+    const o = ordersData.find(x => x.id === id);
+    if (!o) continue;
+    let groups = [];
+    try {
+      const r = await fetch(`${API_BASE}/admin/orders/${id}/items`, { headers: { Authorization: `Bearer ${token}` } });
+      const d = await r.json();
+      groups = d.groups || [];
+    } catch(e) {}
+    const address    = o.short_address || o.address || '—';
+    const clientName = `${o.client_first_name||''} ${o.client_last_name||''}`.trim() || '—';
+    const phone      = _fmtPhoneUZ(o.client_phone);
+    const net        = _orderPrintNet(o);
+    // Несколько позиций — отдельная строка на каждую (а не одна многострочная
+    // ячейка): так "Кол-во"/"Цена"/"Итого по позициям" остаются настоящими
+    // числами в каждой строке, с ними работают формулы. Общие поля заказа
+    // (№/ФИО/Адрес/Телефон/Итого) заполняются только в первой строке заказа.
+    if (!groups.length) {
+      rows.push({ '№ заказа': o.order_num||'', 'ФИО': clientName, 'Адрес': address, 'Телефон': phone, 'Итого': net, 'Позиции':'', 'Кол-во':'', 'Цена':'', 'Итого по позициям':'' });
+      continue;
+    }
+    groups.forEach((g, i) => {
+      const isPcs  = g.unit_key === 'pcs';
+      const qtyNum = isPcs ? Math.round(Number(g.raw_sqm || 0)) : Number(Number(g.raw_sqm || 0).toFixed(2));
+      const unit   = isPcs ? 'шт' : 'м²';
+      rows.push({
+        '№ заказа': i === 0 ? (o.order_num || '') : '',
+        'ФИО':      i === 0 ? clientName : '',
+        'Адрес':    i === 0 ? address : '',
+        'Телефон':  i === 0 ? phone : '',
+        'Итого':    i === 0 ? net : '',
+        'Позиции':  `${g.label} — ${g.count} п. ${unit}`,
+        'Кол-во':   qtyNum,
+        'Цена':     g.price != null ? g.price : '',
+        'Итого по позициям': g.amount != null ? Math.round(g.amount) : '',
+      });
+    });
+  }
+  if (!rows.length) throw new Error('Нет данных по выбранным заказам');
+  const ws = XLSX.utils.json_to_sheet(rows);
+  // Ширина колонок — обычное (не-style) свойство листа, community-сборка
+  // SheetJS пишет его надёжно.
+  ws['!cols'] = [{ wch: 12 }, { wch: 22 }, { wch: 28 }, { wch: 18 }, { wch: 12 }, { wch: 32 }, { wch: 9 }, { wch: 10 }, { wch: 16 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Заказы');
+  const _d = new Date();
+  const _pad = n => String(n).padStart(2,'0');
+  const _ts = `${_d.getFullYear()}-${_pad(_d.getMonth()+1)}-${_pad(_d.getDate())}_${_pad(_d.getHours())}-${_pad(_d.getMinutes())}`;
+  XLSX.writeFile(wb, `artez_orders_${_ts}.xlsx`);
+}
 
 function openLeadCard(id) {
   const lead = leadsData.find(l => l.id === id); if (!lead) return;
@@ -6272,6 +6379,8 @@ let ordersDateFilter  = 'all'; // 'all' | 'today' | 'yesterday' | 'week' | 'mont
 let ordersDateFrom    = '';
 let ordersDateTo      = '';
 let ordersStaffFilter = null; // null = все, или staff_id
+let ordersNumFrom = ''; // фильтр по диапазону номера заказа: "от"
+let ordersNumTo   = ''; // фильтр по диапазону номера заказа: "до"
 let ordersPage = 1;
 let ordersPageSize = 50;
 let ordersTotal = 0;
@@ -6289,17 +6398,23 @@ function pageOrders() {
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
         ${!_isWasherPage ? `<button id="ofTogBtn" onclick="_toggleOrdersFilters()" style="background:${(_ordersFiltersOpen||(ordersOwnerFilter!=='all'||ordersDateFilter!=='all'||!!ordersStaffFilter))?'var(--accent)':'none'};color:${(_ordersFiltersOpen||(ordersOwnerFilter!=='all'||ordersDateFilter!=='all'||!!ordersStaffFilter))?'#fff':'var(--text2)'};border:1.5px solid ${(_ordersFiltersOpen||(ordersOwnerFilter!=='all'||ordersDateFilter!=='all'||!!ordersStaffFilter))?'var(--accent)':'var(--sep)'};border-radius:10px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer">${t('ord.filters')}</button>` : ''}
         ${hasPermission('orders') && !_isWasherPage ? `
-          <span id="bulkOrdersCount" style="display:none;font-size:13px;font-weight:600;color:#374151"></span>
-          <button id="bulkOrdersSelectAllBtn" onclick="selectAllOrders()" style="display:none;font-size:13px;font-weight:600;color:#163E3B;background:none;border:1.5px solid #163E3B;border-radius:10px;padding:5px 12px;cursor:pointer">${t('ord.select_all')}</button>
-          <button id="bulkOrdersDeleteBtn" onclick="openBulkOrdersDeleteModal()" style="display:none;padding:6px 14px;border:none;border-radius:10px;background:#fee2e2;color:#ef4444;font-size:13px;font-weight:600;cursor:pointer">${t('ord.delete')}</button>
-          <button id="bulkOrdersPrintBtn" onclick="printSelectedOrders()" style="display:none;padding:6px 14px;border:none;border-radius:10px;background:#e0f2fe;color:#0369a1;font-size:13px;font-weight:600;cursor:pointer">${t('ord.print')}</button>
           <button onclick="_resetOrdersFilters()" style="background:none;border:1.5px solid var(--sep);border-radius:10px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer">${t('ord.reset')}</button>
-          <button id="ordersSelectBtn" onclick="toggleOrdersSelectMode()" style="background:none;border:1.5px solid var(--sep);border-radius:10px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer">${t('ord.select')}</button>
         ` : ''}
       </div>
     </div>
     ${!_isWasherPage ? `
     <div id="ordersExtraFilters" style="display:${_ordersFiltersOpen?'block':'none'}">
+      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--text2);white-space:nowrap">№ ${t('period.from')}</span>
+        <input type="number" id="ordersNumFrom" inputmode="numeric" value="${ordersNumFrom}" placeholder="1125"
+          oninput="ordersNumFrom=this.value;_saveOrdersFilters();renderOrders();_syncOrdersNumClearBtn()"
+          style="width:84px;border:1.5px solid var(--sep);border-radius:8px;padding:5px 8px;font-size:12px;background:var(--bg);color:var(--text)">
+        <span style="font-size:12px;color:var(--text2);white-space:nowrap">${t('period.to')}</span>
+        <input type="number" id="ordersNumTo" inputmode="numeric" value="${ordersNumTo}" placeholder="1210"
+          oninput="ordersNumTo=this.value;_saveOrdersFilters();renderOrders();_syncOrdersNumClearBtn()"
+          style="width:84px;border:1.5px solid var(--sep);border-radius:8px;padding:5px 8px;font-size:12px;background:var(--bg);color:var(--text)">
+        <button id="ordersNumClear" onclick="_clearOrdersNumFilter()" title="Очистить" style="display:${(ordersNumFrom||ordersNumTo)?'':'none'};background:none;border:none;color:var(--text2);font-size:16px;cursor:pointer;padding:0 2px;line-height:1">✕</button>
+      </div>
       <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
         <button id="oown_all"  onclick="setOrdersOwnerFilter('all')"  style="${_ownerBtnStyle(ordersOwnerFilter==='all')}">${t('ord.all')}</button>
         <button id="oown_mine" onclick="setOrdersOwnerFilter('mine')" style="${_ownerBtnStyle(ordersOwnerFilter==='mine')}">${t('ord.mine')}</button>
@@ -6317,9 +6432,31 @@ function pageOrders() {
       ${statuses.map(s=>`<button class="fchip ${s===ordersFilter?'active':''}" id="ofc_${s}" onclick="setOrdersFilter('${s}')">${s==='all'?t('ord.all'):statusLabel(s)}</button>`).join('')}
       ${!_isWasherPage ? `<button class="fchip ${ordersFilter==='debt'?'active':''}" id="ofc_debt" onclick="setOrdersFilter('debt')">${t('ord.debt')}</button>` : ''}
     </div>
+    ${hasPermission('orders') && !_isWasherPage ? `
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin:2px 0 10px">
+      <span id="bulkOrdersCount" style="display:none;font-size:13px;font-weight:600;color:#374151"></span>
+      <button id="bulkOrdersSelectAllBtn" onclick="selectAllOrders()" style="display:none;font-size:13px;font-weight:600;color:#163E3B;background:none;border:1.5px solid #163E3B;border-radius:10px;padding:5px 12px;cursor:pointer">${t('ord.select_all')}</button>
+      <button id="bulkOrdersPrintBtn" onclick="printSelectedOrders()" style="display:none;padding:6px 14px;border:none;border-radius:10px;background:#e0f2fe;color:#0369a1;font-size:13px;font-weight:600;cursor:pointer">${t('ord.print')}</button>
+      <button id="bulkOrdersExcelBtn" onclick="exportSelectedOrdersExcel()" style="display:none;padding:6px 14px;border:none;border-radius:10px;background:#dcfce7;color:#15803d;font-size:13px;font-weight:600;cursor:pointer">${t('ord.excel')}</button>
+      <button id="bulkOrdersDeleteBtn" onclick="openBulkOrdersDeleteModal()" style="display:none;padding:6px 14px;border:none;border-radius:10px;background:#fee2e2;color:#ef4444;font-size:13px;font-weight:600;cursor:pointer">${t('ord.delete')}</button>
+      <button id="ordersSelectBtn" onclick="toggleOrdersSelectMode()" style="background:none;border:1.5px solid var(--sep);border-radius:10px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer">${t('ord.select')}</button>
+    </div>
+    ` : ''}
     <div id="ordersList"><div class="empty-box">${t('ord.loading')}</div></div>
     <div id="ordersPager"></div>
   `;
+}
+function _syncOrdersNumClearBtn() {
+  const btn = document.getElementById('ordersNumClear');
+  if (btn) btn.style.display = (ordersNumFrom || ordersNumTo) ? '' : 'none';
+}
+function _clearOrdersNumFilter() {
+  ordersNumFrom = ''; ordersNumTo = '';
+  const nf = document.getElementById('ordersNumFrom'); if (nf) nf.value = '';
+  const nt = document.getElementById('ordersNumTo');   if (nt) nt.value = '';
+  _syncOrdersNumClearBtn();
+  _saveOrdersFilters();
+  renderOrders();
 }
 function _ownerBtnStyle(active) {
   return `padding:7px 16px;border-radius:10px;border:1.5px solid ${active?'var(--accent)':'var(--sep)'};background:${active?'var(--accent)':'none'};color:${active?'#fff':'var(--text2)'};font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap`;
@@ -6453,6 +6590,10 @@ function setOrdersDateFilter(v) {
 function _resetOrdersFilters() {
   ordersFilter = 'new'; ordersStaffFilter = null; ordersPage = 1;
   ordersDateFilter = 'all'; ordersDateFrom = ''; ordersDateTo = '';
+  ordersNumFrom = ''; ordersNumTo = '';
+  const nf = document.getElementById('ordersNumFrom'); if (nf) nf.value = '';
+  const nt = document.getElementById('ordersNumTo');   if (nt) nt.value = '';
+  _syncOrdersNumClearBtn();
   document.querySelectorAll('.fchip[id^="ofc_"]').forEach(b => b.classList.remove('active'));
   const fc = document.getElementById('ofc_new'); if (fc) fc.classList.add('active');
   const si = document.getElementById('ordersSearch'); if (si) si.value = '';
@@ -6467,6 +6608,7 @@ function _saveOrdersFilters() {
   sessionStorage.setItem('sf_orders', JSON.stringify({
     st: ordersFilter, ow: ordersOwnerFilter, dt: ordersDateFilter,
     df: ordersDateFrom, dt2: ordersDateTo, stf: ordersStaffFilter,
+    nf: ordersNumFrom, nt: ordersNumTo,
     s: document.getElementById('ordersSearch')?.value||'', op: _ordersFiltersOpen,
     pg: ordersPage, ps: ordersPageSize
   }));
@@ -6676,6 +6818,9 @@ function renderOrders() {
   else if (ordersFilter === 'ready_postponed') items = items.filter(o=>o.status==='ready' && !!o.postponed_until);
   else if (ordersFilter !== 'all') items = items.filter(o=>o.status===ordersFilter);
   if (ordersStaffFilter) items = items.filter(o => _orderCreatorName(o) === ordersStaffFilter);
+  const _numFrom = parseInt(ordersNumFrom, 10), _numTo = parseInt(ordersNumTo, 10);
+  if (!isNaN(_numFrom)) items = items.filter(o => _orderNumInt(o.order_num) >= _numFrom);
+  if (!isNaN(_numTo))   items = items.filter(o => _orderNumInt(o.order_num) <= _numTo);
   if (ordersOwnerFilter === 'mine') {
     const myName = [currentStaff?.first_name, currentStaff?.last_name].filter(Boolean).join(' ');
     items = items.filter(o => _orderCreatorName(o) === myName);
@@ -15440,7 +15585,7 @@ function staffChatSend() {
 <!-- Оверлей "формируем список" — пока по каждому заказу подтягиваются позиции -->
 <div id="bulkPrintLoading" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.55);align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff">
   <span style="font-size:34px;animation:spin .8s linear infinite;display:inline-block">⟳</span>
-  <div style="font-size:14px;font-weight:600">Формируем список для печати…</div>
+  <div id="bulkPrintLoadingText" style="font-size:14px;font-weight:600">Формируем список для печати…</div>
 </div>
 
 <div class="modal-overlay" id="orderChangedModal" style="z-index:350;align-items:center;padding:0 16px">

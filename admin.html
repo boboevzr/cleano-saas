@@ -1331,7 +1331,9 @@
 </style>
 <link rel="manifest" href="admin-manifest.json">
 <script src="config.js"></script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<!-- Самохостинг вместо cdn.sheetjs.com — у части сотрудников CDN блокировался
+     сетью/провайдером ("XLSX is not defined"), собственный домен всегда доступен. -->
+<script src="/vendor/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
