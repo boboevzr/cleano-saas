@@ -6699,7 +6699,8 @@ function renderOrders() {
     const measureStyle = hasMeasure ? 'background:rgba(22,62,59,.06);border-left:3px solid #163E3B;' : '';
     const isExpress = o.service_type === 'express';
     const expressStyle = isExpress && !measureStyle ? 'border-left:3px solid #f59e0b;background:rgba(245,158,11,.04);' : '';
-    const cardStyle = outline + (measureStyle || expressStyle);
+    const cancelledStyle = o.status === 'cancelled' ? 'background:rgba(239,68,68,.08);border-left:3px solid #ef4444;' : '';
+    const cardStyle = outline + (cancelledStyle || measureStyle || expressStyle);
     return `<div class="list-item" onclick="${onclick}" style="cursor:pointer;${cardStyle}">
       ${_ordersSelectMode ? `<input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();toggleOrderSelect(${o.id},this.closest('.list-item'))" style="width:20px;height:20px;flex-shrink:0;accent-color:#163E3B">` : `<div class="li-icon" style="background:${isExpress?'#fef3c7':'var(--green-bg)'}">${isExpress?'⚡':'📦'}</div>`}
       <div class="li-body">
