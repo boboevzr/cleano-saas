@@ -2216,6 +2216,7 @@
           <button class="filter-btn" data-status="drying"    data-i18n="status.drying"    onclick="filterOrders(this)">💨 Сушка</button>
           <button class="filter-btn" data-status="packing"   data-i18n="status.packing"   onclick="filterOrders(this)">📦 Упаковка</button>
           <button class="filter-btn" data-status="ready"     data-i18n="status.ready"     onclick="filterOrders(this)">✅ Готов</button>
+          <button class="filter-btn" data-status="ready_postponed" data-i18n="status.ready_postponed" onclick="filterOrders(this)">⏸ Отложенные</button>
           <button class="filter-btn" data-status="delivery"  data-i18n="status.delivery"  onclick="filterOrders(this)">🚚 Доставка</button>
           <button class="filter-btn" data-status="delivered" data-i18n="status.delivered" onclick="filterOrders(this)">✅ Доставлен</button>
           <button class="filter-btn" data-status="cancelled" data-i18n="status.cancelled" onclick="filterOrders(this)">❌ Отменено</button>
@@ -6493,6 +6494,7 @@ const _adminI18n = {
     'status.pickup':'🚗 Вывоз','status.received':'📦 В мастерской',
     'status.washing':'🧼 Мойка','status.drying':'💨 Сушка',
     'status.packing':'📦 Упаковка','status.ready':'✅ Готов',
+    'status.ready_postponed':'⏸ Отложенные',
     'status.delivery':'🚚 Доставка','status.delivered':'✅ Доставлен',
     'status.cancelled':'❌ Отменено',
     'cash.payments':'Платежи','cash.balances':'Балансы','cash.deposits':'Инкассация',
@@ -7246,6 +7248,7 @@ const _adminI18n = {
     'status.pickup':'🚗 Olib ketish','status.received':'📦 Ustaxonada',
     'status.washing':'🧼 Yuvish','status.drying':'💨 Quritish',
     'status.packing':'📦 Qadoqlash','status.ready':'✅ Tayyor',
+    'status.ready_postponed':'⏸ Kechiktirilgan',
     'status.delivery':'🚚 Yetkazib berish','status.delivered':'✅ Yetkazildi',
     'status.cancelled':'❌ Bekor qilindi',
     'cash.payments':'Toʻlovlar','cash.balances':'Balanslar','cash.deposits':'Inkassatsiya',
@@ -11023,12 +11026,18 @@ async function loadOrders(status) {
   // заказов) и фильтруем на клиенте той же формулой, что и в _payRow/
   // get_orders_with_debt (см. _orderHasDebt). Без пагинации, как и раньше.
   const isDebt = status === 'debt';
+  // 'ready_postponed' — не настоящий статус в БД, тот же 'ready' с
+  // postponed_until — как и в staff.html, запрашиваем 'ready' с сервера и
+  // разделяем на клиенте по postponed_until.
+  const apiStatus = status === 'ready_postponed' ? 'ready' : status;
   const path = isDebt
     ? '/admin/orders?limit=1000'
-    : `/admin/orders?limit=${ordersPageSize}&offset=${(ordersPage-1)*ordersPageSize}${status ? `&status=${status}` : ''}`;
+    : `/admin/orders?limit=${ordersPageSize}&offset=${(ordersPage-1)*ordersPageSize}${apiStatus ? `&status=${apiStatus}` : ''}`;
   const data = await apiGet(path);
   if (!data) return;
-  const orders = isDebt ? (data.orders || []).filter(_orderHasDebt) : (data.orders || []);
+  let orders = isDebt ? (data.orders || []).filter(_orderHasDebt) : (data.orders || []);
+  if (status === 'ready') orders = orders.filter(o => !o.postponed_until);
+  else if (status === 'ready_postponed') orders = orders.filter(o => !!o.postponed_until);
   ordersTotal = isDebt ? 0 : (data.total || 0);
   renderOrderCards(orders, 'ordersList');
   _renderAdminOrdersStaffRow();
