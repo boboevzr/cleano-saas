@@ -2859,7 +2859,7 @@
         <div class="section-header"><h2>⚙️ Настройки сайта</h2></div>
 
         <!-- Под-вкладки -->
-        <div style="display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:20px;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:4px;">
 
           <button class="s-tab active" data-stab="staff-mgmt" onclick="switchStab(this);staffMgmtLoad()" data-i18n="cfg.tab.staff">👤 Сотрудники</button>
           <button class="s-tab"        data-stab="maintenance" onclick="switchStab(this);loadMaintenanceMode()" data-i18n="cfg.tab.maintenance">🚧 Техработы</button>
@@ -3411,7 +3411,7 @@
         <div class="section-header"><h2>🏢 Настройки компании</h2></div>
 
         <!-- Под-вкладки -->
-        <div style="display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:20px;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:4px;">
           <button class="cs-tab active" data-cstab="profile"  onclick="switchCompanyStab(this)" data-i18n="cs.tab.profile">🏢 Профиль</button>
           <button class="cs-tab"        data-cstab="contacts" onclick="switchCompanyStab(this)" data-i18n="cs.tab.contacts">📞 Контакты</button>
           <button class="cs-tab"        data-cstab="social"   onclick="switchCompanyStab(this)" data-i18n="cs.tab.social">📱 Соцсети</button>
@@ -14083,7 +14083,7 @@ async function _loadPricesCache() {
 }
 
 function odSwitchTab(tab) {
-  const tabs = ['info','items','photo','payment'];
+  const tabs = ['info','items','photo','payment','notif'];
   tabs.forEach(t => {
     const panel = document.getElementById(`od-tab-${t}`);
     const btn   = document.getElementById(`od-tabBtn-${t}`);
@@ -14095,11 +14095,13 @@ function odSwitchTab(tab) {
     btn.style.background = active ? 'var(--card)' : 'transparent';
   });
   if (tab === 'payment') loadPaymentModal();
+  if (tab === 'notif') { _odRenderReceiptButtons(); _odRenderNotifications(); }
 }
 
 async function openOrderModal(orderId) {
   _orderModalId = orderId;
   _orderItemEdit = null;
+  _odActivityCache = null;
   const m = document.getElementById('modalOrderDetail');
   m.style.display = 'flex';
   odSwitchTab('info');
@@ -14460,6 +14462,9 @@ async function changeOrderStatus() {
   const o = d.order;
   document.getElementById('od_status').innerHTML = `<span class="status-badge ${statusBadgeClass(o.status)}">${STATUS_NAMES[o.status] || o.status}</span>`;
   showToast(`Статус → ${STATUS_NAMES[status] || status}`);
+  _adminOrderCache = o;
+  _odActivityCache = null;
+  if (document.getElementById('od-tab-notif')?.style.display === 'flex') { _odRenderReceiptButtons(); _odRenderNotifications(); }
 }
 
 function odUpdateTotal() {
@@ -15818,6 +15823,149 @@ async function _adminLoadOrderHistory(orderId) {
       </div>`;
     }).join('');
   } catch { wrap.style.display = 'none'; }
+}
+
+// ─── ВКЛАДКА «УВЕДОМЛЕНИЯ» (зеркало staff.html: SMS клиенту + чек + лог) ───
+let _odActivityCache = null;
+async function _odFetchActivity() {
+  if (_odActivityCache) return _odActivityCache;
+  if (!_orderModalId) return [];
+  try {
+    const res = await fetch(`${API_BASE}/admin/orders/${_orderModalId}/activity`, { headers: { Authorization: `Bearer ${_orderToken()}` } });
+    const d = await res.json();
+    _odActivityCache = d.activity || [];
+  } catch(e) { _odActivityCache = []; }
+  return _odActivityCache;
+}
+
+const _OD_NOTIF_ACTIONS = ['sms_sent', 'sms_failed', 'tg_sent'];
+async function _odRenderNotifications() {
+  const el = document.getElementById('od_notif_list');
+  if (!el) return;
+  el.innerHTML = '<div style="color:var(--text2)">Загрузка…</div>';
+  const acts = (await _odFetchActivity()).filter(a => _OD_NOTIF_ACTIONS.includes(a.action));
+  if (!acts.length) { el.innerHTML = '<div style="color:var(--text2)">Уведомлений пока нет</div>'; return; }
+  el.innerHTML = acts.map(a => {
+    const dt = a.created_at ? new Date(a.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    const icon = a.action === 'tg_sent' ? '🔔' : (a.action === 'sms_failed' ? '❌' : '📲');
+    return `<div style="padding:7px 0;border-bottom:1px solid var(--border)">
+      <div>${icon} ${_esc(a.details||'')}</div>
+      <div style="white-space:nowrap;color:var(--text2);margin-top:2px">${dt} · ${_esc(a.staff_name||'—')}</div>
+    </div>`;
+  }).join('');
+}
+
+function _odRenderReceiptButtons() {
+  const o = _adminOrderCache;
+  const receiptRow = document.getElementById('od_notif_receipt_row');
+  const previewRow = document.getElementById('od_notif_preview_row');
+  if (!receiptRow || !previewRow || !o) return;
+  const show = ['ready','delivery','delivered'].includes(o.status);
+  receiptRow.innerHTML = show
+    ? `<div style="display:flex;gap:8px;margin-bottom:8px">
+         <button onclick="odSendReceipt('', false)" style="flex:1;padding:12px;background:#0d9488;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">🔔 Чек со звуком</button>
+         <button onclick="odSendReceipt('', true)" style="flex:1;padding:12px;background:#0f766e;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">🔕 Чек без звука</button>
+       </div>`
+    : '';
+  previewRow.innerHTML = show
+    ? `<button onclick="odPreviewReceipt()" style="width:100%;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">👁 Просмотр чека</button>`
+    : '';
+}
+
+let _odSmsKind = 'pickup';
+function _odSmsSetKind(kind) {
+  _odSmsKind = kind;
+  const p = document.getElementById('odSmsKindPickup'), r = document.getElementById('odSmsKindReady');
+  if (p) p.style.cssText = _odKindBtnStyle(kind === 'pickup');
+  if (r) r.style.cssText = _odKindBtnStyle(kind === 'ready');
+}
+function _odKindBtnStyle(active) {
+  return `flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid ${active?'var(--accent)':'var(--border)'};background:${active?'var(--accent)':'none'};color:${active?'#fff':'var(--text2)'};font-size:13px;font-weight:600;cursor:pointer`;
+}
+function odOpenSmsModal() {
+  if (!_orderModalId) return;
+  document.getElementById('odSmsModal')?.remove();
+  const div = document.createElement('div');
+  div.id = 'odSmsModal';
+  div.style.cssText = 'position:fixed;inset:0;z-index:10020;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px';
+  const readyStatuses = ['ready','delivery','delivered'];
+  _odSmsKind = readyStatuses.includes(_adminOrderCache?.status) ? 'ready' : 'pickup';
+  div.innerHTML = `
+    <div style="background:var(--card);border-radius:20px;padding:24px;width:100%;max-width:440px">
+      <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px">Отправить SMS клиенту</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Выберите шаблон и язык сообщения</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button id="odSmsKindPickup" onclick="_odSmsSetKind('pickup')" style="${_odKindBtnStyle(_odSmsKind==='pickup')}">🚗 Забор</button>
+        <button id="odSmsKindReady"  onclick="_odSmsSetKind('ready')"  style="${_odKindBtnStyle(_odSmsKind==='ready')}">✅ Готово</button>
+      </div>
+      <button onclick="odSendSms('ru')" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">🇷🇺 Русский</button>
+      <button onclick="odSendSms('uz')" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">🇺🇿 Ўзбекча</button>
+      <button onclick="document.getElementById('odSmsModal')?.remove()" style="width:100%;padding:11px;border:1.5px solid var(--border);border-radius:12px;background:none;color:var(--text2);font-size:14px;font-weight:600;cursor:pointer">Отмена</button>
+    </div>`;
+  document.body.appendChild(div);
+}
+async function odSendSms(lang) {
+  document.getElementById('odSmsModal')?.remove();
+  if (!_orderModalId) return;
+  try {
+    const res = await fetch(`${API_BASE}/admin/orders/${_orderModalId}/send-sms`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_orderToken()}` },
+      body: JSON.stringify({ lang, kind: _odSmsKind }),
+    });
+    const d = await res.json().catch(()=>({}));
+    if (!res.ok) throw new Error(d.detail || 'Ошибка');
+    if (d.sent) showToast('SMS отправлено');
+    else showToast('⚠️ ' + (d.reason || 'SMS не отправлено'), 'error');
+  } catch(e) { showToast('⚠️ ' + e.message, 'error'); }
+  _odActivityCache = null;
+  _odRenderNotifications();
+}
+
+async function odSendReceipt(note, silent) {
+  if (!_orderModalId) return;
+  const btns = document.querySelectorAll('[onclick*="odSendReceipt"]');
+  btns.forEach(b => { b.dataset._label = b.textContent; b.disabled = true; b.textContent = '…'; });
+  let r;
+  try {
+    r = await fetch(`${API_BASE}/admin/orders/${_orderModalId}/send-receipt`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_orderToken()}` },
+      body: JSON.stringify({ note: note || '', silent: !!silent }),
+    });
+  } catch(e) {
+    btns.forEach(b => { b.disabled = false; b.textContent = b.dataset._label; });
+    showToast('Нет соединения с сервером', 'error');
+    return;
+  }
+  const d = await r.json().catch(() => null);
+  btns.forEach(b => { b.disabled = false; b.textContent = b.dataset._label; });
+  if (r.ok && d?.ok) {
+    showToast('✅ Чек отправлен клиенту');
+  } else if (r.status === 409) {
+    const reason = prompt((d?.detail || 'Чек уже отправлялся ранее.') + '\n\nУкажите причину повторной отправки:');
+    if (reason && reason.trim()) { await odSendReceipt(reason.trim(), silent); return; }
+    return;
+  } else {
+    showToast('⚠️ ' + (d?.detail || 'Не удалось отправить чек'), 'error');
+  }
+  _odActivityCache = null;
+  _odRenderNotifications();
+}
+
+async function odPreviewReceipt() {
+  if (!_orderModalId) return;
+  const btn = document.querySelector('[onclick*="odPreviewReceipt()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    const res = await fetch(`${API_BASE}/admin/orders/${_orderModalId}/receipt-image`, { headers: { Authorization: `Bearer ${_orderToken()}` } });
+    if (!res.ok) throw new Error('preview failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  } catch(e) {
+    showToast('Не удалось загрузить превью чека', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '👁 Просмотр чека'; }
+  }
 }
 
 function toggleAdminOrdersSelect() {
@@ -21699,6 +21847,7 @@ function confirmBranchLoc() {
       <button id="od-tabBtn-items"   onclick="odSwitchTab('items')"   style="flex:1;padding:11px 4px;border:none;background:none;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap">📋 Позиции</button>
       <button id="od-tabBtn-photo"   onclick="odSwitchTab('photo')"   style="flex:1;padding:11px 4px;border:none;background:none;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap">📷 Фото</button>
       <button id="od-tabBtn-payment" onclick="odSwitchTab('payment')" style="flex:1;padding:11px 4px;border:none;background:none;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap">💰 Оплата</button>
+      <button id="od-tabBtn-notif"   onclick="odSwitchTab('notif')"   style="flex:1;padding:11px 4px;border:none;background:none;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap">🔔 Уведомления</button>
     </div>
 
     <!-- Вкладка: Инфо -->
@@ -21831,6 +21980,15 @@ function confirmBranchLoc() {
       <div id="od_pm_add_wrap" style="margin-bottom:16px">
         <button onclick="openAdminPaymentModal()" style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation">+ Добавить платёж</button>
       </div>
+    </div>
+
+    <!-- Вкладка: Уведомления -->
+    <div id="od-tab-notif" style="flex:1;min-height:0;overflow-y:auto;display:none;flex-direction:column;padding:14px 20px">
+      <button onclick="odOpenSmsModal()" style="width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📲 SMS клиенту</button>
+      <div id="od_notif_receipt_row" style="margin-bottom:4px"></div>
+      <div id="od_notif_preview_row" style="margin-bottom:12px"></div>
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">История уведомлений</div>
+      <div id="od_notif_list" style="font-size:12px;color:var(--text2)"></div>
     </div>
 
   </div>
