@@ -2212,9 +2212,31 @@
             <button onclick="adminOpenBulkOrdersDelete()" style="padding:9px 14px;border:none;border-radius:10px;background:#fee2e2;color:#ef4444;font-size:18px;cursor:pointer">🗑</button>
           </div>
         </div>
-        <div style="margin-bottom:10px">
-          <input id="adminOrdersSearch" data-i18n-ph="ph.search.orders" class="filter-input" placeholder="🔍 Имя, телефон, номер заказа…"
-            oninput="_adminOrdersFilter()" style="width:100%;max-width:400px">
+        <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div style="position:relative;flex:1;min-width:220px;max-width:400px">
+            <input id="adminOrdersSearch" data-i18n-ph="ph.search.orders" class="filter-input" placeholder="🔍 Имя, телефон, номер заказа, адрес…"
+              oninput="_adminOrdersSearchDebounce()" style="width:100%;padding-right:28px">
+            <button id="adminOrdersSearchClear" onclick="_clearAdminOrdersSearch()" title="Очистить" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text2);font-size:16px;cursor:pointer;padding:0 4px;line-height:1">✕</button>
+          </div>
+          <button id="adminOfTogBtn" onclick="_toggleAdminOrdersFilters()" style="background:none;border:1.5px solid var(--border);border-radius:10px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;white-space:nowrap">🔽 Фильтры</button>
+        </div>
+        <div id="adminOrdersExtraFilters" style="display:none;margin-bottom:10px">
+          <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:12px;color:var(--text2);white-space:nowrap">№ от</span>
+            <input type="number" id="adminOrdersNumFrom" inputmode="numeric" placeholder="1125"
+              oninput="adminOrdersNumFrom=this.value;_syncAdminOrdersNumClearBtn();_adminOrdersNumDebounce()"
+              style="width:90px;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;background:var(--surface);color:var(--text)">
+            <span style="font-size:12px;color:var(--text2);white-space:nowrap">до</span>
+            <input type="number" id="adminOrdersNumTo" inputmode="numeric" placeholder="1210"
+              oninput="adminOrdersNumTo=this.value;_syncAdminOrdersNumClearBtn();_adminOrdersNumDebounce()"
+              style="width:90px;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;background:var(--surface);color:var(--text)">
+            <button id="adminOrdersNumClear" onclick="_clearAdminOrdersNumFilter()" title="Очистить" style="display:none;background:none;border:none;color:var(--text2);font-size:16px;cursor:pointer;padding:0 2px;line-height:1">✕</button>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+            <button id="aown_all"  onclick="setAdminOrdersOwnerFilter('all')"  class="filter-btn active">Все заказы</button>
+            <button id="aown_mine" onclick="setAdminOrdersOwnerFilter('mine')" class="filter-btn">👤 Мои</button>
+          </div>
+          <div id="adminOrdersDateFilterRow" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px"></div>
         </div>
         <div class="filters" id="orderFilters">
           <button class="filter-btn active" data-status="" data-i18n="status.all" onclick="filterOrders(this)">Все</button>
@@ -11030,6 +11052,25 @@ let ordersPage = 1;
 let ordersPageSize = 50;
 let ordersTotal = 0;
 const ORDERS_PAGE_SIZES = [50, 100, 200, 300, 500];
+// Доп. фильтры (🔽 Фильтры) — зеркало staff.html
+let _adminOrdersFiltersOpen = false;
+let adminOrdersOwnerFilter = 'all'; // 'all' | 'mine'
+let adminOrdersDateFilter  = 'all'; // 'all' | 'today' | 'yesterday' | 'week' | 'month' | 'period'
+let adminOrdersDateFrom    = '';
+let adminOrdersDateTo      = '';
+let adminOrdersNumFrom     = '';
+let adminOrdersNumTo       = '';
+
+// Поиск/№-диапазон/сотрудник/владелец/дата — всё это фильтрует только уже
+// ЗАГРУЖЕННУЮ страницу заказов (limit по умолчанию 50). Если совпадение лежит
+// за пределами последних 50 заказов текущего статуса, фильтр молча находит
+// пусто — выглядит как "не работает". Поэтому при активном любом из этих
+// фильтров грузим большой лимит без пагинации (тот же приём, что и для «Долгов»).
+function _adminOrdersHasExtraFilter() {
+  const q = (document.getElementById('adminOrdersSearch')?.value || '').trim();
+  return !!q || !!_adminOrdersStaffFilter || adminOrdersOwnerFilter === 'mine' ||
+    adminOrdersDateFilter !== 'all' || !!adminOrdersNumFrom || !!adminOrdersNumTo;
+}
 
 async function loadOrders(status) {
   currentStatus = status;
@@ -11039,28 +11080,33 @@ async function loadOrders(status) {
   // заказов) и фильтруем на клиенте той же формулой, что и в _payRow/
   // get_orders_with_debt (см. _orderHasDebt). Без пагинации, как и раньше.
   const isDebt = status === 'debt';
+  const hasExtraFilter = _adminOrdersHasExtraFilter();
   // 'ready_postponed' — не настоящий статус в БД, тот же 'ready' с
   // postponed_until — как и в staff.html, запрашиваем 'ready' с сервера и
   // разделяем на клиенте по postponed_until.
   const apiStatus = status === 'ready_postponed' ? 'ready' : status;
-  const path = isDebt
-    ? '/admin/orders?limit=1000'
+  const path = (isDebt || hasExtraFilter)
+    ? `/admin/orders?limit=2000${apiStatus ? `&status=${apiStatus}` : ''}`
     : `/admin/orders?limit=${ordersPageSize}&offset=${(ordersPage-1)*ordersPageSize}${apiStatus ? `&status=${apiStatus}` : ''}`;
   const data = await apiGet(path);
   if (!data) return;
   let orders = isDebt ? (data.orders || []).filter(_orderHasDebt) : (data.orders || []);
   if (status === 'ready') orders = orders.filter(o => !o.postponed_until);
   else if (status === 'ready_postponed') orders = orders.filter(o => !!o.postponed_until);
-  ordersTotal = isDebt ? 0 : (data.total || 0);
-  renderOrderCards(orders, 'ordersList');
-  _renderAdminOrdersStaffRow();
+  ordersTotal = (isDebt || hasExtraFilter) ? 0 : (data.total || 0);
+  // Чистый список с сервера — источник для _adminOrdersFilter(), сама функция
+  // ниже перезаписывает _adminOrdersCache уже ОТФИЛЬТРОВАННЫМ набором (нужно
+  // для "Выбрать все" — выбирает видимые), поэтому сырой список храним отдельно.
+  _adminOrdersRawCache = orders;
+  _adminOrdersFilter();
   _renderOrdersPager();
 }
 
 function _renderOrdersPager() {
   const el = document.getElementById('ordersPager');
   if (!el) return;
-  if (currentStatus === 'debt') { el.innerHTML = ''; return; } // «Долги» без пагинации
+  // «Долги» и активный доп. фильтр — без пагинации (грузим большой limit разом, см. loadOrders)
+  if (currentStatus === 'debt' || _adminOrdersHasExtraFilter()) { el.innerHTML = ''; return; }
   const totalPages = Math.max(1, Math.ceil(ordersTotal / ordersPageSize));
   if (ordersPage > totalPages) ordersPage = totalPages;
   el.innerHTML = `
@@ -15632,7 +15678,8 @@ async function adminSaveOrderEdit() {
 
 let _adminOrdersSelectMode = false;
 let _adminSelectedOrders   = new Set();
-let _adminOrdersCache      = [];
+let _adminOrdersCache      = []; // текущий ОТФИЛЬТРОВАННЫЙ (видимый) список
+let _adminOrdersRawCache   = []; // сырой список со страницы сервера — источник для фильтров
 
 function _resetAdminOrdersSelect() {
   _adminOrdersSelectMode = false; _adminSelectedOrders.clear();
@@ -15644,22 +15691,143 @@ function _resetAdminOrdersSelect() {
 // ─── ПОИСК ПО ЗАКАЗАМ (admin) ─────────────────────────────────────────────
 function _adminOrdersFilter() {
   const q = (document.getElementById('adminOrdersSearch')?.value||'').toLowerCase().trim();
-  let filtered = _adminOrdersCache;
+  const qDigits = q.replace(/\D/g,'');
+  let filtered = _adminOrdersRawCache;
   if (q) {
-    filtered = filtered.filter(o =>
-      (o.order_num||'').toLowerCase().includes(q) ||
-      (o.client_first_name||'').toLowerCase().includes(q) ||
-      (o.client_last_name||'').toLowerCase().includes(q) ||
-      (o.client_phone||'').replace(/\D/g,'').includes(q.replace(/\D/g,'')) ||
-      (o.short_address||'').toLowerCase().includes(q) ||
-      (o.address||'').toLowerCase().includes(q)
-    );
+    filtered = filtered.filter(o => {
+      // ФИО целиком (в обоих порядках слов) — раньше проверялись только
+      // first_name/last_name ПО ОТДЕЛЬНОСТИ, поэтому запрос "Иванов Пётр"
+      // (два слова сразу) не находил ничего, даже если оба слова верны.
+      const fullName1 = `${o.client_first_name||''} ${o.client_last_name||''}`.toLowerCase();
+      const fullName2 = `${o.client_last_name||''} ${o.client_first_name||''}`.toLowerCase();
+      // qDigits пустой при поиске по имени (без единой цифры) — раньше
+      // "".includes("") давало true для ЛЮБОГО заказа, из-за чего проверка
+      // телефона молча "матчила" вообще всё и поиск по ФИО не фильтровал
+      // ничего. Проверяем телефон только если в запросе реально есть цифры.
+      return (o.order_num||'').toLowerCase().includes(q) ||
+        fullName1.includes(q) ||
+        fullName2.includes(q) ||
+        (!!qDigits && (o.client_phone||'').replace(/\D/g,'').includes(qDigits)) ||
+        (o.short_address||'').toLowerCase().includes(q) ||
+        (o.address||'').toLowerCase().includes(q);
+    });
   }
   if (_adminOrdersStaffFilter) {
     filtered = filtered.filter(o => _adminOrderCreatorName(o) === _adminOrdersStaffFilter);
   }
+  if (adminOrdersOwnerFilter === 'mine') {
+    const myName = [_adminMe?.first_name, _adminMe?.last_name].filter(Boolean).join(' ');
+    filtered = filtered.filter(o => _adminOrderCreatorName(o) === myName);
+  }
+  const _numFrom = parseInt(adminOrdersNumFrom, 10), _numTo = parseInt(adminOrdersNumTo, 10);
+  if (!isNaN(_numFrom)) filtered = filtered.filter(o => _orderNumInt(o.order_num) >= _numFrom);
+  if (!isNaN(_numTo))   filtered = filtered.filter(o => _orderNumInt(o.order_num) <= _numTo);
+  filtered = _applyAdminDateFilter(filtered, 'created_at', adminOrdersDateFilter, adminOrdersDateFrom, adminOrdersDateTo);
   _renderAdminOrdersStaffRow();
   renderOrderCards(filtered, 'ordersList');
+}
+
+// Числовая часть номера заказа ("ARTEZ-1231" → 1231) — для фильтра "№ от … до …".
+function _orderNumInt(order_num) {
+  return parseInt((order_num || '').replace(/\D/g, ''), 10) || 0;
+}
+
+function _applyAdminDateFilter(items, dateField, filterKey, dateFrom, dateTo) {
+  if (filterKey === 'all') return items;
+  const now = new Date();
+  const today     = now.toISOString().slice(0,10);
+  const yesterday = new Date(now - 86400000).toISOString().slice(0,10);
+  const weekAgo   = new Date(now - 7*86400000).toISOString().slice(0,10);
+  const monthAgo  = new Date(now - 30*86400000).toISOString().slice(0,10);
+  return items.filter(o => {
+    const d = (o[dateField] || '').slice(0,10);
+    if (!d) return false;
+    if (filterKey === 'today')     return d === today;
+    if (filterKey === 'yesterday') return d === yesterday;
+    if (filterKey === 'week')      return d >= weekAgo && d <= today;
+    if (filterKey === 'month')     return d >= monthAgo && d <= today;
+    if (filterKey === 'period')    return (!dateFrom || d >= dateFrom) && (!dateTo || d <= dateTo);
+    return true;
+  });
+}
+
+function _toggleAdminOrdersFilters() {
+  _adminOrdersFiltersOpen = !_adminOrdersFiltersOpen;
+  const el = document.getElementById('adminOrdersExtraFilters');
+  if (el) el.style.display = _adminOrdersFiltersOpen ? 'block' : 'none';
+  _renderAdminOrdersDateRow();
+  _updateAdminOrdersFilterBtn();
+}
+function _updateAdminOrdersFilterBtn() {
+  const btn = document.getElementById('adminOfTogBtn');
+  if (!btn) return;
+  const active = _adminOrdersFiltersOpen || adminOrdersOwnerFilter !== 'all' || adminOrdersDateFilter !== 'all' || !!adminOrdersNumFrom || !!adminOrdersNumTo;
+  btn.style.background  = active ? 'var(--accent)' : 'none';
+  btn.style.color       = active ? '#fff' : 'var(--text2)';
+  btn.style.borderColor = active ? 'var(--accent)' : 'var(--border)';
+}
+
+function setAdminOrdersOwnerFilter(v) {
+  adminOrdersOwnerFilter = v;
+  const a = document.getElementById('aown_all'), m = document.getElementById('aown_mine');
+  if (a) a.classList.toggle('active', v === 'all');
+  if (m) m.classList.toggle('active', v === 'mine');
+  _updateAdminOrdersFilterBtn();
+  loadOrders(currentStatus);
+}
+
+function _renderAdminOrdersDateRow() {
+  const row = document.getElementById('adminOrdersDateFilterRow');
+  if (!row) return;
+  const chips = [['all','Все даты'],['today','Сегодня'],['yesterday','Вчера'],['week','Неделя'],['month','Месяц'],['period','Период']];
+  row.innerHTML = chips.map(([k,label]) => `<button class="filter-btn ${k===adminOrdersDateFilter?'active':''}" onclick="setAdminOrdersDateFilter('${k}')">${label}</button>`).join('') +
+    `<span id="adminOrdersPeriodInputs" style="display:${adminOrdersDateFilter==='period'?'inline-flex':'none'};gap:6px;align-items:center">
+      <input type="date" id="adminOrdersDateFrom" value="${adminOrdersDateFrom}" onchange="adminOrdersDateFrom=this.value;loadOrders(currentStatus)" style="border:1.5px solid var(--border);border-radius:8px;padding:5px 8px;font-size:13px;background:var(--surface);color:var(--text);color-scheme:light">
+      <span style="color:var(--text2);font-size:12px">—</span>
+      <input type="date" id="adminOrdersDateTo" value="${adminOrdersDateTo}" onchange="adminOrdersDateTo=this.value;loadOrders(currentStatus)" style="border:1.5px solid var(--border);border-radius:8px;padding:5px 8px;font-size:13px;background:var(--surface);color:var(--text);color-scheme:light">
+    </span>`;
+}
+function setAdminOrdersDateFilter(v) {
+  adminOrdersDateFilter = v;
+  if (v !== 'period') { adminOrdersDateFrom = ''; adminOrdersDateTo = ''; }
+  _renderAdminOrdersDateRow();
+  _updateAdminOrdersFilterBtn();
+  loadOrders(currentStatus);
+}
+
+function _syncAdminOrdersNumClearBtn() {
+  const btn = document.getElementById('adminOrdersNumClear');
+  if (btn) btn.style.display = (adminOrdersNumFrom || adminOrdersNumTo) ? '' : 'none';
+}
+let _adminOrdersNumTimer = null;
+function _adminOrdersNumDebounce() {
+  clearTimeout(_adminOrdersNumTimer);
+  _adminOrdersNumTimer = setTimeout(() => { _updateAdminOrdersFilterBtn(); loadOrders(currentStatus); }, 400);
+}
+function _clearAdminOrdersNumFilter() {
+  adminOrdersNumFrom = ''; adminOrdersNumTo = '';
+  const nf = document.getElementById('adminOrdersNumFrom'); if (nf) nf.value = '';
+  const nt = document.getElementById('adminOrdersNumTo');   if (nt) nt.value = '';
+  _syncAdminOrdersNumClearBtn();
+  _updateAdminOrdersFilterBtn();
+  loadOrders(currentStatus);
+}
+
+let _adminOrdersSearchTimer = null;
+function _adminOrdersSearchDebounce() {
+  _syncAdminOrdersSearchClearBtn();
+  clearTimeout(_adminOrdersSearchTimer);
+  _adminOrdersSearchTimer = setTimeout(() => loadOrders(currentStatus), 400);
+}
+function _syncAdminOrdersSearchClearBtn() {
+  const inp = document.getElementById('adminOrdersSearch'), btn = document.getElementById('adminOrdersSearchClear');
+  if (btn) btn.style.display = (inp && inp.value) ? '' : 'none';
+}
+function _clearAdminOrdersSearch() {
+  const inp = document.getElementById('adminOrdersSearch');
+  if (inp) { inp.value = ''; inp.focus(); }
+  _syncAdminOrdersSearchClearBtn();
+  loadOrders(currentStatus);
 }
 
 // ─── ФОТО/ВИДЕО ЗАКАЗА ────────────────────────────────────────────────────────
@@ -16226,7 +16394,7 @@ function _renderAdminOrdersStaffRow() {
 }
 function setAdminOrdersStaffFilter(name) {
   _adminOrdersStaffFilter = name;
-  _adminOrdersFilter();
+  loadOrders(currentStatus);
 }
 function openAdminOrdersStaffModal() {
   const names = {};
@@ -16281,7 +16449,7 @@ function _filterAdminOrdersStaffList() {
 function selectAdminOrdersStaff(name) {
   _adminOrdersStaffFilter = name;
   document.getElementById('adminOrdersStaffModal').style.display = 'none';
-  _adminOrdersFilter();
+  loadOrders(currentStatus);
 }
 
 function _renderAdminLeadsTable(leads) {
