@@ -263,7 +263,8 @@
     try {
       var API_BASE = (window.APP_API_URL || 'https://web-production-eef2a.up.railway.app') + '/api';
       var r = await fetch(API_BASE + '/saas/public-settings');
-      var s = await r.json();
+      var d = await r.json();
+      var s = (d && d.settings) || {};
       var html = '';
       if (s.cleano_phone) html += '<a href="tel:' + s.cleano_phone.replace(/\D/g,'') + '">📞 ' + s.cleano_phone + '</a>';
       if (s.cleano_telegram) html += '<a href="' + s.cleano_telegram + '" target="_blank" rel="noopener">✈️ Telegram</a>';

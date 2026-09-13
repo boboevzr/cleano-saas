@@ -112,7 +112,7 @@
     <div class="section">
       <div class="section-title">3. Регистрация и пробный период</div>
       <ul>
-        <li>При регистрации предоставляется <strong>14 дней бесплатного доступа</strong> ко всем функциям платформы, банковская карта не требуется.</li>
+        <li>При регистрации предоставляется <strong id="trialDaysRu">14 дней бесплатного доступа</strong> ко всем функциям платформы, банковская карта не требуется.</li>
         <li>Вы обязаны указывать достоверные данные о компании и контактном лице.</li>
         <li>Один аккаунт администратора создаётся на компанию; остальные роли (менеджер, водитель, упаковщик и т.д.) добавляются администратором внутри панели.</li>
       </ul>
@@ -191,7 +191,7 @@
     <div class="section">
       <div class="section-title">3. Ro'yxatdan o'tish va sinov davri</div>
       <ul>
-        <li>Ro'yxatdan o'tishda platformaning barcha funksiyalariga <strong>14 kunlik bepul kirish</strong> beriladi, bank kartasi talab qilinmaydi.</li>
+        <li>Ro'yxatdan o'tishda platformaning barcha funksiyalariga <strong id="trialDaysUz">14 kunlik bepul kirish</strong> beriladi, bank kartasi talab qilinmaydi.</li>
         <li>Kompaniya va aloqa shaxsi haqida to'g'ri ma'lumot berish shart.</li>
         <li>Kompaniya uchun bitta admin akkaunti yaratiladi; qolgan rollar (menejer, haydovchi, qadoqlovchi va h.k.) admin tomonidan panel ichida qo'shiladi.</li>
       </ul>
@@ -277,7 +277,8 @@
     try {
       var API_BASE = (window.APP_API_URL || 'https://web-production-eef2a.up.railway.app') + '/api';
       var r = await fetch(API_BASE + '/saas/public-settings');
-      var s = await r.json();
+      var d = await r.json();
+      var s = (d && d.settings) || {};
       var html = '';
       if (s.cleano_phone) html += '<a href="tel:' + s.cleano_phone.replace(/\D/g,'') + '">📞 ' + s.cleano_phone + '</a>';
       if (s.cleano_telegram) html += '<a href="' + s.cleano_telegram + '" target="_blank" rel="noopener">✈️ Telegram</a>';
@@ -286,6 +287,13 @@
       var uz = document.getElementById('contactCardUz');
       if (ru) ru.innerHTML += html;
       if (uz) uz.innerHTML += html;
+      var td = parseInt(s.default_trial_days, 10);
+      if (td > 0) {
+        var trRu = document.getElementById('trialDaysRu');
+        var trUz = document.getElementById('trialDaysUz');
+        if (trRu) trRu.textContent = td + ' дней бесплатного доступа';
+        if (trUz) trUz.textContent = td + ' kunlik bepul kirish';
+      }
     } catch (e) {}
   })();
 </script>
