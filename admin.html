@@ -2237,6 +2237,7 @@
             <button id="aown_mine" onclick="setAdminOrdersOwnerFilter('mine')" class="filter-btn">👤 Мои</button>
           </div>
           <div id="adminOrdersDateFilterRow" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px"></div>
+          <div id="adminOrdersStaffRow" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px"></div>
         </div>
         <div class="filters" id="orderFilters">
           <button class="filter-btn active" data-status="" data-i18n="status.all" onclick="filterOrders(this)">Все</button>
@@ -2254,7 +2255,6 @@
           <button class="filter-btn" data-status="cancelled" data-i18n="status.cancelled" onclick="filterOrders(this)">❌ Отменено</button>
           <button class="filter-btn" data-status="debt" onclick="filterOrders(this)">💸 Долги</button>
         </div>
-        <div id="adminOrdersStaffRow" style="display:flex;gap:6px;margin-top:8px;margin-bottom:4px"></div>
         <div id="ordersList"><div class="loader">Загрузка…</div></div>
         <div id="ordersPager"></div>
       </div>
