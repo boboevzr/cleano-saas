@@ -8586,13 +8586,13 @@ function _computeSetupGaps() {
       });
     }
     if (!(b.lat && b.lon) || !(b.workshop_lat && b.workshop_lon)) {
-      required.push({ kind: 'nav', label: `Филиал «${label}»: локация`, hint: 'Центр района и адрес цеха на карте', fix: () => _setupGoToBranch(b.id) });
+      required.push({ kind: 'nav', label: `Филиал «${label}» — Основные данные`, hint: 'Центр района и адрес цеха на карте', fix: () => _setupGoToBranch(b.id, 'main') });
     }
-    if (!b.tg_leads_group_id) {
-      required.push({ kind: 'nav', label: `Филиал «${label}»: Telegram-группа заявок`, hint: 'Куда присылать уведомления о новых заявках', fix: () => _setupGoToBranch(b.id, 'tg') });
-    }
-    if (!b.tg_orders_channel_id || !b.tg_delivery_channel_id) {
-      recommended.push({ kind: 'nav', label: `Филиал «${label}»: остальные Telegram-группы`, hint: 'Заказы, доставка — по желанию', fix: () => _setupGoToBranch(b.id, 'tg') });
+    // Все поля Telegram-групп объединены в один пункт (ведёт на вкладку 📱 Telegram) —
+    // раньше группа заявок отдельным ⚠️-пунктом ошибочно вела на вкладку "Основные
+    // данные" (там этого поля вообще нет), см. запрос пользователя.
+    if (!b.tg_leads_group_id || !b.tg_orders_channel_id || !b.tg_delivery_channel_id) {
+      recommended.push({ kind: 'nav', label: `Филиал «${label}»: Telegram-группы`, hint: 'Заказы, доставка и т.д.', fix: () => _setupGoToBranch(b.id, 'tg') });
     }
   });
   return { required, recommended };
