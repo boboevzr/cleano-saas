@@ -5677,6 +5677,7 @@ function kbRenderBlocks() {
   const el = document.getElementById('kbaBlocksList');
   if (!list.length) { el.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:10px 0">Пока нет блоков — добавьте ниже</div>'; return; }
   el.innerHTML = list.map((b, i) => kbBlockRowHtml(b, i, list.length)).join('');
+  _kbLoadBlockMedia();
 }
 
 function _kbBlockLabel(type) {
@@ -5701,12 +5702,30 @@ function kbBlockRowHtml(b, idx, total) {
   } else if (b.type === 'image' || b.type === 'video') {
     const preview = b.file_id
       ? (b.type === 'image'
-          ? `<img src="${API}/kb/media/${encodeURIComponent(b.file_id)}?t=${encodeURIComponent(_token)}" style="max-width:220px;border-radius:8px;display:block;margin-bottom:8px">`
-          : `<video src="${API}/kb/media/${encodeURIComponent(b.file_id)}?t=${encodeURIComponent(_token)}" controls style="max-width:220px;border-radius:8px;display:block;margin-bottom:8px"></video>`)
+          ? `<img data-kb-media="${encodeURIComponent(b.file_id)}" style="max-width:220px;border-radius:8px;display:block;margin-bottom:8px">`
+          : `<video data-kb-media="${encodeURIComponent(b.file_id)}" controls style="max-width:220px;border-radius:8px;display:block;margin-bottom:8px"></video>`)
       : '<div style="color:var(--text2);font-size:12px;margin-bottom:8px">Файл не загружен</div>';
     body = `${preview}<input type="file" accept="${b.type==='image'?'image/*':'video/*'}" onchange="kbUploadBlockFile(${idx}, this)">`;
   }
   return `<div class="card" style="margin-bottom:10px;padding:10px 12px;background:var(--surface2)">${head}${body}</div>`;
+}
+
+let _kbBlockObjectUrls = [];
+async function _kbLoadBlockMedia() {
+  _kbBlockObjectUrls.forEach(u => URL.revokeObjectURL(u));
+  _kbBlockObjectUrls = [];
+  const els = document.querySelectorAll('#kbaBlocksList [data-kb-media]');
+  for (const el of els) {
+    const fileId = decodeURIComponent(el.getAttribute('data-kb-media'));
+    try {
+      const r = await fetch(`${API}/kb/media/${encodeURIComponent(fileId)}`, { headers: { Authorization: 'Bearer ' + _token } });
+      if (!r.ok) continue;
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      _kbBlockObjectUrls.push(url);
+      el.src = url;
+    } catch (e) {}
+  }
 }
 
 function kbAddBlock(type) {
