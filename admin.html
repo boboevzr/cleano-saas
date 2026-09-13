@@ -760,6 +760,16 @@
   }
   .s-tab:hover, .cs-tab:hover { color: var(--text); border-color: var(--accent); }
   .s-tab.active, .cs-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  /* ── Настройки сайта: вкладки слева одной колонкой на десктопе ── */
+  .scfg-wrap { display: flex; flex-direction: column; gap: 20px; }
+  .scfg-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+  .scfg-content { max-width: 660px; }
+  @media (min-width: 900px) {
+    .scfg-wrap { flex-direction: row; align-items: flex-start; gap: 28px; }
+    .scfg-nav { flex-direction: column; flex-wrap: nowrap; width: 230px; flex-shrink: 0; position: sticky; top: 16px; }
+    .scfg-nav .s-tab { width: 100%; text-align: left; }
+    .scfg-content { flex: 1; min-width: 0; }
+  }
   .cfg-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 
   /* Рамка логотипа компании — с градиентом и мягкой тенью, красивая иконка-заглушка если лого нет */
@@ -2858,8 +2868,10 @@
       <div class="page" id="page-siteconfig">
         <div class="section-header"><h2>⚙️ Настройки сайта</h2></div>
 
+        <div class="scfg-wrap">
+
         <!-- Под-вкладки -->
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:4px;">
+        <div class="scfg-nav">
 
           <button class="s-tab active" data-stab="staff-mgmt" onclick="switchStab(this);staffMgmtLoad()" data-i18n="cfg.tab.staff">👤 Сотрудники</button>
           <button class="s-tab"        data-stab="maintenance" onclick="switchStab(this);loadMaintenanceMode()" data-i18n="cfg.tab.maintenance">🚧 Техработы</button>
@@ -2876,7 +2888,7 @@
           <button class="s-tab"        data-stab="bulkprint"  onclick="switchStab(this);loadBulkPrintTemplate()">🖨 Печать заказов</button>
         </div>
 
-        <div style="max-width:660px;">
+        <div class="scfg-content">
 
           <!-- ─── Сотрудники ─── -->
           <div class="s-panel" id="stab-staff-mgmt">
@@ -3300,8 +3312,6 @@
             </div>
           </div>
 
-        </div>
-
         <!-- ─── Правила приёма и выдачи заказов ─── -->
         <!-- Шире остальных вкладок (не 660px) — эта форма редактируется только
              с компьютера, мобильная адаптация ей не нужна. -->
@@ -3340,6 +3350,9 @@
               <span class="s-msg" id="msg_bulkprint"></span>
             </div>
           </div>
+        </div>
+
+        </div>
         </div>
 
       </div>
