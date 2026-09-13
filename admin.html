@@ -8589,10 +8589,10 @@ function _computeSetupGaps() {
       required.push({ kind: 'nav', label: `Филиал «${label}»: локация`, hint: 'Центр района и адрес цеха на карте', fix: () => _setupGoToBranch(b.id) });
     }
     if (!b.tg_leads_group_id) {
-      required.push({ kind: 'nav', label: `Филиал «${label}»: Telegram-группа заявок`, hint: 'Куда присылать уведомления о новых заявках', fix: () => _setupGoToBranch(b.id) });
+      required.push({ kind: 'nav', label: `Филиал «${label}»: Telegram-группа заявок`, hint: 'Куда присылать уведомления о новых заявках', fix: () => _setupGoToBranch(b.id, 'tg') });
     }
     if (!b.tg_orders_channel_id || !b.tg_delivery_channel_id) {
-      recommended.push({ kind: 'nav', label: `Филиал «${label}»: остальные Telegram-группы`, hint: 'Заказы, доставка — по желанию', fix: () => _setupGoToBranch(b.id) });
+      recommended.push({ kind: 'nav', label: `Филиал «${label}»: остальные Telegram-группы`, hint: 'Заказы, доставка — по желанию', fix: () => _setupGoToBranch(b.id, 'tg') });
     }
   });
   return { required, recommended };
@@ -8692,20 +8692,20 @@ function _setupGoToContacts() {
   setTimeout(() => editTab('contacts'), 200);
 }
 
-function _setupGoToBranch(branchId) {
+function _setupGoToBranch(branchId, tab) {
   _setupGoToPage();
   const tabBtn = document.querySelector('.cs-tab[data-cstab="branches"]');
   if (tabBtn) switchCompanyStab(tabBtn);
-  setTimeout(() => editBranchCard(branchId), 250);
+  setTimeout(() => editBranchCard(branchId, tab), 250);
 }
 
-function editBranchCard(id) {
+function editBranchCard(id, tab) {
   const b = (window._BRANCHES || []).find(x => x.id === id);
   if (!b) return;
-  _bfOpenForm('edit', b);
+  _bfOpenForm('edit', b, tab);
 }
 
-function _bfOpenForm(mode, b) {
+function _bfOpenForm(mode, b, tab) {
   _bfMode = mode;
   _bfBranchId = b?.id || null;
   document.getElementById('bfModalTitle').textContent = mode === 'add' ? _t('cs.branches.modal.add') : _t('cs.branches.modal.edit');
@@ -8744,7 +8744,7 @@ function _bfOpenForm(mode, b) {
     set('bf_tg_orders_channel_id', b.tg_orders_channel_id);
     set('bf_tg_delivery_channel_id', b.tg_delivery_channel_id);
   }
-  bfTab('main');
+  bfTab(tab === 'tg' ? 'tg' : 'main');
   document.getElementById('modalBranchForm').style.display = 'flex';
 }
 
