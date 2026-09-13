@@ -366,6 +366,10 @@
   .f-field input { width: 100%; font: inherit; font-size: 14px; padding: 11px 13px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--ink); color: var(--text); transition: border-color .15s; }
   .f-field input:focus { outline: none; border-color: var(--teal); }
   .f-field input.dup { border-color: #F48080; }
+  .f-pwd-wrap { position: relative; }
+  .f-pwd-wrap input { padding-right: 40px; }
+  .f-pwd-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 17px; line-height: 1; padding: 6px; opacity: .55; color: var(--text); }
+  .f-pwd-toggle:hover { opacity: 1; }
   .f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 420px) { .f-row { grid-template-columns: 1fr; } }
   .f-hint { font-size: 11.5px; color: var(--text2); margin-top: 5px; }
@@ -735,11 +739,17 @@
             <div class="f-row">
               <div class="f-field">
                 <label data-i18n="reg.password">Parol</label>
-                <input type="password" id="regPassword" name="new-password" autocomplete="new-password" required minlength="6">
+                <div class="f-pwd-wrap">
+                  <input type="password" id="regPassword" name="new-password" autocomplete="new-password" required minlength="6">
+                  <button type="button" class="f-pwd-toggle" onclick="_toggleRegPwd('regPassword', this)" tabindex="-1" aria-label="Показать пароль">👁</button>
+                </div>
               </div>
               <div class="f-field">
                 <label data-i18n="reg.password2">Parolni takrorlang</label>
-                <input type="password" id="regPassword2" name="new-password2" autocomplete="new-password" required minlength="6">
+                <div class="f-pwd-wrap">
+                  <input type="password" id="regPassword2" name="new-password2" autocomplete="new-password" required minlength="6">
+                  <button type="button" class="f-pwd-toggle" onclick="_toggleRegPwd('regPassword2', this)" tabindex="-1" aria-label="Показать пароль">👁</button>
+                </div>
               </div>
             </div>
             <label class="f-consent">
@@ -1017,6 +1027,7 @@
   // поэтому функции нужно явно прокинуть наружу
   window.toggleLoginDropdown = toggleLoginDropdown;
   window.toggleMobNav = toggleMobNav;
+  window._toggleRegPwd = _toggleRegPwd;
 
   // ── VIDEO: своё видео на RU и UZ, проигрывается в зависимости от выбранного языка.
   // Рамка сама подстраивается под ориентацию загруженного видео (вертикальное 9:16 / горизонтальное 16:9). ──
@@ -1613,6 +1624,15 @@
       statusEl.textContent = tr('reg.err.generic');
     }
   });
+
+  function _toggleRegPwd(id, btn){
+    var inp = document.getElementById(id);
+    if (!inp) return;
+    var show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.textContent = show ? '🙈' : '👁';
+    btn.setAttribute('aria-label', show ? 'Скрыть пароль' : 'Показать пароль');
+  }
 
   document.getElementById('regForm').addEventListener('submit', async function(e){
     e.preventDefault();
