@@ -1599,6 +1599,7 @@
           <div class="nav-sub-item" data-page="role-perms"     onclick="switchSubPage(this)">🔐 Роли и доступы</div>
           <div class="nav-sub-item" data-page="db-maintenance" onclick="switchSubPage(this)">🗄️ Обслуживание БД</div>
           <div class="nav-sub-item" data-page="temp"           onclick="switchSubPage(this)">🗑️ Чистка БД</div>
+          <div class="nav-sub-item" onclick="event.stopPropagation();openKnowledgeBase()">📚 База знаний</div>
         </div>
       </div>
 
@@ -10220,6 +10221,11 @@ async function dbOp(op) {
   }
   if (btn) { btn.disabled = false; btn.textContent = _t('btn.execute'); }
   log.scrollTop = log.scrollHeight;
+}
+
+function openKnowledgeBase() {
+  const slug = localStorage.getItem('admin_company_slug') || '';
+  window.open('kb.html' + (slug ? '?company_slug=' + encodeURIComponent(slug) : ''), '_blank');
 }
 
 function switchSubPage(el) {
@@ -23097,6 +23103,7 @@ function confirmBranchLoc() {
       <div class="mob-drawer-sub-item" data-page="role-perms"     onclick="switchSubPage(this);closeMobDrawer()">🔐 Роли и доступы</div>
       <div class="mob-drawer-sub-item" data-page="db-maintenance" onclick="switchSubPage(this);closeMobDrawer()">🗄️ Обслуживание БД</div>
       <div class="mob-drawer-sub-item" data-page="temp"           onclick="switchSubPage(this);closeMobDrawer()">🗑️ Чистка БД</div>
+      <div class="mob-drawer-sub-item" onclick="closeMobDrawer();openKnowledgeBase()">📚 База знаний</div>
     </div>
 
   </div>

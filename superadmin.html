@@ -284,6 +284,9 @@
       <div class="nav-item" data-page="settings" onclick="showPage('settings',this)">
         <span class="icon">⚙️</span> Настройки
       </div>
+      <div class="nav-item" data-page="kb" onclick="showPage('kb',this)">
+        <span class="icon">📚</span> База знаний
+      </div>
       <div class="nav-item" data-page="maintenance" onclick="showPage('maintenance',this)">
         <span class="icon">🧹</span> Чистка БД
       </div>
@@ -1065,6 +1068,31 @@
         </div>
       </div>
 
+      <!-- PAGE: База знаний -->
+      <div class="page" id="page-kb">
+        <div class="page-title">📚 База знаний</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px;max-width:680px">
+          Инструкция по admin.html — общая для всех компаний, ссылка на неё видна каждому
+          залогиненному сотруднику (кнопка «📚 База знаний» в admin.html → Система).
+        </p>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+          <div class="card" style="flex:1;min-width:280px;max-width:340px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <h3 style="margin:0;font-size:15px">Категории</h3>
+              <button class="btn btn-primary btn-sm" onclick="kbOpenCategoryModal(null)">+ Категория</button>
+            </div>
+            <div id="kbCategoryList"><div style="color:var(--text2);font-size:13px">Загрузка…</div></div>
+          </div>
+          <div class="card" id="kbArticlesCard" style="flex:2;min-width:320px;display:none">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <h3 style="margin:0;font-size:15px" id="kbArticlesTitle">Статьи</h3>
+              <button class="btn btn-primary btn-sm" id="kbAddArticleBtn" onclick="kbOpenArticleModal(null)" style="display:none">+ Статья</button>
+            </div>
+            <div id="kbArticleList"><div style="color:var(--text2);font-size:13px">Выберите категорию слева</div></div>
+          </div>
+        </div>
+      </div>
+
       <!-- PAGE: Maintenance -->
       <div class="page" id="page-maintenance">
         <div class="page-title">🧹 Чистка базы данных</div>
@@ -1098,6 +1126,52 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('saUnitModal')">Отмена</button>
       <button class="btn btn-primary" onclick="saveSaUnit()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: KB Category (add/edit) -->
+<div class="modal-bg" id="kbCategoryModal">
+  <div class="modal" style="max-width:440px">
+    <h3 id="kbCategoryModalTitle">📚 Категория</h3>
+    <div class="field"><label>Иконка (эмодзи)</label><input id="kbc_icon" placeholder="📱" maxlength="4"></div>
+    <div class="field"><label>Slug (латиница)</label><input id="kbc_slug" placeholder="telegram-settings"></div>
+    <div class="field"><label>Название RU</label><input id="kbc_title_ru" placeholder="Telegram-настройки"></div>
+    <div class="field"><label>Название UZ</label><input id="kbc_title_uz" placeholder="Telegram sozlamalari"></div>
+    <div class="modal-err" id="kbCategoryErr"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('kbCategoryModal')">Отмена</button>
+      <button class="btn btn-danger" id="kbCategoryDeleteBtn" onclick="kbDeleteCategory()" style="display:none">🗑️ Удалить</button>
+      <button class="btn btn-primary" onclick="kbSaveCategory()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: KB Article (add/edit) — блочный редактор, RU/UZ отдельно -->
+<div class="modal-bg" id="kbArticleModal">
+  <div class="modal" style="max-width:720px;max-height:90vh;overflow-y:auto">
+    <h3 id="kbArticleModalTitle">📄 Статья</h3>
+    <div class="field"><label>Slug (латиница)</label><input id="kba_slug" placeholder="tg-leads-group"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Заголовок RU</label><input id="kba_title_ru"></div>
+      <div class="field"><label>Заголовок UZ</label><input id="kba_title_uz"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin:16px 0 10px">
+      <button class="btn btn-sm" id="kbaLangRuBtn" onclick="kbSetEditLang('ru')">🇷🇺 Содержимое RU</button>
+      <button class="btn btn-sm" id="kbaLangUzBtn" onclick="kbSetEditLang('uz')">🇺🇿 Содержимое UZ</button>
+    </div>
+    <div id="kbaBlocksList"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="kbAddBlock('heading')">+ Заголовок</button>
+      <button class="btn btn-ghost btn-sm" onclick="kbAddBlock('text')">+ Текст</button>
+      <button class="btn btn-ghost btn-sm" onclick="kbAddBlock('image')">+ Скриншот</button>
+      <button class="btn btn-ghost btn-sm" onclick="kbAddBlock('video')">+ Видео</button>
+    </div>
+    <div class="modal-err" id="kbArticleErr"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('kbArticleModal')">Отмена</button>
+      <button class="btn btn-danger" id="kbArticleDeleteBtn" onclick="kbDeleteArticle()" style="display:none">🗑️ Удалить</button>
+      <button class="btn btn-primary" onclick="kbSaveArticle()">💾 Сохранить</button>
     </div>
   </div>
 </div>
@@ -1988,6 +2062,7 @@ function showPage(name, navEl) {
   if (name === 'sa-site-reviews') loadSaReviews();
   if (name === 'sa-site-faq') loadSaFaq();
   if (name === 'sa-site-design') { saRenderSiteTemplates(); saRenderSitePalettes(); }
+  if (name === 'kb') loadKbCategories();
 }
 
 // ── AUTH ──────────────────────────────────────────────
@@ -5441,6 +5516,270 @@ function closeModal(id) {
 // произвольный HTML-атрибут/обработчик события (см. logo_url ниже — единственное
 // место в файле, где значение шло в src="..." БЕЗ escHtml вообще).
 function escHtml(s)     { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// ══════════════════════════════════════════
+// БАЗА ЗНАНИЙ (kb.html) — общая инструкция по admin.html для всех компаний.
+// body_ru/body_uz — JSON-массив блоков heading/text/image/video, тот же
+// приём что у конструктора печати заказов (bulk_print_template).
+// ══════════════════════════════════════════
+let _kbCategories = [];
+let _kbCurrentCategoryId = null;
+let _kbEditCategoryId = null;
+let _kbEditArticleId = null;
+let _kbEditLang = 'ru';
+let _kbBlocksRu = [];
+let _kbBlocksUz = [];
+
+async function loadKbCategories() {
+  try {
+    const d = await api('/superadmin/kb/categories');
+    _kbCategories = d.categories || [];
+  } catch(e) { _kbCategories = []; }
+  kbRenderCategoryList();
+}
+
+function kbRenderCategoryList() {
+  const el = document.getElementById('kbCategoryList');
+  if (!_kbCategories.length) { el.innerHTML = '<div style="color:var(--text2);font-size:13px">Пока нет категорий</div>'; return; }
+  el.innerHTML = _kbCategories.map(c => `
+    <div class="card" style="margin-bottom:8px;padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;border-color:${_kbCurrentCategoryId===c.id?'var(--accent)':'var(--border)'}" onclick="kbSelectCategory(${c.id})">
+      <div style="font-size:18px">${escHtml(c.icon||'📄')}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px">${escHtml(c.title_ru)}</div>
+        <div style="font-size:11px;color:var(--text2)">${c.articles.length} статей</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();kbOpenCategoryModal(${c.id})" title="Редактировать">✏️</button>
+    </div>`).join('');
+}
+
+function kbSelectCategory(id) {
+  _kbCurrentCategoryId = id;
+  kbRenderCategoryList();
+  const cat = _kbCategories.find(c => c.id === id);
+  document.getElementById('kbArticlesCard').style.display = '';
+  document.getElementById('kbArticlesTitle').textContent = 'Статьи: ' + (cat ? cat.title_ru : '');
+  document.getElementById('kbAddArticleBtn').style.display = '';
+  kbRenderArticleList(cat);
+}
+
+function kbRenderArticleList(cat) {
+  const el = document.getElementById('kbArticleList');
+  if (!cat || !cat.articles.length) { el.innerHTML = '<div style="color:var(--text2);font-size:13px">Пока нет статей</div>'; return; }
+  el.innerHTML = cat.articles.map(a => `
+    <div class="card" style="margin-bottom:8px;padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="kbOpenArticleModal(${a.id})">
+      <div style="flex:1;font-size:13px;font-weight:600">${escHtml(a.title_ru)}</div>
+      <div style="color:var(--text2)">✏️</div>
+    </div>`).join('');
+}
+
+function kbOpenCategoryModal(id) {
+  _kbEditCategoryId = id;
+  document.getElementById('kbCategoryErr').textContent = '';
+  const del = document.getElementById('kbCategoryDeleteBtn');
+  if (id) {
+    const c = _kbCategories.find(x => x.id === id);
+    document.getElementById('kbCategoryModalTitle').textContent = '📚 Категория';
+    document.getElementById('kbc_icon').value = c.icon || '';
+    document.getElementById('kbc_slug').value = c.slug || '';
+    document.getElementById('kbc_title_ru').value = c.title_ru || '';
+    document.getElementById('kbc_title_uz').value = c.title_uz || '';
+    del.style.display = '';
+  } else {
+    document.getElementById('kbCategoryModalTitle').textContent = '+ Новая категория';
+    ['kbc_icon','kbc_slug','kbc_title_ru','kbc_title_uz'].forEach(x => document.getElementById(x).value = '');
+    document.getElementById('kbc_icon').value = '📄';
+    del.style.display = 'none';
+  }
+  openModal('kbCategoryModal');
+}
+
+async function kbSaveCategory() {
+  const err = document.getElementById('kbCategoryErr');
+  err.textContent = '';
+  const body = {
+    icon: document.getElementById('kbc_icon').value.trim() || '📄',
+    slug: document.getElementById('kbc_slug').value.trim().toLowerCase(),
+    title_ru: document.getElementById('kbc_title_ru').value.trim(),
+    title_uz: document.getElementById('kbc_title_uz').value.trim(),
+  };
+  if (!body.slug || !body.title_ru || !body.title_uz) { err.textContent = 'Заполните slug и оба названия'; return; }
+  try {
+    if (_kbEditCategoryId) {
+      await api(`/superadmin/kb/categories/${_kbEditCategoryId}`, 'PUT', body);
+    } else {
+      await api('/superadmin/kb/categories', 'POST', { ...body, sort_order: _kbCategories.length });
+    }
+    closeModal('kbCategoryModal');
+    await loadKbCategories();
+  } catch(e) { err.textContent = e.message; }
+}
+
+async function kbDeleteCategory() {
+  if (!_kbEditCategoryId) return;
+  if (!confirm('Удалить категорию и все статьи внутри? Действие необратимо.')) return;
+  try {
+    await api(`/superadmin/kb/categories/${_kbEditCategoryId}`, 'DELETE');
+    closeModal('kbCategoryModal');
+    _kbCurrentCategoryId = null;
+    document.getElementById('kbArticlesCard').style.display = 'none';
+    await loadKbCategories();
+  } catch(e) { alert(e.message); }
+}
+
+function kbOpenArticleModal(id) {
+  _kbEditArticleId = id;
+  document.getElementById('kbArticleErr').textContent = '';
+  const del = document.getElementById('kbArticleDeleteBtn');
+  if (id) {
+    document.getElementById('kbArticleModalTitle').textContent = '📄 Статья';
+    del.style.display = '';
+    openModal('kbArticleModal');
+    _kbLoadArticleBody(id);
+  } else {
+    document.getElementById('kbArticleModalTitle').textContent = '+ Новая статья';
+    document.getElementById('kba_slug').value = '';
+    document.getElementById('kba_title_ru').value = '';
+    document.getElementById('kba_title_uz').value = '';
+    _kbBlocksRu = []; _kbBlocksUz = [];
+    del.style.display = 'none';
+    kbSetEditLang('ru');
+    openModal('kbArticleModal');
+  }
+}
+
+async function _kbLoadArticleBody(id) {
+  const cat = _kbCategories.find(c => c.id === _kbCurrentCategoryId);
+  const a = (cat?.articles || []).find(x => x.id === id);
+  if (a) {
+    document.getElementById('kba_slug').value = a.slug || '';
+    document.getElementById('kba_title_ru').value = a.title_ru || '';
+    document.getElementById('kba_title_uz').value = a.title_uz || '';
+  }
+  try {
+    const d = await api(`/superadmin/kb/articles/${id}`);
+    try { _kbBlocksRu = JSON.parse(d.article.body_ru || '[]'); } catch(e) { _kbBlocksRu = []; }
+    try { _kbBlocksUz = JSON.parse(d.article.body_uz || '[]'); } catch(e) { _kbBlocksUz = []; }
+  } catch(e) { _kbBlocksRu = []; _kbBlocksUz = []; }
+  kbSetEditLang(_kbEditLang);
+}
+
+function kbSetEditLang(lang) {
+  _kbEditLang = lang;
+  document.getElementById('kbaLangRuBtn').classList.toggle('btn-primary', lang==='ru');
+  document.getElementById('kbaLangUzBtn').classList.toggle('btn-primary', lang==='uz');
+  kbRenderBlocks();
+}
+
+function _kbBlocks() { return _kbEditLang === 'uz' ? _kbBlocksUz : _kbBlocksRu; }
+
+function kbRenderBlocks() {
+  const list = _kbBlocks();
+  const el = document.getElementById('kbaBlocksList');
+  if (!list.length) { el.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:10px 0">Пока нет блоков — добавьте ниже</div>'; return; }
+  el.innerHTML = list.map((b, i) => kbBlockRowHtml(b, i, list.length)).join('');
+}
+
+function _kbBlockLabel(type) {
+  return { heading: '📌 Заголовок', text: '📝 Текст', image: '🖼️ Скриншот', video: '🎬 Видео' }[type] || type;
+}
+
+function kbBlockRowHtml(b, idx, total) {
+  const upDis = idx === 0 ? 'disabled' : '';
+  const downDis = idx === total-1 ? 'disabled' : '';
+  const head = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;flex:1">${_kbBlockLabel(b.type)}</div>
+      <button class="btn btn-sm" onclick="kbMoveBlock(${idx},-1)" ${upDis}>↑</button>
+      <button class="btn btn-sm" onclick="kbMoveBlock(${idx},1)" ${downDis}>↓</button>
+      <button class="btn btn-sm" style="color:var(--red)" onclick="kbRemoveBlock(${idx})">🗑️</button>
+    </div>`;
+  let body = '';
+  if (b.type === 'heading') {
+    body = `<input class="kb-block-input" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)" value="${escHtml(b.text||'')}" placeholder="Заголовок раздела" oninput="kbUpdateBlockField(${idx},'text',this.value)">`;
+  } else if (b.type === 'text') {
+    body = `<textarea style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit" rows="4" placeholder="Текст..." oninput="kbUpdateBlockField(${idx},'text',this.value)">${escHtml(b.text||'')}</textarea>`;
+  } else if (b.type === 'image' || b.type === 'video') {
+    const preview = b.file_id
+      ? (b.type === 'image'
+          ? `<img src="${API}/kb/media/${encodeURIComponent(b.file_id)}?t=${encodeURIComponent(_token)}" style="max-width:220px;border-radius:8px;display:block;margin-bottom:8px">`
+          : `<video src="${API}/kb/media/${encodeURIComponent(b.file_id)}?t=${encodeURIComponent(_token)}" controls style="max-width:220px;border-radius:8px;display:block;margin-bottom:8px"></video>`)
+      : '<div style="color:var(--text2);font-size:12px;margin-bottom:8px">Файл не загружен</div>';
+    body = `${preview}<input type="file" accept="${b.type==='image'?'image/*':'video/*'}" onchange="kbUploadBlockFile(${idx}, this)">`;
+  }
+  return `<div class="card" style="margin-bottom:10px;padding:10px 12px;background:var(--surface2)">${head}${body}</div>`;
+}
+
+function kbAddBlock(type) {
+  const list = _kbBlocks();
+  const block = (type === 'heading' || type === 'text') ? { type, text: '' } : { type, file_id: '' };
+  list.push(block);
+  kbRenderBlocks();
+}
+function kbRemoveBlock(idx) {
+  _kbBlocks().splice(idx, 1);
+  kbRenderBlocks();
+}
+function kbMoveBlock(idx, dir) {
+  const list = _kbBlocks();
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= list.length) return;
+  const [item] = list.splice(idx, 1);
+  list.splice(newIdx, 0, item);
+  kbRenderBlocks();
+}
+function kbUpdateBlockField(idx, field, val) {
+  _kbBlocks()[idx][field] = val;
+}
+async function kbUploadBlockFile(idx, input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const res = await fetch(`${API}/superadmin/kb/upload-media`, { method: 'POST', headers: { Authorization: 'Bearer ' + _token }, body: fd });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.detail || 'Ошибка загрузки');
+    _kbBlocks()[idx].file_id = d.file_id;
+    kbRenderBlocks();
+  } catch(e) { alert(e.message); }
+}
+
+async function kbSaveArticle() {
+  const err = document.getElementById('kbArticleErr');
+  err.textContent = '';
+  const slug = document.getElementById('kba_slug').value.trim().toLowerCase();
+  const title_ru = document.getElementById('kba_title_ru').value.trim();
+  const title_uz = document.getElementById('kba_title_uz').value.trim();
+  if (!slug || !title_ru || !title_uz) { err.textContent = 'Заполните slug и оба заголовка'; return; }
+  const body = {
+    category_id: _kbCurrentCategoryId,
+    slug, title_ru, title_uz,
+    body_ru: JSON.stringify(_kbBlocksRu),
+    body_uz: JSON.stringify(_kbBlocksUz),
+  };
+  try {
+    if (_kbEditArticleId) {
+      await api(`/superadmin/kb/articles/${_kbEditArticleId}`, 'PUT', body);
+    } else {
+      const cat = _kbCategories.find(c => c.id === _kbCurrentCategoryId);
+      await api('/superadmin/kb/articles', 'POST', { ...body, sort_order: cat ? cat.articles.length : 0 });
+    }
+    closeModal('kbArticleModal');
+    await loadKbCategories();
+    kbSelectCategory(_kbCurrentCategoryId);
+  } catch(e) { err.textContent = e.message; }
+}
+
+async function kbDeleteArticle() {
+  if (!_kbEditArticleId) return;
+  if (!confirm('Удалить статью? Действие необратимо.')) return;
+  try {
+    await api(`/superadmin/kb/articles/${_kbEditArticleId}`, 'DELETE');
+    closeModal('kbArticleModal');
+    await loadKbCategories();
+    kbSelectCategory(_kbCurrentCategoryId);
+  } catch(e) { alert(e.message); }
+}
 
 // Modal closes only via buttons (not backdrop click)
 
