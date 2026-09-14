@@ -1599,8 +1599,11 @@
           <div class="nav-sub-item" data-page="role-perms"     onclick="switchSubPage(this)">🔐 Роли и доступы</div>
           <div class="nav-sub-item" data-page="db-maintenance" onclick="switchSubPage(this)">🗄️ Обслуживание БД</div>
           <div class="nav-sub-item" data-page="temp"           onclick="switchSubPage(this)">🗑️ Чистка БД</div>
-          <div class="nav-sub-item" onclick="event.stopPropagation();openKnowledgeBase()">📚 База знаний</div>
         </div>
+      </div>
+
+      <div class="nav-item" onclick="openKnowledgeBase()">
+        <span class="nav-icon">📚</span> База знаний
       </div>
 
     </div>
@@ -23085,8 +23088,9 @@ function confirmBranchLoc() {
       <div class="mob-drawer-sub-item" data-page="role-perms"     onclick="switchSubPage(this);closeMobDrawer()">🔐 Роли и доступы</div>
       <div class="mob-drawer-sub-item" data-page="db-maintenance" onclick="switchSubPage(this);closeMobDrawer()">🗄️ Обслуживание БД</div>
       <div class="mob-drawer-sub-item" data-page="temp"           onclick="switchSubPage(this);closeMobDrawer()">🗑️ Чистка БД</div>
-      <div class="mob-drawer-sub-item" onclick="closeMobDrawer();openKnowledgeBase()">📚 База знаний</div>
     </div>
+
+    <div class="nav-item" onclick="closeMobDrawer();openKnowledgeBase()"><span class="nav-icon">📚</span> База знаний</div>
 
   </div>
 </div>
