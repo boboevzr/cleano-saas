@@ -6135,19 +6135,6 @@
       </div>
       <div class="tg-group-card">
         <div class="tg-group-head">
-          <span class="tg-group-icon">📦</span>
-          <div><div class="tg-group-title" data-i18n="cs.branches.tg.orders">Группа заказов</div><div class="tg-group-desc" data-i18n="cs.branches.tg.orders.desc">Приём и статусы заказов</div></div>
-        </div>
-        <div class="tg-group-inputs">
-          <div class="tg-id-row">
-            <input class="form-input" id="bf_tg_orders_channel_id" placeholder="-100..." inputmode="numeric">
-            <button class="btn btn-ghost btn-sm" type="button" onclick="tgCheckId('bf_tg_orders_channel_id','tgn_orders_bf')">🔍</button>
-          </div>
-          <span class="tg-chat-name" id="tgn_orders_bf"></span>
-        </div>
-      </div>
-      <div class="tg-group-card">
-        <div class="tg-group-head">
           <span class="tg-group-icon">📢</span>
           <div><div class="tg-group-title" data-i18n="cs.branches.tg.delivery">Канал доставки</div><div class="tg-group-desc" data-i18n="cs.branches.tg.delivery.desc">Список маршрутов для водителей</div></div>
         </div>
@@ -6622,7 +6609,6 @@ const _adminI18n = {
     'cs.branches.phone1':'Номер 1','cs.branches.phone2':'Номер 2',
     'cs.branches.tg.groups':'Telegram — группы и каналы',
     'cs.branches.tg.leads':'Группа лидов','cs.branches.tg.leads.desc':'Новые заявки из CRM',
-    'cs.branches.tg.orders':'Группа заказов','cs.branches.tg.orders.desc':'Приём и статусы заказов',
     'cs.branches.tg.delivery':'Канал доставки','cs.branches.tg.delivery.desc':'Список маршрутов для водителей',
     'cs.branches.empty':'Нет филиалов. Добавьте первый.',
     'cs.branches.modal.add':'Добавить филиал','cs.branches.modal.edit':'Редактировать филиал',
@@ -7376,7 +7362,6 @@ const _adminI18n = {
     'cs.branches.phone1':'1-raqam','cs.branches.phone2':'2-raqam',
     'cs.branches.tg.groups':'Telegram — guruhlar va kanallar',
     'cs.branches.tg.leads':'Lidlar guruhi','cs.branches.tg.leads.desc':"CRM'dan yangi arizalar",
-    'cs.branches.tg.orders':'Buyurtmalar guruhi','cs.branches.tg.orders.desc':'Qabul va buyurtma holatlari',
     'cs.branches.tg.delivery':'Yetkazib berish kanali','cs.branches.tg.delivery.desc':"Haydovchilar uchun marshrutlar ro'yxati",
     'cs.branches.empty':"Filiallar yo'q. Birinchisini qo'shing.",
     'cs.branches.modal.add':"Filial qo'shish",'cs.branches.modal.edit':'Filialni tahrirlash',
@@ -8495,7 +8480,6 @@ function renderBranchContactCards() {
       ${_brSectionLabel('📱 ' + _t('cs.branches.tg.groups'))}
       <div style="margin-top:8px">
         ${_brTgCard('🧑‍💼', _t('cs.branches.tg.leads'),    _t('cs.branches.tg.leads.desc'),    b.tg_leads_group_id)}
-        ${_brTgCard('📦',  _t('cs.branches.tg.orders'),   _t('cs.branches.tg.orders.desc'),   b.tg_orders_channel_id)}
         ${_brTgCard('📢',  _t('cs.branches.tg.delivery'), _t('cs.branches.tg.delivery.desc'), b.tg_delivery_channel_id)}
       </div>
     </div>`;
@@ -8592,8 +8576,8 @@ function _computeSetupGaps() {
     // Все поля Telegram-групп объединены в один пункт (ведёт на вкладку 📱 Telegram) —
     // раньше группа заявок отдельным ⚠️-пунктом ошибочно вела на вкладку "Основные
     // данные" (там этого поля вообще нет), см. запрос пользователя.
-    if (!b.tg_leads_group_id || !b.tg_orders_channel_id || !b.tg_delivery_channel_id) {
-      recommended.push({ kind: 'nav', label: `Филиал «${label}»: Telegram-группы`, hint: 'Заказы, доставка и т.д.', fix: () => _setupGoToBranch(b.id, 'tg') });
+    if (!b.tg_leads_group_id || !b.tg_delivery_channel_id) {
+      recommended.push({ kind: 'nav', label: `Филиал «${label}»: Telegram-группы`, hint: 'Заявки, доставка и т.д.', fix: () => _setupGoToBranch(b.id, 'tg') });
     }
   });
   return { required, recommended };
@@ -8714,14 +8698,14 @@ function _bfOpenForm(mode, b, tab) {
   document.getElementById('bfSaveBtn').textContent = mode === 'add' ? _t('cs.branches.modal.create') : _t('btn.save');
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
   const setChk = (id, v) => { const el = document.getElementById(id); if (el) el.checked = v; };
-  ['tgn_leads_bf','tgn_orders_bf','tgn_delivery_bf','tgn_dchannel_bf'].forEach(id => {
+  ['tgn_leads_bf','tgn_delivery_bf','tgn_dchannel_bf'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.textContent = ''; el.className = 'tg-chat-name'; }
   });
   if (mode === 'add') {
     ['bf_name_ru','bf_name_uz','bf_slug','bf_city_coords','bf_workshop_coords',
      'bf_phone1','bf_phone2',
-     'bf_tg_leads_group_id','bf_tg_orders_channel_id',
+     'bf_tg_leads_group_id',
      'bf_tg_delivery_channel_id',
     ].forEach(id => set(id, ''));
     ['bf_phone1_site','bf_phone1_bot','bf_phone2_site','bf_phone2_bot'].forEach(id => setChk(id, true));
@@ -8742,7 +8726,6 @@ function _bfOpenForm(mode, b, tab) {
     setChk('bf_phone2_site', p2.site !== false);
     setChk('bf_phone2_bot',  p2.bot  !== false);
     set('bf_tg_leads_group_id', b.tg_leads_group_id);
-    set('bf_tg_orders_channel_id', b.tg_orders_channel_id);
     set('bf_tg_delivery_channel_id', b.tg_delivery_channel_id);
   }
   bfTab(tab === 'tg' ? 'tg' : 'main');
@@ -8770,7 +8753,6 @@ async function saveBranchForm() {
     name_ru, name_uz: g('bf_name_uz'),
     lat, lon, workshop_lat, workshop_lon, phones,
     tg_leads_group_id: intOrNull(g('bf_tg_leads_group_id')),
-    tg_orders_channel_id: intOrNull(g('bf_tg_orders_channel_id')),
     tg_delivery_channel_id: intOrNull(g('bf_tg_delivery_channel_id')),
   };
   try {
