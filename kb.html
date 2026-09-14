@@ -52,8 +52,21 @@
   .kb-content h3 { font-size: 16px; margin: 20px 0 8px; color: var(--accent); }
   .kb-content p { font-size: 14px; line-height: 1.65; color: var(--text); margin-bottom: 10px; white-space: pre-wrap; }
   .kb-content img, .kb-content video { max-width: 100%; border-radius: var(--radius); margin: 10px 0; border: 1px solid var(--border); display: block; }
+  .kb-content img { cursor: zoom-in; }
   .kb-empty { color: var(--text2); font-size: 14px; padding: 40px 0; text-align: center; }
   .kb-loading { color: var(--text2); font-size: 13px; padding: 12px; }
+  .kb-lightbox {
+    display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.85);
+    align-items: center; justify-content: center; padding: 32px; cursor: zoom-out;
+  }
+  .kb-lightbox.open { display: flex; }
+  .kb-lightbox img { max-width: 100%; max-height: 100%; border-radius: 8px; cursor: default; }
+  .kb-lightbox-close {
+    position: absolute; top: 18px; right: 24px; width: 40px; height: 40px; border-radius: 50%;
+    background: var(--surface2); border: 1.5px solid var(--border); color: var(--text);
+    font-size: 20px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .kb-lightbox-close:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -66,6 +79,11 @@
   <div class="kb-layout">
     <div class="kb-sidebar" id="kbSidebar"><div class="kb-loading">Загрузка…</div></div>
     <div class="kb-content" id="kbContent"><div class="kb-empty">Выберите статью слева</div></div>
+  </div>
+
+  <div class="kb-lightbox" id="kbLightbox" onclick="closeLightbox()">
+    <button class="kb-lightbox-close" onclick="event.stopPropagation();closeLightbox()">✕</button>
+    <img id="kbLightboxImg" onclick="event.stopPropagation()">
   </div>
 
 <script>
@@ -175,6 +193,20 @@
     if (!a) return;
     e.preventDefault();
     openArticle(a.dataset.slug);
+  });
+
+  document.getElementById('kbContent').addEventListener('click', (e) => {
+    const img = e.target.closest('img');
+    if (!img || !img.src) return;
+    document.getElementById('kbLightboxImg').src = img.src;
+    document.getElementById('kbLightbox').classList.add('open');
+  });
+  function closeLightbox() {
+    document.getElementById('kbLightbox').classList.remove('open');
+    document.getElementById('kbLightboxImg').src = '';
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
   });
 
   async function init() {
