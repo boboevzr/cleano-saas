@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Быстрый старт — Cleano</title>
+<link rel="icon" href="data:,">
+<script src="config.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:       #0f1117;
+    --surface:  #1a1d27;
+    --surface2: #222536;
+    --border:   #2e3250;
+    --accent:   #f5a623;
+    --text:     #e8eaf0;
+    --text2:    #9ca3af;
+    --radius:   10px;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif, 'Segoe UI Emoji', 'Noto Color Emoji', 'Apple Color Emoji';
+    background: var(--bg); color: var(--text); min-height: 100vh;
+  }
+  .ob-header {
+    position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px; background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .ob-header .title { font-size: 17px; font-weight: 700; flex: 1; }
+  .ob-btn { background: none; border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--text2); cursor: pointer; }
+  .ob-btn:hover { color: var(--text); border-color: var(--accent); }
+  .ob-langbtn.active { background: var(--accent); color: #1a1200; border-color: var(--accent); }
+  .ob-content { max-width: 760px; margin: 0 auto; padding: 28px 24px 60px; }
+  .ob-content h1 { font-size: 24px; margin-bottom: 18px; }
+  .ob-content h3 { font-size: 17px; margin: 22px 0 8px; color: var(--accent); }
+  .ob-content p { font-size: 14px; line-height: 1.7; color: var(--text); margin-bottom: 10px; white-space: pre-wrap; }
+  .ob-content a { color: var(--accent); }
+  .ob-content img, .ob-content video { max-width: 100%; border-radius: var(--radius); margin: 10px 0; border: 1px solid var(--border); display: block; cursor: zoom-in; }
+  .ob-loading, .ob-empty { color: var(--text2); font-size: 14px; padding: 40px 0; text-align: center; }
+  .ob-lightbox {
+    display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.85);
+    align-items: center; justify-content: center; padding: 32px; cursor: zoom-out;
+  }
+  .ob-lightbox.open { display: flex; }
+  .ob-lightbox img { max-width: 100%; max-height: 100%; border-radius: 8px; cursor: default; }
+  .ob-lightbox-close {
+    position: absolute; top: 18px; right: 24px; width: 40px; height: 40px; border-radius: 50%;
+    background: var(--surface2); border: 1.5px solid var(--border); color: var(--text);
+    font-size: 20px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .ob-lightbox-close:hover { border-color: var(--accent); color: var(--accent); }
+  @media print {
+    .ob-header, .ob-lightbox { display: none !important; }
+    body { background: #fff; color: #000; }
+    .ob-content h1, .ob-content h3 { color: #000; }
+    .ob-content img, .ob-content video { border-color: #ccc; }
+  }
+</style>
+</head>
+<body>
+  <div class="ob-header">
+    <div class="title">🚀 Быстрый старт — Cleano</div>
+    <button class="ob-btn ob-langbtn" id="langRu" onclick="setLang('ru')">RU</button>
+    <button class="ob-btn ob-langbtn" id="langUz" onclick="setLang('uz')">UZ</button>
+    <button class="ob-btn" onclick="window.print()">🖨 Печать / PDF</button>
+  </div>
+  <div class="ob-content" id="obContent"><div class="ob-loading">Загрузка…</div></div>
+
+  <div class="ob-lightbox" id="obLightbox" onclick="closeLightbox()">
+    <button class="ob-lightbox-close" onclick="event.stopPropagation();closeLightbox()">✕</button>
+    <img id="obLightboxImg" onclick="event.stopPropagation()">
+  </div>
+
+<script>
+  const API_BASE = (window.APP_API_URL || 'https://web-production-eef2a.up.railway.app') + '/api';
+  let lang = localStorage.getItem('admin_lang') || 'ru';
+
+  function _esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function _escAttr(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function _linkify(s) {
+    const str = String(s == null ? '' : s);
+    const re = /(https?:\/\/[^\s<>"']+)/g;
+    let out = '', last = 0, m;
+    while ((m = re.exec(str))) {
+      out += _esc(str.slice(last, m.index));
+      out += `<a href="${_escAttr(m[0])}" target="_blank" rel="noopener">${_esc(m[0])}</a>`;
+      last = m.index + m[0].length;
+    }
+    out += _esc(str.slice(last));
+    return out;
+  }
+
+  function setLang(l) {
+    lang = l;
+    localStorage.setItem('admin_lang', l);
+    _syncLangBtns();
+    load();
+  }
+  function _syncLangBtns() {
+    document.getElementById('langRu').classList.toggle('active', lang === 'ru');
+    document.getElementById('langUz').classList.toggle('active', lang === 'uz');
+  }
+
+  function renderBlock(b) {
+    if (b.type === 'heading') return `<h3>${_esc(b.text)}</h3>`;
+    if (b.type === 'text') return `<p>${_linkify(b.text)}</p>`;
+    if (b.type === 'image') return `<img data-ob-media="${encodeURIComponent(b.file_id)}" loading="lazy">`;
+    if (b.type === 'video') return `<video controls preload="metadata" data-ob-media="${encodeURIComponent(b.file_id)}"></video>`;
+    return '';
+  }
+
+  async function _loadMedia(container) {
+    const els = container.querySelectorAll('[data-ob-media]');
+    for (const el of els) {
+      const fileId = decodeURIComponent(el.getAttribute('data-ob-media'));
+      el.src = `${API_BASE}/public/onboarding/media/${encodeURIComponent(fileId)}`;
+    }
+  }
+
+  async function load() {
+    const content = document.getElementById('obContent');
+    content.innerHTML = '<div class="ob-loading">Загрузка…</div>';
+    try {
+      const r = await fetch(`${API_BASE}/public/onboarding`);
+      const d = await r.json();
+      if (!d.ok) throw new Error('not found');
+      const a = d.article;
+      const title = lang === 'uz' ? a.title_uz : a.title_ru;
+      let blocks = [];
+      try { blocks = JSON.parse((lang === 'uz' ? a.body_uz : a.body_ru) || '[]'); } catch (e) { blocks = []; }
+      content.innerHTML = `<h1>${_esc(title)}</h1>` + (blocks.map(renderBlock).join('') || '<div class="ob-empty">Пока пусто</div>');
+      _loadMedia(content);
+    } catch (e) {
+      content.innerHTML = '<div class="ob-empty">Не удалось загрузить страницу</div>';
+    }
+  }
+
+  document.getElementById('obContent').addEventListener('click', (e) => {
+    const img = e.target.closest('img');
+    if (!img || !img.src) return;
+    document.getElementById('obLightboxImg').src = img.src;
+    document.getElementById('obLightbox').classList.add('open');
+  });
+  function closeLightbox() {
+    document.getElementById('obLightbox').classList.remove('open');
+    document.getElementById('obLightboxImg').src = '';
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+
+  _syncLangBtns();
+  load();
+</script>
+</body>
+</html>
