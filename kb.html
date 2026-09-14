@@ -139,9 +139,12 @@
     document.getElementById('kbCat' + i).classList.toggle('open');
   }
 
+  function _linkify(s) {
+    return _esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--accent)">$1</a>');
+  }
   function renderBlock(b) {
     if (b.type === 'heading') return `<h3>${_esc(b.text)}</h3>`;
-    if (b.type === 'text') return `<p>${_esc(b.text)}</p>`;
+    if (b.type === 'text') return `<p>${_linkify(b.text)}</p>`;
     if (b.type === 'image') return `<img data-kb-media="${encodeURIComponent(b.file_id)}" loading="lazy">`;
     if (b.type === 'video') return `<video controls preload="metadata" data-kb-media="${encodeURIComponent(b.file_id)}"></video>`;
     return '';
