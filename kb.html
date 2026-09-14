@@ -140,7 +140,16 @@
   }
 
   function _linkify(s) {
-    return _esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--accent)">$1</a>');
+    const str = String(s == null ? '' : s);
+    const re = /(https?:\/\/[^\s<>"']+)/g;
+    let out = '', last = 0, m;
+    while ((m = re.exec(str))) {
+      out += _esc(str.slice(last, m.index));
+      out += `<a href="${_escAttr(m[0])}" target="_blank" rel="noopener" style="color:var(--accent)">${_esc(m[0])}</a>`;
+      last = m.index + m[0].length;
+    }
+    out += _esc(str.slice(last));
+    return out;
   }
   function renderBlock(b) {
     if (b.type === 'heading') return `<h3>${_esc(b.text)}</h3>`;
