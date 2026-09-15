@@ -163,18 +163,20 @@
   async function _loadKbMedia(container) {
     _kbObjectUrls.forEach(u => URL.revokeObjectURL(u));
     _kbObjectUrls = [];
-    const els = container.querySelectorAll('[data-kb-media]');
-    for (const el of els) {
+    const els = [...container.querySelectorAll('[data-kb-media]')];
+    // Параллельно, не по очереди — на статью с несколькими картинками раньше
+    // уходило N раз по round-trip до Telegram, теперь один раз на всех.
+    await Promise.all(els.map(async (el) => {
       const fileId = decodeURIComponent(el.getAttribute('data-kb-media'));
       try {
         const r = await fetch(`${API_BASE}/kb/media/${encodeURIComponent(fileId)}`, { headers: { Authorization: `Bearer ${token}` } });
-        if (!r.ok) continue;
+        if (!r.ok) return;
         const blob = await r.blob();
         const url = URL.createObjectURL(blob);
         _kbObjectUrls.push(url);
         el.src = url;
       } catch (e) {}
-    }
+    }));
   }
 
   async function openArticle(slug) {
