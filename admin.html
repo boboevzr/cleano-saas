@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#163E3B">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   :root {
     --bg:       #0f1117;
@@ -3960,8 +3961,12 @@
           <div class="cfg-title-row">
             <h3 class="cfg-title" data-i18n="design.preview">👁 Предпросмотр</h3>
           </div>
-          <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;height:520px">
-            <iframe id="designPreviewFrame" style="width:100%;height:100%;border:none" loading="lazy"></iframe>
+          <div style="position:relative;border:1px solid var(--border);border-radius:10px;overflow:hidden;height:520px">
+            <iframe id="designPreviewFrame" style="width:100%;height:100%;border:none" loading="lazy" onload="_designPreviewLoaded()"></iframe>
+            <div id="designPreviewLoading" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:var(--surface,#1a1d27);color:var(--text2);font-size:13px;gap:8px">
+              <span class="spinner" style="width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:spin .7s linear infinite"></span>
+              <span data-i18n="design.previewLoading">Загрузка предпросмотра…</span>
+            </div>
           </div>
         </div>
 
@@ -6626,6 +6631,7 @@ const _adminI18n = {
     'bf.map.done':'✅ Готово',
     'design.title':'🎨 Дизайн сайта','design.hint':'Выберите шаблон вёрстки и цветовую палитру для вашего публичного сайта. Изменения применяются сразу после сохранения.',
     'design.templates':'Шаблон','design.palettes':'Палитра','design.preview':'👁 Предпросмотр','design.save':'💾 Сохранить',
+    'design.previewLoading':'Загрузка предпросмотра…',
     'design.selected':'✓ Выбран','design.none':'Нет доступных вариантов','design.saved':'Сохранено ✓','design.err':'Ошибка сохранения',
     'tariff.available':'Доступные тарифы','tariff.support':'💬 Поддержка',
     'tariff.limit.title':'Достигнут лимит филиалов','tariff.limit.msg':'На вашем тарифе достигнут лимит филиалов.',
@@ -7379,6 +7385,7 @@ const _adminI18n = {
     'bf.map.done':'✅ Tayyor',
     'design.title':'🎨 Sayt dizayni','design.hint':'Ommaviy saytingiz uchun shablon va rang palitrasini tanlang. O‘zgarishlar saqlangandan so‘ng darhol qo‘llaniladi.',
     'design.templates':'Shablon','design.palettes':'Palitra','design.preview':'👁 Ko‘rib chiqish','design.save':'💾 Saqlash',
+    'design.previewLoading':'Ko‘rib chiqish yuklanmoqda…',
     'design.selected':'✓ Tanlandi','design.none':'Mavjud variantlar yo‘q','design.saved':'Saqlandi ✓','design.err':'Saqlashda xatolik',
     'tariff.available':'Mavjud tariflar','tariff.support':'💬 Yordam',
     'tariff.limit.title':'Filial limitiga yetdingiz','tariff.limit.msg':'Sizning tarifingizda filial limitiga yetildi.',
@@ -8870,16 +8877,29 @@ function designSelectPalette(key) {
   designUpdatePreview();
 }
 
+let _designPreviewDebounce = null;
 function designUpdatePreview() {
+  // Дебаунс — быстрое переключение нескольких шаблонов/палитр подряд иначе
+  // каждый клик грузил тяжёлую страницу заново (много независимых fetch к API).
+  clearTimeout(_designPreviewDebounce);
+  _designPreviewDebounce = setTimeout(_designUpdatePreviewNow, 300);
+}
+function _designUpdatePreviewNow() {
   const frame = document.getElementById('designPreviewFrame');
   if (!frame || !_designSelTemplate || !_designSelPalette) return;
   const slug = _designCompanySlug || localStorage.getItem('admin_company_slug') || '';
+  const loading = document.getElementById('designPreviewLoading');
+  if (loading) loading.style.display = 'flex';
   // company-site.html, не index.html — на cleano.uz index.html при каждом
   // деплое подменяется лендингом самой платформы (см. deploy-frontend.yml,
   // шаг "Swap in platform landing page"), поэтому там всегда маркетинговая
   // страница cleano независимо от company_slug. Реальный шаблон сайта
   // компании — company-site.html (в проде отдаётся по <slug>.cleano.uz).
   frame.src = `company-site.html?company_slug=${encodeURIComponent(slug)}&preview_template=${encodeURIComponent(_designSelTemplate)}&preview_palette=${encodeURIComponent(_designSelPalette)}`;
+}
+function _designPreviewLoaded() {
+  const loading = document.getElementById('designPreviewLoading');
+  if (loading) loading.style.display = 'none';
 }
 
 async function designSave() {
