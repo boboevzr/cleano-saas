@@ -329,6 +329,7 @@
   .fc-link .ico { width: 32px; height: 32px; border-radius: 9px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; color: var(--brand, var(--text)); }
   .fc-link .ico svg { width: 16px; height: 16px; }
   .fc-addr { font-size: 12px; color: var(--text2); padding: 8px 8px 0; border-top: 1px solid var(--line); margin-top: 6px; display: flex; gap: 8px; }
+  .footer-addr { font-size: 13px; color: var(--text2); margin-bottom: 12px; display: flex; align-items: flex-start; gap: 7px; max-width: 320px; }
   .fc-empty { font-size: 13px; color: var(--text2); padding: 6px 8px; }
 
   /* ===== REGISTRATION — full-screen page (не модалка: не должна пропадать от случайного клика) ===== */
@@ -624,6 +625,7 @@
         </svg>
         Cleano
       </div>
+      <div class="footer-addr" id="footerAddr" style="display:none"></div>
       <a class="footer-phone" id="footerPhone" style="display:none" href="#"></a>
       <div class="footer-links" id="footerContacts"></div>
     </div>
@@ -820,6 +822,7 @@
 </div>
 
 <script>
+function _escHtml(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 (function(){
   document.getElementById('year').textContent = new Date().getFullYear();
 
@@ -1251,6 +1254,11 @@
           return '<a class="icon-social" style="--brand:' + BRAND_COLOR[it[0]] + '" href="' + it[1] + '" target="_blank" rel="noopener" aria-label="' + BRAND_LABEL[it[0]] + '" title="' + BRAND_LABEL[it[0]] + '">' + BRAND_ICON[it[0]] + '</a>';
         }).join('');
       }
+      var fAddr = document.getElementById('footerAddr');
+      if (fAddr && s.cleano_office_address) {
+        fAddr.style.display = 'flex';
+        fAddr.innerHTML = '<span>📍</span><span>' + _escHtml(s.cleano_office_address) + '</span>';
+      }
       var fPhone = document.getElementById('footerPhone');
       if (fPhone && s.cleano_phone) {
         fPhone.style.display = 'flex';
@@ -1269,7 +1277,7 @@
       var linksHtml = items.map(function(it){
         return '<a class="fc-link" href="' + it[1] + '" target="_blank" rel="noopener"><span class="ico" style="--brand:' + BRAND_COLOR[it[0]] + '">' + BRAND_ICON[it[0]] + '</span>' + BRAND_LABEL[it[0]] + '</a>';
       }).join('');
-      var addrHtml = s.cleano_office_address ? '<div class="fc-addr">📍 ' + s.cleano_office_address + '</div>' : '';
+      var addrHtml = s.cleano_office_address ? '<div class="fc-addr">📍 ' + _escHtml(s.cleano_office_address) + '</div>' : '';
       var fp = document.getElementById('floatPanelLinks');
       if (fp) fp.innerHTML = (linksHtml || '<div class="fc-empty" data-i18n="contact.none">Ma\'lumot hali kiritilmagan</div>') + addrHtml;
 
