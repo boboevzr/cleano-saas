@@ -8958,11 +8958,6 @@ document.addEventListener('click', e => {
         <div>
           <div id="soLblClient" style="font-size:11px;color:#888;margin-bottom:2px">Клиент</div>
           <div id="so_client" style="font-weight:600;font-size:14px;color:#1a1a1a"></div>
-          <div style="margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <a id="so_phone" href="#" style="font-size:17px;font-weight:700;color:#007aff;text-decoration:underline;text-underline-offset:2px"></a>
-            <button onclick="_saveContactFromOrder()" title="Сохранить контакт в телефон" style="flex-shrink:0;padding:4px 10px;background:#f3f4f6;border:1.5px solid #d1d5db;color:#374151;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap"><span id="soSaveContactBtnLbl">📇 В контакты</span></button>
-            <button onclick="soNewOrderForClient()" id="so_new_order_btn" style="display:none;flex-shrink:0;padding:4px 10px;background:#e8f4ff;border:1.5px solid #007aff;color:#007aff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap"><span id="soNewOrderBtnLbl">➕ Новый заказ</span></button>
-          </div>
         </div>
         <div>
           <div id="soLblCreated" style="font-size:11px;color:#888;margin-bottom:2px">Создан</div>
@@ -8972,6 +8967,11 @@ document.addEventListener('click', e => {
             <span id="soLblDeadline" style="font-size:11px;color:#888">Дедлайн: </span>
             <span id="so_deadline" style="font-size:12px;font-weight:600"></span>
           </div>
+        </div>
+        <div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <a id="so_phone" href="#" style="font-size:17px;font-weight:700;color:#007aff;text-decoration:underline;text-underline-offset:2px"></a>
+          <button onclick="_saveContactFromOrder()" title="Сохранить контакт в телефон" style="flex-shrink:0;padding:4px 10px;background:#f3f4f6;border:1.5px solid #d1d5db;color:#374151;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap"><span id="soSaveContactBtnLbl">📇 В контакты</span></button>
+          <button onclick="soNewOrderForClient()" id="so_new_order_btn" style="display:none;flex-shrink:0;padding:4px 10px;background:#e8f4ff;border:1.5px solid #007aff;color:#007aff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap"><span id="soNewOrderBtnLbl">➕ Новый заказ</span></button>
         </div>
         <div style="grid-column:1/-1">
           <div id="soLblAddress" style="font-size:11px;color:#888;margin-bottom:2px">Адрес</div>
