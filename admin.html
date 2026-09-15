@@ -8874,7 +8874,12 @@ function designUpdatePreview() {
   const frame = document.getElementById('designPreviewFrame');
   if (!frame || !_designSelTemplate || !_designSelPalette) return;
   const slug = _designCompanySlug || localStorage.getItem('admin_company_slug') || '';
-  frame.src = `index.html?company_slug=${encodeURIComponent(slug)}&preview_template=${encodeURIComponent(_designSelTemplate)}&preview_palette=${encodeURIComponent(_designSelPalette)}`;
+  // company-site.html, не index.html — на cleano.uz index.html при каждом
+  // деплое подменяется лендингом самой платформы (см. deploy-frontend.yml,
+  // шаг "Swap in platform landing page"), поэтому там всегда маркетинговая
+  // страница cleano независимо от company_slug. Реальный шаблон сайта
+  // компании — company-site.html (в проде отдаётся по <slug>.cleano.uz).
+  frame.src = `company-site.html?company_slug=${encodeURIComponent(slug)}&preview_template=${encodeURIComponent(_designSelTemplate)}&preview_palette=${encodeURIComponent(_designSelPalette)}`;
 }
 
 async function designSave() {
