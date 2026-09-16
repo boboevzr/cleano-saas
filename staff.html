@@ -1497,7 +1497,7 @@ const _i18n = {
     'so.sms_btn':'📲 Отправить SMS клиенту','so.notif_history':'История уведомлений',
     'so.lbl.client':'Клиент','so.lbl.created':'Создан','so.lbl.deadline':'Дедлайн: ','so.lbl.address':'Адрес',
     'so.open_geo':'Открыть геолокацию','so.btn.edit':'✏️ Редактировать','so.btn.new_order':'➕ Новый заказ',
-    'so.history':'История','so.items_history':'История позиций','so.payment_history':'История операций',
+    'so.history':'История заказа','so.items_history':'История позиций','so.payment_history':'История операций',
     'so.bulk.label':'Принято:','so.bulk.units':'позиций','so.bulk.create':'Создать пустые','so.add_item':'Добавить позицию',
     'so.photo.before':'До','so.photo.after':'После','so.photo.damage':'Повр.','so.photo.uploading':'⏳ Загрузка…',
     'so.lbl.total':'Сумма позиций','so.lbl.net':'К оплате','so.selfpickup':'🏠 Клиент привозит','so.selfdelivery':'🏠 Клиент забирает',
@@ -1806,7 +1806,7 @@ const _i18n = {
     'so.sms_btn':'📲 Mijozga SMS yuborish','so.notif_history':'Bildirishnomalar tarixi',
     'so.lbl.client':'Mijoz','so.lbl.created':'Yaratilgan','so.lbl.deadline':'Muddat: ','so.lbl.address':'Manzil',
     'so.open_geo':'Geolokatsiyani ochish','so.btn.edit':`✏️ Tahrirlash`,'so.btn.new_order':'➕ Yangi buyurtma',
-    'so.history':'Tarix','so.items_history':'Pozitsiyalar tarixi','so.payment_history':'Amallar tarixi',
+    'so.history':'Buyurtma tarixi','so.items_history':'Pozitsiyalar tarixi','so.payment_history':'Amallar tarixi',
     'so.bulk.label':'Qabul:','so.bulk.units':'ta','so.bulk.create':`Boʻsh yaratish`,'so.add_item':`Pozitsiya qoʻshish`,
     'so.photo.before':'Oldin','so.photo.after':'Keyin','so.photo.damage':'Shikast.','so.photo.uploading':'⏳ Yuklanmoqda…',
     'so.lbl.total':'Pozitsiyalar summasi','so.lbl.net':`Toʻlash kerak`,'so.selfpickup':'🏠 Mijoz olib keladi','so.selfdelivery':'🏠 Mijoz olib ketadi',
@@ -6093,9 +6093,9 @@ function _applyOrderCardI18n() {
   _s('soHeaderLabel',       t('so.header'));
   _s('so-tabBtn-info',      t('so.tab.info'));
   _s('so-tabBtn-items',     t('so.tab.items'));
-  _s('so-tabBtn-photo',     t('so.tab.photo'));
+  _s('soPhotoSubTitle',     t('so.tab.photo'));
   _s('so-tabBtn-payment',   t('so.tab.payment'));
-  _s('so-tabBtn-notif',     t('so.tab.notif'));
+  _s('soNotifSubTitle',     t('so.tab.notif'));
   _s('so_sms_btn',          t('so.sms_btn'));
   _s('soNotifListTitle',    t('so.notif_history'));
   _s('soEditBtnLbl',        t('so.btn.edit'));
@@ -8950,13 +8950,12 @@ document.addEventListener('click', e => {
     <div style="display:flex;border-bottom:2px solid #f0f0f0;flex-shrink:0;background:#fafafa">
       <button id="so-tabBtn-info"    onclick="soSwitchTab('info')"    style="flex:1;padding:11px 4px;border:none;background:none;font-size:12px;font-weight:600;color:#888;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap">ℹ️ Инфо</button>
       <button id="so-tabBtn-items"   onclick="soSwitchTab('items')"   style="flex:1;padding:11px 4px;border:none;background:none;font-size:12px;font-weight:600;color:#888;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap">📋 Позиции</button>
-      <button id="so-tabBtn-photo"   onclick="soSwitchTab('photo')"   style="flex:1;padding:11px 4px;border:none;background:none;font-size:12px;font-weight:600;color:#888;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap">📷 Фото</button>
       <button id="so-tabBtn-payment" onclick="soSwitchTab('payment')" style="flex:1;padding:11px 4px;border:none;background:none;font-size:12px;font-weight:600;color:#888;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap">💰 Оплата</button>
-      <button id="so-tabBtn-notif"   onclick="soSwitchTab('notif')"   style="flex:1;padding:11px 4px;border:none;background:none;font-size:12px;font-weight:600;color:#888;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap">🔔 Уведомления</button>
     </div>
 
     <!-- Вкладка: Инфо -->
-    <div id="so-tab-info" style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column">
+    <div id="so-tab-info" style="flex:1;min-height:0;display:flex;flex-direction:column">
+      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column">
       <div style="padding:8px 20px 0;display:flex;justify-content:flex-end;gap:8px">
         <button id="so_edit_btn" onclick="staffOpenOrderEdit()" style="display:none;background:none;border:1px solid #e5e7eb;border-radius:8px;padding:5px 10px;font-size:14px;color:#6b7280;cursor:pointer"><span id="soEditBtnLbl">✏️ Редактировать</span></button>
       </div>
@@ -9007,12 +9006,30 @@ document.addEventListener('click', e => {
           </div>
         </div>
       </div>
+      </div>
       <!-- Workflow кнопки -->
       <div id="so_workflow_row" style="padding:6px 20px;border-top:1px solid #f0f0f0;flex-shrink:0;display:none"></div>
-      <!-- История статусов -->
-      <div id="so_history_wrap" style="display:none;padding:0 20px 14px;border-top:1px solid #f0f0f0">
-        <div id="soHistoryTitle" style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em;padding-top:12px;margin-bottom:6px">История</div>
-        <div id="so_history_list" style="display:flex;flex-direction:column;gap:4px"></div>
+      <!-- История заказа / Уведомления (сворачиваются, кнопки в одной строке, аккордеон) -->
+      <div id="so_history_wrap" style="flex-shrink:0;border-top:1px solid #f0f0f0;background:#fafafa">
+        <div style="display:flex">
+          <button id="soInfoHistoryToggle" onclick="_sToggleInfoHistory()" style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:10px 12px;border:none;background:none;cursor:pointer;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px">
+            <span id="soHistoryTitle">История заказа</span>
+            <span id="soInfoHistoryArrow" style="font-size:13px">▼</span>
+          </button>
+          <button id="so-tabBtn-notif" onclick="_sToggleInfoNotif()" style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:10px 12px;border:none;border-left:1px solid #f0f0f0;background:none;cursor:pointer;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px">
+            <span id="soNotifSubTitle">🔔 Уведомления</span>
+            <span id="soInfoNotifArrow" style="font-size:13px">▼</span>
+          </button>
+        </div>
+        <div id="so_history_body" style="display:none;padding:0 20px 14px;max-height:240px;overflow-y:auto">
+          <div id="so_history_list" style="display:flex;flex-direction:column;gap:4px"></div>
+        </div>
+        <div id="so-tab-notif" style="display:none;flex-direction:column;padding:12px 20px 16px;max-height:280px;overflow-y:auto;border-top:1px solid #f0f0f0">
+          <button id="so_sms_btn" onclick="soOpenSmsModal()" style="width:100%;padding:11px;background:#163E3B;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📲 Отправить SMS клиенту</button>
+          <div id="so_notif_receipt_row" style="margin-bottom:12px"></div>
+          <div id="soNotifListTitle" style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">История уведомлений</div>
+          <div id="so_notif_list" style="font-size:12px;color:#888"></div>
+        </div>
       </div>
     </div>
 
@@ -9034,39 +9051,44 @@ document.addEventListener('click', e => {
           + <span id="soAddItemBtnLbl">Добавить позицию</span>
         </button>
       </div>
-      <div id="so_items_history_wrap" style="display:none;flex-shrink:0;border-top:1px solid #f0f0f0;background:#fafafa">
-        <button id="soItemsHistoryToggle" onclick="_sToggleItemsHistory()" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;background:none;border:none;cursor:pointer;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px">
-          <span id="soItemsHistoryTitle">История позиций</span>
-          <span id="soItemsHistoryArrow" style="font-size:13px">▼</span>
-        </button>
+      <!-- История позиций / Фото (сворачиваются, кнопки в одной строке, аккордеон) -->
+      <div id="so_items_history_wrap" style="flex-shrink:0;border-top:1px solid #f0f0f0;background:#fafafa">
+        <div style="display:flex">
+          <button id="soItemsHistoryToggle" onclick="_sToggleItemsHistory()" style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:10px 10px;border:none;background:none;cursor:pointer;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px">
+            <span id="soItemsHistoryTitle">История позиций</span>
+            <span id="soItemsHistoryArrow" style="font-size:13px">▼</span>
+          </button>
+          <button id="so-tabBtn-photo" onclick="_sTogglePhotoSection()" style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:10px 10px;border:none;border-left:1px solid #f0f0f0;background:none;cursor:pointer;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px">
+            <span id="soPhotoSubTitle">📷 Фото</span>
+            <span id="soPhotoArrow" style="font-size:13px">▼</span>
+          </button>
+        </div>
         <div id="so_items_history_body" style="display:none;padding:0 16px 14px;max-height:200px;overflow-y:auto">
           <div id="so_items_activity" style="font-size:12px;color:#888"></div>
         </div>
-      </div>
-    </div>
-
-    <!-- Вкладка: Фото -->
-    <div id="so-tab-photo" style="flex:1;min-height:0;display:none;flex-direction:column">
-      <!-- Фильтр по типу -->
-      <div id="sPhotoTabTabs" style="display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid #f0f0f0;flex-shrink:0;flex-wrap:wrap"></div>
-      <!-- Сетка -->
-      <div style="flex:1;overflow-y:auto;padding:12px 16px">
-        <div id="sPhotoTabGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px"></div>
-      </div>
-      <!-- Кнопки загрузки -->
-      <div style="padding:10px 16px;border-top:1px solid #f0f0f0;flex-shrink:0;background:#fafafa">
-        <div style="display:flex;gap:8px">
-          <label style="flex:1;display:flex;align-items:center;justify-content:center;padding:12px 4px;border:2px solid #3b82f6;border-radius:10px;background:#eff6ff;font-size:13px;font-weight:700;color:#1d4ed8;cursor:pointer;touch-action:manipulation">
-            🔵 <span id="soPhotoBeforeLbl">До</span><input type="file" data-ptype="before" accept="image/*,video/*" multiple onchange="staffUploadPhotos(this)" style="display:none">
-          </label>
-          <label style="flex:1;display:flex;align-items:center;justify-content:center;padding:12px 4px;border:2px solid #22c55e;border-radius:10px;background:#f0fdf4;font-size:13px;font-weight:700;color:#15803d;cursor:pointer;touch-action:manipulation">
-            🟢 <span id="soPhotoAfterLbl">После</span><input type="file" data-ptype="after" accept="image/*,video/*" multiple onchange="staffUploadPhotos(this)" style="display:none">
-          </label>
-          <label style="flex:1;display:flex;align-items:center;justify-content:center;padding:12px 4px;border:2px solid #ef4444;border-radius:10px;background:#fef2f2;font-size:13px;font-weight:700;color:#b91c1c;cursor:pointer;touch-action:manipulation">
-            🔴 <span id="soPhotoDamageLbl">Повр.</span><input type="file" data-ptype="damage" accept="image/*,video/*" multiple onchange="staffUploadPhotos(this)" style="display:none">
-          </label>
+        <div id="so-tab-photo" style="display:none;flex-direction:column;border-top:1px solid #f0f0f0">
+          <!-- Фильтр по типу -->
+          <div id="sPhotoTabTabs" style="display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid #f0f0f0;flex-shrink:0;flex-wrap:wrap"></div>
+          <!-- Сетка -->
+          <div style="max-height:220px;overflow-y:auto;padding:12px 16px">
+            <div id="sPhotoTabGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px"></div>
+          </div>
+          <!-- Кнопки загрузки -->
+          <div style="padding:10px 16px;border-top:1px solid #f0f0f0;flex-shrink:0;background:#fff">
+            <div style="display:flex;gap:8px">
+              <label style="flex:1;display:flex;align-items:center;justify-content:center;padding:12px 4px;border:2px solid #3b82f6;border-radius:10px;background:#eff6ff;font-size:13px;font-weight:700;color:#1d4ed8;cursor:pointer;touch-action:manipulation">
+                🔵 <span id="soPhotoBeforeLbl">До</span><input type="file" data-ptype="before" accept="image/*,video/*" multiple onchange="staffUploadPhotos(this)" style="display:none">
+              </label>
+              <label style="flex:1;display:flex;align-items:center;justify-content:center;padding:12px 4px;border:2px solid #22c55e;border-radius:10px;background:#f0fdf4;font-size:13px;font-weight:700;color:#15803d;cursor:pointer;touch-action:manipulation">
+                🟢 <span id="soPhotoAfterLbl">После</span><input type="file" data-ptype="after" accept="image/*,video/*" multiple onchange="staffUploadPhotos(this)" style="display:none">
+              </label>
+              <label style="flex:1;display:flex;align-items:center;justify-content:center;padding:12px 4px;border:2px solid #ef4444;border-radius:10px;background:#fef2f2;font-size:13px;font-weight:700;color:#b91c1c;cursor:pointer;touch-action:manipulation">
+                🔴 <span id="soPhotoDamageLbl">Повр.</span><input type="file" data-ptype="damage" accept="image/*,video/*" multiple onchange="staffUploadPhotos(this)" style="display:none">
+              </label>
+            </div>
+            <div id="sPhotoUploadProgress" style="display:none;text-align:center;padding:6px 0 0;font-size:13px;color:#888"><span id="soPhotoProgressLbl">⏳ Загрузка…</span></div>
+          </div>
         </div>
-        <div id="sPhotoUploadProgress" style="display:none;text-align:center;padding:6px 0 0;font-size:13px;color:#888"><span id="soPhotoProgressLbl">⏳ Загрузка…</span></div>
       </div>
     </div>
 
@@ -9136,14 +9158,6 @@ document.addEventListener('click', e => {
         <div id="soPaymentHistoryTitle" style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">История операций</div>
         <div id="s_pm_activity" style="font-size:12px;color:#888"></div>
       </div>
-    </div>
-
-    <!-- Вкладка: Уведомления -->
-    <div id="so-tab-notif" style="flex:1;min-height:0;overflow-y:auto;display:none;flex-direction:column;padding:14px 20px">
-      <button id="so_sms_btn" onclick="soOpenSmsModal()" style="width:100%;padding:11px;background:#163E3B;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📲 Отправить SMS клиенту</button>
-      <div id="so_notif_receipt_row" style="margin-bottom:12px"></div>
-      <div id="soNotifListTitle" style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">История уведомлений</div>
-      <div id="so_notif_list" style="font-size:12px;color:#888"></div>
     </div>
 
   </div>
@@ -9430,7 +9444,7 @@ async function _loadStaffPrices() {
 
 function soSwitchTab(tab) {
   _sActiveTab = tab;
-  const tabs = ['info','items','photo','payment','notif'];
+  const tabs = ['info','items','payment'];
   tabs.forEach(t => {
     const panel = document.getElementById(`so-tab-${t}`);
     const btn   = document.getElementById(`so-tabBtn-${t}`);
@@ -9441,10 +9455,63 @@ function soSwitchTab(tab) {
     btn.style.borderBottomColor = active ? '#163E3B' : 'transparent';
     btn.style.background = active ? '#fff' : 'transparent';
   });
-  if (tab === 'photo')   staffRenderPhotoGrid();
   if (tab === 'payment') { soRecalcAutoDiscounts(); sLoadPaymentModal(); }
   if (tab === 'items')   _sRenderItemActivity();
-  if (tab === 'notif')   _sRenderNotifications();
+}
+
+// «Инфо»: История заказа — сворачивающийся блок (аккордеон с Уведомлениями)
+function _sToggleInfoHistory() {
+  const body  = document.getElementById('so_history_body');
+  const arrow = document.getElementById('soInfoHistoryArrow');
+  const isOpen = body.style.display !== 'none';
+  if (isOpen) {
+    body.style.display = 'none';
+    arrow.textContent  = '▼';
+  } else {
+    body.style.display = 'block';
+    arrow.textContent  = '▲';
+    document.getElementById('so-tab-notif').style.display = 'none';
+    document.getElementById('soInfoNotifArrow').textContent = '▼';
+  }
+}
+
+// «Инфо»: Уведомления — сворачивающийся блок (аккордеон с Историей заказа)
+function _sToggleInfoNotif() {
+  const body  = document.getElementById('so-tab-notif');
+  const arrow = document.getElementById('soInfoNotifArrow');
+  const isOpen = body.style.display !== 'none';
+  if (isOpen) {
+    body.style.display = 'none';
+    arrow.textContent  = '▼';
+  } else {
+    body.style.display = 'flex';
+    arrow.textContent  = '▲';
+    document.getElementById('so_history_body').style.display = 'none';
+    document.getElementById('soInfoHistoryArrow').textContent = '▼';
+    _sRenderNotifications();
+  }
+}
+
+// «Позиции»: Фото — сворачивающийся блок (аккордеон с Историей позиций)
+function _sTogglePhotoSection() {
+  const body  = document.getElementById('so-tab-photo');
+  const arrow = document.getElementById('soPhotoArrow');
+  const isOpen = body.style.display !== 'none';
+  if (isOpen) {
+    body.style.display = 'none';
+    arrow.textContent  = '▼';
+  } else {
+    body.style.display = 'flex';
+    arrow.textContent  = '▲';
+    document.getElementById('so_items_history_body').style.display = 'none';
+    document.getElementById('soItemsHistoryArrow').textContent = '▼';
+    staffRenderPhotoGrid();
+  }
+}
+
+function _sOpenPhotoSection() {
+  const body = document.getElementById('so-tab-photo');
+  if (body && body.style.display === 'none') _sTogglePhotoSection();
 }
 
 async function _sFetchActivity() {
@@ -9456,20 +9523,27 @@ async function _sFetchActivity() {
   return _sActivityCache;
 }
 
+// «Позиции»: История позиций — сворачивающийся блок (аккордеон с Фото)
 function _sToggleItemsHistory() {
   const body  = document.getElementById('so_items_history_body');
   const arrow = document.getElementById('soItemsHistoryArrow');
   const isOpen = body.style.display !== 'none';
-  body.style.display = isOpen ? 'none' : 'block';
-  arrow.textContent  = isOpen ? '▼' : '▲';
+  if (isOpen) {
+    body.style.display = 'none';
+    arrow.textContent  = '▼';
+  } else {
+    body.style.display = 'block';
+    arrow.textContent  = '▲';
+    document.getElementById('so-tab-photo').style.display = 'none';
+    document.getElementById('soPhotoArrow').textContent = '▼';
+  }
 }
 
 async function _sRenderItemActivity() {
-  const wrap = document.getElementById('so_items_history_wrap');
-  const el   = document.getElementById('so_items_activity');
-  if (!el || !wrap) return;
+  const el = document.getElementById('so_items_activity');
+  if (!el) return;
   const acts = (await _sFetchActivity()).filter(a => a.action.startsWith('item_'));
-  if (!acts.length) { wrap.style.display = 'none'; return; }
+  if (!acts.length) { el.innerHTML = `<div style="color:#aaa">—</div>`; return; }
   const _iconItem = a => {
     if (a.action === 'item_deleted')       return '🗑';
     if (a.action === 'item_added')         return '➕';
@@ -9477,7 +9551,6 @@ async function _sRenderItemActivity() {
     if (a.action === 'item_media_deleted') return '🗑';
     return '✏️';
   };
-  wrap.style.display = 'block';
   el.innerHTML = acts.map(a => {
     const dt = (_parseUTC(a.created_at)||new Date()).toLocaleString('ru',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:_TZ});
     return `<div style="padding:5px 0;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;gap:8px">
@@ -9599,10 +9672,16 @@ async function staffOpenOrder(orderId) {
   document.getElementById('so_debt_display').textContent     = '—';
   _sDiscountSum = 0; _sManualDiscount = 0;
   document.getElementById('so_deadline_wrap').style.display  = 'none';
-  document.getElementById('so_history_wrap').style.display   = 'none';
   document.getElementById('so_history_list').innerHTML        = '';
+  document.getElementById('so_notif_list').innerHTML          = '';
+  document.getElementById('so_history_body').style.display    = 'none';
+  document.getElementById('soInfoHistoryArrow').textContent   = '▼';
+  document.getElementById('so-tab-notif').style.display       = 'none';
+  document.getElementById('soInfoNotifArrow').textContent     = '▼';
   document.getElementById('so_items_history_body').style.display = 'none';
   document.getElementById('soItemsHistoryArrow').textContent  = '▼';
+  document.getElementById('so-tab-photo').style.display       = 'none';
+  document.getElementById('soPhotoArrow').textContent         = '▼';
   document.getElementById('sPhotoTabGrid').innerHTML          = '';
   document.getElementById('sPhotoTabTabs').innerHTML          = '';
   document.getElementById('so_items').innerHTML = `<div style="text-align:center;color:#aaa;padding:20px">${t('ord.loading')}</div>`;
@@ -9831,7 +9910,8 @@ async function soSendSms(lang) {
   // Попытка (успех/провал) уже залогирована бэкендом в order_activity — обновляем
   // кэш и перерисовываем «Историю уведомлений», чтобы её увидеть сразу, без переоткрытия карточки.
   _sActivityCache = null;
-  if (_sActiveTab === 'notif') _sRenderNotifications();
+  const _notifBody = document.getElementById('so-tab-notif');
+  if (_notifBody && _notifBody.style.display !== 'none') _sRenderNotifications();
 }
 
 // Подтверждение SMS сразу после создания заявки с позициями (item_count > 0).
@@ -10549,11 +10629,11 @@ async function staffLoadOrderPhotos(orderId) {
   } catch(e) { _sPhotoModalPhotos = []; }
   staffRenderPhotoGrid();
   // обновить счётчик на кнопке вкладки
-  const btn = document.getElementById('so-tabBtn-photo');
+  const btn = document.getElementById('soPhotoSubTitle');
   if (btn) btn.textContent = `${t('so.tab.photo')}${_sPhotoModalPhotos.length ? ' ('+_sPhotoModalPhotos.length+')' : ''}`;
 }
 
-function staffOpenPhotoModal() { soSwitchTab('photo'); }
+function staffOpenPhotoModal() { soSwitchTab('items'); _sOpenPhotoSection(); }
 function staffClosePhotoModal() {}
 
 function staffRenderPhotoGrid() {
@@ -10594,7 +10674,7 @@ function staffRenderPhotoGrid() {
   });
 
   // Обновить счётчик вкладки
-  const photoBtn = document.getElementById('so-tabBtn-photo');
+  const photoBtn = document.getElementById('soPhotoSubTitle');
   if (photoBtn) photoBtn.textContent = `${t('so.tab.photo')}${_sPhotoModalPhotos.length ? ' ('+_sPhotoModalPhotos.length+')' : ''}`;
   const wmoPhotoBtn = document.getElementById('wmo-tab-photo');
   if (wmoPhotoBtn) wmoPhotoBtn.textContent = `${t('so.tab.photo')}${_sPhotoModalPhotos.length ? ' ('+_sPhotoModalPhotos.length+')' : ''}`;
@@ -10633,7 +10713,7 @@ async function staffDeletePhoto(photoId) {
   });
   _sPhotoModalPhotos = _sPhotoModalPhotos.filter(p => p.id !== photoId);
   staffRenderPhotoGrid();
-  const btn = document.getElementById('so-tabBtn-photo');
+  const btn = document.getElementById('soPhotoSubTitle');
   if (btn) btn.textContent = `${t('so.tab.photo')}${_sPhotoModalPhotos.length ? ' ('+_sPhotoModalPhotos.length+')' : ''}`;
 }
 
@@ -11047,9 +11127,8 @@ async function _doSaveOrderEdit(newStatus, reason) {
 
 // ─── ИСТОРИЯ СТАТУСОВ ЗАКАЗА ──────────────────────────────────────────────────
 async function _loadOrderHistory(orderId) {
-  const wrap = document.getElementById('so_history_wrap');
   const list = document.getElementById('so_history_list');
-  if (!wrap || !list) return;
+  if (!list) return;
   try {
     const token = localStorage.getItem(TOKEN_KEY);
     const res = await fetch(`${API_BASE}/staff/orders/${orderId}/history`, {
@@ -11057,19 +11136,23 @@ async function _loadOrderHistory(orderId) {
     });
     const d = await res.json();
     const history = d.history || [];
-    if (!history.length) { wrap.style.display = 'none'; return; }
-    wrap.style.display = '';
+    if (!history.length) { list.innerHTML = `<div style="color:#aaa">—</div>`; return; }
     list.innerHTML = history.map(h => {
       const dt = h.created_at ? (_parseUTC(h.created_at)||new Date()).toLocaleString('ru-RU',
         {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:_TZ}) : '';
       const label = statusLabel(h.new_status);
-      const note = h.note ? `<span style="color:#888;font-size:11px"> · ${h.note}</span>` : '';
-      return `<div style="display:flex;align-items:baseline;gap:8px;font-size:12px">
+      // note может быть двуязычным "ru / uz" (см. bi() на бэкенде) — показываем только текущий язык
+      let noteText = h.note || '';
+      const noteParts = noteText.split(' / ');
+      if (noteParts.length === 2) noteText = _lang === 'uz' ? noteParts[1] : noteParts[0];
+      const note = noteText ? `<span style="color:#888;font-size:11px"> · ${noteText}</span>` : '';
+      return `<div style="display:flex;align-items:baseline;gap:6px;font-size:12px;flex-wrap:wrap">
         <span style="color:#9ca3af;white-space:nowrap">${dt}</span>
+        <span style="color:#d1d5db">|</span>
         <span style="font-weight:600">${label}</span>${note}
       </div>`;
     }).join('');
-  } catch { wrap.style.display = 'none'; }
+  } catch { list.innerHTML = `<div style="color:#aaa">—</div>`; }
 }
 
 // ─── ВЫБОР КАРТЫ ─────────────────────────────────────────────────────────────
