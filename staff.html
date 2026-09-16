@@ -11209,7 +11209,10 @@ function staffRenderItems(items, containerEl) {
   const myLogin           = currentStaff?.login || '';
   const isWasher          = currentStaff?.role === 'washer';
   const _isAdminItems     = currentStaff?.role === 'admin';
-  const _editLockedByStatus = _isAdminItems
+  // Право can_edit_price расширяет доступ до уровня админа (Упаковка/Готов/Доставка) —
+  // перенос из прод, см. запрос пользователя 2026-09-16.
+  const _canBypassItemLock = _isAdminItems || currentStaff?.can_edit_price === true;
+  const _editLockedByStatus = _canBypassItemLock
     ? ['delivered','cancelled'].includes(_sOrderStatus)
     : _NONADMIN_ITEM_EDIT_LOCKED_STATUSES.has(_sOrderStatus);
   const canEdit           = !_editLockedByStatus && currentStaff?.can_edit_items !== false;

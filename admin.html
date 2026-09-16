@@ -5549,6 +5549,14 @@
         </div>
         <div class="sf-perm-row" style="border-bottom:1px solid var(--border)">
           <label style="display:contents;cursor:pointer">
+            <input type="checkbox" id="sf_can_edit_price" style="opacity:0;width:0;height:0;position:absolute" onchange="sfToggleStyle('sf_can_edit_price')">
+            <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center">💲</div>
+            <div style="flex:1"><div class="sf-perm-title" data-i18n="sf.perm.edit.price">Изменение цены</div><div class="sf-perm-desc" data-i18n="sf.perm.edit.price.d">Менять цену позиции на статусах Упаковка/Готов/Доставка, как админ</div></div>
+            <div class="sf-track" id="sf_can_edit_price_track" onclick="event.stopPropagation();document.getElementById('sf_can_edit_price').click()"><div class="sf-thumb" id="sf_can_edit_price_thumb"></div></div>
+          </label>
+        </div>
+        <div class="sf-perm-row" style="border-bottom:1px solid var(--border)">
+          <label style="display:contents;cursor:pointer">
             <input type="checkbox" id="sf_can_manage_cash" style="opacity:0;width:0;height:0;position:absolute" onchange="sfToggleStyle('sf_can_manage_cash')">
             <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center">💰</div>
             <div style="flex:1"><div class="sf-perm-title" data-i18n="sf.perm.manage.cash">Ответственный за кассу</div><div class="sf-perm-desc" data-i18n="sf.perm.manage.cash.d">Принимает наличные, сдаёт руководителю</div></div>
@@ -7043,6 +7051,7 @@ const _adminI18n = {
     'sf.perm.edit.confirmed':'Ред. подтверждённых','sf.perm.edit.confirmed.d':'Изменять данные заказа после подтверждения',
     'sf.perm.send.pickup':'Передача на вывоз','sf.perm.send.pickup.d':'Переводить заказ в статус «Вывоз»',
     'sf.perm.edit.delivery':'Ред. доставки','sf.perm.edit.delivery.d':'Редактировать заказы в статусе «Доставка»',
+    'sf.perm.edit.price':'Изменение цены','sf.perm.edit.price.d':'Менять цену позиции на статусах Упаковка/Готов/Доставка, как админ',
     'sf.perm.manage.cash':'Ответственный за кассу','sf.perm.manage.cash.d':'Принимает наличные, сдаёт руководителю',
     'sf.perm.approve.debt':'Ответственный за долги','sf.perm.approve.debt.d':'Разрешает/отклоняет закрытие заказов в долг',
     'sf.perm.drive':'Водитель','sf.perm.drive.d':'Вкладка «Доставка» в staff — маршруты и стопы',
@@ -7797,6 +7806,7 @@ const _adminI18n = {
     'sf.perm.edit.confirmed':'Tasdiqlanganlarni tahrirl.','sf.perm.edit.confirmed.d':'Tasdiqlangandan keyin buyurtma maʼlumotlarini oʻzgartirish',
     'sf.perm.send.pickup':'Olib ketishga topshirish','sf.perm.send.pickup.d':'Buyurtmani «Olib ketish» holatiga oʻtkazish',
     'sf.perm.edit.delivery':'Yetkazib berishni tahrirl.','sf.perm.edit.delivery.d':'«Yetkazib berish» holatidagi buyurtmalarni tahrirlash',
+    'sf.perm.edit.price':'Narxni oʻzgartirish','sf.perm.edit.price.d':'Qadoqlash/Tayyor/Yetkazib berish holatlarida pozitsiya narxini admin kabi oʻzgartirish',
     'sf.perm.manage.cash':'Kassa uchun masʼul','sf.perm.manage.cash.d':'Naqd pul qabul qiladi, rahbarga topshiradi',
     'sf.perm.approve.debt':'Qarzlar uchun masʼul','sf.perm.approve.debt.d':'Qarz bilan buyurtmalarni yopishga ruxsat beradi/rad etadi',
     'sf.perm.drive':'Haydovchi','sf.perm.drive.d':'staff.html da «Yetkazib berish» vkladkasi — marshrutlar',
@@ -12107,6 +12117,7 @@ async function openStaffModal(id=null) {
     sfSetToggle('sf_can_edit_confirmed',  s.can_edit_confirmed === true);
     sfSetToggle('sf_can_send_pickup',     s.can_send_pickup === true);
     sfSetToggle('sf_can_edit_delivery',   s.can_edit_delivery === true);
+    sfSetToggle('sf_can_edit_price',      s.can_edit_price === true);
     sfSetToggle('sf_can_manage_cash',     s.can_manage_cash === true);
     sfSetToggle('sf_can_approve_debt',    !!s.can_approve_debt);
     sfSetToggle('sf_can_drive',           !!s.can_drive);
@@ -12160,6 +12171,7 @@ async function saveStaff() {
   const canEditConfirmed     = document.getElementById('sf_can_edit_confirmed')?.checked ?? false;
   const canSendPickup        = document.getElementById('sf_can_send_pickup')?.checked ?? false;
   const canEditDelivery      = document.getElementById('sf_can_edit_delivery')?.checked ?? false;
+  const canEditPrice         = document.getElementById('sf_can_edit_price')?.checked ?? false;
   const canManageCash        = document.getElementById('sf_can_manage_cash')?.checked ?? false;
   const canApproveDebt       = document.getElementById('sf_can_approve_debt')?.checked ?? false;
   const canDrive             = document.getElementById('sf_can_drive')?.checked ?? false;
@@ -12184,7 +12196,7 @@ async function saveStaff() {
     birth_date: document.getElementById('sf_birth_date').value || null,
   };
 
-  const permBody = { can_edit_items: canEditItems, can_measure: canMeasure, can_approve_measure: canApproveMeasure, can_override_measure: canOverrideMeasure, can_create_order: canCreateOrder, can_confirm_order: canConfirmOrder, can_edit_confirmed: canEditConfirmed, can_send_pickup: canSendPickup, can_edit_delivery: canEditDelivery, can_manage_cash: canManageCash, can_approve_debt: canApproveDebt, can_drive: canDrive, can_view_timesheet: canViewTimesheet, notify_new_users: notifyNewUsers, hide_client_phone: hideClientPhone };
+  const permBody = { can_edit_items: canEditItems, can_measure: canMeasure, can_approve_measure: canApproveMeasure, can_override_measure: canOverrideMeasure, can_create_order: canCreateOrder, can_confirm_order: canConfirmOrder, can_edit_confirmed: canEditConfirmed, can_send_pickup: canSendPickup, can_edit_delivery: canEditDelivery, can_edit_price: canEditPrice, can_manage_cash: canManageCash, can_approve_debt: canApproveDebt, can_drive: canDrive, can_view_timesheet: canViewTimesheet, notify_new_users: notifyNewUsers, hide_client_phone: hideClientPhone };
   try {
     if (id) {
       const res = await apiFetch(`${API_BASE}/staff/${id}`, {
