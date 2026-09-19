@@ -1380,7 +1380,8 @@ const _i18n = {
     'lead.agent_pick':'🔍 Выбрать','lead.agent_none':'Не выбран',
     'btn.cancel':'Отмена','btn.create_lead':'Создать лид','btn.save':'Сохранить',
     'lead.branch_lbl':'Филиал','lead.pickup_lbl':'Тип ввоза','lead.delivery_lbl':'Тип вывоза',
-    'lead.short_addr_lbl':'Кр. адрес','lead.addr_lbl':'Адрес','lead.location_lbl':'Локация',
+    'lead.short_addr_lbl':'Кр. адрес','lead.addr_lbl':'Адрес вывоза','lead.location_lbl':'Локация вывоза',
+    'lead.phone2_lbl':'Запасной номер','lead.delivery_addr_lbl':'Адрес доставки','lead.delivery_location_lbl':'Локация доставки',
     'lead.open_map':'Открыть на карте',
     'lead.take':'✋ Взять лид','lead.at_me':'👤 Лид у вас','lead.release':'Освободить',
     'lead.busy':'Занят','lead.take_from':'Взять у него',
@@ -1694,7 +1695,8 @@ const _i18n = {
     'lead.agent_pick':'🔍 Tanlash','lead.agent_none':'Tanlanmagan',
     "btn.cancel":"Bekor",'btn.create_lead':'Lid yaratish','btn.save':'Saqlash',
     'lead.branch_lbl':'Filial','lead.pickup_lbl':'Olib kelish turi','lead.delivery_lbl':'Olib ketish turi',
-    'lead.short_addr_lbl':'Qisqa manzil','lead.addr_lbl':'Manzil','lead.location_lbl':'Joylashuv',
+    'lead.short_addr_lbl':'Qisqa manzil','lead.addr_lbl':'Olib ketish manzili','lead.location_lbl':'Olib ketish joylashuvi',
+    'lead.phone2_lbl':'Zaxira raqam','lead.delivery_addr_lbl':'Yetkazib berish manzili','lead.delivery_location_lbl':'Yetkazib berish joylashuvi',
     'lead.open_map':'Xaritada ochish',
     'lead.take':'✋ Lidni olish','lead.at_me':'👤 Lid sizda','lead.release':`Boʻshatish`,
     'lead.busy':'Band','lead.take_from':'Undan olish',
@@ -4528,6 +4530,7 @@ function openLeadDetail(id) {
           ${code}
           <div class="detail-name">'${lead.client_name||t('lead.no_name')}'${lead.promo_id ? ` <span class="li-badge-promo">${t('promo.badge')}</span>` : ''}</div>
           <div class="detail-phone" style="margin-top:6px;margin-bottom:16px">📞 <a href="tel:${lead.client_phone}">${lead.client_phone}</a> <button onclick="_saveContactFromLead()" title="Сохранить контакт в телефон" style="background:none;border:1px solid var(--sep);border-radius:6px;padding:2px 8px;color:inherit;font-size:12px;font-weight:600;cursor:pointer;vertical-align:middle">${t('so.lbl.save_contact')}</button></div>
+          ${lead.client_phone2 ? `<div class="kv-row"><span class="kv-key">${t('lead.phone2_lbl')}</span><span class="kv-val"><a href="tel:${lead.client_phone2}" style="color:var(--accent);font-weight:600">📞 ${lead.client_phone2}</a></span></div>` : ''}
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px">
           ${!isAgentRole && !isConverted && (lead.assigned_to == null ? Number(lead.created_by) === Number(myId) : isMine) ? `<button onclick="openLeadEdit(${id})" style="background:none;border:1px solid var(--sep);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;color:var(--text2)">✏️</button>` : ''}
@@ -4543,6 +4546,8 @@ function openLeadDetail(id) {
       ${lead.address      ? `<div class="kv-row"><span class="kv-key">${t('lead.addr_lbl')}</span><span class="kv-val">${lead.address}</span></div>` : ''}
       ${!lead.short_address && !lead.address ? `<div class="kv-row"><span class="kv-key">${t('lead.addr_lbl')}</span><span class="kv-val">—</span></div>` : ''}
       ${lead.location ? (() => { const [la,lo]=lead.location.split(','); const yUrl=`https://yandex.uz/maps/?pt=${lo.trim()},${la.trim()}&z=16`; return `<div class="kv-row"><span class="kv-key">${t('lead.location_lbl')}</span><span class="kv-val"><a href="${yUrl}" target="_blank" style="color:var(--accent);font-weight:600">📍 ${lead.location_address||t('lead.open_map')}</a></span></div>`; })() : ''}
+      ${(lead.delivery_address || lead.delivery_short_address) ? `<div class="kv-row"><span class="kv-key">${t('lead.delivery_addr_lbl')}</span><span class="kv-val">${lead.delivery_address || lead.delivery_short_address}</span></div>` : ''}
+      ${lead.delivery_location ? (() => { const [dla,dlo]=lead.delivery_location.split(','); const yUrl=`https://yandex.uz/maps/?pt=${dlo.trim()},${dla.trim()}&z=16`; return `<div class="kv-row"><span class="kv-key">${t('lead.delivery_location_lbl')}</span><span class="kv-val"><a href="${yUrl}" target="_blank" style="color:var(--accent);font-weight:600">📍 ${lead.delivery_location_address||t('lead.open_map')}</a></span></div>`; })() : ''}
       ${(() => {
         if (isAgentRole || isConverted) return '';
         const aName  = lead.assigned_to ? ([lead.assigned_first_name,lead.assigned_last_name].filter(Boolean).join(' ')||t('lead.employee')) : null;
