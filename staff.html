@@ -844,6 +844,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
       </div>
       <div id="ld_dupWarn" style="display:none;font-size:13px;color:#b45309;background:#fff3cd;padding:6px 10px;border-radius:8px;margin-top:5px;margin-left:76px"></div>
     </div>
+    <div class="field-inline" style="margin-bottom:12px">
+      <div class="field-label" id="ldPhone2Label">Запасной номер</div>
+      <div class="field-inp" style="flex:1;min-width:0"><input id="ld_phone2" type="text" inputmode="tel" placeholder="+998 90 000-00-00 (необязательно)"></div>
+    </div>
     <div class="field">
       <div class="field-label" id="ldNameLabel">Имя клиента *</div>
       <div class="ac-wrap">
@@ -855,35 +859,69 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
       <div id="ldBranchBtns" style="display:flex;gap:8px;margin-top:4px"></div>
       <input type="hidden" id="ld_branch" value="">
     </div>
-    <div class="field-inline" style="margin-bottom:12px">
-      <div class="field-label" id="ldShortAddrLabel">Кр. адрес</div>
-      <div class="field-inp" style="flex:1;min-width:0"><input id="ld_short_address" placeholder="1-кв, 12-дом"></div>
-    </div>
-    <div class="field">
-      <div class="field-label" id="ldFullAddrLabel">Полный адрес</div>
-      <div class="field-inp"><input id="ld_address" placeholder="г. Навои, ул. Навои 12"></div>
-    </div>
-    <div class="field">
-      <div class="field-label" style="display:flex;align-items:center;justify-content:space-between">
-        <span id="ldLocationLabel">Локация <span id="ldLocationOptional" style="color:var(--text3);font-weight:400">(необязательно)</span></span>
-        <button onclick="ldPickLocation()" id="ldLocBtn" type="button" style="font-size:13px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📍 Указать</button>
+    <!-- Блок: Адрес вывоза -->
+    <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;margin-bottom:12px">
+      <div class="field-inline" style="margin-bottom:0">
+        <div class="field-label" id="ldShortAddrLabel">Адрес вывоза</div>
+        <div class="field-inp" style="flex:1;min-width:0"><input id="ld_short_address" placeholder="1-кв, 12-дом"></div>
       </div>
-      <div id="ldLocDisplay" style="font-size:13px;color:var(--text2);padding:4px 0">Не указана</div>
-      <div id="ldLocMapWrap" style="display:none;margin-top:8px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-          <button type="button" id="ldLocMyBtn" onclick="_ldLocateUser()" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">📍 Моё место</button>
-          <span id="ldLocDragHint" style="font-size:11px;color:var(--text3)">Нажмите или перетащите метку</span>
-          <div style="display:flex;gap:4px">
-            <button type="button" id="ldLocReadyBtn" onclick="_toggleLdLocMapFs()" style="display:none;font-size:12px;padding:4px 10px;background:#16a34a;border:none;border-radius:8px;cursor:pointer;color:#fff;font-weight:600">✅ Готово</button>
-            <button type="button" onclick="_toggleLdLocMapFs()" id="ldLocFsBtn" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">⛶ Во весь экран</button>
+      <div style="margin-top:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span id="ldLocationLabel">Локация вывоза <span id="ldLocationOptional" style="color:var(--text3);font-weight:400">(необязательно)</span></span>
+          <button onclick="ldPickLocation()" id="ldLocBtn" type="button" style="font-size:13px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📍 Указать</button>
+        </div>
+        <div id="ldLocDisplay" style="font-size:13px;color:var(--text2);padding:4px 0">Не указана</div>
+        <div id="ldLocMapWrap" style="display:none;margin-top:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <button type="button" id="ldLocMyBtn" onclick="_ldLocateUser()" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">📍 Моё место</button>
+            <span id="ldLocDragHint" style="font-size:11px;color:var(--text3)">Нажмите или перетащите метку</span>
+            <div style="display:flex;gap:4px">
+              <button type="button" id="ldLocReadyBtn" onclick="_toggleLdLocMapFs()" style="display:none;font-size:12px;padding:4px 10px;background:#16a34a;border:none;border-radius:8px;cursor:pointer;color:#fff;font-weight:600">✅ Готово</button>
+              <button type="button" onclick="_toggleLdLocMapFs()" id="ldLocFsBtn" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">⛶ Во весь экран</button>
+            </div>
+          </div>
+          <div id="ldLocMapInner" style="border-radius:10px;overflow:hidden;height:220px">
+            <div id="ldLocMap" style="width:100%;height:100%"></div>
           </div>
         </div>
-        <div id="ldLocMapInner" style="border-radius:10px;overflow:hidden;height:220px">
-          <div id="ldLocMap" style="width:100%;height:100%"></div>
+        <input type="hidden" id="ld_location">
+        <input type="hidden" id="ld_location_address">
+      </div>
+    </div>
+    <!-- Блок: Адрес доставки -->
+    <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="ld_delivery_addr_differs_cb" onchange="ldSetDeliveryAddrDiffers(this.checked)" style="width:18px;height:18px;flex-shrink:0">
+        <span id="ldDeliveryAddrToggleLabel" style="font-size:14px;font-weight:600">Адрес доставки другой</span>
+      </label>
+      <div id="ld_delivery_address_row" style="display:none;margin-top:10px">
+        <div class="field-inline" style="margin-bottom:0">
+          <div class="field-label" id="ldDeliveryAddrLabel">Адрес доставки</div>
+          <div class="field-inp" style="flex:1;min-width:0"><input id="ld_delivery_address" placeholder="Например: 14-5-1"></div>
+        </div>
+        <div style="margin-top:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span id="ldDeliveryLocationLabel">Локация доставки</span><span style="color:var(--text3);font-weight:400;margin-left:4px">(необязательно)</span>
+            <button onclick="ldPickDeliveryLocation()" id="ldDeliveryLocBtn" type="button" style="font-size:13px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📍 Указать</button>
+          </div>
+          <div id="ldDeliveryLocDisplay" style="font-size:13px;color:var(--text2);padding:4px 0">Не указана</div>
+          <div id="ldDeliveryLocMapWrap" style="display:none;margin-top:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <button type="button" onclick="_ldDeliveryLocateUser()" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">📍 Моё место</button>
+              <span style="font-size:11px;color:var(--text3)">Нажмите или перетащите метку</span>
+              <div style="display:flex;gap:4px">
+                <button type="button" id="ldDeliveryLocReadyBtn" onclick="_toggleLdDeliveryLocMapFs()" style="display:none;font-size:12px;padding:4px 10px;background:#16a34a;border:none;border-radius:8px;cursor:pointer;color:#fff;font-weight:600">✅ Готово</button>
+                <button type="button" onclick="_toggleLdDeliveryLocMapFs()" id="ldDeliveryLocFsBtn" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">⛶ Во весь экран</button>
+              </div>
+            </div>
+            <div id="ldDeliveryLocMapInner" style="border-radius:10px;overflow:hidden;height:220px">
+              <div id="ldDeliveryLocMap" style="width:100%;height:100%"></div>
+            </div>
+          </div>
+          <input type="hidden" id="ld_delivery_location">
+          <input type="hidden" id="ld_delivery_location_address">
         </div>
       </div>
-      <input type="hidden" id="ld_location">
-      <input type="hidden" id="ld_location_address">
     </div>
     <div class="field">
       <div class="field-label" id="ldPickupLabel">Тип ввоза</div>
@@ -992,6 +1030,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
       <div id="or_dupWarn" style="display:none;font-size:13px;color:#b45309;background:#fff3cd;padding:6px 10px;border-radius:8px;margin-top:5px;margin-left:76px"></div>
       <div id="or_discBadge" style="display:none;font-size:13px;font-weight:700;color:#92400e;background:#fef3c7;padding:6px 10px;border-radius:8px;margin-top:5px;margin-left:76px"></div>
     </div>
+    <div class="field-inline" style="margin-bottom:12px">
+      <div class="field-label" id="orPhone2Label">Запасной номер</div>
+      <div class="field-inp" style="flex:1;min-width:0"><input id="or_phone2" type="text" inputmode="tel" placeholder="+998 90 000-00-00 (необязательно)"></div>
+    </div>
     <div class="field">
       <div class="field-label" id="orNameLabel">Имя клиента *</div>
       <div class="ac-wrap">
@@ -1003,38 +1045,75 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
       <div id="orBranchBtns" style="display:flex;gap:8px;margin-top:4px"></div>
       <input type="hidden" id="or_branch" value="">
     </div>
-    <div class="field-inline" style="margin-bottom:14px">
-      <div class="field-label" id="orShortAddrLabel">Кр. адрес</div>
-      <div class="field-inp" style="flex:1;min-width:0"><input id="or_short_address" placeholder="1-кв, 12-дом"></div>
-    </div>
-    <div class="field">
-      <div class="field-label" id="orAddrLabel">Полный адрес</div>
-      <div class="field-inp"><input id="or_address" placeholder="г. Навои, ул. Навои 12"></div>
-    </div>
-    <div class="field">
-      <div class="field-label" style="display:flex;align-items:center;justify-content:space-between">
-        <span id="orLocationLabel">Локация</span><span id="orLocationOptional" style="color:var(--text3);font-weight:400;margin-left:4px">(необязательно)</span>
-        <button onclick="pickLocation()" id="locBtn" style="font-size:13px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📍 Указать</button>
+    <!-- Блок: Адрес вывоза -->
+    <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;margin-bottom:12px">
+      <div class="field-inline" style="margin-bottom:0">
+        <div class="field-label" id="orShortAddrLabel">Адрес вывоза</div>
+        <div class="field-inp" style="flex:1;min-width:0"><input id="or_short_address" placeholder="1-кв, 12-дом"></div>
       </div>
-      <div id="locDisplay" style="font-size:13px;color:var(--text2);padding:4px 0">Не указана</div>
-      <div id="locAddrWrap" style="display:none;margin-top:4px">
-        <div id="locAddr" style="font-size:13px;color:var(--text);background:var(--bg);border-radius:8px;padding:8px 10px;line-height:1.4"></div>
-      </div>
-      <div id="locMapWrap" style="display:none;margin-top:8px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-          <button type="button" onclick="_locLocateUser()" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">📍 Моё место</button>
-          <span style="font-size:11px;color:var(--text3)">Нажмите или перетащите метку</span>
-          <div style="display:flex;gap:4px">
-            <button type="button" id="locReadyBtn" onclick="_toggleLocMapFs()" style="display:none;font-size:12px;padding:4px 10px;background:#16a34a;border:none;border-radius:8px;cursor:pointer;color:#fff;font-weight:600">✅ Готово</button>
-            <button type="button" onclick="_toggleLocMapFs()" id="locFsBtn" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">⛶ Во весь экран</button>
+      <div style="margin-top:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span id="orLocationLabel">Локация вывоза</span><span id="orLocationOptional" style="color:var(--text3);font-weight:400;margin-left:4px">(необязательно)</span>
+          <button onclick="pickLocation()" id="locBtn" style="font-size:13px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📍 Указать</button>
+        </div>
+        <div id="locDisplay" style="font-size:13px;color:var(--text2);padding:4px 0">Не указана</div>
+        <div id="locAddrWrap" style="display:none;margin-top:4px">
+          <div id="locAddr" style="font-size:13px;color:var(--text);background:var(--bg);border-radius:8px;padding:8px 10px;line-height:1.4"></div>
+        </div>
+        <div id="locMapWrap" style="display:none;margin-top:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <button type="button" onclick="_locLocateUser()" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">📍 Моё место</button>
+            <span style="font-size:11px;color:var(--text3)">Нажмите или перетащите метку</span>
+            <div style="display:flex;gap:4px">
+              <button type="button" id="locReadyBtn" onclick="_toggleLocMapFs()" style="display:none;font-size:12px;padding:4px 10px;background:#16a34a;border:none;border-radius:8px;cursor:pointer;color:#fff;font-weight:600">✅ Готово</button>
+              <button type="button" onclick="_toggleLocMapFs()" id="locFsBtn" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">⛶ Во весь экран</button>
+            </div>
+          </div>
+          <div id="locMapInner" style="border-radius:10px;overflow:hidden;height:220px">
+            <div id="locMap" style="width:100%;height:100%"></div>
           </div>
         </div>
-        <div id="locMapInner" style="border-radius:10px;overflow:hidden;height:220px">
-          <div id="locMap" style="width:100%;height:100%"></div>
+        <input type="hidden" id="or_location">
+        <input type="hidden" id="or_location_address">
+      </div>
+    </div>
+    <!-- Блок: Адрес доставки -->
+    <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="or_delivery_addr_differs_cb" onchange="orSetDeliveryAddrDiffers(this.checked)" style="width:18px;height:18px;flex-shrink:0">
+        <span id="orDeliveryAddrToggleLabel" style="font-size:14px;font-weight:600">Адрес доставки другой</span>
+      </label>
+      <div id="or_delivery_address_row" style="display:none;margin-top:10px">
+        <div class="field-inline" style="margin-bottom:0">
+          <div class="field-label" id="orDeliveryAddrLabel">Адрес доставки</div>
+          <div class="field-inp" style="flex:1;min-width:0"><input id="or_delivery_address" placeholder="Например: 14-5-1"></div>
+        </div>
+        <div style="margin-top:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span id="orDeliveryLocationLabel">Локация доставки</span><span style="color:var(--text3);font-weight:400;margin-left:4px">(необязательно)</span>
+            <button onclick="pickOrDeliveryLocation()" id="orDeliveryLocBtn" type="button" style="font-size:13px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📍 Указать</button>
+          </div>
+          <div id="orDeliveryLocDisplay" style="font-size:13px;color:var(--text2);padding:4px 0">Не указана</div>
+          <div id="orDeliveryLocAddrWrap" style="display:none;margin-top:4px">
+            <div id="orDeliveryLocAddr" style="font-size:13px;color:var(--text);background:var(--bg);border-radius:8px;padding:8px 10px;line-height:1.4"></div>
+          </div>
+          <div id="orDeliveryLocMapWrap" style="display:none;margin-top:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <button type="button" onclick="_orDeliveryLocLocateUser()" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">📍 Моё место</button>
+              <span style="font-size:11px;color:var(--text3)">Нажмите или перетащите метку</span>
+              <div style="display:flex;gap:4px">
+                <button type="button" id="orDeliveryLocReadyBtn" onclick="_toggleOrDeliveryLocMapFs()" style="display:none;font-size:12px;padding:4px 10px;background:#16a34a;border:none;border-radius:8px;cursor:pointer;color:#fff;font-weight:600">✅ Готово</button>
+                <button type="button" onclick="_toggleOrDeliveryLocMapFs()" id="orDeliveryLocFsBtn" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">⛶ Во весь экран</button>
+              </div>
+            </div>
+            <div id="orDeliveryLocMapInner" style="border-radius:10px;overflow:hidden;height:220px">
+              <div id="orDeliveryLocMap" style="width:100%;height:100%"></div>
+            </div>
+          </div>
+          <input type="hidden" id="or_delivery_location">
+          <input type="hidden" id="or_delivery_location_address">
         </div>
       </div>
-      <input type="hidden" id="or_location">
-      <input type="hidden" id="or_location_address">
     </div>
     <div class="field">
       <div class="field-label" id="orSvcTypeLabel">Тип обслуживания</div>
@@ -1285,9 +1364,11 @@ const _i18n = {
     'src.pick_agent':'Выбрать агента','src.pick_staff':'Выбрать сотрудника',
     'src.search_ph':'Имя или телефон…','src.not_found':'Не найдено','src.all_btn':'Все',
     'lead.new_title':'🎯 Новый лид','lead.edit_title':'✏️ Редактировать лид',
-    'lead.phone':'Телефон *','lead.client_name':'Имя клиента *','lead.branch':'Филиал *',
-    'lead.short_address':'Кр. адрес','lead.full_address':'Полный адрес',
-    'lead.location_label':'Локация','lead.location_optional':'(необязательно)',
+    'lead.phone':'Телефон *','lead.phone2':'Запасной номер','lead.client_name':'Имя клиента *','lead.branch':'Филиал *',
+    'lead.short_address':'Адрес вывоза','lead.full_address':'Полный адрес',
+    'lead.delivery_addr_differs':'Адрес доставки другой','lead.delivery_addr_label':'Адрес доставки',
+    'lead.delivery_location_label':'Локация доставки',
+    'lead.location_label':'Локация вывоза','lead.location_optional':'(необязательно)',
     'lead.location_btn':'📍 Указать','lead.location_update':'🔄 Обновить',
     'lead.location_none':'Не указана','lead.map_my':'📍 Моё место',
     'lead.map_drag':'Нажмите или перетащите метку','lead.map_done':'✅ Готово',
@@ -1486,7 +1567,9 @@ const _i18n = {
     'pickup.date_lbl':'Дата вывоза','pickup.date_today':'📅 Сегодня','pickup.date_tomorrow':'📅 Завтра','pickup.date_pick':'🗓 Дата',
     'pickup.time_lbl':'Время вывоза','pickup.time_morning':'🌅 До обеда (9:00–13:00)','pickup.time_evening':'🌆 После обеда (13:00–20:00)','pickup.time_custom':'⏰ Период','pickup.time_from':'С','pickup.time_to':'До',
     'or.title':'📦 Новая заявка','or.phone':'Телефон *','or.client_name':'Имя клиента *','or.branch':'Филиал *',
-    'or.short_addr':'Кр. адрес','or.address':'Полный адрес','or.location':'Локация','or.location_optional':'(необязательно)',
+    'or.short_addr':'Адрес вывоза','or.address':'Полный адрес','or.location':'Локация вывоза','or.location_optional':'(необязательно)',
+    'or.delivery_addr_differs':'Адрес доставки другой','or.delivery_addr_label':'Адрес доставки',
+    'or.delivery_location_label':'Локация доставки',
     'or.service_type':'Тип обслуживания','or.std':'📦 Стандарт','or.express':'⚡ Экспресс',
     'or.pickup':'Тип ввоза','or.delivery':'Тип вывоза','or.note':'Примечание *',
     'btn.create_order':'Создать заявку','or.creating':'Создаём…',
@@ -1535,7 +1618,8 @@ const _i18n = {
     'soe.title':'✏️ Редактировать заявку',
     'soe.phone':'Телефон','soe.name':'Имя клиента',
     'soe.branch_pick':'— выбрать —',
-    'soe.deadline':'Срок','soe.short_addr':'Кр. адрес','soe.full_addr':'Полный адрес',
+    'soe.deadline':'Срок','soe.short_addr':'Адрес вывоза','soe.full_addr':'Полный адрес',
+    'soe.delivery_addr_differs':'Адрес доставки другой','soe.delivery_addr_label':'Адрес доставки',
     'soe.loc_optional':'(необязательно)','soe.loc_update':'🔄 Обновить','soe.loc_drag':'Нажмите или перетащите метку',
     'soe.svc_type':'Тип обслуживания','soe.pickup_disc':'Скидка при самопривозе, %',
     'soe.delivery_disc':'Скидка при самовывозе, %',
@@ -1594,9 +1678,11 @@ const _i18n = {
     'src.pick_agent':'Agent tanlash','src.pick_staff':'Xodim tanlash',
     'src.search_ph':'Ism yoki telefon…','src.not_found':'Topilmadi','src.all_btn':'Barchasi',
     'lead.new_title':'🎯 Yangi lid','lead.edit_title':'✏️ Lidni tahrirlash',
-    'lead.phone':'Telefon *','lead.client_name':'Mijoz ismi *','lead.branch':'Filial *',
-    'lead.short_address':'Qisqa manzil','lead.full_address':`Toʻliq manzil`,
-    'lead.location_label':'Joylashuv','lead.location_optional':'(ixtiyoriy)',
+    'lead.phone':'Telefon *','lead.phone2':'Zaxira raqam','lead.client_name':'Mijoz ismi *','lead.branch':'Filial *',
+    'lead.short_address':'Olib ketish manzili','lead.full_address':`Toʻliq manzil`,
+    'lead.delivery_addr_differs':'Yetkazib berish manzili boshqa','lead.delivery_addr_label':'Yetkazib berish manzili',
+    'lead.delivery_location_label':'Yetkazib berish joylashuvi',
+    'lead.location_label':'Olib ketish joylashuvi','lead.location_optional':'(ixtiyoriy)',
     'lead.location_btn':'📍 Belgilash','lead.location_update':'🔄 Yangilash',
     'lead.location_none':`Koʻrsatilmagan`,'lead.map_my':'📍 Mening yerim',
     'lead.map_drag':'Belgi bosing yoki sudrang','lead.map_done':'✅ Tayyor',
@@ -1795,7 +1881,9 @@ const _i18n = {
     'pickup.date_lbl':'Olib ketish sanasi','pickup.date_today':'📅 Bugun','pickup.date_tomorrow':'📅 Ertaga','pickup.date_pick':'🗓 Sana',
     'pickup.time_lbl':'Olib ketish vaqti','pickup.time_morning':'🌅 Tushgacha (9:00–13:00)','pickup.time_evening':'🌆 Tushdan keyin (13:00–20:00)','pickup.time_custom':'⏰ Davr','pickup.time_from':'Dan','pickup.time_to':'Gacha',
     'or.title':'📦 Yangi buyurtma','or.phone':'Telefon *','or.client_name':'Mijoz ismi *','or.branch':'Filial *',
-    'or.short_addr':'Qisqa manzil','or.address':`Toʻliq manzil`,'or.location':'Joylashuv','or.location_optional':'(ixtiyoriy)',
+    'or.short_addr':'Olib ketish manzili','or.address':`Toʻliq manzil`,'or.location':'Olib ketish joylashuvi','or.location_optional':'(ixtiyoriy)',
+    'or.delivery_addr_differs':'Yetkazib berish manzili boshqa','or.delivery_addr_label':'Yetkazib berish manzili',
+    'or.delivery_location_label':'Yetkazib berish joylashuvi',
     'or.service_type':'Xizmat turi','or.std':'📦 Standart','or.express':'⚡ Ekspress',
     'or.pickup':`Olib kelish turi`,'or.delivery':`Olib ketish turi`,'or.note':'Izoh *',
     'btn.create_order':'Buyurtma yaratish','or.creating':'Yaratilmoqda…',
@@ -1844,7 +1932,8 @@ const _i18n = {
     'soe.title':'✏️ Buyurtmani tahrirlash',
     'soe.phone':'Telefon','soe.name':'Mijoz ismi',
     'soe.branch_pick':'— tanlash —',
-    'soe.deadline':'Muddat','soe.short_addr':'Qisqa manzil','soe.full_addr':`Toʻliq manzil`,
+    'soe.deadline':'Muddat','soe.short_addr':'Olib ketish manzili','soe.full_addr':`Toʻliq manzil`,
+    'soe.delivery_addr_differs':'Yetkazib berish manzili boshqa','soe.delivery_addr_label':'Yetkazib berish manzili',
     'soe.loc_optional':'(ixtiyoriy)','soe.loc_update':`🔄 Yangilash`,'soe.loc_drag':'Belgi bosing yoki sudrang',
     'soe.svc_type':'Xizmat turi','soe.pickup_disc':`Oʻzi olib kelganda chegirma, %`,
     'soe.delivery_disc':`Oʻzi olib ketganda chegirma, %`,
@@ -2485,10 +2574,12 @@ function _orSetSmsLang(lang) {
 }
 
 function clearOrderForm() {
-  ['or_name','or_phone','or_short_address','or_address','or_note',
-   'or_location','or_location_address','or_lead_id','or_item_count'].forEach(id => {
+  ['or_name','or_phone','or_phone2','or_short_address','or_delivery_address','or_note',
+   'or_location','or_location_address','or_delivery_location','or_delivery_location_address',
+   'or_lead_id','or_item_count'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
+  orSetDeliveryAddrDiffers(false);
   _orSetSmsLang('ru');
   const svc = document.getElementById('or_service'); if (svc) svc.value = '';
   _setOrBranch(currentStaff?.branch || window._BRANCHES?.[0]?.slug || '');
@@ -2505,6 +2596,17 @@ function clearOrderForm() {
   if (_locYmap) { _locYmap.destroy(); _locYmap = null; _locYmarker = null; }
   const addrWrap = document.getElementById('locAddrWrap');
   if (addrWrap) addrWrap.style.display = 'none';
+  const deliveryLocDisp = document.getElementById('orDeliveryLocDisplay'); if (deliveryLocDisp) deliveryLocDisp.textContent = 'Не указана';
+  const deliveryLocBtn = document.getElementById('orDeliveryLocBtn'); if (deliveryLocBtn) deliveryLocBtn.textContent = '📍 Указать';
+  const deliveryLocWrap  = document.getElementById('orDeliveryLocMapWrap');
+  const deliveryLocInner = document.getElementById('orDeliveryLocMapInner');
+  const deliveryLocFsBtn = document.getElementById('orDeliveryLocFsBtn');
+  if (deliveryLocWrap)  { Object.assign(deliveryLocWrap.style,  { display:'none', position:'', inset:'', zIndex:'', margin:'8px 0 0', background:'', padding:'', borderRadius:'' }); }
+  if (deliveryLocInner) { deliveryLocInner.dataset.fs = ''; Object.assign(deliveryLocInner.style, { height:'220px', borderRadius:'10px' }); }
+  if (deliveryLocFsBtn) deliveryLocFsBtn.textContent = '⛶ Во весь экран';
+  if (_orDeliveryLocYmap) { _orDeliveryLocYmap.destroy(); _orDeliveryLocYmap = null; _orDeliveryLocYmarker = null; }
+  const deliveryAddrWrap = document.getElementById('orDeliveryLocAddrWrap');
+  if (deliveryAddrWrap) deliveryAddrWrap.style.display = 'none';
   const od = document.getElementById('orPhoneDrop'); if (od) od.style.display = 'none';
   const dw = document.getElementById('or_dupWarn');  if (dw) dw.style.display = 'none';
   const db = document.getElementById('or_discBadge'); if (db) { db.style.display = 'none'; db.textContent = ''; }
@@ -2522,8 +2624,6 @@ function _openLeadModalNew() {
   if (branchField) branchField.style.display = '';
   const brEl = document.getElementById('ld_branch');
   if (brEl && !brEl.value) _setLdBranch(_normBranchVal(currentStaff?.branch) || window._BRANCHES?.[0]?.slug || '');
-  const addrFullField = document.getElementById('ld_address')?.closest('.field');
-  if (addrFullField) addrFullField.style.display = isAgent ? 'none' : '';
   if (!isAgent) loadAgentOptions();
   document.querySelector('#modalLead .modal-title').textContent = t('lead.new_title');
   document.querySelector('#modalLead .btn-submit').textContent  = t('btn.create_lead');
@@ -2628,7 +2728,7 @@ function _setLocation(lat, lon, addrText) {
   document.getElementById('or_location').value = `${lat},${lon}`;
   document.getElementById('or_location_address').value = addrText || '';
   const yUrl = `https://yandex.uz/maps/?pt=${lon},${lat}&z=16`;
-  const linkLabel = addrText || `${lat}, ${lon}`;
+  const linkLabel = _esc(addrText || `${lat}, ${lon}`);
   document.getElementById('locDisplay').innerHTML =
     `<a href="${yUrl}" target="_blank" style="color:var(--accent);text-decoration:none">📍 ${linkLabel}</a>`;
   const addrWrap = document.getElementById('locAddrWrap');
@@ -2741,6 +2841,128 @@ function pickLocation() {
   }, 600);
 }
 
+function orSetDeliveryAddrDiffers(differs) {
+  const cb = document.getElementById('or_delivery_addr_differs_cb');
+  if (cb) cb.checked = !!differs;
+  const row = document.getElementById('or_delivery_address_row');
+  if (row) row.style.display = differs ? '' : 'none';
+  if (!differs) {
+    const f = document.getElementById('or_delivery_address'); if (f) f.value = '';
+    document.getElementById('or_delivery_location').value = '';
+    document.getElementById('or_delivery_location_address').value = '';
+    document.getElementById('orDeliveryLocDisplay').textContent = 'Не указана';
+    const dw = document.getElementById('orDeliveryLocAddrWrap'); if (dw) dw.style.display = 'none';
+    const mw = document.getElementById('orDeliveryLocMapWrap');  if (mw) mw.style.display = 'none';
+    if (_orDeliveryLocYmap) { _orDeliveryLocYmap.destroy(); _orDeliveryLocYmap = null; _orDeliveryLocYmarker = null; }
+  }
+}
+
+// ── Карта ЗАКАЗА: доставка ───────────────────────────────────────────────────
+let _orDeliveryLocYmap = null, _orDeliveryLocYmarker = null;
+
+function _setOrDeliveryLocation(lat, lon, addrText) {
+  document.getElementById('or_delivery_location').value = `${lat},${lon}`;
+  document.getElementById('or_delivery_location_address').value = addrText || '';
+  const yUrl = `https://yandex.uz/maps/?pt=${lon},${lat}&z=16`;
+  const linkLabel = _esc(addrText || `${lat}, ${lon}`);
+  document.getElementById('orDeliveryLocDisplay').innerHTML =
+    `<a href="${yUrl}" target="_blank" style="color:var(--accent);text-decoration:none">📍 ${linkLabel}</a>`;
+  const addrWrap = document.getElementById('orDeliveryLocAddrWrap');
+  const addrEl   = document.getElementById('orDeliveryLocAddr');
+  if (addrText && !addrText.startsWith('⏳')) {
+    addrEl.textContent = addrText;
+    addrWrap.style.display = 'block';
+  } else if (!addrText) {
+    addrWrap.style.display = 'none';
+  }
+}
+
+async function _orDeliveryLocOnCoordChange(lat, lon) {
+  _setOrDeliveryLocation(lat.toFixed(6), lon.toFixed(6), '⏳ Определяем адрес…');
+  _setOrDeliveryLocation(lat.toFixed(6), lon.toFixed(6), await _reverseGeocode(lat, lon));
+}
+
+function _showOrDeliveryLocYmap(lat, lon) {
+  document.getElementById('orDeliveryLocMapWrap').style.display = 'block';
+  _loadYmaps(() => {
+    if (_orDeliveryLocYmap) {
+      _orDeliveryLocYmap.setCenter([lat, lon], 16);
+      _orDeliveryLocYmarker.geometry.setCoordinates([lat, lon]);
+      setTimeout(() => _orDeliveryLocYmap.container.fitToViewport(), 50);
+      return;
+    }
+    _orDeliveryLocYmap = new ymaps.Map('orDeliveryLocMap', { center: [lat, lon], zoom: 16, controls: ['zoomControl'] });
+    _orDeliveryLocYmarker = new ymaps.Placemark([lat, lon], {}, { draggable: true, preset: 'islands#redDotIcon' });
+    _orDeliveryLocYmap.geoObjects.add(_orDeliveryLocYmarker);
+    _orDeliveryLocYmarker.events.add('dragend', () => {
+      const c = _orDeliveryLocYmarker.geometry.getCoordinates();
+      _orDeliveryLocOnCoordChange(c[0], c[1]);
+    });
+    _orDeliveryLocYmap.events.add('click', e => {
+      const c = e.get('coords');
+      _orDeliveryLocYmarker.geometry.setCoordinates(c);
+      _orDeliveryLocOnCoordChange(c[0], c[1]);
+    });
+  });
+}
+
+function _orDeliveryLocLocateUser() {
+  if (!navigator.geolocation || !_orDeliveryLocYmap) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    const c = [pos.coords.latitude, pos.coords.longitude];
+    _orDeliveryLocYmap.panTo(c, { flying: true });
+    _orDeliveryLocYmarker.geometry.setCoordinates(c);
+    _orDeliveryLocOnCoordChange(c[0], c[1]);
+  }, () => {}, { enableHighAccuracy: true, timeout: 8000 });
+}
+
+function _toggleOrDeliveryLocMapFs() {
+  const wrap  = document.getElementById('orDeliveryLocMapWrap');
+  const inner = document.getElementById('orDeliveryLocMapInner');
+  const btn   = document.getElementById('orDeliveryLocFsBtn');
+  const ready = document.getElementById('orDeliveryLocReadyBtn');
+  const fs = inner.dataset.fs === '1';
+  if (!fs) {
+    inner.dataset.fs = '1';
+    Object.assign(wrap.style,  { position:'fixed', inset:'0', zIndex:'10000', margin:'0', background:'#fff', padding:'44px 0 0', borderRadius:'0' });
+    Object.assign(inner.style, { height:'calc(100vh - 44px)', borderRadius:'0' });
+    btn.textContent = '✕ Закрыть'; Object.assign(btn.style, { background:'#ef4444', color:'#fff', border:'none' });
+    if (ready) ready.style.display = 'block';
+  } else {
+    inner.dataset.fs = '';
+    Object.assign(wrap.style,  { position:'', inset:'', zIndex:'', margin:'', background:'', padding:'', borderRadius:'' });
+    Object.assign(inner.style, { height:'220px', borderRadius:'10px' });
+    btn.textContent = '⛶ Во весь экран'; Object.assign(btn.style, { background:'', color:'', border:'' });
+    if (ready) ready.style.display = 'none';
+  }
+  setTimeout(() => _orDeliveryLocYmap && _orDeliveryLocYmap.container.fitToViewport(), 100);
+}
+
+function pickOrDeliveryLocation() {
+  const existingVal = document.getElementById('or_delivery_location').value;
+  if (existingVal) {
+    const [la, lo] = existingVal.split(',').map(Number);
+    if (!isNaN(la) && !isNaN(lo)) { _showOrDeliveryLocYmap(la, lo); return; }
+  }
+  const [cityLat, cityLon] = _branchCenter('or_branch');
+  _showOrDeliveryLocYmap(cityLat, cityLon);
+  if (!navigator.geolocation) return;
+  setTimeout(() => {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const c = [pos.coords.latitude, pos.coords.longitude];
+        if (_orDeliveryLocYmap) {
+          _orDeliveryLocYmap.panTo(c, { flying: true, duration: 1200 });
+          _orDeliveryLocYmarker.geometry.setCoordinates(c);
+        }
+        _orDeliveryLocOnCoordChange(c[0], c[1]);
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }, 600);
+}
+
 // ── Карта ЛИДА ──────────────────────────────────────────────────────────────
 let _ldLocYmap = null, _ldLocYmarker = null;
 
@@ -2749,7 +2971,7 @@ function _setLdLocation(lat, lon, addrText) {
   document.getElementById('ld_location_address').value = addrText || '';
   const yUrl = `https://yandex.uz/maps/?pt=${lon},${lat}&z=16`;
   document.getElementById('ldLocDisplay').innerHTML =
-    `<a href="${yUrl}" target="_blank" style="color:var(--accent);text-decoration:none">📍 ${addrText || lat+', '+lon}</a>`;
+    `<a href="${yUrl}" target="_blank" style="color:var(--accent);text-decoration:none">📍 ${_esc(addrText || lat+', '+lon)}</a>`;
 }
 
 async function _ldOnCoordChange(lat, lon) {
@@ -2838,6 +3060,120 @@ function ldPickLocation() {
       { enableHighAccuracy: true, timeout: 8000 }
     );
   }, 600);
+}
+
+// ── Карта ЛИДА: доставка ─────────────────────────────────────────────────────
+let _ldDeliveryYmap = null, _ldDeliveryYmarker = null;
+
+function _setLdDeliveryLocation(lat, lon, addrText) {
+  document.getElementById('ld_delivery_location').value = `${lat},${lon}`;
+  document.getElementById('ld_delivery_location_address').value = addrText || '';
+  const yUrl = `https://yandex.uz/maps/?pt=${lon},${lat}&z=16`;
+  document.getElementById('ldDeliveryLocDisplay').innerHTML =
+    `<a href="${yUrl}" target="_blank" style="color:var(--accent);text-decoration:none">📍 ${_esc(addrText || lat+', '+lon)}</a>`;
+}
+
+async function _ldDeliveryOnCoordChange(lat, lon) {
+  _setLdDeliveryLocation(lat.toFixed(6), lon.toFixed(6), '⏳ Определяем адрес…');
+  _setLdDeliveryLocation(lat.toFixed(6), lon.toFixed(6), await _reverseGeocode(lat, lon));
+}
+
+function _showLdDeliveryLocYmap(lat, lon) {
+  document.getElementById('ldDeliveryLocMapWrap').style.display = 'block';
+  _loadYmaps(() => {
+    if (_ldDeliveryYmap) {
+      _ldDeliveryYmap.setCenter([lat, lon], 16);
+      _ldDeliveryYmarker.geometry.setCoordinates([lat, lon]);
+      setTimeout(() => _ldDeliveryYmap.container.fitToViewport(), 50);
+      return;
+    }
+    _ldDeliveryYmap = new ymaps.Map('ldDeliveryLocMap', { center: [lat, lon], zoom: 16, controls: ['zoomControl'] });
+    _ldDeliveryYmarker = new ymaps.Placemark([lat, lon], {}, { draggable: true, preset: 'islands#redDotIcon' });
+    _ldDeliveryYmap.geoObjects.add(_ldDeliveryYmarker);
+    _ldDeliveryYmarker.events.add('dragend', () => {
+      const c = _ldDeliveryYmarker.geometry.getCoordinates();
+      _ldDeliveryOnCoordChange(c[0], c[1]);
+    });
+    _ldDeliveryYmap.events.add('click', e => {
+      const c = e.get('coords');
+      _ldDeliveryYmarker.geometry.setCoordinates(c);
+      _ldDeliveryOnCoordChange(c[0], c[1]);
+    });
+  });
+}
+
+function _ldDeliveryLocateUser() {
+  if (!navigator.geolocation || !_ldDeliveryYmap) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    const c = [pos.coords.latitude, pos.coords.longitude];
+    _ldDeliveryYmap.panTo(c, { flying: true });
+    _ldDeliveryYmarker.geometry.setCoordinates(c);
+    _ldDeliveryOnCoordChange(c[0], c[1]);
+  }, () => {}, { enableHighAccuracy: true, timeout: 8000 });
+}
+
+function _toggleLdDeliveryLocMapFs() {
+  const wrap  = document.getElementById('ldDeliveryLocMapWrap');
+  const inner = document.getElementById('ldDeliveryLocMapInner');
+  const btn   = document.getElementById('ldDeliveryLocFsBtn');
+  const ready = document.getElementById('ldDeliveryLocReadyBtn');
+  const fs = inner.dataset.fs === '1';
+  if (!fs) {
+    inner.dataset.fs = '1';
+    Object.assign(wrap.style,  { position:'fixed', inset:'0', zIndex:'10000', margin:'0', background:'#fff', padding:'44px 0 0', borderRadius:'0' });
+    Object.assign(inner.style, { height:'calc(100vh - 44px)', borderRadius:'0' });
+    btn.textContent = t('lead.map_close'); Object.assign(btn.style, { background:'#ef4444', color:'#fff', border:'none' });
+    if (ready) ready.style.display = 'block';
+  } else {
+    inner.dataset.fs = '';
+    Object.assign(wrap.style,  { position:'', inset:'', zIndex:'', margin:'', background:'', padding:'', borderRadius:'' });
+    Object.assign(inner.style, { height:'220px', borderRadius:'10px' });
+    btn.textContent = t('lead.map_fs'); Object.assign(btn.style, { background:'', color:'', border:'' });
+    if (ready) ready.style.display = 'none';
+  }
+  setTimeout(() => _ldDeliveryYmap && _ldDeliveryYmap.container.fitToViewport(), 100);
+}
+
+function ldPickDeliveryLocation() {
+  const btn = document.getElementById('ldDeliveryLocBtn');
+  if (btn) { btn.textContent = '📍 Обновить'; }
+  const existingVal = document.getElementById('ld_delivery_location').value;
+  if (existingVal) {
+    const [la, lo] = existingVal.split(',').map(Number);
+    if (!isNaN(la) && !isNaN(lo)) { _showLdDeliveryLocYmap(la, lo); return; }
+  }
+  const [cityLat, cityLon] = _branchCenter('ld_branch');
+  _showLdDeliveryLocYmap(cityLat, cityLon);
+  if (!navigator.geolocation) return;
+  setTimeout(() => {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const c = [pos.coords.latitude, pos.coords.longitude];
+        if (_ldDeliveryYmap) {
+          _ldDeliveryYmap.panTo(c, { flying: true, duration: 1200 });
+          _ldDeliveryYmarker.geometry.setCoordinates(c);
+        }
+        _ldDeliveryOnCoordChange(c[0], c[1]);
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }, 600);
+}
+
+function ldSetDeliveryAddrDiffers(differs) {
+  const cb = document.getElementById('ld_delivery_addr_differs_cb');
+  if (cb) cb.checked = !!differs;
+  const row = document.getElementById('ld_delivery_address_row');
+  if (row) row.style.display = differs ? '' : 'none';
+  if (!differs) {
+    const f = document.getElementById('ld_delivery_address'); if (f) f.value = '';
+    document.getElementById('ld_delivery_location').value = '';
+    document.getElementById('ld_delivery_location_address').value = '';
+    const disp = document.getElementById('ldDeliveryLocDisplay'); if (disp) disp.textContent = 'Не указана';
+    const mw = document.getElementById('ldDeliveryLocMapWrap'); if (mw) mw.style.display = 'none';
+    if (_ldDeliveryYmap) { _ldDeliveryYmap.destroy(); _ldDeliveryYmap = null; _ldDeliveryYmarker = null; }
+  }
 }
 
 function _setLdBranch(branch) {
@@ -2973,15 +3309,19 @@ async function submitOrder() {
       body: JSON.stringify({
         first_name: name,
         phone,
+        phone2:       document.getElementById('or_phone2').value.trim() || '',
         service:      document.getElementById('or_service').value || '',
         service_type:  document.getElementById('or_service_type_val')?.value || 'standard',
         pickup_type:   document.getElementById('or_pickup_type_val')?.value || 'courier',
         delivery_type: document.getElementById('or_delivery_type_val')?.value || 'courier',
         branch:       document.getElementById('or_branch').value || currentStaff?.branch || '',
         short_address: document.getElementById('or_short_address').value.trim() || '',
-        address:       document.getElementById('or_address').value.trim() || '',
+        delivery_address:       document.getElementById('or_delivery_address').value.trim() || '',
+        delivery_short_address: document.getElementById('or_delivery_address').value.trim() || '',
         location:         document.getElementById('or_location').value || '',
         location_address: document.getElementById('or_location_address').value || '',
+        delivery_location:         document.getElementById('or_delivery_location').value || '',
+        delivery_location_address: document.getElementById('or_delivery_location_address').value || '',
         note:             document.getElementById('or_note').value.trim() || '',
         pickup_date:      document.getElementById('or_pickup_date')?.value || '',
         pickup_time:      document.getElementById('or_pickup_time')?.value || '',
@@ -4326,10 +4666,12 @@ function openLeadEdit(id) {
   const lead = leadsData.find(l=>l.id===id); if (!lead) return;
   _editLeadId = id;
   document.getElementById('ld_phone').value         = lead.client_phone || '';
+  document.getElementById('ld_phone2').value        = lead.client_phone2|| '';
   document.getElementById('ld_name').value          = lead.client_name  || '';
   _setLdBranch(_normBranchVal(lead.branch) || window._BRANCHES?.[0]?.slug || '');
   document.getElementById('ld_short_address').value = lead.short_address|| '';
-  document.getElementById('ld_address').value       = lead.address      || '';
+  document.getElementById('ld_delivery_address').value = lead.delivery_address || '';
+  ldSetDeliveryAddrDiffers(!!(lead.delivery_address || lead.delivery_short_address));
   document.getElementById('ld_note').value          = lead.note         || '';
   // агент
   const agentIdEl = document.getElementById('ld_agent_id');
@@ -4360,7 +4702,7 @@ function openLeadEdit(id) {
     const [la, lo] = lead.location.split(',').map(Number);
     if (!isNaN(la) && !isNaN(lo)) {
       const yUrl  = `https://yandex.uz/maps/?pt=${lo},${la}&z=16`;
-      const label = lead.location_address || `${la}, ${lo}`;
+      const label = _esc(lead.location_address || `${la}, ${lo}`);
       if (ldLocDisp) ldLocDisp.innerHTML = `<a href="${yUrl}" target="_blank" style="color:var(--accent);text-decoration:none">📍 ${label}</a>`;
       if (ldLocBtn)  ldLocBtn.textContent = t('lead.location_update');
       if (ldLocWrap) {
@@ -4372,6 +4714,24 @@ function openLeadEdit(id) {
     if (ldLocBtn)  { ldLocBtn.textContent = t('lead.location_btn'); ldLocBtn.disabled = false; }
     if (ldLocWrap) ldLocWrap.style.display = 'none';
     if (_ldLocYmap) { _ldLocYmap.destroy(); _ldLocYmap = null; _ldLocYmarker = null; }
+  }
+  // локация доставки
+  document.getElementById('ld_delivery_location').value         = lead.delivery_location         || '';
+  document.getElementById('ld_delivery_location_address').value = lead.delivery_location_address  || '';
+  const ldDeliveryLocDisp = document.getElementById('ldDeliveryLocDisplay');
+  const ldDeliveryLocWrap = document.getElementById('ldDeliveryLocMapWrap');
+  if (lead.delivery_location) {
+    const [dla, dlo] = lead.delivery_location.split(',').map(Number);
+    if (!isNaN(dla) && !isNaN(dlo)) {
+      const yUrl  = `https://yandex.uz/maps/?pt=${dlo},${dla}&z=16`;
+      const label = _esc(lead.delivery_location_address || `${dla}, ${dlo}`);
+      if (ldDeliveryLocDisp) ldDeliveryLocDisp.innerHTML = `<a href="${yUrl}" target="_blank" style="color:var(--accent);text-decoration:none">📍 ${label}</a>`;
+      if (ldDeliveryLocWrap) _showLdDeliveryLocYmap(dla, dlo);
+    }
+  } else {
+    if (ldDeliveryLocDisp) ldDeliveryLocDisp.textContent = 'Не указана';
+    if (ldDeliveryLocWrap) ldDeliveryLocWrap.style.display = 'none';
+    if (_ldDeliveryYmap) { _ldDeliveryYmap.destroy(); _ldDeliveryYmap = null; _ldDeliveryYmarker = null; }
   }
   // Тип ввоза / вывоза
   ldSetPickupType(lead.pickup_type || 'courier');
@@ -4588,9 +4948,11 @@ function openConvertToOrderModal(leadId) {
   // pre-fill order form
   document.getElementById('or_name').value    = lead.client_name  || '';
   document.getElementById('or_phone').value   = lead.client_phone || '';
+  document.getElementById('or_phone2').value  = lead.client_phone2|| '';
   document.getElementById('or_branch').value  = lead.branch       || '';
   document.getElementById('or_short_address').value = lead.short_address || '';
-  document.getElementById('or_address').value       = lead.address       || '';
+  document.getElementById('or_delivery_address').value = lead.delivery_address || '';
+  orSetDeliveryAddrDiffers(!!(lead.delivery_address || lead.delivery_short_address));
   document.getElementById('or_note').value    = lead.note         || '';
   document.getElementById('or_service').value = lead.service      || '';
   orSetPickupType(lead.pickup_type || 'courier');
@@ -4605,10 +4967,22 @@ function openConvertToOrderModal(leadId) {
     const [lat, lon] = lead.location.split(',').map(Number);
     if (!isNaN(lat) && !isNaN(lon)) {
       const yUrl = `https://yandex.uz/maps/?pt=${lon},${lat}&z=16`;
-      const label = lead.location_address || `${lat}, ${lon}`;
+      const label = _esc(lead.location_address || `${lat}, ${lon}`);
       document.getElementById('locDisplay').innerHTML =
         `<a href="${yUrl}" target="_blank" style="color:var(--accent);text-decoration:none">📍 ${label}</a>`;
       _showLocYmap(lat, lon);
+    }
+  }
+  if (lead.delivery_location) {
+    document.getElementById('or_delivery_location').value = lead.delivery_location;
+    document.getElementById('or_delivery_location_address').value = lead.delivery_location_address || '';
+    const [dla, dlo] = lead.delivery_location.split(',').map(Number);
+    if (!isNaN(dla) && !isNaN(dlo)) {
+      const yUrl = `https://yandex.uz/maps/?pt=${dlo},${dla}&z=16`;
+      const label = _esc(lead.delivery_location_address || `${dla}, ${dlo}`);
+      document.getElementById('orDeliveryLocDisplay').innerHTML =
+        `<a href="${yUrl}" target="_blank" style="color:var(--accent);text-decoration:none">📍 ${label}</a>`;
+      _showOrDeliveryLocYmap(dla, dlo);
     }
   }
   _fillPickupDateTime('or', lead.pickup_date || '', lead.pickup_time || '');
@@ -5787,9 +6161,13 @@ async function submitLead(notifyGroup) {
   const body = {
     client_name:   document.getElementById('ld_name').value.trim()||null,
     client_phone:  phone,
+    client_phone2: document.getElementById('ld_phone2').value.trim()||null,
     branch:        document.getElementById('ld_branch').value||null,
     short_address:    document.getElementById('ld_short_address').value.trim()||null,
-    address:          document.getElementById('ld_address').value.trim()||null,
+    delivery_address:       document.getElementById('ld_delivery_address').value.trim()||null,
+    delivery_short_address: document.getElementById('ld_delivery_address').value.trim()||null,
+    delivery_location:         document.getElementById('ld_delivery_location').value||null,
+    delivery_location_address: document.getElementById('ld_delivery_location_address').value||null,
     note:             document.getElementById('ld_note').value.trim()||null,
     volunteer_id:     agentVal ? parseInt(agentVal) : null,
     location:         document.getElementById('ld_location').value||null,
@@ -5883,7 +6261,8 @@ async function saveAgentProfile() {
 
 function _resetLeadModal() {
   _editLeadId = null;
-  ['ld_name','ld_phone','ld_short_address','ld_address','ld_note','ld_location','ld_location_address'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['ld_name','ld_phone','ld_phone2','ld_short_address','ld_delivery_address','ld_note','ld_location','ld_location_address','ld_delivery_location','ld_delivery_location_address'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ldSetDeliveryAddrDiffers(false);
   document.getElementById('ldLocDisplay').textContent = t('lead.location_none');
   const ldWrap  = document.getElementById('ldLocMapWrap');
   const ldInner = document.getElementById('ldLocMapInner');
@@ -5893,6 +6272,14 @@ function _resetLeadModal() {
   if (ldFsBtn) ldFsBtn.textContent = t('lead.map_fs');
   document.getElementById('ldLocBtn').textContent = t('lead.location_btn');
   if (_ldLocYmap) { try { _ldLocYmap.destroy(); } catch(e){} _ldLocYmap = null; _ldLocYmarker = null; }
+  const ldDeliveryDisp = document.getElementById('ldDeliveryLocDisplay'); if (ldDeliveryDisp) ldDeliveryDisp.textContent = 'Не указана';
+  const ldDeliveryWrap = document.getElementById('ldDeliveryLocMapWrap');
+  const ldDeliveryInner = document.getElementById('ldDeliveryLocMapInner');
+  const ldDeliveryFsBtn = document.getElementById('ldDeliveryLocFsBtn');
+  if (ldDeliveryWrap)  { Object.assign(ldDeliveryWrap.style,  { display:'none', position:'', inset:'', zIndex:'', margin:'', background:'', padding:'', borderRadius:'' }); }
+  if (ldDeliveryInner) { ldDeliveryInner.dataset.fs = ''; Object.assign(ldDeliveryInner.style, { height:'220px', borderRadius:'10px' }); }
+  if (ldDeliveryFsBtn) ldDeliveryFsBtn.textContent = t('lead.map_fs');
+  if (_ldDeliveryYmap) { try { _ldDeliveryYmap.destroy(); } catch(e){} _ldDeliveryYmap = null; _ldDeliveryYmarker = null; }
   _setLdBranch('');
   const dupW = document.getElementById('ld_dupWarn'); if (dupW) dupW.style.display='none';
   ['ac_ld','ac_ld_name'].forEach(id=>{ const d=document.getElementById(id); if(d) d.style.display='none'; });
@@ -5911,10 +6298,13 @@ function _applyLeadsFormI18n() {
   const _p = (id, txt) => { const el=document.getElementById(id); if(el) el.placeholder=txt; };
   // field labels
   _s('ldPhoneLabel', t('lead.phone'));
+  _s('ldPhone2Label', t('lead.phone2'));
   _s('ldNameLabel', t('lead.client_name'));
   _s('ldBranchLabel', t('lead.branch'));
   _s('ldShortAddrLabel', t('lead.short_address'));
-  _s('ldFullAddrLabel', t('lead.full_address'));
+  _s('ldDeliveryAddrToggleLabel', t('lead.delivery_addr_differs'));
+  _s('ldDeliveryAddrLabel', t('lead.delivery_addr_label'));
+  _s('ldDeliveryLocationLabel', t('lead.delivery_location_label'));
   _s('ldLocationLabel', t('lead.location_label') + ' ');
   _s('ldLocationOptional', t('lead.location_optional'));
   _s('ldPickupLabel', t('lead.pickup'));
@@ -5934,7 +6324,6 @@ function _applyLeadsFormI18n() {
   // placeholders
   _p('ld_name', _lang==='uz'?'Alisher':'Алишер');
   _p('ld_short_address', _lang==='uz'?'1-xonadon, 12-uy':'1-кв, 12-дом');
-  _p('ld_address', _lang==='uz'?'Navoiy sh., Navoiy k. 12':'г. Навои, ул. Навои 12');
   _p('ld_note', t('lead.note_ph'));
   // map buttons
   _s('ldLocReadyBtn', t('lead.map_done'));
@@ -6177,13 +6566,16 @@ function _applySoeI18n() {
   const _s = (id, txt) => { const el=document.getElementById(id); if(el) el.textContent=txt; };
   _s('soeTitle',            t('soe.title'));
   _s('soePhoneLabel',       t('soe.phone'));
+  _s('soePhone2Label',      t('lead.phone2'));
   _s('soeNameLabel',        t('soe.name'));
   _s('soeBranchLabel',      t('lead.branch_lbl'));
   _s('soeBranchPick',       t('soe.branch_pick'));
   renderSoeBranchOptions();
   _s('soeDeadlineLabel',    t('soe.deadline'));
   _s('soeShortAddrLabel',   t('soe.short_addr'));
-  _s('soeFullAddrLabel',    t('soe.full_addr'));
+  _s('soeDeliveryAddrToggleLabel', t('soe.delivery_addr_differs'));
+  _s('soeDeliveryAddrLabel',       t('soe.delivery_addr_label'));
+  _s('soeDeliveryLocationLabel',   t('or.delivery_location_label'));
   _s('soeLocLabel',         t('or.location'));
   _s('soeLocOptional',      t('soe.loc_optional'));
   _s('soeLocBtn',           t('lead.location_btn'));
@@ -6231,10 +6623,13 @@ function _applyOrderFormI18n() {
   const _s = (id, txt) => { const el=document.getElementById(id); if(el) el.textContent=txt; };
   _s('orModalTitle',       t('or.title'));
   _s('orPhoneLabel',       t('or.phone'));
+  _s('orPhone2Label',      t('lead.phone2'));
   _s('orNameLabel',        t('or.client_name'));
   _s('orBranchLabel',      t('or.branch'));
   _s('orShortAddrLabel',   t('or.short_addr'));
-  _s('orAddrLabel',        t('or.address'));
+  _s('orDeliveryAddrToggleLabel', t('or.delivery_addr_differs'));
+  _s('orDeliveryAddrLabel',       t('or.delivery_addr_label'));
+  _s('orDeliveryLocationLabel',   t('or.delivery_location_label'));
   _s('orLocationLabel',    t('or.location'));
   _s('orLocationOptional', t('or.location_optional'));
   _s('orSvcTypeLabel',     t('or.service_type'));
@@ -6259,7 +6654,6 @@ function _applyOrderFormI18n() {
   const _p = (id, txt) => { const el=document.getElementById(id); if(el) el.placeholder=txt; };
   _p('or_name',          t('or.name_ph'));
   _p('or_short_address', t('or.short_addr_ph'));
-  _p('or_address',       t('or.address_ph'));
   _p('or_note',          t('lead.note_ph'));
   // location display / button
   const locDisp = document.getElementById('locDisplay');
@@ -7209,7 +7603,6 @@ function acSelect(idx, dropId, prefix) {
     const n  = document.getElementById('or_name');          if(n)  n.value  = fullName;
     const p  = document.getElementById('or_phone');         if(p)  p.value  = c.phone;
     const sa = document.getElementById('or_short_address'); if(sa) sa.value = c.short_address || '';
-    const a  = document.getElementById('or_address');       if(a)  a.value  = c.address || '';
     const db = document.getElementById('or_discBadge');
     if (db) {
       if (c.discount_category === 'pensioner' || c.discount_category === 'disabled') {
@@ -7226,7 +7619,6 @@ function acSelect(idx, dropId, prefix) {
     const n  = document.getElementById('ld_name');          if(n)  n.value  = fullName;
     const p  = document.getElementById('ld_phone');         if(p)  p.value  = c.phone;
     const sa = document.getElementById('ld_short_address'); if(sa) sa.value = c.short_address || '';
-    const a  = document.getElementById('ld_address');       if(a)  a.value  = c.address || '';
   } else if (prefix === 'nc') {
     const n  = document.getElementById('nc_name');  if(n)  n.value  = fullName;
     const p  = document.getElementById('nc_phone'); if(p)  p.value  = c.phone;
@@ -9976,10 +10368,12 @@ function soNewOrderForClient() {
   setTimeout(() => {
     document.getElementById('or_name').value  = name;
     document.getElementById('or_phone').value = o.client_phone || '';
+    document.getElementById('or_phone2').value = o.client_phone2 || '';
     const br = document.getElementById('or_branch');
     if (br && o.branch) br.value = o.branch;
     document.getElementById('or_short_address').value = o.short_address || '';
-    document.getElementById('or_address').value       = o.address || '';
+    document.getElementById('or_delivery_address').value = o.delivery_address || '';
+    orSetDeliveryAddrDiffers(!!(o.delivery_address || o.delivery_short_address));
     const locEl     = document.getElementById('or_location');
     const locAddrEl = document.getElementById('or_location_address');
     if (locEl)     locEl.value     = o.location || '';
@@ -9988,7 +10382,7 @@ function soNewOrderForClient() {
       const [lat, lon] = o.location.split(',').map(Number);
       if (!isNaN(lat) && !isNaN(lon)) {
         const yUrl  = `https://yandex.uz/maps/?pt=${lon},${lat}&z=16`;
-        const label = o.location_address || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+        const label = _esc(o.location_address || `${lat.toFixed(4)}, ${lon.toFixed(4)}`);
         document.getElementById('locDisplay').innerHTML =
           `<a href="${yUrl}" target="_blank" style="color:var(--accent);text-decoration:none">📍 ${label}</a>`;
         _showLocYmap(lat, lon);
@@ -10003,6 +10397,18 @@ function soNewOrderForClient() {
         if (_locYmap) { _locYmap.setCenter(c, 16); _locYmarker.geometry.setCoordinates(c); }
         _locOnCoordChange(c[0], c[1]);
       }, () => {}, { enableHighAccuracy: true, timeout: 8000 });
+    }
+    if (o.delivery_location) {
+      document.getElementById('or_delivery_location').value = o.delivery_location;
+      document.getElementById('or_delivery_location_address').value = o.delivery_location_address || '';
+      const [dlat, dlon] = o.delivery_location.split(',').map(Number);
+      if (!isNaN(dlat) && !isNaN(dlon)) {
+        const yUrl  = `https://yandex.uz/maps/?pt=${dlon},${dlat}&z=16`;
+        const label = _esc(o.delivery_location_address || `${dlat.toFixed(4)}, ${dlon.toFixed(4)}`);
+        document.getElementById('orDeliveryLocDisplay').innerHTML =
+          `<a href="${yUrl}" target="_blank" style="color:var(--accent);text-decoration:none">📍 ${label}</a>`;
+        _showOrDeliveryLocYmap(dlat, dlon);
+      }
     }
     _applyOrderFormI18n();
     openModal('modalOrder');
@@ -10755,17 +11161,30 @@ function staffOpenOrderEdit() {
   const fullName = [o.client_first_name, o.client_last_name].filter(Boolean).join(' ');
   document.getElementById('soe_name').value          = fullName || '';
   document.getElementById('soe_phone').value         = o.client_phone    || '';
+  document.getElementById('soe_phone2').value        = o.client_phone2   || '';
   document.getElementById('soe_branch').value        = o.branch          || '';
   document.getElementById('soe_short_address').value = o.short_address   || '';
   document.getElementById('soe_deadline').value      = o.deadline        ? o.deadline.substring(0,10) : '';
-  document.getElementById('soe_address').value       = o.address         || '';
+  document.getElementById('soe_delivery_address').value = o.delivery_address || '';
+  document.getElementById('soe_delivery_location').value         = o.delivery_location         || '';
+  document.getElementById('soe_delivery_location_address').value = o.delivery_location_address || '';
+  soeSetDeliveryAddrDiffers(!!(o.delivery_address || o.delivery_short_address));
+  const deliveryLocDisplay = document.getElementById('soeDeliveryLocDisplay');
+  if (o.delivery_location && o.delivery_location.includes(',')) {
+    const [_dla, _dlo] = o.delivery_location.split(',');
+    deliveryLocDisplay.innerHTML = `<a href="#" onclick="openMapChoice('${_dla.trim()}','${_dlo.trim()}');return false" style="color:var(--accent)">📍 ${_esc(o.delivery_location_address || o.delivery_location)}</a>`;
+    const dla = parseFloat(_dla), dlo = parseFloat(_dlo);
+    if (!isNaN(dla)) { setTimeout(() => _showSoeDeliveryYmap(dla, dlo), 150); }
+  } else if (deliveryLocDisplay) {
+    deliveryLocDisplay.textContent = 'Не указана';
+  }
   document.getElementById('soe_note').value          = o.note            || '';
   document.getElementById('soe_location').value          = o.location          || '';
   document.getElementById('soe_location_address').value  = o.location_address  || '';
   const locDisplay = document.getElementById('soe_loc_display');
   if (o.location && o.location.includes(',')) {
     const [_la, _lo] = o.location.split(',');
-    locDisplay.innerHTML = `<a href="#" onclick="openMapChoice('${_la.trim()}','${_lo.trim()}');return false" style="color:var(--accent)">📍 ${o.location_address || o.location}</a>`;
+    locDisplay.innerHTML = `<a href="#" onclick="openMapChoice('${_la.trim()}','${_lo.trim()}');return false" style="color:var(--accent)">📍 ${_esc(o.location_address || o.location)}</a>`;
     const la = parseFloat(_la), lo = parseFloat(_lo);
     if (!isNaN(la)) { setTimeout(() => _showSoeYmap(la, lo), 150); }
   } else {
@@ -10813,6 +11232,13 @@ function staffCloseOrderEdit() {
   if (btn)   { btn.textContent = t('lead.map_fs'); }
   const soeLocBtn = document.getElementById('soeLocBtn');
   if (soeLocBtn) soeLocBtn.textContent = t('lead.location_btn');
+  if (_soeDeliveryYmap) { _soeDeliveryYmap.destroy(); _soeDeliveryYmap = null; _soeDeliveryYmarker = null; }
+  const dWrap  = document.getElementById('soeDeliveryLocMapWrap');
+  const dInner = document.getElementById('soeDeliveryLocMapInner');
+  const dBtn   = document.getElementById('soeDeliveryFsBtn');
+  if (dWrap)  { Object.assign(dWrap.style,  { display:'none', position:'', inset:'', zIndex:'', margin:'8px 0 0', background:'', padding:'', borderRadius:'' }); }
+  if (dInner) { dInner.dataset.fs = ''; Object.assign(dInner.style, { height:'220px', borderRadius:'10px' }); }
+  if (dBtn)   { dBtn.textContent = t('lead.map_fs'); }
   document.getElementById('staffOrderEditOverlay').style.display = 'none';
 }
 
@@ -10919,7 +11345,7 @@ async function _soeOnCoordChange(lat, lon) {
   const addr = await _reverseGeocode(lat, lon).catch(() => `${la}, ${lo}`);
   document.getElementById('soe_location_address').value = addr;
   document.getElementById('soe_loc_display').innerHTML =
-    `<a href="#" onclick="openMapChoice('${la}','${lo}');return false" style="color:var(--accent)">📍 ${addr}</a>`;
+    `<a href="#" onclick="openMapChoice('${la}','${lo}');return false" style="color:var(--accent)">📍 ${_esc(addr)}</a>`;
 }
 
 function _soeLocateUser() {
@@ -10980,6 +11406,119 @@ function staffPickLocation() {
     );
   }, 600);
 }
+
+function soeSetDeliveryAddrDiffers(differs) {
+  const cb = document.getElementById('soe_delivery_addr_differs_cb');
+  if (cb) cb.checked = !!differs;
+  const row = document.getElementById('soe_delivery_address_row');
+  if (row) row.style.display = differs ? '' : 'none';
+  if (!differs) {
+    const f = document.getElementById('soe_delivery_address'); if (f) f.value = '';
+    document.getElementById('soe_delivery_location').value = '';
+    document.getElementById('soe_delivery_location_address').value = '';
+    const disp = document.getElementById('soeDeliveryLocDisplay'); if (disp) disp.textContent = 'Не указана';
+    const mw = document.getElementById('soeDeliveryLocMapWrap'); if (mw) mw.style.display = 'none';
+    if (_soeDeliveryYmap) { _soeDeliveryYmap.destroy(); _soeDeliveryYmap = null; _soeDeliveryYmarker = null; }
+  }
+}
+
+let _soeDeliveryYmap = null, _soeDeliveryYmarker = null;
+
+function _showSoeDeliveryYmap(lat, lon) {
+  document.getElementById('soeDeliveryLocMapWrap').style.display = 'block';
+  _loadYmaps(() => {
+    if (_soeDeliveryYmap) {
+      _soeDeliveryYmap.setCenter([lat, lon], 16);
+      _soeDeliveryYmarker.geometry.setCoordinates([lat, lon]);
+      setTimeout(() => _soeDeliveryYmap.container.fitToViewport(), 50);
+      return;
+    }
+    _soeDeliveryYmap = new ymaps.Map('soeDeliveryLocMap', { center: [lat, lon], zoom: 16, controls: ['zoomControl'] });
+    _soeDeliveryYmarker = new ymaps.Placemark([lat, lon], {}, { draggable: true, preset: 'islands#redDotIcon' });
+    _soeDeliveryYmap.geoObjects.add(_soeDeliveryYmarker);
+    _soeDeliveryYmarker.events.add('dragend', () => {
+      const c = _soeDeliveryYmarker.geometry.getCoordinates();
+      _soeDeliveryOnCoordChange(c[0], c[1]);
+    });
+    _soeDeliveryYmap.events.add('click', e => {
+      const c = e.get('coords');
+      _soeDeliveryYmarker.geometry.setCoordinates(c);
+      _soeDeliveryOnCoordChange(c[0], c[1]);
+    });
+  });
+}
+
+async function _soeDeliveryOnCoordChange(lat, lon) {
+  const la = lat.toFixed(6), lo = lon.toFixed(6);
+  document.getElementById('soe_delivery_location').value = `${la},${lo}`;
+  document.getElementById('soe_delivery_location_address').value = '⏳ Определяем адрес…';
+  document.getElementById('soeDeliveryLocDisplay').innerHTML =
+    `<a href="#" onclick="openMapChoice('${la}','${lo}');return false" style="color:var(--accent)">📍 ⏳ Определяем адрес…</a>`;
+  const addr = await _reverseGeocode(lat, lon).catch(() => `${la}, ${lo}`);
+  document.getElementById('soe_delivery_location_address').value = addr;
+  document.getElementById('soeDeliveryLocDisplay').innerHTML =
+    `<a href="#" onclick="openMapChoice('${la}','${lo}');return false" style="color:var(--accent)">📍 ${_esc(addr)}</a>`;
+}
+
+function _soeDeliveryLocateUser() {
+  if (!navigator.geolocation || !_soeDeliveryYmap) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    const c = [pos.coords.latitude, pos.coords.longitude];
+    _soeDeliveryYmap.panTo(c, { flying: true });
+    _soeDeliveryYmarker.geometry.setCoordinates(c);
+    _soeDeliveryOnCoordChange(c[0], c[1]);
+  }, () => {}, { enableHighAccuracy: true, timeout: 8000 });
+}
+
+function _toggleSoeDeliveryMapFs() {
+  const wrap  = document.getElementById('soeDeliveryLocMapWrap');
+  const inner = document.getElementById('soeDeliveryLocMapInner');
+  const btn   = document.getElementById('soeDeliveryFsBtn');
+  const ready = document.getElementById('soeDeliveryReadyBtn');
+  const fs = inner.dataset.fs === '1';
+  if (!fs) {
+    inner.dataset.fs = '1';
+    Object.assign(wrap.style,  { position:'fixed', inset:'0', zIndex:'10000', margin:'0', background:'#fff', padding:'44px 0 0', borderRadius:'0' });
+    Object.assign(inner.style, { height:'calc(100vh - 44px)', borderRadius:'0' });
+    btn.textContent = t('lead.map_close') || '✕ Закрыть'; Object.assign(btn.style, { background:'#ef4444', color:'#fff', border:'none' });
+    if (ready) ready.style.display = 'block';
+  } else {
+    inner.dataset.fs = '';
+    Object.assign(wrap.style,  { position:'', inset:'', zIndex:'', margin:'8px 0 0', background:'', padding:'', borderRadius:'' });
+    Object.assign(inner.style, { height:'220px', borderRadius:'10px' });
+    btn.textContent = t('lead.map_fs'); Object.assign(btn.style, { background:'', color:'', border:'' });
+    if (ready) ready.style.display = 'none';
+  }
+  setTimeout(() => _soeDeliveryYmap && _soeDeliveryYmap.container.fitToViewport(), 100);
+}
+
+function pickSoeDeliveryLocation() {
+  const btn = document.getElementById('soeDeliveryLocBtn');
+  if (btn) { btn.textContent = '📍 Обновить'; }
+  const existLoc = document.getElementById('soe_delivery_location').value;
+  if (existLoc) {
+    const [la, lo] = existLoc.split(',').map(Number);
+    if (!isNaN(la) && !isNaN(lo)) { _showSoeDeliveryYmap(la, lo); return; }
+  }
+  const [cityLat, cityLon] = _branchCenter('soe_branch');
+  _showSoeDeliveryYmap(cityLat, cityLon);
+  if (!navigator.geolocation) return;
+  setTimeout(() => {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const c = [pos.coords.latitude, pos.coords.longitude];
+        if (_soeDeliveryYmap) {
+          _soeDeliveryYmap.panTo(c, { flying: true, duration: 1200 });
+          _soeDeliveryYmarker.geometry.setCoordinates(c);
+        }
+        _soeDeliveryOnCoordChange(c[0], c[1]);
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }, 600);
+}
+
 async function staffSaveOrderEdit() {
   const newStatus = document.getElementById('soe_new_status')?.value || '';
   const curStatus = _sOrderCache?.status || '';
@@ -11017,11 +11556,15 @@ async function _doSaveOrderEdit(newStatus, reason) {
   const body = {
     client_first_name: nameVal || null,
     client_phone:      document.getElementById('soe_phone').value.trim()          || null,
+    client_phone2:     document.getElementById('soe_phone2').value.trim()         || null,
     branch:            document.getElementById('soe_branch').value                || null,
     short_address:     document.getElementById('soe_short_address').value.trim()  || null,
-    address:           document.getElementById('soe_address').value.trim()        || null,
+    delivery_address:       document.getElementById('soe_delivery_address').value.trim() || null,
+    delivery_short_address: document.getElementById('soe_delivery_address').value.trim() || null,
     location:          document.getElementById('soe_location').value              || null,
     location_address:  document.getElementById('soe_location_address').value      || null,
+    delivery_location:         document.getElementById('soe_delivery_location').value         || null,
+    delivery_location_address: document.getElementById('soe_delivery_location_address').value || null,
     note:              document.getElementById('soe_note').value.trim()           || null,
     deadline:          document.getElementById('soe_deadline').value              || null,
     service_type:      _newServiceType,
@@ -15891,6 +16434,10 @@ function staffChatSend() {
       <div id="soePhoneLabel" class="field-label">Телефон</div>
       <div class="field-inp" style="flex:1"><input id="soe_phone" type="tel" inputmode="tel" placeholder="+998 90 000-00-00"></div>
     </div>
+    <div class="field-inline" style="margin-bottom:12px">
+      <div id="soePhone2Label" class="field-label">Запасной номер</div>
+      <div class="field-inp" style="flex:1"><input id="soe_phone2" type="tel" inputmode="tel" placeholder="+998 90 000-00-00 (необязательно)"></div>
+    </div>
     <div class="field">
       <div id="soeNameLabel" class="field-label">Имя клиента</div>
       <div class="field-inp"><input id="soe_name" placeholder="Алишер" autocomplete="off"></div>
@@ -15911,35 +16458,69 @@ function staffChatSend() {
         </div>
       </div>
     </div>
-    <div class="field-inline" style="margin-bottom:12px">
-      <div id="soeShortAddrLabel" class="field-label">Кр. адрес</div>
-      <div class="field-inp" style="flex:1"><input id="soe_short_address" placeholder="Навои, 1-кв"></div>
-    </div>
-    <div class="field">
-      <div id="soeFullAddrLabel" class="field-label">Полный адрес</div>
-      <div class="field-inp"><input id="soe_address" placeholder="г. Навои, ул. Навои 12"></div>
-    </div>
-    <div class="field">
-      <div class="field-label" style="display:flex;align-items:center;justify-content:space-between">
-        <span><span id="soeLocLabel">Локация</span> <span id="soeLocOptional" style="color:var(--text3);font-weight:400">(необязательно)</span></span>
-        <button onclick="staffPickLocation()" id="soeLocBtn" style="font-size:13px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📍 Указать</button>
+    <!-- Блок: Адрес вывоза -->
+    <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;margin-bottom:12px">
+      <div class="field-inline" style="margin-bottom:0">
+        <div id="soeShortAddrLabel" class="field-label">Адрес вывоза</div>
+        <div class="field-inp" style="flex:1"><input id="soe_short_address" placeholder="Навои, 1-кв"></div>
       </div>
-      <div id="soe_loc_display" style="font-size:13px;color:var(--text2);padding:4px 0">Не указана</div>
-      <div id="soeLocMapWrap" style="display:none;margin-top:8px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-          <button type="button" id="soeMeBtn" onclick="_soeLocateUser()" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">📍 Моё место</button>
-          <span id="soeDragHint" style="font-size:11px;color:var(--text3)">Нажмите или перетащите метку</span>
-          <div style="display:flex;gap:4px">
-            <button type="button" id="soeReadyBtn" onclick="_toggleSoeMapFs()" style="display:none;font-size:12px;padding:4px 10px;background:#16a34a;border:none;border-radius:8px;cursor:pointer;color:#fff;font-weight:600">✅ Готово</button>
-            <button type="button" onclick="_toggleSoeMapFs()" id="soeFsBtn" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">⛶ Во весь экран</button>
+      <div style="margin-top:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span><span id="soeLocLabel">Локация вывоза</span> <span id="soeLocOptional" style="color:var(--text3);font-weight:400">(необязательно)</span></span>
+          <button onclick="staffPickLocation()" id="soeLocBtn" style="font-size:13px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📍 Указать</button>
+        </div>
+        <div id="soe_loc_display" style="font-size:13px;color:var(--text2);padding:4px 0">Не указана</div>
+        <div id="soeLocMapWrap" style="display:none;margin-top:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <button type="button" id="soeMeBtn" onclick="_soeLocateUser()" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">📍 Моё место</button>
+            <span id="soeDragHint" style="font-size:11px;color:var(--text3)">Нажмите или перетащите метку</span>
+            <div style="display:flex;gap:4px">
+              <button type="button" id="soeReadyBtn" onclick="_toggleSoeMapFs()" style="display:none;font-size:12px;padding:4px 10px;background:#16a34a;border:none;border-radius:8px;cursor:pointer;color:#fff;font-weight:600">✅ Готово</button>
+              <button type="button" onclick="_toggleSoeMapFs()" id="soeFsBtn" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">⛶ Во весь экран</button>
+            </div>
+          </div>
+          <div id="soeLocMapInner" style="border-radius:10px;overflow:hidden;height:220px">
+            <div id="soeLocMap" style="width:100%;height:100%"></div>
           </div>
         </div>
-        <div id="soeLocMapInner" style="border-radius:10px;overflow:hidden;height:220px">
-          <div id="soeLocMap" style="width:100%;height:100%"></div>
+        <input type="hidden" id="soe_location">
+        <input type="hidden" id="soe_location_address">
+      </div>
+    </div>
+    <!-- Блок: Адрес доставки -->
+    <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="soe_delivery_addr_differs_cb" onchange="soeSetDeliveryAddrDiffers(this.checked)" style="width:18px;height:18px;flex-shrink:0">
+        <span id="soeDeliveryAddrToggleLabel" style="font-size:14px;font-weight:600">Адрес доставки другой</span>
+      </label>
+      <div id="soe_delivery_address_row" style="display:none;margin-top:10px">
+        <div class="field-inline" style="margin-bottom:0">
+          <div class="field-label" id="soeDeliveryAddrLabel">Адрес доставки</div>
+          <div class="field-inp" style="flex:1"><input id="soe_delivery_address" placeholder="Например: 14-5-1"></div>
+        </div>
+        <div style="margin-top:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span id="soeDeliveryLocationLabel">Локация доставки</span><span style="color:var(--text3);font-weight:400;margin-left:4px">(необязательно)</span>
+            <button onclick="pickSoeDeliveryLocation()" id="soeDeliveryLocBtn" type="button" style="font-size:13px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📍 Указать</button>
+          </div>
+          <div id="soeDeliveryLocDisplay" style="font-size:13px;color:var(--text2);padding:4px 0">Не указана</div>
+          <div id="soeDeliveryLocMapWrap" style="display:none;margin-top:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <button type="button" onclick="_soeDeliveryLocateUser()" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">📍 Моё место</button>
+              <span style="font-size:11px;color:var(--text3)">Нажмите или перетащите метку</span>
+              <div style="display:flex;gap:4px">
+                <button type="button" id="soeDeliveryReadyBtn" onclick="_toggleSoeDeliveryMapFs()" style="display:none;font-size:12px;padding:4px 10px;background:#16a34a;border:none;border-radius:8px;cursor:pointer;color:#fff;font-weight:600">✅ Готово</button>
+                <button type="button" onclick="_toggleSoeDeliveryMapFs()" id="soeDeliveryFsBtn" style="font-size:12px;padding:4px 10px;background:var(--bg2,#f2f2f7);border:1px solid var(--sep,#e5e7eb);border-radius:8px;cursor:pointer;color:var(--text)">⛶ Во весь экран</button>
+              </div>
+            </div>
+            <div id="soeDeliveryLocMapInner" style="border-radius:10px;overflow:hidden;height:220px">
+              <div id="soeDeliveryLocMap" style="width:100%;height:100%"></div>
+            </div>
+          </div>
+          <input type="hidden" id="soe_delivery_location">
+          <input type="hidden" id="soe_delivery_location_address">
         </div>
       </div>
-      <input type="hidden" id="soe_location">
-      <input type="hidden" id="soe_location_address">
     </div>
     <div class="field">
       <div id="soeSvcTypeLabel" class="field-label">Тип обслуживания</div>
