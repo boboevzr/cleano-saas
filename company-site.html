@@ -1544,7 +1544,7 @@
     border: 1.5px solid var(--line);
     margin-bottom: 4px;
   }
-  #orderMap{
+  #orderMap, #deliveryMap{
     width:100%; height: 220px;
   }
   .map-hint{
@@ -1939,7 +1939,7 @@
     height: 220px;
     margin-top: 4px;
   }
-  #orderMap{ width:100%; height:100%; }
+  #orderMap, #deliveryMap{ width:100%; height:100%; }
   .map-label-row{
     display:flex; flex-wrap:wrap; align-items:center;
     gap:10px; margin-bottom:10px;
@@ -3612,25 +3612,58 @@
         </div>
 
         <div class="field">
-          <label data-i18n="order.branch">Филиал</label>
-          <div class="pill-group" id="branchGroup"></div>
+          <label for="dPhone2" data-i18n="order.phone2">Запасной номер (необязательно)</label>
+          <input type="tel" id="dPhone2" placeholder="+998 90 123-45-67">
         </div>
 
-        <div class="field">
-          <label for="dAddress" data-i18n="order.addressLabel">Адрес (улица, дом, квартира)</label>
-          <input type="text" id="dAddress" placeholder="ул. Алишера Навои, дом 12, кв. 5" data-i18n-placeholder="order.addressPlaceholder" required>
+        <!-- Блок: Адрес вывоза -->
+        <div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px">
+          <div class="field">
+            <label data-i18n="order.branch">Филиал</label>
+            <div class="pill-group" id="branchGroup"></div>
+          </div>
+
+          <div class="field">
+            <label for="dAddress" data-i18n="order.addressLabel">Адрес (улица, дом, квартира)</label>
+            <input type="text" id="dAddress" placeholder="ул. Алишера Навои, дом 12, кв. 5" data-i18n-placeholder="order.addressPlaceholder" required>
+          </div>
+
+          <div class="field">
+            <div class="map-label-row">
+              <label data-i18n="order.mapLabel">Локация на карте</label>
+              <button type="button" class="btn-locate" id="btnLocate" onclick="locateUser()" data-i18n="order.locateBtn">📍 Определить моё местоположение</button>
+            </div>
+            <div class="map-field">
+              <div id="orderMap"></div>
+            </div>
+            <div class="map-hint" data-i18n="order.mapHint">Перетащите метку на нужное место — координаты сохранятся вместе с заявкой</div>
+            <div id="mapAddrDisplay" style="display:none;font-size:13px;color:#555;margin-top:6px;padding:6px 10px;background:#f2f2f7;border-radius:8px;line-height:1.4"></div>
+          </div>
         </div>
 
-        <div class="field">
-          <div class="map-label-row">
-            <label data-i18n="order.mapLabel">Локация на карте</label>
-            <button type="button" class="btn-locate" id="btnLocate" onclick="locateUser()" data-i18n="order.locateBtn">📍 Определить моё местоположение</button>
+        <!-- Блок: Адрес доставки -->
+        <div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px">
+          <div class="consent-row" style="margin-bottom:0">
+            <input type="checkbox" id="dDeliveryAddrDiffers">
+            <label for="dDeliveryAddrDiffers" data-i18n="order.deliveryAddrDiffers" style="font-size:14px;color:var(--ink,#1f2937);font-weight:600">Адрес доставки другой</label>
           </div>
-          <div class="map-field">
-            <div id="orderMap"></div>
+          <div id="dDeliveryAddrWrap" style="display:none">
+            <div class="field">
+              <label for="dDeliveryAddress" data-i18n="order.deliveryAddressLabel">Адрес доставки</label>
+              <input type="text" id="dDeliveryAddress" placeholder="ул. Алишера Навои, дом 14, кв. 1" data-i18n-placeholder="order.addressPlaceholder">
+            </div>
+            <div class="field">
+              <div class="map-label-row">
+                <label data-i18n="order.deliveryMapLabel">Локация доставки на карте</label>
+                <button type="button" class="btn-locate" id="btnDeliveryLocate" onclick="locateUserDelivery()" data-i18n="order.locateBtn">📍 Определить моё местоположение</button>
+              </div>
+              <div class="map-field">
+                <div id="deliveryMap"></div>
+              </div>
+              <div class="map-hint" data-i18n="order.mapHint">Перетащите метку на нужное место — координаты сохранятся вместе с заявкой</div>
+              <div id="deliveryMapAddrDisplay" style="display:none;font-size:13px;color:#555;margin-top:6px;padding:6px 10px;background:#f2f2f7;border-radius:8px;line-height:1.4"></div>
+            </div>
           </div>
-          <div class="map-hint" data-i18n="order.mapHint">Перетащите метку на нужное место — координаты сохранятся вместе с заявкой</div>
-          <div id="mapAddrDisplay" style="display:none;font-size:13px;color:#555;margin-top:6px;padding:6px 10px;background:#f2f2f7;border-radius:8px;line-height:1.4"></div>
         </div>
 
         <div class="field">

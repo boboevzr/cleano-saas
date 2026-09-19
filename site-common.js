@@ -102,7 +102,10 @@
       'order.tabSimple': 'Быстрая заявка', 'order.tabDetailed': 'Подробная заявка', 'order.submit': 'Отправить заявку',
       'order.branch': 'Филиал', 'order.cityLabel': 'Город / район', 'order.chooseBranchFirst': 'Сначала выберите филиал',
       'order.addressLabel': 'Адрес (улица, дом, квартира)', 'order.addressPlaceholder': 'ул. Алишера Навои, дом 12, кв. 5',
+      'order.phone2': 'Запасной номер (необязательно)',
+      'order.deliveryAddrDiffers': 'Адрес доставки другой', 'order.deliveryAddressLabel': 'Адрес доставки',
       'order.mapLabel': 'Локация на карте',
+      'order.deliveryMapLabel': 'Локация доставки на карте',
       'order.locateBtn': '📍 Определить моё местоположение',
       'order.locating': '⏳ Определяем…',
       'order.mapHint': 'Перетащите метку на нужное место — координаты сохранятся вместе с заявкой',
@@ -320,7 +323,10 @@
       'order.tabSimple': 'Tezkor buyurtma', 'order.tabDetailed': 'Batafsil buyurtma', 'order.submit': 'Buyurtmani yuborish',
       'order.branch': 'Filial', 'order.cityLabel': 'Shahar / tuman', 'order.chooseBranchFirst': 'Avval filialni tanlang',
       'order.addressLabel': "Manzil (ko'cha, uy, kvartira)", 'order.addressPlaceholder': "Alisher Navoiy ko'chasi, 12-uy, 5-kvartira",
+      'order.phone2': "Zaxira raqam (ixtiyoriy)",
+      'order.deliveryAddrDiffers': "Yetkazib berish manzili boshqa", 'order.deliveryAddressLabel': "Yetkazib berish manzili",
       'order.mapLabel': 'Xaritadagi joylashuv',
+      'order.deliveryMapLabel': 'Yetkazib berish joylashuvi (xaritada)',
       'order.locateBtn': '📍 Joylashuvimni aniqlash',
       'order.locating': '⏳ Aniqlanmoqda…',
       'order.mapHint': "Belgini kerakli joyga torting — koordinatalar buyurtma bilan birga saqlanadi",
@@ -1405,6 +1411,10 @@
           if (window._ymapsWaiting) {
             window._ymapsWaiting = false;
             ymaps.ready(initYandexMap);
+          }
+          if (window._ymapsWaitingDelivery) {
+            window._ymapsWaitingDelivery = false;
+            ymaps.ready(initDeliveryYandexMap);
           }
         };
         document.head.appendChild(sc);
@@ -2587,7 +2597,29 @@
     document.body.style.overflow = '';
     // Уничтожаем карту чтобы при следующем открытии создалась в видимом контейнере
     if (yandexMap){ try { yandexMap.destroy(); } catch(e){} yandexMap = null; yandexMarker = null; }
+    if (deliveryYandexMap){ try { deliveryYandexMap.destroy(); } catch(e){} deliveryYandexMap = null; deliveryYandexMarker = null; }
   };
+
+  document.addEventListener('change', e => {
+    if (e.target.id === 'dDeliveryAddrDiffers') {
+      document.getElementById('dDeliveryAddrWrap').style.display = e.target.checked ? '' : 'none';
+      if (!e.target.checked) {
+        document.getElementById('dDeliveryAddress').value = '';
+        _deliveryMapLocationAddress = '';
+        const addrEl = document.getElementById('deliveryMapAddrDisplay');
+        if (addrEl) { addrEl.style.display = 'none'; addrEl.textContent = ''; }
+        if (deliveryYandexMap) { try { deliveryYandexMap.destroy(); } catch(err){} deliveryYandexMap = null; deliveryYandexMarker = null; }
+      } else {
+        setTimeout(() => {
+          if (typeof ymaps !== 'undefined') {
+            if (!deliveryYandexMap) { ymaps.ready(initDeliveryYandexMap); } else { deliveryYandexMap.container.fitToViewport(); }
+          } else {
+            window._ymapsWaitingDelivery = true;
+          }
+        }, 150);
+      }
+    }
+  });
 
   // ── ВКЛАДКИ ──
   tabSimple.addEventListener('click', () => {
@@ -2852,6 +2884,98 @@
     return `${coords[0].toFixed(6)}, ${coords[1].toFixed(6)}`;
   }
 
+  // ── Карта ДОСТАВКИ ──
+  let deliveryYandexMap = null, deliveryYandexMarker = null;
+  let _deliveryMapLocationAddress = '';
+
+  function initDeliveryYandexMap(){
+    const cityCenter = getBranchCenter();
+
+    function createMap(center, zoom){
+      deliveryYandexMap = new ymaps.Map('deliveryMap', {
+        center: center,
+        zoom: zoom,
+        controls: ['zoomControl']
+      });
+      deliveryYandexMarker = new ymaps.Placemark(center, {}, {
+        draggable: true,
+        preset: 'islands#redDotIcon'
+      });
+      deliveryYandexMap.geoObjects.add(deliveryYandexMarker);
+      deliveryYandexMarker.events.add('dragend', () => {
+        const c = deliveryYandexMarker.geometry.getCoordinates();
+        _updateDeliveryMapAddr(c[0], c[1]);
+      });
+      deliveryYandexMap.events.add('click', (e) => {
+        const coords = e.get('coords');
+        deliveryYandexMarker.geometry.setCoordinates(coords);
+        _updateDeliveryMapAddr(coords[0], coords[1]);
+      });
+    }
+
+    createMap(cityCenter, 14);
+
+    if (navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const userCoords = [pos.coords.latitude, pos.coords.longitude];
+          if (distanceKm(userCoords, cityCenter) <= 50){
+            deliveryYandexMap.setCenter(userCoords, 16);
+            deliveryYandexMarker.geometry.setCoordinates(userCoords);
+            _updateDeliveryMapAddr(userCoords[0], userCoords[1]);
+          }
+        },
+        () => {},
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
+      );
+    }
+  }
+
+  function locateUserDelivery(){
+    const btn = document.getElementById('btnDeliveryLocate');
+    if (!navigator.geolocation){
+      showOrderAlert(t('order.geoUnavailable'));
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = t('order.locating');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = [pos.coords.latitude, pos.coords.longitude];
+        if (deliveryYandexMap){
+          deliveryYandexMap.setCenter(coords, 16);
+          deliveryYandexMarker.geometry.setCoordinates(coords);
+          _updateDeliveryMapAddr(coords[0], coords[1]);
+        }
+        btn.disabled = false;
+        btn.textContent = t('order.locateBtn');
+      },
+      () => {
+        btn.disabled = false;
+        btn.textContent = t('order.locateBtn');
+        showOrderAlert(t('order.geoError'));
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+  }
+
+  function getDeliveryMarkerCoords(){
+    if (!deliveryYandexMarker) return '';
+    const coords = deliveryYandexMarker.geometry.getCoordinates();
+    return `${coords[0].toFixed(6)}, ${coords[1].toFixed(6)}`;
+  }
+
+  async function _updateDeliveryMapAddr(lat, lon) {
+    const el = document.getElementById('deliveryMapAddrDisplay');
+    if (!el) return;
+    el.style.display = '';
+    el.textContent = '⏳ Определяем адрес…';
+    const addr = await _reverseGeocodeMap(lat, lon);
+    _deliveryMapLocationAddress = addr;
+    el.textContent = addr ? `📍 ${addr}` : '';
+    if (!addr) el.style.display = 'none';
+  }
+
   let _mapLocationAddress = '';
 
   function _buildAddr(d) {
@@ -2909,6 +3033,11 @@
       document.getElementById('successOrderNum').textContent = data.order_num || '';
       simpleOrderForm.reset();
       detailedOrderForm.reset();
+      document.getElementById('dDeliveryAddrWrap').style.display = 'none';
+      _deliveryMapLocationAddress = '';
+      const deliveryAddrEl = document.getElementById('deliveryMapAddrDisplay');
+      if (deliveryAddrEl) { deliveryAddrEl.style.display = 'none'; deliveryAddrEl.textContent = ''; }
+      if (deliveryYandexMap) { try { deliveryYandexMap.destroy(); } catch(err){} deliveryYandexMap = null; deliveryYandexMarker = null; }
     } catch (err){
       showOrderAlert(err.message);
     } finally {
@@ -2973,10 +3102,20 @@
     const payload = {
       first_name: document.getElementById('dName').value.trim(),
       phone: document.getElementById('dPhone').value.trim(),
+      phone2: document.getElementById('dPhone2').value.trim(),
       branch: selectedBranch,
       address: document.getElementById('dAddress').value.trim(),
+      delivery_address: document.getElementById('dDeliveryAddrDiffers').checked
+        ? document.getElementById('dDeliveryAddress').value.trim()
+        : '',
       location: getMarkerCoords(),
       location_address: _mapLocationAddress || '',
+      delivery_location: document.getElementById('dDeliveryAddrDiffers').checked
+        ? getDeliveryMarkerCoords()
+        : '',
+      delivery_location_address: document.getElementById('dDeliveryAddrDiffers').checked
+        ? (_deliveryMapLocationAddress || '')
+        : '',
       service: serviceName(document.getElementById('dService').value),
       service_type: serviceTypeName(selectedServiceType),
       pickup_date: selectedDateValue,
