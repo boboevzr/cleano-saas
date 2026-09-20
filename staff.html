@@ -4530,7 +4530,7 @@ function openLeadDetail(id) {
           ${code}
           <div class="detail-name">'${lead.client_name||t('lead.no_name')}'${lead.promo_id ? ` <span class="li-badge-promo">${t('promo.badge')}</span>` : ''}</div>
           <div class="detail-phone" style="margin-top:6px;margin-bottom:16px">📞 <a href="tel:${lead.client_phone}">${lead.client_phone}</a> <button onclick="_saveContactFromLead()" title="Сохранить контакт в телефон" style="background:none;border:1px solid var(--sep);border-radius:6px;padding:2px 8px;color:inherit;font-size:12px;font-weight:600;cursor:pointer;vertical-align:middle">${t('so.lbl.save_contact')}</button></div>
-          ${lead.client_phone2 ? `<div class="kv-row"><span class="kv-key">${t('lead.phone2_lbl')}</span><span class="kv-val"><a href="tel:${lead.client_phone2}" style="color:var(--accent);font-weight:600">📞 ${lead.client_phone2}</a></span></div>` : ''}
+          ${lead.client_phone2 ? `<div class="kv-row"><span class="kv-key">${t('lead.phone2_lbl')}</span><span class="kv-val"><a href="tel:${_esc(lead.client_phone2)}" style="color:var(--accent);font-weight:600">📞 ${_esc(lead.client_phone2)}</a></span></div>` : ''}
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px">
           ${!isAgentRole && !isConverted && (lead.assigned_to == null ? Number(lead.created_by) === Number(myId) : isMine) ? `<button onclick="openLeadEdit(${id})" style="background:none;border:1px solid var(--sep);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;color:var(--text2)">✏️</button>` : ''}
@@ -4546,8 +4546,8 @@ function openLeadDetail(id) {
       ${lead.address      ? `<div class="kv-row"><span class="kv-key">${t('lead.addr_lbl')}</span><span class="kv-val">${lead.address}</span></div>` : ''}
       ${!lead.short_address && !lead.address ? `<div class="kv-row"><span class="kv-key">${t('lead.addr_lbl')}</span><span class="kv-val">—</span></div>` : ''}
       ${lead.location ? (() => { const [la,lo]=lead.location.split(','); const yUrl=`https://yandex.uz/maps/?pt=${lo.trim()},${la.trim()}&z=16`; return `<div class="kv-row"><span class="kv-key">${t('lead.location_lbl')}</span><span class="kv-val"><a href="${yUrl}" target="_blank" style="color:var(--accent);font-weight:600">📍 ${lead.location_address||t('lead.open_map')}</a></span></div>`; })() : ''}
-      ${(lead.delivery_address || lead.delivery_short_address) ? `<div class="kv-row"><span class="kv-key">${t('lead.delivery_addr_lbl')}</span><span class="kv-val">${lead.delivery_address || lead.delivery_short_address}</span></div>` : ''}
-      ${lead.delivery_location ? (() => { const [dla,dlo]=lead.delivery_location.split(','); const yUrl=`https://yandex.uz/maps/?pt=${dlo.trim()},${dla.trim()}&z=16`; return `<div class="kv-row"><span class="kv-key">${t('lead.delivery_location_lbl')}</span><span class="kv-val"><a href="${yUrl}" target="_blank" style="color:var(--accent);font-weight:600">📍 ${lead.delivery_location_address||t('lead.open_map')}</a></span></div>`; })() : ''}
+      ${(lead.delivery_address || lead.delivery_short_address) ? `<div class="kv-row"><span class="kv-key">${t('lead.delivery_addr_lbl')}</span><span class="kv-val">${_esc(lead.delivery_address || lead.delivery_short_address)}</span></div>` : ''}
+      ${lead.delivery_location ? (() => { const [dla,dlo]=lead.delivery_location.split(','); const yUrl=`https://yandex.uz/maps/?pt=${dlo.trim()},${dla.trim()}&z=16`; return `<div class="kv-row"><span class="kv-key">${t('lead.delivery_location_lbl')}</span><span class="kv-val"><a href="${yUrl}" target="_blank" style="color:var(--accent);font-weight:600">📍 ${_esc(lead.delivery_location_address||t('lead.open_map'))}</a></span></div>`; })() : ''}
       ${(() => {
         if (isAgentRole || isConverted) return '';
         const aName  = lead.assigned_to ? ([lead.assigned_first_name,lead.assigned_last_name].filter(Boolean).join(' ')||t('lead.employee')) : null;
