@@ -2277,6 +2277,7 @@
               <input type="file" accept=".xlsx,.xls" style="display:none" onchange="adminImportClientsExcel(this)">
             </label>
             <button data-i18n="clients.btn.template" class="btn btn-sm" style="background:var(--surface2);color:var(--text2)" onclick="adminDownloadClientTemplate()">📋 Шаблон</button>
+            <button class="btn btn-sm" style="background:var(--blue);color:#fff" onclick="openClientsMap()">🗺 Клиенты на карте</button>
           </div>
         </div>
         <div id="adminClientsStats" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
@@ -2309,6 +2310,24 @@
           </table>
           <div id="adminClientsEmpty" data-i18n="empty.clients" style="display:none" class="loader">Клиентов не найдено</div>
           <div id="adminClientsImportStatus" style="display:none;padding:12px;text-align:center;font-weight:600"></div>
+        </div>
+        <div id="clientsPager"></div>
+      </div>
+
+      <!-- Модалка: клиенты на карте (точка = координаты последнего заказа с локацией) -->
+      <div id="clientsMapModal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:12px">
+        <div style="background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:16px;padding:16px;width:100%;max-width:900px;height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0;flex-wrap:wrap;gap:8px">
+            <div style="font-size:16px;font-weight:700">🗺 Клиенты на карте</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span id="clientsMapCount" style="font-size:12px;color:var(--text2)"></span>
+              <button onclick="document.getElementById('clientsMapModal').style.display='none'" style="padding:7px 14px;background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:13px;color:var(--text);cursor:pointer">Закрыть</button>
+            </div>
+          </div>
+          <div id="clientsMapDateRow" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;flex-shrink:0"></div>
+          <div style="flex:1;border-radius:10px;overflow:hidden;min-height:0">
+            <div id="clientsMapContainer" style="width:100%;height:100%"></div>
+          </div>
         </div>
       </div>
 
@@ -16901,6 +16920,18 @@ async function submitAdminNewLead() {
 
 // ═════════════════════════════════════════════════════════════════════════════
 let _adminClientsTimer = null;
+let clientsPage = 1;
+let clientsPageSize = 50;
+let clientsTotal = 0;
+const CLIENTS_PAGE_SIZES = [50, 100, 200, 500, 1000, 5000, 10000, 50000, 100000];
+// Статус/источник фильтруются только на уже ЗАГРУЖЕННОЙ странице (сервер не
+// умеет фильтровать по ним) — при активном любом из них грузим большой лимит
+// без пагинации, иначе фильтр молча теряет совпадения за пределами страницы.
+function _adminClientsHasExtraFilter() {
+  const status = document.getElementById('adminClientsStatus')?.value || '';
+  const source = document.getElementById('adminClientsSource')?.value || '';
+  return !!status || !!source;
+}
 let _adminClientEdit = null;
 let _deleteClientId = null;
 
@@ -16943,14 +16974,19 @@ async function adminLoadClients() {
   const tbody  = document.getElementById('adminClientsTbody');
   const empty  = document.getElementById('adminClientsEmpty');
   if (!tbody) return;
-  let url = `${API_BASE}/clients?limit=200`;
-  if (q)      url += `&search=${encodeURIComponent(q)}`;
+  const hasExtraFilter = _adminClientsHasExtraFilter();
+  let url = hasExtraFilter
+    ? `${API_BASE}/clients?limit=100000`
+    : `${API_BASE}/clients?limit=${clientsPageSize}&offset=${(clientsPage-1)*clientsPageSize}`;
+  if (q) url += `&search=${encodeURIComponent(q)}`;
   try {
     const data = await apiGet(url.replace(API_BASE,''));
     if (!data) return;
     let clients = data.clients || [];
     if (status) clients = clients.filter(c => c.status === status);
     if (source) clients = clients.filter(c => c.source === source);
+    clientsTotal = hasExtraFilter ? 0 : (data.total || 0);
+    _renderClientsPager();
     renderAdminClientsStats(data.counts || {});
     if (!clients.length) {
       tbody.innerHTML = '';
@@ -16965,8 +17001,9 @@ async function adminLoadClients() {
       const src  = ADMIN_CLIENT_SOURCE[c.source] || c.source || '—';
       const badge = `<span style="padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;background:${st.bg};color:${st.color}">${st.label}</span>`;
       const bl = !!c.blacklisted;
+      const rowNum = hasExtraFilter ? (i+1) : ((clientsPage-1)*clientsPageSize + i + 1);
       return `<tr class="client-row" onclick="openClientCard(${c.id})" style="cursor:pointer;${bl?'opacity:.55':''}">
-        <td>${i+1}</td>
+        <td>${rowNum}</td>
         <td data-label="Имя"><b>${name}</b>${bl?' <span style="font-size:10px;background:#dc2626;color:#fff;padding:1px 5px;border-radius:4px">🚫</span>':''}</td>
         <td data-label="Телефон"><a href="tel:${c.phone}" onclick="event.stopPropagation()">${c.phone}</a></td>
         <td data-label="Доп.номер">${c.phone2 || '—'}</td>
@@ -16978,6 +17015,139 @@ async function adminLoadClients() {
       </tr>`;
     }).join('');
   } catch(e) { tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red)">Ошибка: ${e.message}</td></tr>`; }
+}
+
+function _renderClientsPager() {
+  const el = document.getElementById('clientsPager');
+  if (!el) return;
+  if (_adminClientsHasExtraFilter()) { el.innerHTML = ''; return; }
+  const totalPages = Math.max(1, Math.ceil(clientsTotal / clientsPageSize));
+  if (clientsPage > totalPages) clientsPage = totalPages;
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 4px">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text2)">
+        <span>На странице:</span>
+        <select onchange="setClientsPageSize(this.value)" style="border:1.5px solid var(--border);border-radius:8px;padding:4px 8px;font-size:12.5px;background:var(--surface);color:var(--text)">
+          ${CLIENTS_PAGE_SIZES.map(n=>`<option value="${n}" ${n===clientsPageSize?'selected':''}>${n}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2)">
+        <button onclick="clientsGoPage(${clientsPage-1})" ${clientsPage<=1?'disabled':''} style="border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;background:var(--surface);color:var(--text);cursor:pointer;opacity:${clientsPage<=1?'.4':'1'}">‹</button>
+        <span>${clientsPage} / ${totalPages} <span style="opacity:.6">(${clientsTotal})</span></span>
+        <button onclick="clientsGoPage(${clientsPage+1})" ${clientsPage>=totalPages?'disabled':''} style="border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;background:var(--surface);color:var(--text);cursor:pointer;opacity:${clientsPage>=totalPages?'.4':'1'}">›</button>
+      </div>
+    </div>`;
+}
+function clientsGoPage(p) {
+  const totalPages = Math.max(1, Math.ceil(clientsTotal / clientsPageSize));
+  if (p < 1 || p > totalPages || p === clientsPage) return;
+  clientsPage = p;
+  adminLoadClients();
+}
+function setClientsPageSize(v) {
+  clientsPageSize = parseInt(v, 10) || 50;
+  clientsPage = 1;
+  adminLoadClients();
+}
+
+// ── Клиенты на карте — у самого клиента координат нет (только текстовый
+// адрес), поэтому точка = координаты его последнего заказа с локацией
+// (/api/clients/map-points на бэкенде, company_id-scoped). Один маркер на
+// клиента. Портировано из ARTEZ, карта — тот же _loadAoeYmaps этой же SaaS. ──
+let _clientsMapDateFilter = 'all'; // 'all'|'today'|'week'|'month'|'m3'|'m6'|'m9'|'year'|'last_year'|'period'
+let _clientsMapDateFrom = '';
+let _clientsMapDateTo = '';
+let _clientsYmap = null;
+let _clientsMapPlacemarks = [];
+
+function _clientsMapDateRange(key) {
+  const now = new Date();
+  const toStr = d => d.toISOString().slice(0, 10);
+  const today = toStr(now);
+  const daysAgo = n => toStr(new Date(now - n * 86400000));
+  if (key === 'today')     return [today, today];
+  if (key === 'week')      return [daysAgo(7), today];
+  if (key === 'month')     return [daysAgo(30), today];
+  if (key === 'm3')        return [daysAgo(90), today];
+  if (key === 'm6')        return [daysAgo(180), today];
+  if (key === 'm9')        return [daysAgo(270), today];
+  if (key === 'year')      return [daysAgo(365), today];
+  if (key === 'last_year') { const y = now.getFullYear() - 1; return [`${y}-01-01`, `${y}-12-31`]; }
+  if (key === 'period')    return [_clientsMapDateFrom || null, _clientsMapDateTo || null];
+  return [null, null]; // 'all'
+}
+
+function _renderClientsMapDateRow() {
+  const row = document.getElementById('clientsMapDateRow');
+  if (!row) return;
+  const chips = [
+    ['all', 'Все'], ['today', 'Сегодня'], ['week', 'Неделя'], ['month', 'Месяц'],
+    ['m3', '3 мес'], ['m6', '6 мес'], ['m9', '9 мес'], ['year', 'Год'],
+    ['last_year', 'Прошлый год'], ['period', 'Период'],
+  ];
+  row.innerHTML = chips.map(([k, label]) =>
+    `<button class="filter-btn ${k === _clientsMapDateFilter ? 'active' : ''}" onclick="setClientsMapDateFilter('${k}')">${label}</button>`
+  ).join('') + `
+    <span id="clientsMapPeriodInputs" style="display:${_clientsMapDateFilter === 'period' ? 'inline-flex' : 'none'};gap:6px;align-items:center">
+      <input type="date" id="clientsMapDateFrom" value="${_clientsMapDateFrom}" onchange="_clientsMapDateFrom=this.value;openClientsMap()" style="border:1.5px solid var(--border);border-radius:8px;padding:5px 8px;font-size:13px;background:var(--surface);color:var(--text);color-scheme:light">
+      <span style="color:var(--text2);font-size:12px">—</span>
+      <input type="date" id="clientsMapDateTo" value="${_clientsMapDateTo}" onchange="_clientsMapDateTo=this.value;openClientsMap()" style="border:1.5px solid var(--border);border-radius:8px;padding:5px 8px;font-size:13px;background:var(--surface);color:var(--text);color-scheme:light">
+    </span>`;
+}
+
+function setClientsMapDateFilter(v) {
+  _clientsMapDateFilter = v;
+  if (v !== 'period') { _clientsMapDateFrom = ''; _clientsMapDateTo = ''; }
+  _renderClientsMapDateRow();
+  openClientsMap();
+}
+
+async function openClientsMap() {
+  document.getElementById('clientsMapModal').style.display = 'flex';
+  document.getElementById('clientsMapCount').textContent = 'Загружаю…';
+  _renderClientsMapDateRow();
+  const [dateFrom, dateTo] = _clientsMapDateRange(_clientsMapDateFilter);
+  let url = '/clients/map-points';
+  const qs = [];
+  if (dateFrom) qs.push(`date_from=${dateFrom}`);
+  if (dateTo)   qs.push(`date_to=${dateTo}`);
+  if (qs.length) url += `?${qs.join('&')}`;
+  const r = await apiGet(url).catch(() => null);
+  const points = r?.points || [];
+  _initClientsMap(points);
+}
+
+function _initClientsMap(points) {
+  _loadAoeYmaps(() => {
+    if (!_clientsYmap) {
+      _clientsYmap = new ymaps.Map('clientsMapContainer', {
+        center: [41.2995, 69.2401], // Ташкент — нейтральный дефолт (SaaS, у компаний нет фиксированных филиалов)
+        zoom: 11,
+        controls: ['zoomControl', 'fullscreenControl'],
+      });
+    } else {
+      _clientsMapPlacemarks.forEach(pm => _clientsYmap.geoObjects.remove(pm));
+      _clientsMapPlacemarks = [];
+    }
+    points.forEach(p => {
+      if (!p.location || !p.location.includes(',')) return;
+      const [la, lo] = p.location.split(',').map(Number);
+      if (isNaN(la) || isNaN(lo)) return;
+      const name = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.phone;
+      const pm = new ymaps.Placemark([la, lo], {
+        balloonContentHeader: _esc(name),
+        balloonContentBody: `${_esc(p.phone)}<br>${_esc(p.location_address || '')}<br><a href="#" onclick="document.getElementById('clientsMapModal').style.display='none';openClientCard(${p.client_id});return false">Открыть карточку →</a>`,
+        hintContent: _esc(name),
+      }, { preset: 'islands#blueDotIcon' });
+      _clientsYmap.geoObjects.add(pm);
+      _clientsMapPlacemarks.push(pm);
+    });
+    document.getElementById('clientsMapCount').textContent = `Точек: ${_clientsMapPlacemarks.length}`;
+    if (_clientsMapPlacemarks.length) {
+      _clientsYmap.setBounds(_clientsYmap.geoObjects.getBounds(), { checkZoomRange: true, zoomMargin: 30 });
+    }
+    setTimeout(() => _clientsYmap.container.fitToViewport(), 100);
+  });
 }
 
 function renderAdminClientsStats(counts) {
