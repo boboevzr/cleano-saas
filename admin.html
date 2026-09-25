@@ -11589,22 +11589,28 @@ function _logRenderHousesTable() {
       </td>
     </tr>`;
   }).join('') : `<tr><td colspan="4" style="padding:14px 8px;color:var(--text2)">${houses.length ? 'Нет записей по этому фильтру' : 'Домов пока нет'}</td></tr>`;
-  // Быстрое добавление следующего дома по номеру — только для многоэтажных
-  // микрорайонов (там номера домов — простая последовательность 1,2,3...).
+  // Быстрое добавление следующего дома/участка по номеру — берёт максимальный
+  // числовой name_ru среди уже существующих и предлагает +1. Работает для
+  // ОБОИХ типов застройки: parseInt("27а") всё равно даёт 27, так что даже
+  // при буквенных суффиксах (27, 27а, 27б) следующий номер угадывается верно;
+  // при желании админ поправит вручную перед сохранением.
   const typeNode = _logFindNode(obj.parent_id);
-  if (typeNode?.node_type === 'microdistrict') {
-    tbody.innerHTML += `
+  const isStreet = typeNode?.node_type === 'street_area';
+  tbody.innerHTML += `
     <tr>
       <td colspan="4" style="padding:10px 8px;text-align:center">
-        <button onclick="logQuickAddNextHouse()" style="padding:6px 16px;background:var(--accent,#163E3B);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">+ Следующий дом</button>
+        <button onclick="logQuickAddNextHouse()" style="padding:6px 16px;background:var(--accent,#163E3B);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">+ Следующий ${isStreet ? 'участок' : 'дом'}</button>
       </td>
     </tr>`;
-  }
 }
 
 async function logQuickAddNextHouse() {
   const obj = _logFindNode(_logHousesParentId);
   if (!obj) return;
+  const typeNode = _logFindNode(obj.parent_id);
+  const isStreet = typeNode?.node_type === 'street_area';
+  const suffixRu = isStreet ? 'участок' : 'дом';
+  const suffixUz = isStreet ? 'uchastka' : 'uy';
   const houses = obj.children || [];
   const maxNum = houses.reduce((m, h) => {
     const n = parseInt(h.name_ru);
@@ -11616,14 +11622,14 @@ async function logQuickAddNextHouse() {
     level: 4,
     name_ru: String(next),
     name_uz: String(next),
-    name_ru_full: `${next}-дом`,
-    name_uz_full: `${next}-uy`,
+    name_ru_full: `${next}-${suffixRu}`,
+    name_uz_full: `${next}-${suffixUz}`,
     sort_order: next,
     active: true,
   };
   const r = await apiPost('/admin/service-regions', body).catch(() => null);
   if (!r?.ok) { showToast(r?.detail || 'Ошибка', 'error'); return; }
-  showToast(`Добавлен дом ${next}`, 'success');
+  showToast(`Добавлен ${suffixRu} ${next}`, 'success');
   await logLoad();
   logOpenHouses(_logHousesParentId);
 }
