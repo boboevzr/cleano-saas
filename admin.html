@@ -1583,6 +1583,8 @@
           <div class="nav-sub-item" data-page="units"          onclick="switchSubPage(this)">📏 Единицы измерения</div>
           <div class="nav-sub-item" data-page="expenses-admin" onclick="switchSubPage(this)">🧾 Расходы</div>
           <div class="nav-sub-item" data-page="chat-templates" onclick="switchSubPage(this)">💬 Шаблоны чата</div>
+          <div class="nav-sub-item" data-page="logistics"      onclick="switchSubPage(this)">🗺 Логистика</div>
+          <div class="nav-sub-item" data-page="place-categories" onclick="switchSubPage(this)">🏷 Категории точек</div>
         </div>
       </div>
 
@@ -4183,6 +4185,334 @@
               <button class="btn btn-primary" onclick="ctSave()" style="padding:8px 18px;font-size:13px;" data-i18n="btn.save">Сохранить</button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- ЛОГИСТИКА / РЕГИОНЫ ОБСЛУЖИВАНИЯ (перенос из ARTEZ, company-scoped —
+           у каждой компании своё дерево адресов). "Филиал" — свободный текст
+           (не select с фиксированными zarafshan/navoi, как в single-tenant
+           ARTEZ), т.к. у SaaS-компаний нет предопределённого набора филиалов. -->
+      <div class="page" id="page-logistics">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <h2 style="margin:0">🗺 Логистика</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="logOpenBackups()" style="padding:8px 18px;background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer">🗄 Архив</button>
+            <button onclick="logOpenModal(1,null)" style="padding:8px 18px;background:var(--accent,#163E3B);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">+ Населённый пункт</button>
+          </div>
+        </div>
+        <div id="logTree"></div>
+      </div>
+
+      <!-- Модалка: архив/резервные копии Логистики -->
+      <div id="logBackupsModal" style="display:none;position:fixed;inset:0;z-index:660;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:12px">
+        <div style="background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:16px;padding:20px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+            <div style="font-size:16px;font-weight:700">🗄 Архив Логистики</div>
+            <div style="display:flex;gap:8px">
+              <button onclick="logCreateBackup()" style="padding:7px 14px;background:var(--accent,#163E3B);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">💾 Создать сейчас</button>
+              <button onclick="document.getElementById('logBackupsModal').style.display='none'" style="padding:7px 14px;background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:13px;color:var(--text);cursor:pointer">Закрыть</button>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Восстановление возвращает прежние значения полей для существующих записей из выбранного архива. Записи, созданные ПОСЛЕ архива, не удаляются.</div>
+          <div id="logBackupsList"></div>
+        </div>
+      </div>
+
+      <!-- Модалка узла региона -->
+      <div id="logRegionModal" style="display:none;position:fixed;inset:0;z-index:660;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:12px">
+        <div style="background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:16px;padding:20px;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+          <div style="font-size:16px;font-weight:700;margin-bottom:16px" id="logRegionModalTitle">Новый узел</div>
+          <input type="hidden" id="logRegionId">
+          <input type="hidden" id="logRegionLevel">
+          <input type="hidden" id="logRegionParentId">
+
+          <div id="logRegionBranchWrap" style="margin-bottom:10px;display:none">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Филиал (необязательно)</div>
+            <input id="logRegionBranch" type="text" placeholder="например, основной офис" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+          </div>
+
+          <div id="logRegionTypeWrap" style="margin-bottom:10px;display:none">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Тип застройки</div>
+            <select id="logRegionNodeType" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
+              <option value="microdistrict">Микрорайоны</option>
+              <option value="street_area">Махалли / Улицы</option>
+            </select>
+          </div>
+
+          <div id="logRegionFullNameWrap" style="display:none">
+            <div style="margin-bottom:10px">
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Полное название (RU) — например «1 микрорайон»</div>
+              <input id="logRegionNameRuFull" type="text" placeholder="1 микрорайон" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+            </div>
+            <div style="margin-bottom:10px">
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Полное название (UZ)</div>
+              <input id="logRegionNameUzFull" type="text" placeholder="1-mikrorayon" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+            </div>
+          </div>
+
+          <div style="margin-bottom:10px">
+            <div id="logRegionNameRuLabel" style="font-size:11px;color:var(--text2);margin-bottom:4px">Название (RU)</div>
+            <input id="logRegionNameRu" type="text" placeholder="Ташкент" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+          </div>
+          <div style="margin-bottom:10px">
+            <div id="logRegionNameUzLabel" style="font-size:11px;color:var(--text2);margin-bottom:4px">Название (UZ)</div>
+            <input id="logRegionNameUz" type="text" placeholder="Toshkent" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+          </div>
+
+          <div id="logRegionBulkWrap" style="margin-bottom:10px;display:none">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Сразу создать дома/участки 1…N (необязательно)</div>
+            <input id="logRegionBulkCount" type="number" min="0" placeholder="например, 50" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+          </div>
+
+          <div id="logRegionMapField" style="margin-bottom:10px;display:none">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Точка на карте</div>
+            <input type="hidden" id="logRegionLat">
+            <input type="hidden" id="logRegionLocAddr">
+            <div id="logRegionLocDisplay" style="font-size:13px;color:var(--text2);margin-bottom:6px">Не указана</div>
+            <button type="button" onclick="logPickLocation()" style="padding:7px 14px;background:var(--surface2);border:1.5px solid var(--sep);border-radius:8px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer">📍 Указать на карте</button>
+            <div id="logMapWrap" style="display:none;margin-top:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+                <button type="button" onclick="_logLocateUser()" style="padding:6px 12px;background:var(--surface2);border:1.5px solid var(--sep);border-radius:8px;font-size:12px;cursor:pointer;color:var(--text)">📍 Моё местоположение</button>
+                <div style="display:flex;gap:4px">
+                  <button type="button" id="logReadyBtn" onclick="_toggleLogMapFs()" style="display:none;font-size:12px;padding:6px 12px;background:#16a34a;border:none;border-radius:8px;cursor:pointer;color:#fff;font-weight:600">✅ Готово</button>
+                  <button type="button" onclick="_toggleLogMapFs()" id="logFsBtn" style="font-size:12px;padding:6px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--text)">⛶ Во весь экран</button>
+                </div>
+              </div>
+              <div id="logMapInner" style="height:220px;border-radius:10px;overflow:hidden">
+                <div id="logMapContainer" style="width:100%;height:100%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="logRegionPolygonWrap" style="margin-bottom:10px;display:none">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Граница территории</div>
+            <input type="hidden" id="logRegionPolygon">
+            <div id="logPolygonStatus" style="font-size:13px;color:var(--text2);margin-bottom:6px">Не указана</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" onclick="logDrawPolygon()" style="padding:7px 14px;background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer">🗺️ Нарисовать/редактировать</button>
+              <button type="button" id="logPolygonClearBtn" onclick="logClearPolygon()" style="display:none;padding:7px 14px;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;font-size:12px;font-weight:600;color:#dc2626;cursor:pointer">🗑 Убрать границу</button>
+            </div>
+            <div id="logPolygonMapWrap" style="display:none;margin-top:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+                <span style="font-size:11px;color:var(--text2)">Кликайте по карте, чтобы добавить точки границы</span>
+                <div style="display:flex;gap:4px">
+                  <button type="button" id="logPolygonReadyBtn" onclick="_logPolygonDone()" style="font-size:12px;padding:6px 12px;background:#16a34a;border:none;border-radius:8px;cursor:pointer;color:#fff;font-weight:600">✅ Готово</button>
+                  <button type="button" onclick="_toggleLogPolygonMapFs()" id="logPolygonFsBtn" style="font-size:12px;padding:6px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--text)">⛶ Во весь экран</button>
+                </div>
+              </div>
+              <div id="logPolygonMapInner" style="height:280px;border-radius:10px;overflow:hidden">
+                <div id="logPolygonMapContainer" style="width:100%;height:100%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="logRegionNoteWrap" style="margin-bottom:10px;display:none">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Примечание</div>
+            <textarea id="logRegionNote" rows="2" placeholder="Например: код домофона, ориентир…" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box;resize:vertical;font-family:inherit"></textarea>
+          </div>
+
+          <div id="logRegionNotExistsWrap" style="margin-bottom:10px;display:none">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;color:#f59e0b">
+              <input id="logRegionNotExists" type="checkbox" style="width:16px;height:16px">
+              🚫 Дом не существует (пропуск в нумерации)
+            </label>
+          </div>
+
+          <div id="logRegionPoiTypeWrap" style="margin-bottom:10px;display:none">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Тип объекта</div>
+            <select id="logRegionPoiType" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
+              <option value="">🏠 Обычный дом</option>
+              <option value="shop">🏪 Магазин</option>
+              <option value="pharmacy">💊 Аптека</option>
+              <option value="school">🏫 Школа</option>
+              <option value="kindergarten">🧸 Садик</option>
+              <option value="dental">🦷 Стоматология</option>
+              <option value="clinic">🏥 Медцентр/клиника</option>
+              <option value="other">🏢 Другое учреждение</option>
+            </select>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+            <div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Порядок сортировки</div>
+              <input id="logRegionSort" type="number" value="0" inputmode="numeric" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+            </div>
+            <div style="display:flex;align-items:flex-end;padding-bottom:9px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                <input id="logRegionActive" type="checkbox" checked style="width:16px;height:16px">
+                Активен
+              </label>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px">
+            <button id="logRegionSaveBtn" onclick="logRegionSave()" style="flex:2;padding:11px;background:var(--accent,#163E3B);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">💾 Сохранить</button>
+            <button onclick="document.getElementById('logRegionModal').style.display='none'" style="flex:1;padding:11px;background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;font-size:13px;color:var(--text);cursor:pointer">Отмена</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Модалка: список домов объекта (Excel-стиль) -->
+      <div id="logHousesModal" style="display:none;position:fixed;inset:0;z-index:650;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:12px">
+        <div style="background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:16px;padding:20px;width:100%;max-width:720px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+            <div style="font-size:16px;font-weight:700" id="logHousesTitle">Дома объекта</div>
+            <div style="display:flex;gap:8px">
+              <button onclick="logOpenModal(4,_logHousesParentId)" style="padding:7px 14px;background:var(--accent,#163E3B);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">+ Дом</button>
+              <button onclick="logOpenPlaces(_logHousesParentId)" style="padding:7px 14px;background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:13px;color:var(--text);cursor:pointer">🏷 Точки (кафе/аптеки/др.)</button>
+              <button onclick="document.getElementById('logHousesModal').style.display='none'" style="padding:7px 14px;background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:13px;color:var(--text);cursor:pointer">Закрыть</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+            <button onclick="logDownloadHouseTemplate()" style="padding:6px 12px;background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer">📄 Шаблон Excel</button>
+            <button onclick="logExportHouses()" style="padding:6px 12px;background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer">⬇️ Экспорт Excel</button>
+            <button onclick="document.getElementById('logHousesImportInput').click()" style="padding:6px 12px;background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer">⬆️ Импорт Excel</button>
+            <input type="file" id="logHousesImportInput" accept=".xlsx,.xls" style="display:none" onchange="logImportHousesFile(event)">
+            <select id="logHousesFilterSel" onchange="_logHousesFilter=this.value;_logRenderHousesTable()" style="padding:6px 10px;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:var(--bg);color:var(--text);font-size:12px">
+              <option value="all">Показать: все</option>
+              <option value="house">Только дома</option>
+              <option value="poi">Только объекты инфраструктуры</option>
+            </select>
+          </div>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:13px">
+              <thead>
+                <tr style="text-align:left;color:var(--text2);font-size:11px;text-transform:uppercase">
+                  <th style="padding:6px 8px;border-bottom:1.5px solid var(--border)">Дом</th>
+                  <th style="padding:6px 8px;border-bottom:1.5px solid var(--border)">Локация</th>
+                  <th style="padding:6px 8px;border-bottom:1.5px solid var(--border)">Примечание</th>
+                  <th style="padding:6px 8px;border-bottom:1.5px solid var(--border)"></th>
+                </tr>
+              </thead>
+              <tbody id="logHousesTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Точки (places) — общежития/кафе/гостиницы и т.п., не часть адресного
+           дерева, только ссылаются на узел через region_id. -->
+      <div id="logPlacesModal" style="display:none;position:fixed;inset:0;z-index:650;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:12px">
+        <div style="background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:16px;padding:20px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div style="font-size:16px;font-weight:700" id="logPlacesTitle">🏷 Точки</div>
+            <button onclick="document.getElementById('logPlacesModal').style.display='none'" style="padding:7px 14px;background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:13px;color:var(--text);cursor:pointer">Закрыть</button>
+          </div>
+          <div id="logPlacesList" style="margin-bottom:16px;display:flex;flex-direction:column;gap:8px"></div>
+          <div style="border-top:1.5px solid var(--border);padding-top:14px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:10px" id="logPlaceFormTitle">Новая точка</div>
+            <input type="hidden" id="logPlaceId">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Название (RU)</div>
+                <input id="logPlaceNameRu" placeholder="Кафе Дилноза" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+              </div>
+              <div>
+                <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Название (UZ)</div>
+                <input id="logPlaceNameUz" placeholder="Dilnoza kafesi" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+              </div>
+            </div>
+            <div style="margin-bottom:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <div style="font-size:11px;color:var(--text2)">Категория</div>
+                <button type="button" onclick="logOpenPlaceCategoryPicker()" style="padding:2px 9px;background:none;border:1px solid var(--accent);border-radius:6px;font-size:11px;color:var(--accent);cursor:pointer">🔍 Выбрать из списка</button>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <input id="logPlaceCategoryRu" placeholder="кафе, общежитие…" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+                <input id="logPlaceCategoryUz" placeholder="kafe, yotoqxona…" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+              </div>
+            </div>
+            <div style="margin-bottom:10px">
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Локация</div>
+              <div id="logPlaceLocDisplay" style="font-size:13px;color:var(--text2);margin-bottom:6px">Не указана</div>
+              <input type="hidden" id="logPlaceLat">
+              <input type="hidden" id="logPlaceLocAddr">
+              <button type="button" onclick="logPickPlaceLocation()" style="padding:7px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer">📍 Указать на карте</button>
+              <div id="logPlaceMapWrap" style="display:none;margin-top:10px">
+                <div id="logPlaceMapInner" style="height:260px;border-radius:10px;overflow:hidden">
+                  <div id="logPlaceMapContainer" style="width:100%;height:100%"></div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-bottom:12px">
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Примечание</div>
+              <textarea id="logPlaceNote" rows="2" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box;resize:vertical;font-family:inherit"></textarea>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button onclick="logPlaceSave()" id="logPlaceSaveBtn" style="padding:9px 16px;background:var(--accent,#163E3B);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">💾 Сохранить</button>
+              <button onclick="logPlaceFormReset()" style="padding:9px 16px;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);cursor:pointer">Очистить форму</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Модалка: справочник категорий точки (поиск + выбор, заполняет RU/UZ сразу) -->
+      <div id="logPlaceCategoryModal" style="display:none;position:fixed;inset:0;z-index:660;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:12px">
+        <div style="background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:16px;padding:18px;width:100%;max-width:420px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0">
+            <div style="font-size:15px;font-weight:700">Выбрать категорию</div>
+            <button onclick="document.getElementById('logPlaceCategoryModal').style.display='none'" style="padding:6px 12px;background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:8px;font-size:12px;color:var(--text);cursor:pointer">Закрыть</button>
+          </div>
+          <input type="text" id="logPlaceCategorySearchInput" oninput="_logRenderPlaceCategoryList()" placeholder="🔍 Поиск по RU/UZ…" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;margin-bottom:10px;flex-shrink:0;box-sizing:border-box">
+          <div id="logPlaceCategoryList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;min-height:120px"></div>
+        </div>
+      </div>
+
+      <!-- Модалка: добавить/изменить категорию (открывается со страницы "Справочники → Категории точек") -->
+      <div id="logPlaceCategoryEditModal" style="display:none;position:fixed;inset:0;z-index:670;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:12px">
+        <div style="background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:16px;padding:20px;width:100%;max-width:460px;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+          <div style="font-size:15px;font-weight:700;margin-bottom:14px" id="logPlaceCatFormTitle">Добавить категорию</div>
+          <input type="hidden" id="logPlaceCatId">
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Иконка</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="logPlaceCatIcon" placeholder="🏷" maxlength="4" style="width:56px;padding:9px 6px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:16px;text-align:center;box-sizing:border-box;flex-shrink:0">
+              <button type="button" onclick="openEmojiPicker('logPlaceCatIcon','Точки/Бизнес')" style="padding:9px 16px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);font-size:13px;color:var(--text);cursor:pointer;white-space:nowrap">😀 Выбрать</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+            <div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Название (RU)</div>
+              <input id="logPlaceCatNameRu" placeholder="Кафе" style="width:100%;padding:9px 8px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Название (UZ)</div>
+              <input id="logPlaceCatNameUz" placeholder="Kafe" style="width:100%;padding:9px 8px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+            </div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button onclick="logPlaceCategorySaveCat()" style="padding:9px 16px;background:var(--accent,#163E3B);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">💾 Сохранить</button>
+            <button onclick="document.getElementById('logPlaceCategoryEditModal').style.display='none'" style="padding:9px 16px;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);cursor:pointer">Отмена</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Модалка: просмотр точки на карте (только просмотр) -->
+      <div id="logViewLocModal" style="display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:12px">
+        <div style="background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:16px;padding:20px;width:100%;max-width:480px;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-size:15px;font-weight:700">📍 Локация</div>
+            <a id="logViewLocExternal" href="#" target="_blank" style="font-size:12px;color:var(--accent)">Открыть в Яндекс.Картах ↗</a>
+          </div>
+          <div id="logViewLocAddr" style="font-size:13px;color:var(--text2);margin-bottom:10px"></div>
+          <div style="height:280px;border-radius:10px;overflow:hidden">
+            <div id="logViewLocMapContainer" style="width:100%;height:100%"></div>
+          </div>
+          <button onclick="document.getElementById('logViewLocModal').style.display='none'" style="margin-top:12px;width:100%;padding:11px;background:var(--surface2);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;font-size:13px;color:var(--text);cursor:pointer">Закрыть</button>
+        </div>
+      </div>
+
+      <!-- Справочники → Категории точек -->
+      <div class="page" id="page-place-categories">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <h2 style="margin:0">🏷 Категории точек</h2>
+          <button onclick="logOpenPlaceCategoryEditModal()" style="padding:8px 18px;background:var(--accent,#163E3B);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">➕ Добавить категорию</button>
+        </div>
+        <p style="color:var(--text2);font-size:13px;margin-bottom:16px">
+          Категории для точек (🏷 Точки) в 🗺 Логистике — кафе, аптеки, общежития и т.п. Список подсказок при выборе категории точки, можно свободно дополнять и менять.
+        </p>
+        <div class="card">
+          <div id="logPlaceCategoriesPageList"></div>
         </div>
       </div>
 
@@ -10467,6 +10797,8 @@ function _activatePage(page) {
   if (page === 'agent-monitoring') loadAgentMonitoring();
   if (page === 'workon')           loadWorkOn();
   if (page === 'expenses-admin')  expAdminLoad();
+  if (page === 'logistics')       logLoad();
+  if (page === 'place-categories') logLoadPlaceCategoriesPage();
   if (page === 'autodial-campaigns')  adLoad();
   if (page === 'autodial-groups')    adgLoad();
   if (page === 'autodial-settings')  { adCheckAgentSettings(); adsCidLoad(); adsIvrLoad(); }
@@ -10767,12 +11099,13 @@ const EMOJI_CATEGORIES = {
   'Дом':     ['🏠','🏡','🏢','🚗','🚙','🚚','🧹','🧻','🚿','🛁','🪒','🔑','📦'],
   'Природа': ['🌸','🌿','🍀','🌞','🌙','⭐','🔥','💧','❄️','🌈','🌳','🍃'],
   'Символы': ['⭐','✨','💎','🔔','🎯','🏷','✅','❌','⚡','🔷','🔶','🆕','🔵','🟢','🟡','🔴','💰','📋','📌'],
+  'Точки/Бизнес': ['☕','🍽️','🍔','🥐','🍰','🫖','🛏️','🏨','🛌','🏪','🛒','🧺','💊','📚','💐','💍','👕','👟','🧱','🔧','🛋️','🏥','🦷','⚕️','🐾','🏫','🧸','🎈','🎓','📖','💇','💅','🧖','💈','🚗','⛽','🛞','🏦','📮','📝','🏢','🏋️','🏊','🎬','🌳','🕌','⛪','📦','🛠️'],
 };
 let _emojiPickerTarget = null;
 let _emojiPickerCat    = 'Услуги';
-function openEmojiPicker(targetInputId) {
+function openEmojiPicker(targetInputId, defaultCat) {
   _emojiPickerTarget = targetInputId;
-  _emojiPickerCat = 'Услуги';
+  _emojiPickerCat = defaultCat || 'Услуги';
   _renderEmojiPickerTabs();
   _renderEmojiPickerGrid();
   document.getElementById('emojiPickerModal').classList.remove('hidden');
@@ -10804,6 +11137,1130 @@ function pickEmoji(emoji) {
     if (inputEl) inputEl.value = emoji;
   }
   closeEmojiPicker();
+}
+
+// ── ЛОГИСТИКА / РЕГИОНЫ ОБСЛУЖИВАНИЯ (перенос из ARTEZ, company-scoped — своё
+// дерево у каждой компании, company_id читается на бэкенде через _cid()).
+// Отличия от single-tenant ARTEZ: "Филиал" — свободный текст (не select с
+// фиксированными zarafshan/navoi, у SaaS-компаний нет предустановленных
+// филиалов); карта без фиксированных центров филиалов — единый нейтральный
+// дефолт (Ташкент), т.к. компании могут быть в любом городе. ──────────────────
+let _logTree = [];
+let _logHousesParentId = null;
+const _LOG_TYPE_LABEL = { microdistrict: 'Микрорайоны', street_area: 'Махалли / Улицы' };
+const _LOG_POI_TYPE_ICON = { shop: '🏪', pharmacy: '💊', school: '🏫', kindergarten: '🧸', dental: '🦷', clinic: '🏥', other: '🏢' };
+const _LOG_POI_TYPE_LABEL = { shop: 'Магазин', pharmacy: 'Аптека', school: 'Школа', kindergarten: 'Садик', dental: 'Стоматология', clinic: 'Медцентр/клиника', other: 'Другое учреждение' };
+const _LOG_DEFAULT_CENTER = [41.2995, 69.2401]; // Ташкент — нейтральный дефолт карты (не привязан к конкретной компании)
+
+async function logLoad() {
+  const el = document.getElementById('logTree');
+  if (!el) return;
+  el.innerHTML = '<div style="color:var(--text2);font-size:13px">Загружаю…</div>';
+  const data = await apiGet('/admin/service-regions/tree').catch(() => null);
+  _logTree = data?.regions || [];
+  logRenderTree();
+}
+
+// Свёрнутые узлы (id), переживают перерисовку без повторного запроса к серверу.
+let _logCollapsed = new Set();
+
+function logToggleCollapse(regionId) {
+  if (_logCollapsed.has(regionId)) _logCollapsed.delete(regionId);
+  else _logCollapsed.add(regionId);
+  logRenderTree();
+}
+
+// Меняет узел местами с соседом сверху/снизу (direction: -1 вверх, +1 вниз) и
+// перенумеровывает sort_order всей группы 1..N по новому порядку — так работает
+// надёжно, даже если у старых записей sort_order совпадает или не задан.
+async function logMoveNode(regionId, direction) {
+  const node = _logFindNode(regionId);
+  if (!node) return;
+  const siblings = node.parent_id ? (_logFindNode(node.parent_id)?.children || []) : _logTree;
+  const idx = siblings.findIndex(s => s.id === regionId);
+  const swapIdx = idx + direction;
+  if (idx === -1 || swapIdx < 0 || swapIdx >= siblings.length) return;
+  const reordered = siblings.slice();
+  [reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]];
+  await Promise.all(reordered.map((s, i) =>
+    apiPut(`/admin/service-regions/${s.id}`, { sort_order: i + 1 }).catch(() => null)));
+  await logLoad();
+  if (_logHousesParentId && document.getElementById('logHousesModal').style.display === 'flex') {
+    logOpenHouses(_logHousesParentId);
+  }
+}
+
+function _logMoveButtons(regionId, idx, total) {
+  return `
+    <button onclick="logMoveNode(${regionId},-1)" ${idx === 0 ? 'disabled' : ''} style="padding:4px 7px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface2);font-size:11px;cursor:${idx === 0 ? 'default' : 'pointer'};color:var(--text);opacity:${idx === 0 ? '.35' : '1'}">↑</button>
+    <button onclick="logMoveNode(${regionId},1)" ${idx === total - 1 ? 'disabled' : ''} style="padding:4px 7px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface2);font-size:11px;cursor:${idx === total - 1 ? 'default' : 'pointer'};color:var(--text);opacity:${idx === total - 1 ? '.35' : '1'}">↓</button>`;
+}
+
+function logRenderTree() {
+  const el = document.getElementById('logTree');
+  if (!el) return;
+  if (!_logTree.length) { el.innerHTML = '<div style="color:var(--text2)">Регионов нет</div>'; return; }
+
+  el.innerHTML = _logTree.map((l1, l1idx) => `
+    <div style="border:1.5px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2)">
+        <div style="display:flex;align-items:center;gap:8px">
+          ${(l1.children||[]).length ? `<button onclick="logToggleCollapse(${l1.id})" style="width:22px;height:22px;flex-shrink:0;border:1.5px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:13px;font-weight:700;cursor:pointer;line-height:1">${_logCollapsed.has(l1.id) ? '+' : '−'}</button>` : '<span style="width:22px;flex-shrink:0"></span>'}
+          <div>
+            <div style="font-size:15px;font-weight:700">🏙 ${_esc(l1.name_ru)}${l1.polygon && l1.polygon.length ? ' <span title="Граница территории задана" style="font-size:12px">🗺️</span>' : ''}${!l1.active ? ' <span style="font-size:11px;color:#dc2626">неактивен</span>' : ''}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:1px">${l1.name_uz ? _esc(l1.name_uz) + ' · ' : ''}${l1.branch ? _esc(l1.branch) : ''}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          ${_logMoveButtons(l1.id, l1idx, _logTree.length)}
+          <button onclick="logOpenModal(1,${l1.parent_id||'null'},${l1.id})" style="padding:4px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface2);font-size:12px;cursor:pointer">✏️</button>
+          <button onclick="logDelete(${l1.id})" style="padding:4px 10px;border:1.5px solid #fca5a5;border-radius:7px;background:#fef2f2;color:#dc2626;font-size:12px;cursor:pointer">🗑️</button>
+          <button onclick="logOpenModal(2,${l1.id})" style="padding:4px 10px;border:none;border-radius:7px;background:var(--accent,#163E3B);color:#fff;font-size:12px;cursor:pointer;white-space:nowrap">+ тип застройки</button>
+          <button onclick="logOpenPlaces(${l1.id})" style="padding:4px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);font-size:12px;cursor:pointer;white-space:nowrap">🏷 Точки</button>
+        </div>
+      </div>
+      ${(l1.children||[]).length && !_logCollapsed.has(l1.id) ? `
+      <div style="padding:10px 14px 4px">
+        ${(l1.children||[]).map((l2, l2idx) => `
+        <div style="margin-bottom:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="color:var(--text2);font-size:14px">└─</span>
+              ${(l2.children||[]).length ? `<button onclick="logToggleCollapse(${l2.id})" style="width:20px;height:20px;flex-shrink:0;border:1.5px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:12px;font-weight:700;cursor:pointer;line-height:1">${_logCollapsed.has(l2.id) ? '+' : '−'}</button>` : ''}
+              <div style="font-size:13.5px;font-weight:600">${_LOG_TYPE_LABEL[l2.node_type] || _esc(l2.name_ru)}${!l2.active ? ' <span style="font-size:11px;color:#dc2626">неактивен</span>' : ''}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-shrink:0">
+              ${_logMoveButtons(l2.id, l2idx, l1.children.length)}
+              <button onclick="logOpenModal(2,${l1.id},${l2.id})" style="padding:4px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface2);font-size:12px;cursor:pointer">✏️</button>
+              <button onclick="logDelete(${l2.id})" style="padding:4px 10px;border:1.5px solid #fca5a5;border-radius:7px;background:#fef2f2;color:#dc2626;font-size:12px;cursor:pointer">🗑️</button>
+              <button onclick="logOpenModal(3,${l2.id})" style="padding:4px 10px;border:none;border-radius:7px;background:var(--accent,#163E3B);color:#fff;font-size:12px;cursor:pointer;white-space:nowrap">+ объект</button>
+            </div>
+          </div>
+          ${(l2.children||[]).length && !_logCollapsed.has(l2.id) ? `
+          <div style="padding-left:22px">
+            ${(l2.children||[]).map((l3, l3idx) => `
+            <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="logOpenHouses(${l3.id})">
+                  <span style="color:var(--text2);font-size:13px">└─</span>
+                  <div>
+                    <div style="font-size:13px">${_esc(l3.name_ru_full || l3.name_ru)}${!l3.active ? ' <span style="font-size:11px;color:#dc2626">неактивен</span>' : ''}</div>
+                    ${(l3.name_uz_full || l3.name_uz) ? `<div style="font-size:11px;color:var(--text2)">${_esc(l3.name_uz_full || l3.name_uz)}</div>` : ''}
+                  </div>
+                  ${l3.lat ? '<span style="font-size:11px;color:#15803d">📍</span>' : ''}
+                </div>
+                <div style="display:flex;gap:6px;flex-shrink:0" onclick="event.stopPropagation()">
+                  ${_logMoveButtons(l3.id, l3idx, l2.children.length)}
+                  <button onclick="logOpenModal(3,${l2.id},${l3.id})" style="padding:4px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface2);font-size:12px;cursor:pointer">✏️</button>
+                  <button onclick="logDelete(${l3.id})" style="padding:4px 10px;border:1.5px solid #fca5a5;border-radius:7px;background:#fef2f2;color:#dc2626;font-size:12px;cursor:pointer">🗑️</button>
+                  <button onclick="logOpenHouses(${l3.id})" style="padding:4px 10px;border:none;border-radius:7px;background:var(--accent,#163E3B);color:#fff;font-size:12px;cursor:pointer;white-space:nowrap">🏠 ${(l3.children||[]).length} дом. →</button>
+                  <button onclick="logOpenPlaces(${l3.id})" title="Точки: кафе/аптеки/др." style="padding:4px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);font-size:12px;cursor:pointer;white-space:nowrap">🏷 Точки</button>
+                </div>
+              </div>
+            </div>`).join('')}
+          </div>` : ((l2.children||[]).length ? '' : `<div style="padding:6px 0 6px 22px;color:var(--text2);font-size:12px">Объектов нет</div>`)}
+        </div>`).join('')}
+      </div>` : ((l1.children||[]).length ? '' : `<div style="padding:10px 14px;color:var(--text2);font-size:12px">Типов застройки нет</div>`)}
+    </div>
+  `).join('');
+}
+
+function _logFindNode(id) {
+  for (const l1 of _logTree) {
+    if (l1.id === id) return l1;
+    for (const l2 of (l1.children||[])) {
+      if (l2.id === id) return l2;
+      for (const l3 of (l2.children||[])) {
+        if (l3.id === id) return l3;
+        for (const l4 of (l3.children||[])) if (l4.id === id) return l4;
+      }
+    }
+  }
+  return null;
+}
+
+function logOpenModal(level, parentId, regionId = null) {
+  // Защитный сброс — если модалка когда-то закрылась во время сохранения.
+  _logRegionSaving = false;
+  const _saveBtn = document.getElementById('logRegionSaveBtn');
+  _saveBtn.disabled = false; _saveBtn.style.opacity = ''; _saveBtn.style.cursor = 'pointer';
+  _saveBtn.textContent = '💾 Сохранить';
+
+  document.getElementById('logRegionId').value = regionId || '';
+  document.getElementById('logRegionLevel').value = level;
+  document.getElementById('logRegionParentId').value = parentId || '';
+  document.getElementById('logRegionNameRu').value = '';
+  document.getElementById('logRegionNameUz').value = '';
+  document.getElementById('logRegionNameRuFull').value = '';
+  document.getElementById('logRegionNameUzFull').value = '';
+  // При создании (не редактировании) — сразу предлагаем следующий порядковый номер
+  // среди уже существующих братьев/сестёр (например 1,2,3 микрорайона → 4).
+  let _nextSort = 0;
+  if (!regionId) {
+    const siblings = parentId ? (_logFindNode(parseInt(parentId))?.children || []) : _logTree;
+    _nextSort = siblings.reduce((m, s) => Math.max(m, s.sort_order || 0), 0) + 1;
+  }
+  document.getElementById('logRegionSort').value = _nextSort;
+  document.getElementById('logRegionActive').checked = true;
+  document.getElementById('logRegionLat').value = '';
+  document.getElementById('logRegionLocAddr').value = '';
+  document.getElementById('logRegionLocDisplay').textContent = 'Не указана';
+  document.getElementById('logMapWrap').style.display = 'none';
+  document.getElementById('logRegionNote').value = '';
+  document.getElementById('logRegionNotExists').checked = false;
+  document.getElementById('logRegionPoiType').value = '';
+  document.getElementById('logRegionPolygon').value = '';
+  document.getElementById('logPolygonMapWrap').style.display = 'none';
+  _logPolygonSetStatus();
+  document.getElementById('logRegionBulkCount').value = '';
+
+  document.getElementById('logRegionBranchWrap').style.display = level === 1 ? 'block' : 'none';
+  document.getElementById('logRegionTypeWrap').style.display   = level === 2 ? 'block' : 'none';
+  document.getElementById('logRegionMapField').style.display   = (level === 1 || level === 3 || level === 4) ? 'block' : 'none';
+  document.getElementById('logRegionNoteWrap').style.display   = (level === 3 || level === 4) ? 'block' : 'none';
+  document.getElementById('logRegionNotExistsWrap').style.display = (level === 4) ? 'block' : 'none';
+  document.getElementById('logRegionPoiTypeWrap').style.display = (level === 4) ? 'block' : 'none';
+  document.getElementById('logRegionFullNameWrap').style.display = (level === 3 || level === 4) ? 'block' : 'none';
+  document.getElementById('logRegionPolygonWrap').style.display = (level === 1) ? 'block' : 'none';
+  // Массовое создание домов/участков — только при СОЗДАНИИ нового объекта
+  // (не при редактировании — там уже могут быть свои дома).
+  document.getElementById('logRegionBulkWrap').style.display = (level === 3 && !regionId) ? 'block' : 'none';
+  document.getElementById('logRegionNameRuLabel').textContent = (level === 3 || level === 4) ? 'Короткое название (RU) — например «1»' : 'Название (RU)';
+  document.getElementById('logRegionNameUzLabel').textContent = (level === 3 || level === 4) ? 'Короткое название (UZ)' : 'Название (UZ)';
+
+  const _LOG_PLACEHOLDERS = {
+    3: { shortRu: '1', shortUz: '1', fullRu: '1 микрорайон', fullUz: '1-mikrorayon' },
+    4: { shortRu: '1', shortUz: '1', fullRu: '1-дом',        fullUz: '1-uy' },
+  };
+  const _ph = _LOG_PLACEHOLDERS[level] || { shortRu: 'Ташкент', shortUz: 'Toshkent', fullRu: '1 микрорайон', fullUz: '1-mikrorayon' };
+  document.getElementById('logRegionNameRu').placeholder     = _ph.shortRu;
+  document.getElementById('logRegionNameUz').placeholder     = _ph.shortUz;
+  document.getElementById('logRegionNameRuFull').placeholder = _ph.fullRu;
+  document.getElementById('logRegionNameUzFull').placeholder = _ph.fullUz;
+
+  const titles = { 1: 'Населённый пункт', 2: 'Тип застройки', 3: 'Объект', 4: 'Дом' };
+  let title = (regionId ? 'Редактировать: ' : 'Новый: ') + titles[level];
+  if (level === 4 && parentId) {
+    const objectNode = _logFindNode(parseInt(parentId));
+    if (objectNode) title += ` (${objectNode.name_ru_full || objectNode.name_ru})`;
+  }
+  document.getElementById('logRegionModalTitle').textContent = title;
+
+  if (regionId) {
+    const found = _logFindNode(regionId);
+    if (found) {
+      document.getElementById('logRegionNameRu').value = found.name_ru || '';
+      document.getElementById('logRegionNameUz').value = found.name_uz || '';
+      document.getElementById('logRegionNameRuFull').value = found.name_ru_full || '';
+      document.getElementById('logRegionNameUzFull').value = found.name_uz_full || '';
+      document.getElementById('logRegionSort').value = found.sort_order || 0;
+      document.getElementById('logRegionActive').checked = found.active !== false;
+      document.getElementById('logRegionNote').value = found.note || '';
+      document.getElementById('logRegionNotExists').checked = !!found.not_exists;
+      document.getElementById('logRegionPoiType').value = found.poi_type || '';
+      if (level === 1) document.getElementById('logRegionBranch').value = found.branch || '';
+      if (level === 2) document.getElementById('logRegionNodeType').value = found.node_type || 'microdistrict';
+      if ((level === 1 || level === 3 || level === 4) && found.lat) {
+        document.getElementById('logRegionLat').value = found.lat;
+        document.getElementById('logRegionLocAddr').value = found.location_address || '';
+        document.getElementById('logRegionLocDisplay').innerHTML =
+          `<a href="https://yandex.uz/maps/?pt=${found.lat.split(',')[1]},${found.lat.split(',')[0]}&z=16" target="_blank" style="color:var(--accent)">📍 ${_esc(found.location_address || found.lat)}</a>`;
+      }
+      if (level === 1 && found.polygon && found.polygon.length) {
+        document.getElementById('logRegionPolygon').value = JSON.stringify(found.polygon);
+        _logPolygonSetStatus();
+      }
+    }
+  }
+  document.getElementById('logRegionModal').style.display = 'flex';
+}
+
+let _logRegionSaving = false;
+
+async function logRegionSave() {
+  // Защита от двойной отправки — без неё повторный клик во время долгого
+  // массового создания домов (много последовательных запросов) создавал
+  // второй дублирующий объект.
+  if (_logRegionSaving) return;
+
+  const level    = parseInt(document.getElementById('logRegionLevel').value);
+  const regionId = document.getElementById('logRegionId').value;
+  const parentId = document.getElementById('logRegionParentId').value;
+  const name_ru  = document.getElementById('logRegionNameRu').value.trim();
+  const name_uz  = document.getElementById('logRegionNameUz').value.trim();
+  if (!name_ru) { showToast('Введите название (RU)', 'warning'); return; }
+
+  _logRegionSaving = true;
+  const saveBtn = document.getElementById('logRegionSaveBtn');
+  const saveBtnOrigText = saveBtn.textContent;
+  saveBtn.disabled = true;
+  saveBtn.style.opacity = '.6';
+  saveBtn.style.cursor = 'default';
+  saveBtn.textContent = '⏳ Сохраняю…';
+
+  try {
+    const name_ru_full = document.getElementById('logRegionNameRuFull').value.trim();
+    const name_uz_full = document.getElementById('logRegionNameUzFull').value.trim();
+
+    const body = {
+      parent_id: parentId ? parseInt(parentId) : null,
+      level,
+      node_type: level === 2 ? document.getElementById('logRegionNodeType').value : null,
+      branch:    level === 1 ? (document.getElementById('logRegionBranch').value.trim() || null) : null,
+      name_ru, name_uz: name_uz || name_ru,
+      name_ru_full: (level === 3 || level === 4) ? (name_ru_full || null) : null,
+      name_uz_full: (level === 3 || level === 4) ? (name_uz_full || null) : null,
+      lat:              document.getElementById('logRegionLat').value || null,
+      location_address: document.getElementById('logRegionLocAddr').value || null,
+      sort_order: parseInt(document.getElementById('logRegionSort').value) || 0,
+      active:     document.getElementById('logRegionActive').checked,
+      note:       document.getElementById('logRegionNote').value.trim() || null,
+      not_exists: level === 4 ? document.getElementById('logRegionNotExists').checked : false,
+      poi_type:   level === 4 ? (document.getElementById('logRegionPoiType').value || '') : null,
+    };
+    if (level === 1) {
+      const polyRaw = document.getElementById('logRegionPolygon').value;
+      body.polygon = polyRaw ? JSON.parse(polyRaw) : null;
+    }
+
+    let r;
+    if (regionId) {
+      r = await apiPut(`/admin/service-regions/${regionId}`, body).catch(() => null);
+    } else {
+      r = await apiPost('/admin/service-regions', body).catch(() => null);
+    }
+    if (!r?.ok) { showToast(r?.detail || 'Ошибка', 'error'); return; }
+
+    // При создании нового объекта — если указано количество, сразу штампуем дома/участки 1..N.
+    const bulkCount = (level === 3 && !regionId) ? parseInt(document.getElementById('logRegionBulkCount').value) : 0;
+    if (bulkCount > 0) {
+      const newObjectId = r.region.id;
+      const parentType = _logFindNode(parseInt(parentId))?.node_type;
+      const suffixRu = parentType === 'street_area' ? 'участок' : 'дом';
+      const suffixUz = parentType === 'street_area' ? 'uchastka' : 'uy';
+      let created = 0;
+      for (let n = 1; n <= bulkCount; n++) {
+        saveBtn.textContent = `⏳ Создаю ${suffixRu === 'участок' ? 'участки' : 'дома'} ${n}/${bulkCount}…`;
+        const hr = await apiPost('/admin/service-regions', {
+          parent_id: newObjectId, level: 4,
+          name_ru: String(n), name_uz: String(n),
+          name_ru_full: `${n}-${suffixRu}`, name_uz_full: `${n}-${suffixUz}`,
+          sort_order: n, active: true,
+        }).catch(() => null);
+        if (hr?.ok) created++;
+      }
+      showToast(`Объект создан + ${created} из ${bulkCount}`, 'success');
+    } else {
+      showToast(regionId ? 'Сохранено' : 'Создано', 'success');
+    }
+
+    document.getElementById('logRegionModal').style.display = 'none';
+    await logLoad();
+    if (_logHousesParentId && document.getElementById('logHousesModal').style.display === 'flex') {
+      logOpenHouses(_logHousesParentId);
+    }
+  } finally {
+    _logRegionSaving = false;
+    saveBtn.disabled = false;
+    saveBtn.style.opacity = '';
+    saveBtn.style.cursor = 'pointer';
+    saveBtn.textContent = saveBtnOrigText;
+  }
+}
+
+async function logDelete(regionId) {
+  if (!confirm('Удалить? (нельзя, если есть дочерние элементы)')) return;
+  const r = await apiDelete(`/admin/service-regions/${regionId}`).catch(() => null);
+  if (!r?.ok) { showToast(r?.detail || 'Ошибка', 'error'); return; }
+  showToast('Удалено', 'success');
+  await logLoad();
+  if (_logHousesParentId && document.getElementById('logHousesModal').style.display === 'flex') {
+    logOpenHouses(_logHousesParentId);
+  }
+}
+
+// ── Архив / резервные копии Логистики ─────────────────────────────────────
+let _logBackups = [];
+
+async function logOpenBackups() {
+  document.getElementById('logBackupsModal').style.display = 'flex';
+  await logLoadBackupsList();
+}
+
+async function logLoadBackupsList() {
+  const el = document.getElementById('logBackupsList');
+  el.innerHTML = '<div style="color:var(--text2);font-size:13px">Загружаю…</div>';
+  const data = await apiGet('/admin/service-regions/backups').catch(() => null);
+  _logBackups = data?.backups || [];
+  if (!_logBackups.length) { el.innerHTML = '<div style="color:var(--text2)">Архивов пока нет</div>'; return; }
+  el.innerHTML = _logBackups.map(b => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
+      <div>
+        <div style="font-size:13px;font-weight:600">${_esc(new Date(b.created_at).toLocaleString('ru-RU'))}</div>
+        <div style="font-size:12px;color:var(--text2)">${_esc(b.label || 'Архив')} · ${b.record_count} записей</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="logDownloadBackup(${b.id})" style="padding:5px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface2);color:var(--text);font-size:12px;cursor:pointer">⬇️</button>
+        <button onclick="logRestoreBackup(${b.id})" style="padding:5px 12px;border:none;border-radius:7px;background:var(--accent,#163E3B);color:#fff;font-size:12px;font-weight:600;cursor:pointer">Восстановить</button>
+      </div>
+    </div>`).join('');
+}
+
+async function logCreateBackup(label = null) {
+  const r = await apiPost('/admin/service-regions/backup', { label: label || `Ручной архив ${new Date().toLocaleString('ru-RU')}` }).catch(() => null);
+  if (!r?.ok) { showToast(r?.detail || 'Ошибка создания архива', 'error'); return null; }
+  showToast(`Архив создан (${r.backup.record_count} записей)`, 'success');
+  if (document.getElementById('logBackupsModal').style.display === 'flex') await logLoadBackupsList();
+  return r.backup;
+}
+
+async function logRestoreBackup(backupId) {
+  const b = _logBackups.find(x => x.id === backupId);
+  const label = b ? `${new Date(b.created_at).toLocaleString('ru-RU')} (${b.record_count} записей)` : `#${backupId}`;
+  if (!confirm(`Восстановить архив ${label}?\n\nСуществующие записи вернутся к значениям из архива. Записи, созданные позже, затронуты не будут.`)) return;
+  const r = await apiPost(`/admin/service-regions/backups/${backupId}/restore`, {}).catch(() => null);
+  if (!r?.ok) { showToast(r?.detail || 'Ошибка восстановления', 'error'); return; }
+  showToast(`Восстановлено записей: ${r.restored}`, 'success');
+  await logLoad();
+  document.getElementById('logBackupsModal').style.display = 'none';
+}
+
+async function logDownloadBackup(backupId) {
+  const r = await apiGet(`/admin/service-regions/backups/${backupId}`).catch(() => null);
+  if (!r?.ok) { showToast('Ошибка загрузки архива', 'error'); return; }
+  const blob = new Blob([JSON.stringify(r.backup.data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `logistics_backup_${backupId}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// ── Список домов объекта (Excel-стиль) ──
+let _logHousesFilter = 'all'; // 'all' | 'house' | 'poi' — фильтр списка домов по наличию poi_type
+
+function logOpenHouses(objectId) {
+  const obj = _logFindNode(objectId);
+  if (!obj) { document.getElementById('logHousesModal').style.display = 'none'; _logHousesParentId = null; return; }
+  if (_logHousesParentId !== objectId) _logHousesFilter = 'all';
+  _logHousesParentId = objectId;
+  document.getElementById('logHousesTitle').textContent = `🏠 Дома: ${obj.name_ru_full || obj.name_ru}`;
+  document.getElementById('logHousesFilterSel').value = _logHousesFilter;
+  _logRenderHousesTable();
+  document.getElementById('logHousesModal').style.display = 'flex';
+}
+
+function _logRenderHousesTable() {
+  const obj = _logFindNode(_logHousesParentId);
+  if (!obj) return;
+  const objectId = _logHousesParentId;
+  const houses = obj.children || [];
+  const shown = houses.filter(h =>
+    _logHousesFilter === 'all' ? true : _logHousesFilter === 'poi' ? !!h.poi_type : !h.poi_type);
+  const tbody = document.getElementById('logHousesTbody');
+  tbody.innerHTML = shown.length ? shown.map((h) => {
+    const idx = houses.indexOf(h); // индекс в ПОЛНОМ списке — ↑/↓ переставляют среди всех, не среди отфильтрованных
+    const poiIcon = h.poi_type ? `${_LOG_POI_TYPE_ICON[h.poi_type] || '🏢'} ` : '';
+    const poiTag = h.poi_type ? `<div style="font-size:11px;color:var(--accent)">${_LOG_POI_TYPE_LABEL[h.poi_type] || 'Учреждение'}</div>` : '';
+    return `
+    <tr style="border-bottom:1px solid var(--border)${h.active === false ? ';opacity:.55' : ''}">
+      <td style="padding:8px">${h.not_exists
+        ? `<span style="text-decoration:line-through;color:var(--text2)">${poiIcon}${_esc(h.name_ru_full || h.name_ru)}</span> <span style="font-size:11px;color:#f59e0b">🚫 не существует</span>`
+        : `${poiIcon}${_esc(h.name_ru_full || h.name_ru)}${(h.name_uz_full || h.name_uz) ? `<div style="font-size:11px;color:var(--text2)">${_esc(h.name_uz_full || h.name_uz)}</div>` : ''}${poiTag}`}</td>
+      <td style="padding:8px">${h.not_exists ? '' : (h.lat
+        ? `<button onclick="logViewLocationById(${h.id})" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px;padding:0">📍 ${_esc(h.lat)}</button>`
+        : '<span style="color:#b45309;font-size:12px">без точки</span>')}</td>
+      <td style="padding:8px;color:var(--text2);max-width:220px">${h.note ? _esc(h.note) : ''}</td>
+      <td style="padding:8px;white-space:nowrap">
+        ${_logHousesFilter === 'all' ? _logMoveButtons(h.id, idx, houses.length) : ''}
+        <button onclick="logOpenModal(4,${objectId},${h.id})" style="padding:4px 9px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface2);font-size:12px;cursor:pointer">✏️</button>
+        <button onclick="logDelete(${h.id})" style="padding:4px 9px;border:1.5px solid #fca5a5;border-radius:7px;background:#fef2f2;color:#dc2626;font-size:12px;cursor:pointer">🗑️</button>
+        <button onclick="logInsertHouseAfter(${h.id})" title="Вставить дом после этого" style="padding:4px 9px;border:1.5px solid #86efac;border-radius:7px;background:#f0fdf4;color:#16a34a;font-size:12px;cursor:pointer">➕</button>
+      </td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="4" style="padding:14px 8px;color:var(--text2)">${houses.length ? 'Нет записей по этому фильтру' : 'Домов пока нет'}</td></tr>`;
+  // Быстрое добавление следующего дома по номеру — только для многоэтажных
+  // микрорайонов (там номера домов — простая последовательность 1,2,3...).
+  const typeNode = _logFindNode(obj.parent_id);
+  if (typeNode?.node_type === 'microdistrict') {
+    tbody.innerHTML += `
+    <tr>
+      <td colspan="4" style="padding:10px 8px;text-align:center">
+        <button onclick="logQuickAddNextHouse()" style="padding:6px 16px;background:var(--accent,#163E3B);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">+ Следующий дом</button>
+      </td>
+    </tr>`;
+  }
+}
+
+async function logQuickAddNextHouse() {
+  const obj = _logFindNode(_logHousesParentId);
+  if (!obj) return;
+  const houses = obj.children || [];
+  const maxNum = houses.reduce((m, h) => {
+    const n = parseInt(h.name_ru);
+    return !isNaN(n) && n > m ? n : m;
+  }, 0);
+  const next = maxNum + 1;
+  const body = {
+    parent_id: _logHousesParentId,
+    level: 4,
+    name_ru: String(next),
+    name_uz: String(next),
+    name_ru_full: `${next}-дом`,
+    name_uz_full: `${next}-uy`,
+    sort_order: next,
+    active: true,
+  };
+  const r = await apiPost('/admin/service-regions', body).catch(() => null);
+  if (!r?.ok) { showToast(r?.detail || 'Ошибка', 'error'); return; }
+  showToast(`Добавлен дом ${next}`, 'success');
+  await logLoad();
+  logOpenHouses(_logHousesParentId);
+}
+
+// Вставить новый дом сразу ПОСЛЕ конкретного (например 16 -> 16а/16б), без
+// ручного дописывания в конец списка и перетаскивания ↑/↓ на нужное место.
+let _logInsertingHouse = false;
+// "30" -> "30*", "30-дом" -> "30*-дом" — метка сразу после цифр, чтобы было видно,
+// что название унаследовано от соседнего дома и его нужно поправить вручную.
+function _logAppendInsertMarker(name) {
+  if (!name) return name;
+  return /^\d+/.test(name) ? name.replace(/^(\d+)/, '$1*') : `${name}*`;
+}
+
+async function logInsertHouseAfter(afterId) {
+  if (_logInsertingHouse) return;
+  const obj = _logFindNode(_logHousesParentId);
+  if (!obj) return;
+  const houses = (obj.children || []).slice();
+  const idx = houses.findIndex(h => h.id === afterId);
+  if (idx === -1) return;
+  const source = houses[idx];
+
+  _logInsertingHouse = true;
+  try {
+    // Соседний дом обычно физически рядом — наследуем название (с меткой *)
+    // и точку на карте, чтобы админ поправил вручную, а не заполнял с нуля.
+    const body = {
+      parent_id: _logHousesParentId,
+      level: 4,
+      name_ru: _logAppendInsertMarker(source.name_ru) || 'новый',
+      name_uz: _logAppendInsertMarker(source.name_uz) || _logAppendInsertMarker(source.name_ru) || 'новый',
+      name_ru_full: source.name_ru_full ? _logAppendInsertMarker(source.name_ru_full) : null,
+      name_uz_full: source.name_uz_full ? _logAppendInsertMarker(source.name_uz_full) : null,
+      lat: source.lat || null,
+      location_address: source.location_address || null,
+      sort_order: idx + 2,
+      active: true,
+    };
+    const r = await apiPost('/admin/service-regions', body).catch(() => null);
+    if (!r?.ok || !r.region) { showToast(r?.detail || 'Ошибка', 'error'); return; }
+    const newId = r.region.id;
+
+    // Перенумеровать всю группу в display-порядке, вставив новый дом сразу после afterId.
+    houses.splice(idx + 1, 0, { id: newId });
+    await Promise.all(houses.map((h, i) =>
+      apiPut(`/admin/service-regions/${h.id}`, { sort_order: i + 1 }).catch(() => null)));
+
+    await logLoad();
+    logOpenHouses(_logHousesParentId);
+    logOpenModal(4, _logHousesParentId, newId);
+  } finally {
+    _logInsertingHouse = false;
+  }
+}
+
+// ── Точки (places) — общежития/кафе/гостиницы и т.п., универсальная таблица
+// вне адресного дерева service_regions. ──
+let _logPlacesRegionId = null;
+let _logPlacesCache = [];
+
+// Справочник категорий точек — хранится в place_categories, редактируется
+// на отдельной странице "Справочники → 🏷 Категории точек" (logPlaceCategoriesPage*),
+// здесь же — только сам пикер (поиск+выбор) для формы точки в 🗺 Логистике.
+// Категория в самой точке — свободный текст (копия на момент выбора), поэтому
+// удаление категории из справочника НЕ трогает уже сохранённые точки.
+let _logPlaceCategoriesCache = [];
+
+async function logOpenPlaceCategoryPicker() {
+  document.getElementById('logPlaceCategorySearchInput').value = '';
+  document.getElementById('logPlaceCategoryModal').style.display = 'flex';
+  document.getElementById('logPlaceCategoryList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2)">Загружаю…</div>';
+  const r = await apiGet('/admin/place-categories').catch(() => null);
+  _logPlaceCategoriesCache = r?.categories || [];
+  _logRenderPlaceCategoryList();
+}
+
+function _logRenderPlaceCategoryList() {
+  const filter = (document.getElementById('logPlaceCategorySearchInput').value || '').trim().toLowerCase();
+  const items = _logPlaceCategoriesCache.filter(c =>
+    !filter || (c.name_ru || '').toLowerCase().includes(filter) || (c.name_uz || '').toLowerCase().includes(filter));
+  const el = document.getElementById('logPlaceCategoryList');
+  if (!items.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">Ничего не найдено</div>'; return; }
+  el.innerHTML = items.map(c =>
+    `<button onclick="logSelectPlaceCategory(${c.id})" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;font-size:13px;color:var(--text);cursor:pointer;text-align:left"><span>${c.icon || '🏷'}</span><span>${_esc(c.name_ru)} <span style="color:var(--text2);font-size:12px">/ ${_esc(c.name_uz || '')}</span></span></button>`
+  ).join('');
+}
+
+function logSelectPlaceCategory(id) {
+  const c = _logPlaceCategoriesCache.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('logPlaceCategoryRu').value = c.name_ru;
+  document.getElementById('logPlaceCategoryUz').value = c.name_uz || '';
+  document.getElementById('logPlaceCategoryModal').style.display = 'none';
+}
+
+// ── Страница "Справочники → 🏷 Категории точек" — полноценное управление
+// (список + отдельная модалка добавления/изменения logPlaceCategoryEditModal). ──
+let _logPlaceCategoriesPageCache = [];
+
+async function logLoadPlaceCategoriesPage() {
+  const el = document.getElementById('logPlaceCategoriesPageList');
+  el.innerHTML = '<div style="color:var(--text2);padding:10px 0">Загружаю…</div>';
+  const r = await apiGet('/admin/place-categories').catch(() => null);
+  _logPlaceCategoriesPageCache = r?.categories || [];
+  _logRenderPlaceCategoriesPageList();
+}
+
+function _logRenderPlaceCategoriesPageList() {
+  const el = document.getElementById('logPlaceCategoriesPageList');
+  if (!_logPlaceCategoriesPageCache.length) { el.innerHTML = '<div style="color:var(--text2)">Категорий пока нет</div>'; return; }
+  el.innerHTML = _logPlaceCategoriesPageCache.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <span style="font-size:18px;flex-shrink:0">${c.icon || '🏷'}</span>
+        <div style="min-width:0">
+          <div style="font-size:13.5px;font-weight:600">${_esc(c.name_ru)}</div>
+          <div style="font-size:12px;color:var(--text2)">${_esc(c.name_uz || '')}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button onclick="logOpenPlaceCategoryEditModal(${c.id})" style="padding:5px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface2);font-size:12px;cursor:pointer">✏️</button>
+        <button onclick="logPlaceCategoryDeleteCat(${c.id})" style="padding:5px 10px;border:1.5px solid #fca5a5;border-radius:7px;background:#fef2f2;color:#dc2626;font-size:12px;cursor:pointer">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function logOpenPlaceCategoryEditModal(id = null) {
+  const c = id ? _logPlaceCategoriesPageCache.find(x => x.id === id) : null;
+  document.getElementById('logPlaceCatFormTitle').textContent = c ? `Изменить: ${c.name_ru}` : 'Добавить категорию';
+  document.getElementById('logPlaceCatId').value = c ? c.id : '';
+  document.getElementById('logPlaceCatIcon').value = c ? (c.icon || '') : '';
+  document.getElementById('logPlaceCatNameRu').value = c ? (c.name_ru || '') : '';
+  document.getElementById('logPlaceCatNameUz').value = c ? (c.name_uz || '') : '';
+  document.getElementById('logPlaceCategoryEditModal').style.display = 'flex';
+}
+
+async function logPlaceCategorySaveCat() {
+  const catId = document.getElementById('logPlaceCatId').value;
+  const name_ru = document.getElementById('logPlaceCatNameRu').value.trim();
+  if (!name_ru) { showToast('Введите название', 'warning'); return; }
+  const body = {
+    name_ru,
+    name_uz: document.getElementById('logPlaceCatNameUz').value.trim() || name_ru,
+    icon: document.getElementById('logPlaceCatIcon').value.trim() || null,
+  };
+  const r = catId
+    ? await apiPut(`/admin/place-categories/${catId}`, body).catch(() => null)
+    : await apiPost('/admin/place-categories', { ...body, sort_order: _logPlaceCategoriesPageCache.length + 1 }).catch(() => null);
+  if (!r?.ok) { showToast(r?.detail || 'Ошибка', 'error'); return; }
+  showToast('Сохранено', 'success');
+  document.getElementById('logPlaceCategoryEditModal').style.display = 'none';
+  await logLoadPlaceCategoriesPage();
+}
+
+async function logPlaceCategoryDeleteCat(id) {
+  if (!confirm('Удалить категорию из справочника? (уже сохранённые точки не изменятся)')) return;
+  const r = await apiDelete(`/admin/place-categories/${id}`).catch(() => null);
+  if (!r?.ok) { showToast(r?.detail || 'Ошибка', 'error'); return; }
+  showToast('Удалено', 'success');
+  await logLoadPlaceCategoriesPage();
+}
+
+async function logOpenPlaces(regionId) {
+  const node = _logFindNode(regionId);
+  if (!node) return;
+  _logPlacesRegionId = regionId;
+  document.getElementById('logPlacesTitle').textContent = `🏷 Точки: ${node.name_ru_full || node.name_ru}`;
+  logPlaceFormReset();
+  document.getElementById('logPlacesModal').style.display = 'flex';
+  await logLoadPlaces();
+}
+
+async function logLoadPlaces() {
+  const r = await apiGet(`/admin/places?region_id=${_logPlacesRegionId}`).catch(() => null);
+  _logPlacesCache = r?.places || [];
+  logRenderPlacesList();
+}
+
+function logRenderPlacesList() {
+  const el = document.getElementById('logPlacesList');
+  if (!_logPlacesCache.length) { el.innerHTML = '<div style="color:var(--text2);font-size:13px">Точек пока нет</div>'; return; }
+  el.innerHTML = _logPlacesCache.map(p => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px${p.active === false ? ';opacity:.55' : ''}">
+      <div>
+        <div style="font-size:13px;font-weight:600">${_esc(p.name_ru)}${p.category_ru ? ` <span style="font-weight:400;color:var(--accent);font-size:11px">· ${_esc(p.category_ru)}${p.category_uz ? ' / ' + _esc(p.category_uz) : ''}</span>` : ''}${p.active === false ? ' <span style="font-size:11px;color:#dc2626">неактивна</span>' : ''}</div>
+        <div style="font-size:11px;color:var(--text2)">${p.lat ? `📍 ${_esc(p.location_address || p.lat)}` : 'без точки'}${p.note ? ` · ${_esc(p.note)}` : ''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button onclick="logPlaceEdit(${p.id})" style="padding:4px 9px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface2);font-size:12px;cursor:pointer">✏️</button>
+        <button onclick="logPlaceDelete(${p.id})" style="padding:4px 9px;border:1.5px solid #fca5a5;border-radius:7px;background:#fef2f2;color:#dc2626;font-size:12px;cursor:pointer">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function logPlaceFormReset() {
+  document.getElementById('logPlaceFormTitle').textContent = 'Новая точка';
+  document.getElementById('logPlaceId').value = '';
+  document.getElementById('logPlaceNameRu').value = '';
+  document.getElementById('logPlaceNameUz').value = '';
+  document.getElementById('logPlaceCategoryRu').value = '';
+  document.getElementById('logPlaceCategoryUz').value = '';
+  document.getElementById('logPlaceLat').value = '';
+  document.getElementById('logPlaceLocAddr').value = '';
+  document.getElementById('logPlaceLocDisplay').textContent = 'Не указана';
+  document.getElementById('logPlaceNote').value = '';
+  document.getElementById('logPlaceMapWrap').style.display = 'none';
+}
+
+function logPlaceEdit(placeId) {
+  const p = _logPlacesCache.find(x => x.id === placeId);
+  if (!p) return;
+  document.getElementById('logPlaceFormTitle').textContent = `Редактировать: ${p.name_ru}`;
+  document.getElementById('logPlaceId').value = p.id;
+  document.getElementById('logPlaceNameRu').value = p.name_ru || '';
+  document.getElementById('logPlaceNameUz').value = p.name_uz || '';
+  document.getElementById('logPlaceCategoryRu').value = p.category_ru || '';
+  document.getElementById('logPlaceCategoryUz').value = p.category_uz || '';
+  document.getElementById('logPlaceLat').value = p.lat || '';
+  document.getElementById('logPlaceLocAddr').value = p.location_address || '';
+  document.getElementById('logPlaceLocDisplay').textContent = p.lat ? `📍 ${p.location_address || p.lat}` : 'Не указана';
+  document.getElementById('logPlaceNote').value = p.note || '';
+  document.getElementById('logPlaceMapWrap').style.display = 'none';
+}
+
+async function logPlaceSave() {
+  const placeId = document.getElementById('logPlaceId').value;
+  const name_ru = document.getElementById('logPlaceNameRu').value.trim();
+  if (!name_ru) { showToast('Введите название', 'warning'); return; }
+  const body = {
+    region_id: _logPlacesRegionId,
+    category_ru: document.getElementById('logPlaceCategoryRu').value.trim() || null,
+    category_uz: document.getElementById('logPlaceCategoryUz').value.trim() || null,
+    name_ru,
+    name_uz: document.getElementById('logPlaceNameUz').value.trim() || name_ru,
+    lat: document.getElementById('logPlaceLat').value || null,
+    location_address: document.getElementById('logPlaceLocAddr').value || null,
+    note: document.getElementById('logPlaceNote').value.trim() || null,
+  };
+  const r = placeId
+    ? await apiPut(`/admin/places/${placeId}`, body).catch(() => null)
+    : await apiPost('/admin/places', body).catch(() => null);
+  if (!r?.ok) { showToast(r?.detail || 'Ошибка', 'error'); return; }
+  showToast('Сохранено', 'success');
+  logPlaceFormReset();
+  await logLoadPlaces();
+}
+
+async function logPlaceDelete(placeId) {
+  if (!confirm('Удалить точку?')) return;
+  const r = await apiDelete(`/admin/places/${placeId}`).catch(() => null);
+  if (!r?.ok) { showToast(r?.detail || 'Ошибка', 'error'); return; }
+  showToast('Удалено', 'success');
+  await logLoadPlaces();
+}
+
+let _logPlaceYmap = null, _logPlaceYmarker = null;
+
+function logPickPlaceLocation() {
+  document.getElementById('logPlaceMapWrap').style.display = 'block';
+  const existing = document.getElementById('logPlaceLat').value;
+  let [lat, lon] = _LOG_DEFAULT_CENTER;
+  if (existing && existing.includes(',')) {
+    const [la, lo] = existing.split(',').map(Number);
+    if (!isNaN(la)) { lat = la; lon = lo; }
+  } else {
+    const node = _logFindNode(_logPlacesRegionId);
+    if (node?.lat) {
+      const [nla, nlo] = node.lat.split(',').map(Number);
+      if (!isNaN(nla)) { lat = nla; lon = nlo; }
+    }
+  }
+  setTimeout(() => _initLogPlaceMap(lat, lon), 100);
+}
+
+async function _logPlaceSetLocation(lat, lon, addr) {
+  document.getElementById('logPlaceLat').value = `${lat},${lon}`;
+  document.getElementById('logPlaceLocAddr').value = addr || '';
+  document.getElementById('logPlaceLocDisplay').innerHTML = `📍 ${_esc(addr || `${lat}, ${lon}`)}`;
+}
+
+async function _logPlaceOnCoordChange(lat, lon) {
+  await _logPlaceSetLocation(lat.toFixed(6), lon.toFixed(6), '⏳ Определяем адрес…');
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ru`);
+    const d = await r.json();
+    await _logPlaceSetLocation(lat.toFixed(6), lon.toFixed(6), d.display_name || `${lat},${lon}`);
+  } catch { await _logPlaceSetLocation(lat.toFixed(6), lon.toFixed(6), `${lat.toFixed(5)}, ${lon.toFixed(5)}`); }
+}
+
+function _initLogPlaceMap(lat, lon) {
+  _loadAoeYmaps(() => {
+    if (_logPlaceYmap) {
+      _logPlaceYmap.setCenter([lat, lon], 15);
+      _logPlaceYmarker.geometry.setCoordinates([lat, lon]);
+      setTimeout(() => _logPlaceYmap.container.fitToViewport(), 100);
+    } else {
+      _logPlaceYmap = new ymaps.Map('logPlaceMapContainer', { center: [lat, lon], zoom: 15, controls: ['zoomControl'] });
+      _logPlaceYmarker = new ymaps.Placemark([lat, lon], {}, { draggable: true, preset: 'islands#redDotIcon' });
+      _logPlaceYmap.geoObjects.add(_logPlaceYmarker);
+      _logPlaceYmarker.events.add('dragend', () => {
+        const c = _logPlaceYmarker.geometry.getCoordinates();
+        _logPlaceOnCoordChange(c[0], c[1]);
+      });
+      _logPlaceYmap.events.add('click', e => {
+        const c = e.get('coords');
+        _logPlaceYmarker.geometry.setCoordinates(c);
+        _logPlaceOnCoordChange(c[0], c[1]);
+      });
+    }
+  });
+}
+
+// ── Импорт/экспорт домов через Excel ──────────────────────────────────────
+let _xlsxLibReady = false, _xlsxLibQueue = [];
+function _loadXlsxLib(cb) {
+  if (_xlsxLibReady) { cb(); return; }
+  _xlsxLibQueue.push(cb);
+  if (document.getElementById('xlsx-lib-script')) return;
+  const s = document.createElement('script');
+  s.id = 'xlsx-lib-script';
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload = () => { _xlsxLibReady = true; _xlsxLibQueue.forEach(f => f()); _xlsxLibQueue = []; };
+  document.head.appendChild(s);
+}
+
+const _LOG_HOUSE_XLSX_HEADER = ['ID', 'Короткое (RU)', 'Короткое (UZ)', 'Полное (RU)', 'Полное (UZ)', 'Координаты (широта, долгота)', 'Адрес', 'Примечание', 'Активен', 'Порядок'];
+
+function _logHouseToRow(h) {
+  const coords = h.lat ? h.lat.split(',').map(s => s.trim()).join(', ') : '';
+  return [h.id, h.name_ru || '', h.name_uz || '', h.name_ru_full || '', h.name_uz_full || '',
+          coords, h.location_address || '', h.note || '', h.active === false ? 'нет' : 'да', h.sort_order || 0];
+}
+
+function _logDownloadXlsx(rows, filename) {
+  _loadXlsxLib(() => {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:6},{wch:14},{wch:14},{wch:20},{wch:20},{wch:22},{wch:30},{wch:24},{wch:8},{wch:8}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Дома');
+    XLSX.writeFile(wb, filename);
+  });
+}
+
+function logDownloadHouseTemplate() {
+  _logDownloadXlsx([
+    _LOG_HOUSE_XLSX_HEADER,
+    ['', '1', '1', '1-дом', '1-uy', '41.311081, 69.240562', '1 мкр, дом 1', 'код домофона 25К', 'да', '0'],
+  ], 'дома_шаблон.xlsx');
+}
+
+function logExportHouses() {
+  const obj = _logFindNode(_logHousesParentId);
+  if (!obj) return;
+  const houses = obj.children || [];
+  const rows = [_LOG_HOUSE_XLSX_HEADER, ...houses.map(_logHouseToRow)];
+  const safeName = (obj.name_ru_full || obj.name_ru || 'dom').replace(/[^\wа-яА-ЯёЁ-]+/g, '_');
+  _logDownloadXlsx(rows, `дома_${safeName}.xlsx`);
+}
+
+async function logImportHousesFile(event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file || !_logHousesParentId) return;
+  // Автоматический архив перед каждым импортом — если что-то пойдёт не так,
+  // есть куда откатиться даже если забыли сделать архив вручную через «🗄 Архив».
+  await logCreateBackup(`Авто-архив перед импортом (объект #${_logHousesParentId})`);
+  _loadXlsxLib(async () => {
+    // Список ID домов, которые ДЕЙСТВИТЕЛЬНО принадлежат текущему объекту —
+    // строка с ID вне этого списка не может быть "обновлением" (защита от
+    // порчи чужого/старого региона при импорте с неверным ID в файле).
+    const obj = _logFindNode(_logHousesParentId);
+    const validIds = new Set((obj?.children || []).map(c => c.id));
+
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(new Uint8Array(buf), { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    const dataRows = rows.slice(1).filter(r => r && r.some(c => c !== undefined && c !== ''));
+    if (!dataRows.length) { showToast('В файле нет строк для импорта', 'warning'); return; }
+
+    let created = 0, updated = 0, skipped = 0, invalidId = 0;
+    for (const r of dataRows) {
+      const [id, nameRu, nameUz, nameRuFull, nameUzFull, coords, addr, note, activeStr, sortOrder] = r;
+      const name_ru = (nameRu ?? '').toString().trim();
+      if (!name_ru) { skipped++; continue; }
+      const regionId = (id !== undefined && id !== '') ? parseInt(id) : null;
+      // Защита: ID указан, но это НЕ дом текущего объекта — не трогаем чужой/старый
+      // регион, пропускаем строку целиком (пользователь может исправить ID и повторить).
+      if (regionId && !validIds.has(regionId)) { invalidId++; continue; }
+      // Координаты в одной ячейке "41.570047, 64.194410" — разбираем на широту/долготу отдельно.
+      let lat = null;
+      const coordsStr = (coords ?? '').toString().trim();
+      if (coordsStr) {
+        const parts = coordsStr.split(',').map(s => s.trim()).filter(Boolean);
+        if (parts.length === 2 && !isNaN(parseFloat(parts[0])) && !isNaN(parseFloat(parts[1]))) {
+          lat = `${parts[0]},${parts[1]}`;
+        }
+      }
+      const body = {
+        parent_id: _logHousesParentId,
+        level: 4,
+        name_ru,
+        name_uz: (nameUz ?? '').toString().trim() || name_ru,
+        name_ru_full: (nameRuFull ?? '').toString().trim() || null,
+        name_uz_full: (nameUzFull ?? '').toString().trim() || null,
+        lat,
+        location_address: (addr ?? '').toString().trim() || null,
+        note: (note ?? '').toString().trim() || null,
+        active: !(activeStr && /^(нет|no|false|0)$/i.test(activeStr.toString().trim())),
+        sort_order: parseInt(sortOrder) || 0,
+      };
+      let res;
+      if (regionId) {
+        res = await apiPut(`/admin/service-regions/${regionId}`, body).catch(() => null);
+        if (res?.ok) updated++; else skipped++;
+      } else {
+        res = await apiPost('/admin/service-regions', body).catch(() => null);
+        if (res?.ok) created++; else skipped++;
+      }
+    }
+    const parts = [`создано ${created}`, `обновлено ${updated}`];
+    if (skipped) parts.push(`пропущено ${skipped}`);
+    if (invalidId) parts.push(`ID не из этого объекта — пропущено ${invalidId}`);
+    showToast(`Импорт: ${parts.join(', ')}`, (skipped || invalidId) && !created && !updated ? 'error' : 'success');
+    await logLoad();
+    logOpenHouses(_logHousesParentId);
+  });
+}
+
+// ── Просмотр точки на карте (только просмотр, без редактирования) ──
+let _logViewYmap = null;
+
+// Обёртка по id — избегаем интерполяции сырых данных (адрес/примечание) в onclick,
+// см. правило проекта: только id в атрибуте + lookup по дереву в памяти.
+function logViewLocationById(regionId) {
+  const node = _logFindNode(regionId);
+  if (node && node.lat) logViewLocation(node.lat, node.location_address);
+}
+
+function logViewLocation(lat, locationAddress) {
+  if (!lat || !lat.includes(',')) return;
+  const [la, lo] = lat.split(',').map(s => parseFloat(s.trim()));
+  document.getElementById('logViewLocAddr').textContent = locationAddress || `${la}, ${lo}`;
+  document.getElementById('logViewLocExternal').href = `https://yandex.uz/maps/?pt=${lo},${la}&z=16`;
+  document.getElementById('logViewLocModal').style.display = 'flex';
+  _loadAoeYmaps(() => {
+    if (_logViewYmap) { _logViewYmap.destroy(); _logViewYmap = null; }
+    _logViewYmap = new ymaps.Map('logViewLocMapContainer', { center: [la, lo], zoom: 16, controls: ['zoomControl'] });
+    _logViewYmap.geoObjects.add(new ymaps.Placemark([la, lo], {}, { preset: 'islands#redDotIcon' }));
+    setTimeout(() => _logViewYmap.container.fitToViewport(), 50);
+  });
+}
+
+// ── Карта-пикер точки (население/объект) ──
+let _logYmap = null, _logYmarker = null;
+
+function logPickLocation() {
+  document.getElementById('logMapWrap').style.display = 'block';
+  const level = parseInt(document.getElementById('logRegionLevel').value);
+  const parentId = document.getElementById('logRegionParentId').value;
+  const existing = document.getElementById('logRegionLat').value;
+  let [lat, lon] = _LOG_DEFAULT_CENTER;
+  if (existing && existing.includes(',')) {
+    // Своя точка уже есть (редактирование) — центрируем на ней.
+    const [la, lo] = existing.split(',').map(Number);
+    if (!isNaN(la)) { lat = la; lon = lo; }
+  } else if (level === 4 && parentId && _logFindNode(parseInt(parentId))?.lat) {
+    // Новый дом без своей точки — центрируем на локации объекта (микрорайона/улицы),
+    // а не на общей точке по умолчанию, чтобы метка сразу была рядом с нужным местом.
+    const [pla, plo] = _logFindNode(parseInt(parentId)).lat.split(',').map(Number);
+    if (!isNaN(pla)) { lat = pla; lon = plo; }
+  } else if (level === 3 && parentId) {
+    // Новый объект без своей точки — центрируем на локации населённого пункта
+    // (parentId здесь — тип застройки, поднимаемся ещё на уровень выше до посёлка).
+    const typeNode = _logFindNode(parseInt(parentId));
+    const settlement = typeNode ? _logFindNode(typeNode.parent_id) : null;
+    if (settlement?.lat) {
+      const [sla, slo] = settlement.lat.split(',').map(Number);
+      if (!isNaN(sla)) { lat = sla; lon = slo; }
+    }
+  }
+  setTimeout(() => _initLogMap(lat, lon), 100);
+}
+
+async function _logSetLocation(lat, lon, addr) {
+  document.getElementById('logRegionLat').value = `${lat},${lon}`;
+  document.getElementById('logRegionLocAddr').value = addr || '';
+  document.getElementById('logRegionLocDisplay').innerHTML =
+    `📍 ${_esc(addr || `${lat}, ${lon}`)}`;
+}
+
+async function _logOnCoordChange(lat, lon) {
+  await _logSetLocation(lat.toFixed(6), lon.toFixed(6), '⏳ Определяем адрес…');
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ru`);
+    const d = await r.json();
+    await _logSetLocation(lat.toFixed(6), lon.toFixed(6), d.display_name || `${lat},${lon}`);
+  } catch { await _logSetLocation(lat.toFixed(6), lon.toFixed(6), `${lat.toFixed(5)}, ${lon.toFixed(5)}`); }
+}
+
+function _initLogMap(lat, lon) {
+  _loadAoeYmaps(() => {
+    if (_logYmap) {
+      _logYmap.setCenter([lat, lon], 15);
+      _logYmarker.geometry.setCoordinates([lat, lon]);
+      setTimeout(() => _logYmap.container.fitToViewport(), 100);
+    } else {
+      _logYmap = new ymaps.Map('logMapContainer', { center: [lat, lon], zoom: 15, controls: ['zoomControl'] });
+      _logYmarker = new ymaps.Placemark([lat, lon], {}, { draggable: true, preset: 'islands#redDotIcon' });
+      _logYmap.geoObjects.add(_logYmarker);
+      _logYmarker.events.add('dragend', () => {
+        const c = _logYmarker.geometry.getCoordinates();
+        _logOnCoordChange(c[0], c[1]);
+      });
+      _logYmap.events.add('click', e => {
+        const c = e.get('coords');
+        _logYmarker.geometry.setCoordinates(c);
+        _logOnCoordChange(c[0], c[1]);
+      });
+    }
+  });
+}
+
+function _logLocateUser() {
+  if (!navigator.geolocation || !_logYmap) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    const c = [pos.coords.latitude, pos.coords.longitude];
+    _logYmap.panTo(c, { flying: true });
+    _logYmarker.geometry.setCoordinates(c);
+    _logOnCoordChange(c[0], c[1]);
+  }, () => {}, { enableHighAccuracy: true, timeout: 8000 });
+}
+
+function _toggleLogMapFs() {
+  const wrap  = document.getElementById('logMapWrap');
+  const inner = document.getElementById('logMapInner');
+  const btn   = document.getElementById('logFsBtn');
+  const ready = document.getElementById('logReadyBtn');
+  const fs = inner.dataset.fs === '1';
+  if (!fs) {
+    inner.dataset.fs = '1';
+    Object.assign(wrap.style,  { position:'fixed', inset:'0', zIndex:'10000', margin:'0', background:'#0f1117', padding:'44px 0 0', borderRadius:'0' });
+    Object.assign(inner.style, { height:'calc(100vh - 44px)', borderRadius:'0' });
+    btn.textContent = '✕ Закрыть'; Object.assign(btn.style, { background:'#ef4444', color:'#fff', border:'none' });
+    if (ready) ready.style.display = 'block';
+    // Во весь экран — приближаем карту, чтобы сразу был виден нужный микрорайон/квартал,
+    // а не общий вид города (тот же центр — просто ближе).
+    setTimeout(() => _logYmap && _logYmap.setZoom(17, { duration: 200 }), 100);
+  } else {
+    inner.dataset.fs = '';
+    Object.assign(wrap.style,  { position:'', inset:'', zIndex:'', margin:'', background:'', padding:'', borderRadius:'' });
+    Object.assign(inner.style, { height:'220px', borderRadius:'10px' });
+    btn.textContent = '⛶ Во весь экран'; Object.assign(btn.style, { background:'var(--surface2)', color:'var(--text)', border:'1px solid var(--border)' });
+    if (ready) ready.style.display = 'none';
+    setTimeout(() => _logYmap && _logYmap.setZoom(15, { duration: 200 }), 100);
+  }
+  setTimeout(() => _logYmap && _logYmap.container.fitToViewport(), 100);
+}
+
+// ── Граница территории (полигон) для населённого пункта ────────────────────
+let _logPolygonYmap = null, _logPolygonShape = null;
+
+function _logPolygonSetStatus() {
+  const raw = document.getElementById('logRegionPolygon').value;
+  const status = document.getElementById('logPolygonStatus');
+  const clearBtn = document.getElementById('logPolygonClearBtn');
+  if (raw) {
+    let n = 0;
+    try { n = JSON.parse(raw).length; } catch (e) {}
+    status.textContent = `Граница задана (${n} точек)`;
+    clearBtn.style.display = 'inline-block';
+  } else {
+    status.textContent = 'Не указана';
+    clearBtn.style.display = 'none';
+  }
+}
+
+function logClearPolygon() {
+  document.getElementById('logRegionPolygon').value = '';
+  _logPolygonSetStatus();
+}
+
+function logDrawPolygon() {
+  document.getElementById('logPolygonMapWrap').style.display = 'block';
+  const raw = document.getElementById('logRegionPolygon').value;
+  let coords = null;
+  if (raw) { try { coords = JSON.parse(raw); } catch (e) {} }
+
+  let [centerLat, centerLon] = _LOG_DEFAULT_CENTER;
+  const ownLat = document.getElementById('logRegionLat').value;
+  if (ownLat && ownLat.includes(',')) {
+    const [la, lo] = ownLat.split(',').map(Number);
+    if (!isNaN(la)) { centerLat = la; centerLon = lo; }
+  }
+
+  setTimeout(() => {
+    _loadAoeYmaps(() => {
+      if (_logPolygonYmap) { _logPolygonYmap.destroy(); _logPolygonYmap = null; _logPolygonShape = null; }
+      _logPolygonYmap = new ymaps.Map('logPolygonMapContainer', {
+        center: [centerLat, centerLon], zoom: coords ? 13 : 14, controls: ['zoomControl'],
+      });
+      _logPolygonShape = new ymaps.Polygon(coords ? [coords] : [[]], {}, {
+        fillColor: '#f5a62333', strokeColor: '#f5a623', strokeWidth: 3,
+        editorDrawingCursor: 'crosshair', editorMaxPoints: 200,
+      });
+      _logPolygonYmap.geoObjects.add(_logPolygonShape);
+      if (coords && coords.length) {
+        _logPolygonShape.editor.startEditing();
+      } else {
+        _logPolygonShape.editor.startDrawing();
+      }
+      setTimeout(() => _logPolygonYmap.container.fitToViewport(), 100);
+    });
+  }, 100);
+}
+
+function _logPolygonDone() {
+  if (_logPolygonShape) {
+    try { _logPolygonShape.editor.stopEditing(); } catch (e) {}
+    const coords = _logPolygonShape.geometry.getCoordinates()[0] || [];
+    if (coords.length >= 3) {
+      document.getElementById('logRegionPolygon').value = JSON.stringify(coords);
+    }
+  }
+  _logPolygonSetStatus();
+  document.getElementById('logPolygonMapWrap').style.display = 'none';
+  if (_logPolygonYmap) { _logPolygonYmap.destroy(); _logPolygonYmap = null; _logPolygonShape = null; }
+}
+
+function _toggleLogPolygonMapFs() {
+  const wrap  = document.getElementById('logPolygonMapWrap');
+  const inner = document.getElementById('logPolygonMapInner');
+  const btn   = document.getElementById('logPolygonFsBtn');
+  const fs = inner.dataset.fs === '1';
+  if (!fs) {
+    inner.dataset.fs = '1';
+    Object.assign(wrap.style,  { position:'fixed', inset:'0', zIndex:'10000', margin:'0', background:'#0f1117', padding:'44px 0 0', borderRadius:'0' });
+    Object.assign(inner.style, { height:'calc(100vh - 44px)', borderRadius:'0' });
+    btn.textContent = '✕ Закрыть'; Object.assign(btn.style, { background:'#ef4444', color:'#fff', border:'none' });
+  } else {
+    inner.dataset.fs = '';
+    Object.assign(wrap.style,  { position:'', inset:'', zIndex:'', margin:'', background:'', padding:'', borderRadius:'' });
+    Object.assign(inner.style, { height:'280px', borderRadius:'10px' });
+    btn.textContent = '⛶ Во весь экран'; Object.assign(btn.style, { background:'var(--surface2)', color:'var(--text)', border:'1px solid var(--border)' });
+  }
+  setTimeout(() => _logPolygonYmap && _logPolygonYmap.container.fitToViewport(), 100);
 }
 
 async function saveSvc(key) {
@@ -23282,6 +24739,8 @@ function confirmBranchLoc() {
       <div class="mob-drawer-sub-item" data-page="units"          onclick="switchSubPage(this);closeMobDrawer()">📏 Единицы</div>
       <div class="mob-drawer-sub-item" data-page="expenses-admin" onclick="switchSubPage(this);closeMobDrawer()">🧾 Расходы</div>
       <div class="mob-drawer-sub-item" data-page="chat-templates" onclick="switchSubPage(this);closeMobDrawer()">💬 Шаблоны чата</div>
+      <div class="mob-drawer-sub-item" data-page="logistics"      onclick="switchSubPage(this);closeMobDrawer()">🗺 Логистика</div>
+      <div class="mob-drawer-sub-item" data-page="place-categories" onclick="switchSubPage(this);closeMobDrawer()">🏷 Категории точек</div>
     </div>
 
     <!-- Система accordion -->
