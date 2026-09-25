@@ -863,7 +863,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
     <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;margin-bottom:12px">
       <div class="field-inline" style="margin-bottom:0">
         <div class="field-label" id="ldShortAddrLabel">Адрес вывоза</div>
-        <div class="field-inp" style="flex:1;min-width:0"><input id="ld_short_address" placeholder="1-кв, 12-дом"></div>
+        <div class="ac-wrap" style="flex:1;min-width:0">
+          <div class="field-inp"><input id="ld_short_address" placeholder="1-кв, 12-дом" autocomplete="off"
+               oninput="regionAcInput(this,'ac_ld_region','ld')"></div>
+          <div class="ac-dropdown" id="ac_ld_region"></div>
+        </div>
+      </div>
+      <input type="hidden" id="ld_region_id">
+      <div style="text-align:right;margin-top:4px">
+        <button type="button" onclick="openRegionCascade('ld')" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📋 Выбрать из списка</button>
       </div>
       <div style="margin-top:10px">
         <div style="display:flex;align-items:center;justify-content:space-between">
@@ -1049,7 +1057,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
     <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;margin-bottom:12px">
       <div class="field-inline" style="margin-bottom:0">
         <div class="field-label" id="orShortAddrLabel">Адрес вывоза</div>
-        <div class="field-inp" style="flex:1;min-width:0"><input id="or_short_address" placeholder="1-кв, 12-дом"></div>
+        <div class="ac-wrap" style="flex:1;min-width:0">
+          <div class="field-inp"><input id="or_short_address" placeholder="1-кв, 12-дом" autocomplete="off"
+               oninput="regionAcInput(this,'ac_or_region','or')"></div>
+          <div class="ac-dropdown" id="ac_or_region"></div>
+        </div>
+      </div>
+      <input type="hidden" id="or_region_id">
+      <div style="text-align:right;margin-top:4px">
+        <button type="button" onclick="openRegionCascade('or')" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📋 Выбрать из списка</button>
       </div>
       <div style="margin-top:10px">
         <div style="display:flex;align-items:center;justify-content:space-between">
@@ -16031,6 +16047,27 @@ function staffChatSend() {
   </div>
 </div>
 
+<!-- МОДАЛКА: ВЫБОР РЕГИОНА (drill-down по дереву адресов, перенос из ARTEZ) -->
+<div id="regionCascadeModal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:12px">
+  <div style="background:var(--card);border-radius:16px;padding:18px;width:100%;max-width:420px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+    <div style="font-size:16px;font-weight:700;margin-bottom:10px;flex-shrink:0">🗺 Выбрать регион</div>
+    <div id="rcBreadcrumb" style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.7;flex-shrink:0"></div>
+    <div id="rcConfirmCurrentWrap" style="display:none;margin-bottom:8px;flex-shrink:0">
+      <button id="rcConfirmCurrentBtn" onclick="_rcConfirmCurrentLevel()" style="width:100%;padding:10px;background:var(--accent,#163E3B);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer"></button>
+    </div>
+    <input type="text" id="rcFilterInput" oninput="_rcRenderList()" placeholder="🔍 Фильтр, или «11-27» — объект-дом по всему каталогу" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;margin-bottom:8px;flex-shrink:0;box-sizing:border-box">
+    <div id="rcList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;min-height:80px"></div>
+    <div id="rcGlobalWrap" style="display:none;flex-shrink:0;margin-top:8px;padding-top:8px;border-top:1.5px solid var(--border)">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px">🌐 Найдено по всему каталогу</div>
+      <div id="rcGlobalList" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-shrink:0">
+      <button id="rcBackBtn" onclick="_rcGoBack()" style="flex:1;padding:11px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;display:none">← Назад</button>
+      <button onclick="document.getElementById('regionCascadeModal').style.display='none'" style="flex:1;padding:11px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer">Отмена</button>
+    </div>
+  </div>
+</div>
+
 <!-- МОДАЛКА: НЕ ДОЗВОНИЛСЯ -->
 <div id="noAnswerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;display:none;align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border-radius:20px;width:100%;max-width:360px;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
@@ -16480,7 +16517,15 @@ function staffChatSend() {
     <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;margin-bottom:12px">
       <div class="field-inline" style="margin-bottom:0">
         <div id="soeShortAddrLabel" class="field-label">Адрес вывоза</div>
-        <div class="field-inp" style="flex:1"><input id="soe_short_address" placeholder="Навои, 1-кв"></div>
+        <div class="ac-wrap" style="flex:1">
+          <div class="field-inp"><input id="soe_short_address" placeholder="Навои, 1-кв" autocomplete="off"
+               oninput="regionAcInput(this,'ac_soe_region','soe')"></div>
+          <div class="ac-dropdown" id="ac_soe_region"></div>
+        </div>
+      </div>
+      <input type="hidden" id="soe_region_id">
+      <div style="text-align:right;margin-top:4px">
+        <button type="button" onclick="openRegionCascade('soe')" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📋 Выбрать из списка</button>
       </div>
       <div style="margin-top:10px">
         <div style="display:flex;align-items:center;justify-content:space-between">
@@ -17120,6 +17165,387 @@ async function confirmPacking() {
   const packerLogin = document.getElementById('packerSelect').value || null;
   closePacker();
   await staffChangeStatus('packing', packerLogin);
+}
+
+// ── ВЫБОР РЕГИОНА (перенос из ARTEZ) — автокомплит + пошаговый drill-down по
+// дереву адресов. Оба метода независимо заполняют ${prefix}_short_address и
+// ${prefix}_region_id для одних и тех же полей формы. ──────────────────────
+let _regionAcTimer = null;
+let _regionAcResults = [];
+
+async function regionAcInput(el, dropId, prefix) {
+  const q = el.value.trim();
+  clearTimeout(_regionAcTimer);
+  const drop = document.getElementById(dropId);
+  if (!drop) return;
+  if (q.length < 2) { drop.style.display = 'none'; return; }
+  _regionAcTimer = setTimeout(async () => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    try {
+      const res = await fetch(`${API_BASE}/regions/search?q=${encodeURIComponent(q)}&limit=8`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) { drop.style.display = 'none'; return; }
+      const data = await res.json();
+      _regionAcResults = data.results || [];
+      regionAcRender(dropId, prefix);
+    } catch { drop.style.display = 'none'; }
+  }, 280);
+}
+
+function regionAcRender(dropId, prefix) {
+  const drop = document.getElementById(dropId);
+  if (!drop) return;
+  if (!_regionAcResults.length) { drop.style.display = 'none'; return; }
+  const wrap = drop.closest('.ac-wrap') || drop.parentElement;
+  const rect = wrap.getBoundingClientRect();
+  drop.style.top = (rect.bottom + 3) + 'px';
+  drop.style.left = rect.left + 'px';
+  drop.style.width = rect.width + 'px';
+  drop.innerHTML = _regionAcResults.map((r, i) => `
+    <div class="ac-item" ontouchstart="" onclick="regionAcSelect(${i},'${dropId}','${prefix}')">
+      <div class="ac-name">${r.lat ? '📍' : '🗺'} ${_esc(r.name_ru_full || r.name_ru)}</div>
+      <div class="ac-sub">${_esc(r.breadcrumb || '')}</div>
+    </div>`).join('');
+  drop.style.display = 'block';
+}
+
+function regionAcSelect(idx, dropId, prefix) {
+  const r = _regionAcResults[idx];
+  if (!r) return;
+  document.getElementById(dropId).style.display = 'none';
+  const addrEl   = document.getElementById(`${prefix}_short_address`);
+  const regionEl = document.getElementById(`${prefix}_region_id`);
+  if (addrEl)   addrEl.value = r.short_fill || r.breadcrumb || r.name_ru;
+  if (regionEl) regionEl.value = r.id;
+  if (r.lat) _applyRegionAutoLocation(prefix, r.lat, r.location_address);
+}
+
+// Подставляет локацию вывоза (координаты + адрес) из каталога регионов —
+// используется и автокомплитом, и каскадным выбором, когда у выбранного
+// узла (дом или объект) уже есть сохранённая точка на карте.
+function _applyRegionAutoLocation(prefix, latStr, locationAddress) {
+  if (!latStr || !latStr.includes(',')) return;
+  const [la, lo] = latStr.split(',').map(s => s.trim());
+  if (prefix === 'or')  { _setLocation(la, lo, locationAddress || ''); return; }
+  if (prefix === 'ld')  { _setLdLocation(la, lo, locationAddress || ''); return; }
+  if (prefix === 'soe') {
+    document.getElementById('soe_location').value = `${la},${lo}`;
+    document.getElementById('soe_location_address').value = locationAddress || '';
+    const disp = document.getElementById('soe_loc_display');
+    if (disp) disp.innerHTML = `<a href="#" onclick="openMapChoice('${la}','${lo}');return false" style="color:var(--accent)">📍 ${_esc(locationAddress || la+', '+lo)}</a>`;
+  }
+}
+
+// Пара к _applyRegionAutoLocation — очищает локацию для того же набора полей.
+// Реальный id элемента показа не всегда совпадает с шаблоном `${prefix}_loc_display`
+// (ldLocDisplay camelCase, locDisplay вообще без префикса у 'or') — чистка по
+// шаблону молча не срабатывала бы (if(dispEl) — null), поэтому явные ветки.
+function _clearRegionAutoLocation(prefix) {
+  if (prefix === 'or') {
+    document.getElementById('or_location').value = '';
+    document.getElementById('or_location_address').value = '';
+    const disp = document.getElementById('locDisplay');
+    if (disp) disp.textContent = t('lead.location_none');
+    return;
+  }
+  if (prefix === 'ld') {
+    document.getElementById('ld_location').value = '';
+    document.getElementById('ld_location_address').value = '';
+    const disp = document.getElementById('ldLocDisplay');
+    if (disp) disp.textContent = t('lead.location_none');
+    return;
+  }
+  if (prefix === 'soe') {
+    document.getElementById('soe_location').value = '';
+    document.getElementById('soe_location_address').value = '';
+    const disp = document.getElementById('soe_loc_display');
+    if (disp) disp.textContent = 'Не указана';
+  }
+}
+
+// ─── ВЫБОР РЕГИОНА: ПОШАГОВЫЙ DRILL-DOWN (альтернатива автокомплиту) ─────
+let _rcTargetPrefix = null;
+let _rcPath = [];            // цепочка узлов, в которые уже вошли (уровень N = _rcPath[N-1])
+let _rcCurrentChildren = []; // дети текущего (последнего) узла из _rcPath, либо корневой список
+let _rcSearchTimer = null;
+let _rcGlobalResults = [];   // последние результаты глобального поиска (/api/regions/search)
+const _LOG_TYPE_LABEL_RC = { microdistrict: 'Микрорайоны', street_area: 'Махалли / Улицы' };
+const _LOG_POI_TYPE_ICON_RC = { shop: '🏪', pharmacy: '💊', school: '🏫', kindergarten: '🧸', dental: '🦷', clinic: '🏥', other: '🏢' };
+// places.category_ru/category_uz — свободный текст (не enum), поэтому иконка по
+// ключевым словам на обоих языках, а не по точному значению; список ключей
+// соответствует пресетам справочника в admin.html (_LOG_PLACE_CATEGORY_PRESETS).
+// Неизвестная категория — просто 🏷.
+const _PLACE_CATEGORY_ICON_RC = {
+  'кафе': '☕', 'kafe': '☕',
+  'ресторан': '🍽️', 'restoran': '🍽️',
+  'фастфуд': '🍔', 'fast-fud': '🍔',
+  'пекарня': '🥐', 'nonvoyxona': '🥐',
+  'кондитерская': '🍰', 'qandolatxona': '🍰',
+  'чайхана': '🫖', 'choyxona': '🫖',
+  'общежитие': '🛏️', 'yotoqxona': '🛏️',
+  'гостиница': '🏨', 'mehmonxona': '🏨',
+  'хостел': '🛌', 'xostel': '🛌',
+  'магазин': '🏪', "do'kon": '🏪', 'dokon': '🏪',
+  'супермаркет': '🛒', 'supermarket': '🛒',
+  'рынок': '🧺', 'bozor': '🧺',
+  'аптека': '💊', 'dorixona': '💊',
+  'книжный магазин': '📚', "kitob do'koni": '📚',
+  'цветочный магазин': '💐', "gul do'koni": '💐',
+  'ювелирный магазин': '💍', "zargarlik do'koni": '💍',
+  'магазин одежды': '👕', "kiyim do'koni": '👕',
+  'обувной магазин': '👟', "poyabzal do'koni": '👟',
+  'стройматериалы': '🧱', 'qurilish materiallari': '🧱',
+  'автозапчасти': '🔧', 'avto ehtiyot qismlar': '🔧',
+  'мебельный магазин': '🛋️', "mebel do'koni": '🛋️',
+  'клиника': '🏥', 'klinika': '🏥',
+  'стоматология': '🦷', 'stomatologiya': '🦷',
+  'поликлиника': '⚕️', 'poliklinika': '⚕️',
+  'ветеринарная клиника': '🐾', 'veterinariya klinikasi': '🐾',
+  'школа': '🏫', 'maktab': '🏫',
+  'садик': '🧸', 'детский сад': '🧸', "bog'cha": '🧸',
+  'детский центр': '🎈', 'bolalar markazi': '🎈',
+  'университет': '🎓', 'universitet': '🎓',
+  'курсы': '📖', 'kurslar': '📖',
+  'парикмахерская': '💇', 'sartaroshxona': '💇',
+  'салон красоты': '💅', "go'zallik saloni": '💅',
+  'спа': '🧖', 'spa markazi': '🧖',
+  'барбершоп': '💈', 'barbershop': '💈',
+  'автосервис': '🔧', 'avtoservis': '🔧',
+  'автомойка': '🚗', 'avtomoyka': '🚗',
+  'азс': '⛽', "yoqilg'i shahobchasi": '⛽',
+  'шиномонтаж': '🛞', 'shinamontaj': '🛞',
+  'банк': '🏦', 'bank': '🏦',
+  'почта': '📮', 'pochta': '📮',
+  'нотариус': '📝', 'notarius': '📝',
+  'центр гос. услуг': '🏢', 'xizmatlar markazi': '🏢',
+  'спортзал': '🏋️', 'sport zali': '🏋️',
+  'бассейн': '🏊', 'basseyn': '🏊',
+  'кинотеатр': '🎬', 'kinoteatr': '🎬',
+  'парк': '🌳', "bog'": '🌳',
+  'мечеть': '🕌', 'masjid': '🕌',
+  'церковь': '⛪', 'cherkov': '⛪',
+  'офис': '🏢', 'ofis': '🏢',
+  'склад': '📦', 'ombor': '📦',
+  'мастерская': '🛠️', 'usta xonasi': '🛠️',
+};
+function _rcPlaceIcon(node) {
+  const ru = (node.category_ru || '').trim().toLowerCase();
+  const uz = (node.category_uz || '').trim().toLowerCase();
+  return _PLACE_CATEGORY_ICON_RC[ru] || _PLACE_CATEGORY_ICON_RC[uz] || '🏷';
+}
+
+async function _rcFetchChildren(parentId) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const qs = parentId ? `?parent_id=${parentId}` : '';
+  try {
+    const res = await fetch(`${API_BASE}/regions/children${qs}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.children || [];
+  } catch { return []; }
+}
+
+async function openRegionCascade(prefix) {
+  _rcTargetPrefix = prefix;
+  _rcPath = [];
+  document.getElementById('regionCascadeModal').style.display = 'flex';
+  await _rcShowLevel(null);
+}
+
+async function _rcShowLevel(parentNode) {
+  document.getElementById('rcFilterInput').value = '';
+  document.getElementById('rcList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2)">Загружаю…</div>';
+  _rcCurrentChildren = await _rcFetchChildren(parentNode ? parentNode.id : null);
+  _rcRenderBreadcrumb();
+  _rcRenderConfirmButton();
+  _rcRenderList();
+}
+
+function _rcNodeLabel(node, level) {
+  if (node.is_place) return `${_rcPlaceIcon(node)} ${node.name_ru_full || node.name_ru}${node.lat ? '' : ' (без точки)'}`;
+  if (level === 2) return _LOG_TYPE_LABEL_RC[node.node_type] || node.name_ru_full || node.name_ru;
+  if (level === 4) return `${_LOG_POI_TYPE_ICON_RC[node.poi_type] || '🏠'} ${node.name_ru_full || node.name_ru}${node.lat ? '' : ' (без точки)'}`;
+  return node.name_ru_full || node.name_ru;
+}
+
+function _rcRenderBreadcrumb() {
+  const el = document.getElementById('rcBreadcrumb');
+  const backBtn = document.getElementById('rcBackBtn');
+  if (!_rcPath.length) {
+    el.textContent = 'Населённый пункт';
+    backBtn.style.display = 'none';
+    return;
+  }
+  backBtn.style.display = 'block';
+  const parts = _rcPath.map((n, i) =>
+    `<a href="#" onclick="_rcJumpTo(${i});return false" style="color:var(--accent);text-decoration:none">${_esc(_rcNodeLabel(n, i + 1))}</a>`
+  );
+  el.innerHTML = parts.join(' <span style="color:var(--text2)">›</span> ');
+}
+
+function _rcRenderConfirmButton() {
+  const wrap = document.getElementById('rcConfirmCurrentWrap');
+  const btn = document.getElementById('rcConfirmCurrentBtn');
+  if (!_rcPath.length) { wrap.style.display = 'none'; return; }
+  const cur = _rcPath[_rcPath.length - 1];
+  btn.textContent = `✅ Выбрать «${_rcNodeLabel(cur, _rcPath.length)}» целиком`;
+  wrap.style.display = 'block';
+}
+
+function _rcRenderList() {
+  const listEl = document.getElementById('rcList');
+  const filter = (document.getElementById('rcFilterInput').value || '').trim().toLowerCase();
+  const level = _rcPath.length + 1;
+  const items = _rcCurrentChildren.filter(c => !filter || _rcNodeLabel(c, level).toLowerCase().includes(filter));
+  if (!items.length) {
+    listEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">${filter ? 'Ничего не найдено' : 'Список пуст'}</div>`;
+  } else {
+    listEl.innerHTML = items.map(c => {
+      const chevron = level < 4 ? '<span style="color:var(--text2)">›</span>' : '';
+      return `<button onclick="_rcSelectById(${c.id})" style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:11px 12px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;font-size:13.5px;color:var(--text);cursor:pointer;text-align:left"><span>${_esc(_rcNodeLabel(c, level))}</span>${chevron}</button>`;
+    }).join('');
+  }
+  _rcScheduleGlobalSearch(filter);
+}
+
+// Поиск по всему каталогу (не только текущий уровень) — понимает составную запись
+// "11-27" (объект-дом), как в short_fill. Не трогает бэкенд-поиск, только сам ввод.
+function _rcScheduleGlobalSearch(filter) {
+  clearTimeout(_rcSearchTimer);
+  if (filter.length < 2) {
+    document.getElementById('rcGlobalWrap').style.display = 'none';
+    _rcGlobalResults = [];
+    return;
+  }
+  _rcSearchTimer = setTimeout(() => _rcRunGlobalSearch(filter), 300);
+}
+
+async function _rcRunGlobalSearch(filter) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  let results = [];
+  try {
+    const res = await fetch(`${API_BASE}/regions/search?q=${encodeURIComponent(filter)}&limit=8`, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) {
+      const data = await res.json();
+      results = (data.results || []).filter(r => r.short_fill);
+    }
+  } catch { results = []; }
+  // пользователь мог успеть изменить текст, пока ждали ответ — не показываем устаревшее
+  if ((document.getElementById('rcFilterInput').value || '').trim().toLowerCase() !== filter) return;
+  _rcGlobalResults = results;
+  const wrap = document.getElementById('rcGlobalWrap');
+  if (!results.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  document.getElementById('rcGlobalList').innerHTML = results.map(r => {
+    const icon = r.is_place ? `${_rcPlaceIcon(r)} ` : (r.poi_type ? `${_LOG_POI_TYPE_ICON_RC[r.poi_type] || '🏢'} ` : '');
+    return `<button onclick="_rcConfirmSearchResult(${r.id})" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:9px 11px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;font-size:12.5px;color:var(--text);cursor:pointer;text-align:left"><span style="font-weight:600">${icon}${_esc(r.short_fill)}</span><span style="font-size:11px;color:var(--text2)">${_esc(r.breadcrumb || '')}</span></button>`;
+  }).join('');
+}
+
+function _rcConfirmSearchResult(id) {
+  const r = _rcGlobalResults.find(x => x.id === id);
+  if (!r || !_rcTargetPrefix) return;
+  const addrEl   = document.getElementById(`${_rcTargetPrefix}_short_address`);
+  const regionEl = document.getElementById(`${_rcTargetPrefix}_region_id`);
+  if (addrEl)   addrEl.value = r.short_fill;
+  // Место (places) не является узлом дерева — у leads/orders.region_id это FK
+  // на service_regions, поэтому пишем родительский узел места, а не его
+  // синтетический (отрицательный) id.
+  if (regionEl) regionEl.value = r.is_place ? (r.region_id || '') : r.id;
+  if (r.lat) _applyRegionAutoLocation(_rcTargetPrefix, r.lat, r.location_address);
+  document.getElementById('regionCascadeModal').style.display = 'none';
+}
+
+function _rcSelectById(id) {
+  const node = _rcCurrentChildren.find(c => c.id === id);
+  if (node) _rcSelect(node);
+}
+
+async function _rcSelect(node) {
+  // Дома (уровень 4) и места (places) — всегда лист, не тратим запрос на проверку детей.
+  if (node.is_place || _rcPath.length + 1 >= 4) { _rcConfirmNode(_rcPath, node); return; }
+  const children = await _rcFetchChildren(node.id);
+  if (children.length) {
+    _rcPath.push(node);
+    _rcCurrentChildren = children;
+    document.getElementById('rcFilterInput').value = '';
+    _rcRenderBreadcrumb();
+    _rcRenderConfirmButton();
+    _rcRenderList();
+  } else {
+    _rcConfirmNode(_rcPath, node);
+  }
+}
+
+function _rcJumpTo(index) {
+  _rcPath = index < 0 ? [] : _rcPath.slice(0, index + 1);
+  _rcShowLevel(_rcPath.length ? _rcPath[_rcPath.length - 1] : null);
+}
+
+function _rcGoBack() {
+  if (!_rcPath.length) return;
+  _rcJumpTo(_rcPath.length - 2);
+}
+
+function _rcConfirmCurrentLevel() {
+  if (!_rcPath.length) return;
+  const node = _rcPath[_rcPath.length - 1];
+  _rcConfirmNode(_rcPath.slice(0, -1), node);
+}
+
+function _rcConfirmNode(ancestors, node) {
+  if (!_rcTargetPrefix) { document.getElementById('regionCascadeModal').style.display = 'none'; return; }
+
+  if (node.is_place) {
+    // Место — не узел дерева: короткий адрес = просто его название (без
+    // формата "объект-дом-"), region_id пишем от родительского узла места
+    // (FK ссылается только на service_regions, не на синтетический id места).
+    const addrEl   = document.getElementById(`${_rcTargetPrefix}_short_address`);
+    const regionEl = document.getElementById(`${_rcTargetPrefix}_region_id`);
+    if (addrEl)   addrEl.value = node.name_ru_full || node.name_ru;
+    if (regionEl) regionEl.value = node.region_id || '';
+    if (node.lat) {
+      _applyRegionAutoLocation(_rcTargetPrefix, node.lat, node.location_address);
+    } else {
+      _clearRegionAutoLocation(_rcTargetPrefix);
+    }
+    document.getElementById('regionCascadeModal').style.display = 'none';
+    return;
+  }
+
+  const fullChain = [...ancestors, node];
+  const typeNode   = fullChain[1];
+  const objectNode = fullChain[2];
+  const houseNode  = fullChain[3];
+
+  // Компактная запись вместо полной хлебной крошки: "1-1-" (мкр-дом-, квартиру
+  // дописывает сотрудник) для микрорайонов, "ул. X, 15" для улиц/махаллей.
+  let shortFill;
+  if (objectNode && typeNode?.node_type === 'microdistrict') {
+    shortFill = houseNode ? `${objectNode.name_ru}-${houseNode.name_ru}-` : `${objectNode.name_ru}-`;
+  } else if (objectNode) {
+    shortFill = houseNode ? `${objectNode.name_ru}, ${houseNode.name_ru}` : `${objectNode.name_ru}, `;
+  } else {
+    shortFill = node.name_ru_full || node.name_ru || _rcNodeLabel(node, fullChain.length);
+  }
+
+  const addrEl   = document.getElementById(`${_rcTargetPrefix}_short_address`);
+  const regionEl = document.getElementById(`${_rcTargetPrefix}_region_id`);
+  if (addrEl)   addrEl.value = shortFill;
+  if (regionEl) regionEl.value = node.id;
+
+  // Локацию подставляем только с точки САМОГО выбранного узла. Если выбран конкретный
+  // дом без точки — локация должна остаться пустой, а не подставляться с объекта
+  // (иначе на карте окажется центр микрорайона вместо "нет точки").
+  const geoNode = houseNode ? (houseNode.lat ? houseNode : null) : ((objectNode && objectNode.lat) ? objectNode : null);
+  if (geoNode) {
+    _applyRegionAutoLocation(_rcTargetPrefix, geoNode.lat, geoNode.location_address);
+  } else {
+    _clearRegionAutoLocation(_rcTargetPrefix);
+  }
+
+  document.getElementById('regionCascadeModal').style.display = 'none';
 }
 </script>
 
