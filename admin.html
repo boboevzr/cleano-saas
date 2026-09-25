@@ -4250,13 +4250,15 @@
             </div>
           </div>
 
-          <div style="margin-bottom:10px">
-            <div id="logRegionNameRuLabel" style="font-size:11px;color:var(--text2);margin-bottom:4px">Название (RU)</div>
-            <input id="logRegionNameRu" type="text" placeholder="Ташкент" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
-          </div>
-          <div style="margin-bottom:10px">
-            <div id="logRegionNameUzLabel" style="font-size:11px;color:var(--text2);margin-bottom:4px">Название (UZ)</div>
-            <input id="logRegionNameUz" type="text" placeholder="Toshkent" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+          <div id="logRegionNameWrap">
+            <div style="margin-bottom:10px">
+              <div id="logRegionNameRuLabel" style="font-size:11px;color:var(--text2);margin-bottom:4px">Название (RU)</div>
+              <input id="logRegionNameRu" type="text" placeholder="Ташкент" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+            </div>
+            <div style="margin-bottom:10px">
+              <div id="logRegionNameUzLabel" style="font-size:11px;color:var(--text2);margin-bottom:4px">Название (UZ)</div>
+              <input id="logRegionNameUz" type="text" placeholder="Toshkent" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+            </div>
           </div>
 
           <div id="logRegionBulkWrap" style="margin-bottom:10px;display:none">
@@ -11148,6 +11150,7 @@ function pickEmoji(emoji) {
 let _logTree = [];
 let _logHousesParentId = null;
 const _LOG_TYPE_LABEL = { microdistrict: 'Микрорайоны', street_area: 'Махалли / Улицы' };
+const _LOG_TYPE_LABEL_UZ = { microdistrict: 'Mikrorayonlar', street_area: "Mahalla / Ko'chalar" };
 const _LOG_POI_TYPE_ICON = { shop: '🏪', pharmacy: '💊', school: '🏫', kindergarten: '🧸', dental: '🦷', clinic: '🏥', other: '🏢' };
 const _LOG_POI_TYPE_LABEL = { shop: 'Магазин', pharmacy: 'Аптека', school: 'Школа', kindergarten: 'Садик', dental: 'Стоматология', clinic: 'Медцентр/клиника', other: 'Другое учреждение' };
 const _LOG_DEFAULT_CENTER = [41.2995, 69.2401]; // Ташкент — нейтральный дефолт карты (не привязан к конкретной компании)
@@ -11316,6 +11319,10 @@ function logOpenModal(level, parentId, regionId = null) {
 
   document.getElementById('logRegionBranchWrap').style.display = level === 1 ? 'block' : 'none';
   document.getElementById('logRegionTypeWrap').style.display   = level === 2 ? 'block' : 'none';
+  // Тип застройки — это ФИКСИРОВАННЫЙ выбор (Микрорайоны/Махалли-Улицы), название
+  // берётся из этого выбора автоматически (см. logRegionSave) — свои Название
+  // (RU)/(UZ) тут не нужны, это просто дублирующий пустой шаг для админа.
+  document.getElementById('logRegionNameWrap').style.display   = level === 2 ? 'none' : 'block';
   document.getElementById('logRegionMapField').style.display   = (level === 1 || level === 3 || level === 4) ? 'block' : 'none';
   document.getElementById('logRegionNoteWrap').style.display   = (level === 3 || level === 4) ? 'block' : 'none';
   document.getElementById('logRegionNotExistsWrap').style.display = (level === 4) ? 'block' : 'none';
@@ -11386,8 +11393,11 @@ async function logRegionSave() {
   const level    = parseInt(document.getElementById('logRegionLevel').value);
   const regionId = document.getElementById('logRegionId').value;
   const parentId = document.getElementById('logRegionParentId').value;
-  const name_ru  = document.getElementById('logRegionNameRu').value.trim();
-  const name_uz  = document.getElementById('logRegionNameUz').value.trim();
+  // Тип застройки (уровень 2) — название не вводится вручную, оно однозначно
+  // определяется выбором в select (Микрорайоны/Махалли-Улицы).
+  const nodeTypeVal = level === 2 ? document.getElementById('logRegionNodeType').value : null;
+  const name_ru  = level === 2 ? (_LOG_TYPE_LABEL[nodeTypeVal] || nodeTypeVal) : document.getElementById('logRegionNameRu').value.trim();
+  const name_uz  = level === 2 ? (_LOG_TYPE_LABEL_UZ[nodeTypeVal] || nodeTypeVal) : document.getElementById('logRegionNameUz').value.trim();
   if (!name_ru) { showToast('Введите название (RU)', 'warning'); return; }
 
   _logRegionSaving = true;
