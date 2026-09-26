@@ -871,7 +871,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
       </div>
       <input type="hidden" id="ld_region_id">
       <div style="text-align:right;margin-top:4px">
-        <button type="button" onclick="openRegionCascade('ld')" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📋 Выбрать из списка</button>
+        <button type="button" id="ldPickFromListBtn" onclick="openRegionCascade('ld')" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📋 Выбрать из списка</button>
       </div>
       <div style="margin-top:10px">
         <div style="display:flex;align-items:center;justify-content:space-between">
@@ -1065,7 +1065,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
       </div>
       <input type="hidden" id="or_region_id">
       <div style="text-align:right;margin-top:4px">
-        <button type="button" onclick="openRegionCascade('or')" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📋 Выбрать из списка</button>
+        <button type="button" id="orPickFromListBtn" onclick="openRegionCascade('or')" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📋 Выбрать из списка</button>
       </div>
       <div style="margin-top:10px">
         <div style="display:flex;align-items:center;justify-content:space-between">
@@ -1208,7 +1208,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
       <div class="field-inp"><textarea id="or_note" placeholder="Детали заявки..." rows="3"></textarea></div>
     </div>
     <div class="field-inline" style="margin-bottom:0">
-      <div class="field-label">Кол-во позиций</div>
+      <div class="field-label" id="orItemCountLabel">Кол-во позиций</div>
       <div class="field-inp" style="flex:0 0 90px"><input id="or_item_count" type="number" min="0" placeholder="0"></div>
     </div>
   </div>
@@ -1391,7 +1391,7 @@ const _i18n = {
     'lead.map_fs':'⛶ Во весь экран',
     'lead.pickup':'Тип ввоза','lead.pickup_courier':'🚗 Забираем сами','lead.pickup_self':'🏠 Клиент привозит',
     'lead.delivery':'Тип вывоза','lead.delivery_courier':'🚚 Доставляем сами','lead.delivery_self':'🏠 Клиент забирает',
-    'lead.note':'Примечание','lead.services':'🏷 Услуги','lead.note_ph':'Детали заявки...',
+    'lead.note':'Примечание','lead.services':'🏷 Услуги','lead.note_ph':'Детали заявки...','lead.pick_from_list':'📋 Выбрать из списка',
     'lead.agent':'Агент','lead.agent_optional':'(необязательно)',
     'lead.agent_pick':'🔍 Выбрать','lead.agent_none':'Не выбран',
     'btn.cancel':'Отмена','btn.create_lead':'Создать лид','btn.save':'Сохранить',
@@ -1425,7 +1425,14 @@ const _i18n = {
     'drv.pkp.title':'Сколько забираете?','drv.pkp.count_mode':'Общее число','drv.pkp.svc_mode':'По услугам',
     'drv.pkp.svc_placeholder':'Услуга (ковёр, диван…)','drv.pkp.add_svc':'+ Добавить услугу',
     'drv.pkp.lang_title':'Язык SMS клиенту','drv.pkp.submit':'✅ Забрал','drv.pkp.svc_required':'Укажите хотя бы одну услугу',
-    'drv.btn.positions':'📦 Позиции','drv.btn.history':'📋 История','drv.btn.refresh':'🔄 Обновить',
+    'drv.btn.positions':'📦 Позиции','drv.btn.history':'📋 История','drv.btn.refresh':'🔄 Обновить','drv.btn.back_to_routes':'← К маршрутам',
+    'rc.title':'🗺 Выбрать регион','rc.filter_ph':'🔍 Фильтр, или «11-27» — объект-дом по всему каталогу',
+    'rc.global_found':'🌐 Найдено по всему каталогу','rc.back':'← Назад','rc.loading':'Загружаю…',
+    'rc.root_level':'Населённый пункт','rc.select_whole':'✅ Выбрать «{name}» целиком',
+    'rc.no_results':'Ничего не найдено','rc.empty':'Список пуст','rc.no_point':' (без точки)',
+    'pkp.check_phone':'🔍 Проверить заказ по телефону','pkp.searching':'Ищем…','pkp.enter_phone':'Введите телефон',
+    'pkp.not_found':'Заказ, ожидающий забора, с этим номером не найден.','pkp.create_new':'➕ Создать новый заказ',
+    'btn.find':'Найти',
     'drv.st.pending':'Ожидает','drv.st.done':'Доставлен','drv.st.skipped':'Пропущен',
     'drv.sheet.loading':'Загрузка…','drv.sheet.items_empty':'Позиции не найдены',
     'drv.sheet.history_empty':'История пуста','drv.sheet.total':'💰 Итого:',
@@ -1588,7 +1595,7 @@ const _i18n = {
     'or.delivery_addr_differs':'Адрес доставки другой','or.delivery_addr_label':'Адрес доставки',
     'or.delivery_location_label':'Локация доставки',
     'or.service_type':'Тип обслуживания','or.std':'📦 Стандарт','or.express':'⚡ Экспресс',
-    'or.pickup':'Тип ввоза','or.delivery':'Тип вывоза','or.note':'Примечание *',
+    'or.pickup':'Тип ввоза','or.delivery':'Тип вывоза','or.note':'Примечание *','or.item_count':'Кол-во позиций',
     'btn.create_order':'Создать заявку','or.creating':'Создаём…',
     'or.name_ph':'Алишер','or.short_addr_ph':'1-кв, 12-дом','or.address_ph':'г. Навои, ул. Навои 12',
     'svc.title':'Выберите услуги','svc.insert':'Вставить',
@@ -1706,7 +1713,7 @@ const _i18n = {
     'lead.map_fs':`⛶ Toʻliq ekran`,
     'lead.pickup':'Olib kelish turi','lead.pickup_courier':'🚗 Biz olib ketamiz','lead.pickup_self':'🏠 Mijoz olib keladi',
     'lead.delivery':'Olib ketish turi','lead.delivery_courier':'🚚 Biz yetkazamiz','lead.delivery_self':'🏠 Mijoz olib ketadi',
-    'lead.note':'Izoh','lead.services':'🏷 Xizmatlar','lead.note_ph':'Ariza tafsilotlari...',
+    'lead.note':'Izoh','lead.services':'🏷 Xizmatlar','lead.note_ph':'Ariza tafsilotlari...','lead.pick_from_list':'📋 Roʻyxatdan tanlash',
     'lead.agent':'Agent','lead.agent_optional':'(ixtiyoriy)',
     'lead.agent_pick':'🔍 Tanlash','lead.agent_none':'Tanlanmagan',
     "btn.cancel":"Bekor",'btn.create_lead':'Lid yaratish','btn.save':'Saqlash',
@@ -1740,7 +1747,14 @@ const _i18n = {
     'drv.pkp.title':'Nechta pozitsiya olib ketyapsiz?','drv.pkp.count_mode':'Umumiy son','drv.pkp.svc_mode':'Xizmat boʻyicha',
     'drv.pkp.svc_placeholder':'Xizmat (gilam, divan…)','drv.pkp.add_svc':'+ Xizmat qoʻshish',
     'drv.pkp.lang_title':'Mijozga SMS tili','drv.pkp.submit':'✅ Oldim','drv.pkp.svc_required':'Kamida bitta xizmat kiriting',
-    'drv.btn.positions':'📦 Pozitsiyalar','drv.btn.history':'📋 Tarix','drv.btn.refresh':'🔄 Yangilash',
+    'drv.btn.positions':'📦 Pozitsiyalar','drv.btn.history':'📋 Tarix','drv.btn.refresh':'🔄 Yangilash','drv.btn.back_to_routes':'← Marshrutlarga',
+    'rc.title':'🗺 Hududni tanlash','rc.filter_ph':'🔍 Filtr, yoki «11-27» — butun katalog boʻyicha obyekt-uy',
+    'rc.global_found':'🌐 Butun katalogdan topildi','rc.back':'← Orqaga','rc.loading':'Yuklanmoqda…',
+    'rc.root_level':'Aholi punkti','rc.select_whole':'✅ «{name}» ni butunlay tanlash',
+    'rc.no_results':'Hech narsa topilmadi','rc.empty':'Roʻyxat boʻsh','rc.no_point':' (nuqtasiz)',
+    'pkp.check_phone':'🔍 Telefon boʻyicha buyurtmani tekshirish','pkp.searching':'Qidirilmoqda…','pkp.enter_phone':'Telefon raqamini kiriting',
+    'pkp.not_found':'Olib ketishni kutayotgan bu raqamli buyurtma topilmadi.','pkp.create_new':'➕ Yangi buyurtma yaratish',
+    'btn.find':'Qidirish',
     'drv.st.pending':'Kutilmoqda','drv.st.done':'Yetkazildi','drv.st.skipped':'Oʻtkazib yuborildi',
     'drv.sheet.loading':'Yuklanmoqda…','drv.sheet.items_empty':'Pozitsiyalar topilmadi',
     'drv.sheet.history_empty':'Tarix boʻsh','drv.sheet.total':'💰 Jami:',
@@ -1903,7 +1917,7 @@ const _i18n = {
     'or.delivery_addr_differs':'Yetkazib berish manzili boshqa','or.delivery_addr_label':'Yetkazib berish manzili',
     'or.delivery_location_label':'Yetkazib berish joylashuvi',
     'or.service_type':'Xizmat turi','or.std':'📦 Standart','or.express':'⚡ Ekspress',
-    'or.pickup':`Olib kelish turi`,'or.delivery':`Olib ketish turi`,'or.note':'Izoh *',
+    'or.pickup':`Olib kelish turi`,'or.delivery':`Olib ketish turi`,'or.note':'Izoh *','or.item_count':'Pozitsiyalar soni',
     'btn.create_order':'Buyurtma yaratish','or.creating':'Yaratilmoqda…',
     'or.name_ph':'Alisher','or.short_addr_ph':'1-xonadon, 12-uy','or.address_ph':'Navoiy sh., Navoiy k. 12',
     'svc.title':'Xizmatlarni tanlang','svc.insert':`Qoʻshish`,
@@ -6334,6 +6348,7 @@ function _applyLeadsFormI18n() {
   _s('ldDeliveryLabel', t('lead.delivery'));
   _s('ldNoteLabel', t('lead.note'));
   _s('ldSvcBtn', t('lead.services'));
+  _s('ldPickFromListBtn', t('lead.pick_from_list'));
   _s('ldAgentLabel', t('lead.agent') + ' ');
   _s('ldAgentOptional', t('lead.agent_optional'));
   _s('ldAgentPickBtn', t('lead.agent_pick'));
@@ -6619,6 +6634,7 @@ function _applySoeI18n() {
   _s('soeDeliveryDiscLabel',t('soe.delivery_disc'));
   _s('soeNoteLabel',        t('lead.note'));
   _s('soeSvcPickBtn',       t('lead.services'));
+  _s('soePickFromListBtn',  t('lead.pick_from_list'));
   _s('soeChangeStatusLabel',t('soe.change_status'));
   _s('soeCancelBtn',        t('btn.cancel'));
   _s('soeSaveBtn',          t('soe.save'));
@@ -6659,7 +6675,9 @@ function _applyOrderFormI18n() {
   _s('orPickupLabel',      t('or.pickup'));
   _s('orDeliveryLabel',    t('or.delivery'));
   _s('orNoteLabel',        t('or.note'));
+  _s('orItemCountLabel',   t('or.item_count'));
   _s('orSvcBtn',           t('lead.services'));
+  _s('orPickFromListBtn',  t('lead.pick_from_list'));
   _s('orCancelBtn',        t('btn.cancel'));
   _s('orSubmitBtn',        t('btn.create_order'));
   // branch buttons
@@ -6731,6 +6749,7 @@ function reqField(id, msg) {
 
 // ─── ВЫБОР УСЛУГ ────────────────────────────────────────
 const SVC_LIST = ['Ковры','Ковры на дому','Диваны','Матрасы','Шторы'];
+const SVC_LIST_KEYS = ['carpet','carpet_home','sofa','mattress','curtains']; // тот же порядок, что SVC_LIST — для UZ через _svcName()
 let _svcTarget = null;
 
 function openSvcPicker(targetId) {
@@ -6740,14 +6759,15 @@ function openSvcPicker(targetId) {
   _ss('svcCancelBtn',   t('btn.cancel'));
   _ss('svcInsertBtn',   t('svc.insert'));
   const list = document.getElementById('svcPickerList');
-  list.innerHTML = SVC_LIST.map((s, i) =>
-    `<label style="display:flex;align-items:center;gap:12px;padding:11px 18px;cursor:pointer;background:#fff;transition:background .12s${i < SVC_LIST.length-1 ? ';border-bottom:1px solid #f5f5f5' : ''}">
+  list.innerHTML = SVC_LIST.map((s, i) => {
+    const label = _lang === 'uz' ? _svcName(SVC_LIST_KEYS[i], 'uz') : s;
+    return `<label style="display:flex;align-items:center;gap:12px;padding:11px 18px;cursor:pointer;background:#fff;transition:background .12s${i < SVC_LIST.length-1 ? ';border-bottom:1px solid #f5f5f5' : ''}">
        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;border:2px solid #d0d0d0;flex-shrink:0;background:#fff" id="svcIcon_${i}">
        </span>
-       <input type="checkbox" value="${s}" style="display:none" onchange="updateSvcIcon(this,${i})">
-       <span style="font-size:15px;color:#1a1a2e;font-weight:500">${s}</span>
-     </label>`
-  ).join('');
+       <input type="checkbox" value="${_esc(label)}" style="display:none" onchange="updateSvcIcon(this,${i})">
+       <span style="font-size:15px;color:#1a1a2e;font-weight:500">${_esc(label)}</span>
+     </label>`;
+  }).join('');
   // Click on label toggles checkbox via the hidden input trick
   list.querySelectorAll('label').forEach(lbl => {
     lbl.addEventListener('click', () => {
@@ -8240,12 +8260,12 @@ function pageDelivery() {
 function pagePickup() {
   return `<div style="padding:12px 14px 80px">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text)">🔍 Проверить заказ по телефону</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text)">${t('pkp.check_phone')}</div>
       <div style="display:flex;gap:8px">
         <input id="pkp_phone" type="text" inputmode="tel" placeholder="+998 90 000-00-00"
           style="flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px"
           onkeydown="if(event.key==='Enter')pkpSearch()">
-        <button onclick="pkpSearch()" style="padding:10px 18px;background:#163E3B;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;white-space:nowrap">Найти</button>
+        <button onclick="pkpSearch()" style="padding:10px 18px;background:#163E3B;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;white-space:nowrap">${t('btn.find')}</button>
       </div>
     </div>
     <div id="pkpResult" style="margin-top:14px"></div>
@@ -8259,8 +8279,8 @@ let _pkpSvcRowN = 0;
 async function pkpSearch() {
   const phoneRaw = document.getElementById('pkp_phone')?.value.trim();
   const resEl = document.getElementById('pkpResult');
-  if (!phoneRaw) { showToast('Введите телефон', 'error'); return; }
-  resEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text2)">Ищем…</div>`;
+  if (!phoneRaw) { showToast(t('pkp.enter_phone'), 'error'); return; }
+  resEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text2)">${t('pkp.searching')}</div>`;
   try {
     const r = await apiFetch(`/api/staff/pickup/lookup?phone=${encodeURIComponent(phoneRaw)}`);
     const d = await r.json();
@@ -8276,8 +8296,8 @@ function _pkpRenderNotFound(phone) {
   const resEl = document.getElementById('pkpResult');
   resEl.innerHTML = `
     <div style="background:var(--surface);border:1.5px dashed var(--border);border-radius:14px;padding:18px;text-align:center">
-      <div style="font-size:14px;color:var(--text2);margin-bottom:12px">Заказ, ожидающий забора, с этим номером не найден.</div>
-      <button id="pkpCreateNewBtn" style="padding:10px 20px;background:#163E3B;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer">➕ Создать новый заказ</button>
+      <div style="font-size:14px;color:var(--text2);margin-bottom:12px">${t('pkp.not_found')}</div>
+      <button id="pkpCreateNewBtn" style="padding:10px 20px;background:#163E3B;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer">${t('pkp.create_new')}</button>
     </div>`;
   // Телефон передаётся через closure/dataset, а не интерполяцией в onclick-строку —
   // введённый пользователем текст никогда не попадает в HTML/JS-парсинг (XSS-фикс).
@@ -8507,11 +8527,11 @@ function _renderRouteDetail(route) {
   const el = document.getElementById('drvPage');
   el.innerHTML = `
     <div style="padding:12px 14px 0">
-      <button onclick="_backToRouteList()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--sep);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">← К маршрутам</button>
+      <button onclick="_backToRouteList()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--sep);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">${t('drv.btn.back_to_routes')}</button>
     </div>
     ${_drvRouteCard(route, 0)}
     <div style="padding:16px;text-align:center">
-      <button onclick="loadDelivery(true)" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--sep);background:none;color:var(--text2);font-size:14px;font-weight:600;cursor:pointer">🔄 Обновить</button>
+      <button onclick="loadDelivery(true)" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--sep);background:none;color:var(--text2);font-size:14px;font-weight:600;cursor:pointer">${t('drv.btn.refresh')}</button>
     </div>`;
 }
 
@@ -16050,7 +16070,7 @@ function staffChatSend() {
 <!-- МОДАЛКА: ВЫБОР РЕГИОНА (drill-down по дереву адресов, перенос из ARTEZ) -->
 <div id="regionCascadeModal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:12px">
   <div style="background:var(--card);border-radius:16px;padding:18px;width:100%;max-width:420px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.3)">
-    <div style="font-size:16px;font-weight:700;margin-bottom:10px;flex-shrink:0">🗺 Выбрать регион</div>
+    <div id="rcTitle" style="font-size:16px;font-weight:700;margin-bottom:10px;flex-shrink:0">🗺 Выбрать регион</div>
     <div id="rcBreadcrumb" style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.7;flex-shrink:0"></div>
     <div id="rcConfirmCurrentWrap" style="display:none;margin-bottom:8px;flex-shrink:0">
       <button id="rcConfirmCurrentBtn" onclick="_rcConfirmCurrentLevel()" style="width:100%;padding:10px;background:var(--accent,#163E3B);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer"></button>
@@ -16058,12 +16078,12 @@ function staffChatSend() {
     <input type="text" id="rcFilterInput" oninput="_rcRenderList()" placeholder="🔍 Фильтр, или «11-27» — объект-дом по всему каталогу" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;margin-bottom:8px;flex-shrink:0;box-sizing:border-box">
     <div id="rcList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;min-height:80px"></div>
     <div id="rcGlobalWrap" style="display:none;flex-shrink:0;margin-top:8px;padding-top:8px;border-top:1.5px solid var(--border)">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:6px">🌐 Найдено по всему каталогу</div>
+      <div id="rcGlobalFoundLabel" style="font-size:11px;color:var(--text2);margin-bottom:6px">🌐 Найдено по всему каталогу</div>
       <div id="rcGlobalList" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto"></div>
     </div>
     <div style="display:flex;gap:10px;margin-top:12px;flex-shrink:0">
       <button id="rcBackBtn" onclick="_rcGoBack()" style="flex:1;padding:11px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;display:none">← Назад</button>
-      <button onclick="document.getElementById('regionCascadeModal').style.display='none'" style="flex:1;padding:11px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer">Отмена</button>
+      <button id="rcCancelBtn" onclick="document.getElementById('regionCascadeModal').style.display='none'" style="flex:1;padding:11px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer">Отмена</button>
     </div>
   </div>
 </div>
@@ -16525,7 +16545,7 @@ function staffChatSend() {
       </div>
       <input type="hidden" id="soe_region_id">
       <div style="text-align:right;margin-top:4px">
-        <button type="button" onclick="openRegionCascade('soe')" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📋 Выбрать из списка</button>
+        <button type="button" id="soePickFromListBtn" onclick="openRegionCascade('soe')" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0">📋 Выбрать из списка</button>
       </div>
       <div style="margin-top:10px">
         <div style="display:flex;align-items:center;justify-content:space-between">
@@ -17349,13 +17369,18 @@ async function _rcFetchChildren(parentId) {
 async function openRegionCascade(prefix) {
   _rcTargetPrefix = prefix;
   _rcPath = [];
+  document.getElementById('rcTitle').textContent = t('rc.title');
+  document.getElementById('rcFilterInput').placeholder = t('rc.filter_ph');
+  document.getElementById('rcGlobalFoundLabel').textContent = t('rc.global_found');
+  document.getElementById('rcBackBtn').textContent = t('rc.back');
+  document.getElementById('rcCancelBtn').textContent = t('btn.cancel');
   document.getElementById('regionCascadeModal').style.display = 'flex';
   await _rcShowLevel(null);
 }
 
 async function _rcShowLevel(parentNode) {
   document.getElementById('rcFilterInput').value = '';
-  document.getElementById('rcList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2)">Загружаю…</div>';
+  document.getElementById('rcList').innerHTML = `<div style="text-align:center;padding:20px;color:var(--text2)">${t('rc.loading')}</div>`;
   _rcCurrentChildren = await _rcFetchChildren(parentNode ? parentNode.id : null);
   _rcRenderBreadcrumb();
   _rcRenderConfirmButton();
@@ -17363,9 +17388,9 @@ async function _rcShowLevel(parentNode) {
 }
 
 function _rcNodeLabel(node, level) {
-  if (node.is_place) return `${_rcPlaceIcon(node)} ${node.name_ru_full || node.name_ru}${node.lat ? '' : ' (без точки)'}`;
+  if (node.is_place) return `${_rcPlaceIcon(node)} ${node.name_ru_full || node.name_ru}${node.lat ? '' : t('rc.no_point')}`;
   if (level === 2) return _LOG_TYPE_LABEL_RC[node.node_type] || node.name_ru_full || node.name_ru;
-  if (level === 4) return `${_LOG_POI_TYPE_ICON_RC[node.poi_type] || '🏠'} ${node.name_ru_full || node.name_ru}${node.lat ? '' : ' (без точки)'}`;
+  if (level === 4) return `${_LOG_POI_TYPE_ICON_RC[node.poi_type] || '🏠'} ${node.name_ru_full || node.name_ru}${node.lat ? '' : t('rc.no_point')}`;
   return node.name_ru_full || node.name_ru;
 }
 
@@ -17373,7 +17398,7 @@ function _rcRenderBreadcrumb() {
   const el = document.getElementById('rcBreadcrumb');
   const backBtn = document.getElementById('rcBackBtn');
   if (!_rcPath.length) {
-    el.textContent = 'Населённый пункт';
+    el.textContent = t('rc.root_level');
     backBtn.style.display = 'none';
     return;
   }
@@ -17389,7 +17414,7 @@ function _rcRenderConfirmButton() {
   const btn = document.getElementById('rcConfirmCurrentBtn');
   if (!_rcPath.length) { wrap.style.display = 'none'; return; }
   const cur = _rcPath[_rcPath.length - 1];
-  btn.textContent = `✅ Выбрать «${_rcNodeLabel(cur, _rcPath.length)}» целиком`;
+  btn.textContent = t('rc.select_whole').replace('{name}', _rcNodeLabel(cur, _rcPath.length));
   wrap.style.display = 'block';
 }
 
@@ -17399,7 +17424,7 @@ function _rcRenderList() {
   const level = _rcPath.length + 1;
   const items = _rcCurrentChildren.filter(c => !filter || _rcNodeLabel(c, level).toLowerCase().includes(filter));
   if (!items.length) {
-    listEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">${filter ? 'Ничего не найдено' : 'Список пуст'}</div>`;
+    listEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">${filter ? t('rc.no_results') : t('rc.empty')}</div>`;
   } else {
     listEl.innerHTML = items.map(c => {
       const chevron = level < 4 ? '<span style="color:var(--text2)">›</span>' : '';
