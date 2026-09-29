@@ -434,14 +434,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
   @page { margin: 0; }
 }
 /* ── МОЯ КАССА (full-screen) ── */
-#myCashModal>.mc-inner{position:absolute;inset:0;background:#fff;display:flex;flex-direction:column;overflow:hidden}
+#myCashModal>.mc-inner{position:absolute;inset:0;height:100dvh;background:#fff;display:flex;flex-direction:column;overflow:hidden}
 @media(min-width:560px){
   #myCashModal{display:flex;align-items:center;justify-content:center}
-  #myCashModal>.mc-inner{position:relative;inset:auto;max-width:520px;width:100%;max-height:90dvh;border-radius:16px}
+  #myCashModal>.mc-inner{position:relative;inset:auto;max-width:520px;width:100%;height:90dvh;border-radius:16px}
 }
 .mc-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e7eb;flex-shrink:0}
-.mc-top{padding:14px 20px 4px;overflow-y:auto;max-height:38dvh;flex-shrink:1;min-height:0}
-.mc-action{padding:0 20px 8px;flex-shrink:0}
+.mc-onhand-row{padding:10px 20px 0;font-size:15px;font-weight:700;flex-shrink:0}
+.mc-date-row{padding:10px 20px 0;flex-shrink:0}
 .mc-tabs-row{padding:0 20px;display:flex;border-bottom:2px solid #e5e7eb;flex-shrink:0}
 .mc-scroll{flex:1;overflow-y:auto;padding:8px 20px 20px;-webkit-overflow-scrolling:touch}
 .modal-box{
@@ -1666,7 +1666,7 @@ const _i18n = {
     'cash.toast.sent':'Передача отправлена — ожидайте подтверждения','cash.toast.confirmed':'Получение подтверждено',
     'cash.err.no_recipient':'Выберите получателя','cash.err.no_amount':'Введите сумму',
     'cash.err.send':'Ошибка отправки','cash.err.confirm':'Ошибка','cash.err.reject':'Ошибка','cash.toast.rejected':'Отклонено',
-    'cash.tab.received':'💰 Принятые','cash.tab.sent':'📤 Передачи',
+    'cash.tab.overview':'📊 Общие','cash.tab.received':'💰 Принятые','cash.tab.sent':'📤 Передачи',
     'cash.handovers.empty':'Передач нет','cash.handovers.pending':'Ожидает','cash.handovers.confirmed':'Подтверждено',
     'cash.bal.pending':'Ожидает','cash.pending_in.title':'Входящие — ожидают подтверждения',
     'exp.status.pending':'На рассмотрении','exp.status.mgr_approved':'Ожидает Admin',
@@ -1988,7 +1988,7 @@ const _i18n = {
     'cash.toast.sent':'Topshirish yuborildi — tasdiqlashni kuting','cash.toast.confirmed':'Qabul tasdiqlandi',
     'cash.err.no_recipient':'Qabul qiluvchini tanlang','cash.err.no_amount':'Summani kiriting',
     'cash.err.send':'Yuborish xatosi','cash.err.confirm':'Xato','cash.err.reject':'Xato','cash.toast.rejected':'Rad etildi',
-    'cash.tab.received':`💰 Qabul qilinganlar`,'cash.tab.sent':`📤 O'tkazmalar`,
+    'cash.tab.overview':'📊 Umumiy','cash.tab.received':`💰 Qabul qilinganlar`,'cash.tab.sent':`📤 O'tkazmalar`,
     'cash.handovers.empty':`O'tkazma yo'q`,'cash.handovers.pending':'Kutilmoqda','cash.handovers.confirmed':'Tasdiqlandi',
     'cash.bal.pending':'Kutilmoqda','cash.pending_in.title':`Kiruvchi — tasdiqlanishni kutmoqda`,
     'exp.status.pending':`Ko'rib chiqilmoqda`,'exp.status.mgr_approved':'Admin kutmoqda',
@@ -14389,6 +14389,64 @@ function closeProfileDrop() {
 let _cashActiveTab = 'received';
 let _myCashHandovers = [];
 let _myCashReceivedHandovers = [];
+let _cashDateFilter = 'all'; // 'all'|'today'|'yesterday'|'week'|'month'|'period' — те же ключи, что у ordersDateFilter
+let _cashDateFrom = '';
+let _cashDateTo = '';
+
+// [dateFrom, dateTo] в формате YYYY-MM-DD (или null) для query-параметров — та же
+// логика окон, что _applyDateFilter(), но возвращает границы для запроса к серверу,
+// а не фильтрует уже загруженный массив (баланс/списки "Моя касса" считаются в БД
+// с учётом периода, а не берутся из капа LIMIT 50/100 на клиенте).
+function _cashDateRange(key) {
+  const now = new Date();
+  const toStr = d => d.toISOString().slice(0, 10);
+  const today = toStr(now);
+  if (key === 'today')     return [today, today];
+  if (key === 'yesterday') { const y = toStr(new Date(now - 86400000)); return [y, y]; }
+  if (key === 'week')      return [toStr(new Date(now - 7*86400000)), today];
+  if (key === 'month')     return [toStr(new Date(now - 30*86400000)), today];
+  if (key === 'period')    return [_cashDateFrom || null, _cashDateTo || null];
+  return [null, null]; // 'all'
+}
+
+function _renderCashDateRow() {
+  const row = document.getElementById('cashDateFilterRow');
+  if (!row) return;
+  const chips = [
+    ['all','ord.date.all'], ['today','ord.date.today'], ['yesterday','ord.date.yesterday'],
+    ['week','ord.date.week'], ['month','ord.date.month'], ['period','ord.date.period']
+  ];
+  const s = (k) => `padding:6px 14px;border-radius:20px;border:1.5px solid ${k===_cashDateFilter?'var(--accent,#163E3B)':'#e5e7eb'};background:${k===_cashDateFilter?'var(--accent,#163E3B)':'none'};color:${k===_cashDateFilter?'#fff':'#888'};font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0`;
+  const _dtInp = (id, val, calId, onch) =>
+    `<span style="display:inline-flex;align-items:stretch;flex-shrink:0;position:relative">
+      <input type="text" inputmode="numeric" id="${id}" value="${_fmtYMDtoDMY(val)}" placeholder="${t('period.ph')}" maxlength="10"
+        oninput="_autoDateFmt(this)" onchange="${onch}"
+        style="border:1.5px solid #e5e7eb;border-right:none;border-radius:8px 0 0 8px;padding:4px 8px;font-size:12px;background:#fff;color:#1a1a1a;width:82px;min-width:0">
+      <button type="button" onclick="_openDatePicker('${calId}')"
+        style="border:1.5px solid #e5e7eb;border-left:none;border-radius:0 8px 8px 0;padding:0 7px;background:#f5f5f7;cursor:pointer;font-size:13px;line-height:1;color:#888;flex-shrink:0">📅</button>
+      <input type="date" id="${calId}" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;top:0;left:0" tabindex="-1">
+    </span>`;
+  row.innerHTML = chips.map(([k,key]) => `<button onclick="setCashDateFilter('${k}')" style="${s(k)}">${t(key)}</button>`).join('') +
+    `<span id="cashPeriodInputs" style="display:${_cashDateFilter==='period'?'flex':'none'};gap:4px;align-items:center;flex-shrink:0">
+      <span style="color:#888;font-size:12px;white-space:nowrap">${t('period.from')}</span>
+      ${_dtInp('cashDateFrom', _cashDateFrom, 'cdfCal', "_cashDateFrom=_parseDMY(this.value);_loadMyCashData()")}
+      <span style="color:#888;font-size:12px;white-space:nowrap">${t('period.to')}</span>
+      ${_dtInp('cashDateTo', _cashDateTo, 'cdtCal', "_cashDateTo=_parseDMY(this.value);_loadMyCashData()")}
+    </span>`;
+  document.getElementById('cdfCal')?.addEventListener('change', function() {
+    const f=document.getElementById('cashDateFrom'); if(f){f.value=_fmtYMDtoDMY(this.value);} _cashDateFrom=this.value; _loadMyCashData();
+  });
+  document.getElementById('cdtCal')?.addEventListener('change', function() {
+    const f=document.getElementById('cashDateTo'); if(f){f.value=_fmtYMDtoDMY(this.value);} _cashDateTo=this.value; _loadMyCashData();
+  });
+}
+
+function setCashDateFilter(v) {
+  _cashDateFilter = v;
+  if (v !== 'period') { _cashDateFrom = ''; _cashDateTo = ''; }
+  _renderCashDateRow();
+  _loadMyCashData();
+}
 
 function _cashVisibilityRefresh() {
   if (document.hidden) return;
@@ -14407,18 +14465,23 @@ function _stopCashModalWatch() {
 
 function _cashTabSwitch(tab) {
   _cashActiveTab = tab;
+  const btnO  = document.getElementById('cashTabBtn_overview');
   const btnR  = document.getElementById('cashTabBtn_received');
   const btnS  = document.getElementById('cashTabBtn_sent');
   const btnE  = document.getElementById('cashTabBtn_expenses');
+  const listO = document.getElementById('myCashOverviewTab');
   const listR = document.getElementById('myCashPaymentsList');
   const listS = document.getElementById('myCashHandoversList');
   const listE = document.getElementById('myCashExpensesList');
   const acc = 'var(--accent,#163E3B)';
-  [btnR, btnS, btnE].forEach(b => b && Object.assign(b.style, {color:'#888', borderBottomColor:'transparent', fontWeight:'600'}));
-  [listR, listS, listE].forEach(l => l && (l.style.display = 'none'));
+  [btnO, btnR, btnS, btnE].forEach(b => b && Object.assign(b.style, {color:'#888', borderBottomColor:'transparent', fontWeight:'600'}));
+  [listO, listR, listS, listE].forEach(l => l && (l.style.display = 'none'));
   const btnNew = document.getElementById('newExpenseBtnCash');
   if (btnNew) btnNew.style.display = 'none';
-  if (tab === 'received') {
+  if (tab === 'overview') {
+    if (btnO) { btnO.style.color = acc; btnO.style.borderBottomColor = acc; btnO.style.fontWeight = '700'; }
+    if (listO) listO.style.display = '';
+  } else if (tab === 'received') {
     if (btnR) { btnR.style.color = acc; btnR.style.borderBottomColor = acc; btnR.style.fontWeight = '700'; }
     if (listR) listR.style.display = '';
   } else if (tab === 'sent') {
@@ -14690,12 +14753,20 @@ async function openMyCashModal() {
   const modal = document.getElementById('myCashModal');
   if (!modal) return;
   modal.style.display = 'flex';
-  _cashActiveTab = 'received';
+  _cashActiveTab = 'overview';
+  _cashDateFilter = 'today'; _cashDateFrom = ''; _cashDateTo = ''; // по умолчанию — сегодня
+  _applyCashI18n();
+  _cashTabSwitch('overview');
+  _renderCashDateRow();
+  await _loadMyCashData();
+}
 
+// Перезагружает баланс+списки "Моя касса" с учётом текущего фильтра дат
+// (_cashDateFilter/From/To) — вызывается и при открытии модалки, и при смене
+// фильтра (не сбрасывая при этом активную вкладку, в отличие от openMyCashModal).
+async function _loadMyCashData() {
   const balBox  = document.getElementById('myCashBalance');
   const listEl  = document.getElementById('myCashPaymentsList');
-  _applyCashI18n();
-  _cashTabSwitch('received');
   if (balBox)  balBox.innerHTML  = `<div style="color:#888;font-size:13px;text-align:center;padding:8px">${t('cash.loading')}</div>`;
   if (listEl)  listEl.innerHTML  = '';
 
@@ -14705,13 +14776,19 @@ async function openMyCashModal() {
   const cur = t('drv.currency');
   const fmt = v => Number(Math.round(v || 0)).toLocaleString('ru') + ' ' + cur;
 
+  const [dateFrom, dateTo] = _cashDateRange(_cashDateFilter);
+  const dq = [];
+  if (dateFrom) dq.push(`date_from=${dateFrom}`);
+  if (dateTo)   dq.push(`date_to=${dateTo}`);
+  const dqs = dq.length ? `?${dq.join('&')}` : '';
+
   const [balData, pmData, hoData, rhData, phData, expData] = await Promise.all([
-    fetch(`${API_BASE}/admin/cash/my-balance`,              { headers:{Authorization:`Bearer ${token}`} }).then(r=>r.json()).catch(()=>null),
-    fetch(`${API_BASE}/admin/cash/my-payments`,             { headers:{Authorization:`Bearer ${token}`} }).then(r=>r.json()).catch(()=>null),
-    fetch(`${API_BASE}/admin/cash/my-handovers`,            { headers:{Authorization:`Bearer ${token}`} }).then(r=>r.json()).catch(()=>null),
-    fetch(`${API_BASE}/admin/cash/my-received-handovers`,   { headers:{Authorization:`Bearer ${token}`} }).then(r=>r.json()).catch(()=>null),
+    fetch(`${API_BASE}/admin/cash/my-balance${dqs}`,              { headers:{Authorization:`Bearer ${token}`} }).then(r=>r.json()).catch(()=>null),
+    fetch(`${API_BASE}/admin/cash/my-payments${dqs}`,             { headers:{Authorization:`Bearer ${token}`} }).then(r=>r.json()).catch(()=>null),
+    fetch(`${API_BASE}/admin/cash/my-handovers${dqs}`,            { headers:{Authorization:`Bearer ${token}`} }).then(r=>r.json()).catch(()=>null),
+    fetch(`${API_BASE}/admin/cash/my-received-handovers${dqs}`,   { headers:{Authorization:`Bearer ${token}`} }).then(r=>r.json()).catch(()=>null),
     isManager ? fetch(`${API_BASE}/admin/cash/pending-handovers`, { headers:{Authorization:`Bearer ${token}`} }).then(r=>r.json()).catch(()=>null) : Promise.resolve(null),
-    fetch(`${API_BASE}/admin/expenses/my`,                  { headers:{Authorization:`Bearer ${token}`} }).then(r=>r.json()).catch(()=>null),
+    fetch(`${API_BASE}/admin/expenses/my${dqs}`,                  { headers:{Authorization:`Bearer ${token}`} }).then(r=>r.json()).catch(()=>null),
   ]);
   _myCashHandovers = hoData?.handovers || [];
   _myCashReceivedHandovers = rhData?.handovers || [];
@@ -14729,7 +14806,16 @@ async function openMyCashModal() {
   }
   if (newExpBtn) newExpBtn.textContent = '+ ' + t('exp.new_btn');
 
-  // --- Блок баланса ---
+  // --- Реальный остаток на руках (всегда за всё время, не по фильтру) ---
+  const onHandEl = document.getElementById('myCashOnHandValue');
+  if (onHandEl) {
+    const total = balData?.on_hand_total ?? balData?.on_hand ?? 0;
+    onHandEl.textContent = fmt(total);
+    onHandEl.style.color = total > 0 ? '#b91c1c' : '#15803d';
+  }
+
+  // --- Блок баланса за выбранный период (без "На руках" — он вынесен отдельной
+  // строкой выше и не зависит от фильтра) ---
   if (balBox && balData) {
     const b = balData;
     if (isManager) {
@@ -14751,16 +14837,12 @@ async function openMyCashModal() {
             <div style="font-size:10px;color:#a16207;margin-bottom:3px">⏳ ${t('cash.bal.pending')}</div>
             <div style="font-size:15px;font-weight:700;color:#a16207">${fmt(b.pending_sent)}</div>
           </div>` : ''}
-          <div style="background:${b.on_hand > 0 ? '#fef2f2' : '#f0fdf4'};border-radius:12px;padding:12px;text-align:center">
-            <div style="font-size:10px;color:${b.on_hand > 0 ? '#b91c1c' : '#15803d'};margin-bottom:3px">${t('cash.bal.on_hand')}</div>
-            <div style="font-size:17px;font-weight:700;color:${b.on_hand > 0 ? '#b91c1c' : '#15803d'}">${fmt(b.on_hand)}</div>
-          </div>
         </div>
         <div id="cashBalExpenseTiles"></div>`;
     } else {
       const hasPending = (b.pending_sent || 0) > 0;
       balBox.innerHTML = `
-        <div style="display:grid;grid-template-columns:${hasPending ? '1fr 1fr' : '1fr 1fr 1fr'};gap:8px;width:100%">
+        <div style="display:grid;grid-template-columns:${hasPending ? '1fr 1fr 1fr' : '1fr 1fr'};gap:8px;width:100%">
           <div style="background:#f3f4f6;border-radius:12px;padding:12px;text-align:center">
             <div style="font-size:10px;color:#888;margin-bottom:3px">${t('cash.bal.collected')}</div>
             <div style="font-size:15px;font-weight:700">${fmt(b.collected)}</div>
@@ -14773,10 +14855,6 @@ async function openMyCashModal() {
             <div style="font-size:10px;color:#a16207;margin-bottom:3px">⏳ ${t('cash.bal.pending')}</div>
             <div style="font-size:15px;font-weight:700;color:#a16207">${fmt(b.pending_sent)}</div>
           </div>` : ''}
-          <div style="background:${b.on_hand > 0 ? '#fef2f2' : '#f0fdf4'};border-radius:12px;padding:12px;text-align:center">
-            <div style="font-size:10px;color:${b.on_hand > 0 ? '#b91c1c' : '#15803d'};margin-bottom:3px">${t('cash.bal.on_hand')}</div>
-            <div style="font-size:17px;font-weight:700;color:${b.on_hand > 0 ? '#b91c1c' : '#15803d'}">${fmt(b.on_hand)}</div>
-          </div>
         </div>
         <div id="cashBalExpenseTiles"></div>`;
     }
@@ -14849,7 +14927,7 @@ async function openMyCashModal() {
   }
 
   // --- Кнопки "Сдать" ---
-  const onHand = balData?.on_hand || 0;
+  const onHand = balData?.on_hand_total ?? balData?.on_hand ?? 0;
   const handoverSec = document.getElementById('myCashHandoverSection');
   const safeSec = document.getElementById('myCashSafeSection');
   if (handoverSec) {
@@ -15480,6 +15558,8 @@ function _applyCashI18n() {
   s('myCash_amtLabel',     t('cash.amt_label'));
   s('myCash_cancelBtn',    t('cash.cancel'));
   s('myCash_submitBtn',    '💾 ' + t('cash.submit'));
+  s('myCashOnHandLabel',   t('cash.bal.on_hand'));
+  s('cashTabBtn_overview', t('cash.tab.overview'));
   s('cashTabBtn_received', t('cash.tab.received'));
   s('cashTabBtn_sent',     t('cash.tab.sent'));
   s('cashTabBtn_expenses', '🧾 ' + t('exp.tab'));
@@ -16855,67 +16935,75 @@ function staffChatSend() {
       <button onclick="closeMyCashModal()" style="background:none;border:none;font-size:22px;color:#888;cursor:pointer;padding:0;line-height:1">✕</button>
     </div>
 
-    <!-- Баланс + входящие уведомления (скролится если много) -->
-    <div class="mc-top">
-      <div id="myCashBalance" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;width:100%"></div>
-      <div id="myCashPendingIn" style="display:none;background:#fef3c7;border-radius:12px;padding:12px;margin-bottom:10px"></div>
-      <div id="myCashPendingExpenses" style="display:none;background:#eff6ff;border-radius:12px;padding:12px;margin-bottom:10px"></div>
+    <!-- Реальный остаток на руках — ВСЕГДА за всё время, не зависит от фильтра дат
+         (это running balance, а не сумма за период, см. get_my_cash_balance) -->
+    <div class="mc-onhand-row">
+      <span id="myCashOnHandLabel">💵 На руках</span>: <span id="myCashOnHandValue">—</span>
     </div>
 
-    <!-- Кнопки действий + формы (всегда видны) -->
-    <div class="mc-action">
-      <!-- Сдать в кассу (не-админы) -->
-      <div id="myCashHandoverSection" style="display:none;margin-bottom:8px">
-        <button id="myCash_handoverBtn" onclick="openHandoverForm()" style="width:100%;padding:11px;background:linear-gradient(135deg,#163E3B,#1e5e59);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">💰 Сдать в кассу</button>
-      </div>
-      <!-- Сдать в сейф (только админ) -->
-      <div id="myCashSafeSection" style="display:none;margin-bottom:8px">
-        <button onclick="openSafeForm()" style="width:100%;padding:11px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">🔒 Сдать в сейф</button>
-      </div>
-
-      <!-- Форма сдачи в кассу -->
-      <div id="myCashHandoverForm" style="display:none;background:#f3f4f6;border-radius:12px;padding:14px;margin-bottom:8px">
-        <div id="myCash_formTitle" style="font-size:13px;font-weight:700;margin-bottom:10px">Передать наличные</div>
-        <div id="myCash_toLabel" style="font-size:11px;color:#888;margin-bottom:5px">Кому</div>
-        <select id="handoverToSelect" style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box;margin-bottom:10px">
-          <option id="myCash_toDefault" value="">— выбрать ответственного —</option>
-        </select>
-        <div id="myCash_amtLabel" style="font-size:11px;color:#888;margin-bottom:5px">Сумма</div>
-        <input type="number" id="handoverAmount" placeholder="0" inputmode="numeric"
-          style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-weight:700;background:#fff;box-sizing:border-box;margin-bottom:10px">
-        <input type="text" id="handoverNote" placeholder="Примечание (необязательно)"
-          style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box;margin-bottom:12px">
-        <div style="display:flex;gap:8px">
-          <button id="myCash_cancelBtn" onclick="cancelHandoverForm()" style="flex:1;padding:11px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;color:#888;font-size:13px;cursor:pointer">Отмена</button>
-          <button id="myCash_submitBtn" onclick="submitHandover()" style="flex:2;padding:11px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">💾 Отправить</button>
-        </div>
-      </div>
-
-      <!-- Форма сдачи в сейф (админ) -->
-      <div id="myCashSafeForm" style="display:none;background:#eff6ff;border-radius:12px;padding:14px;margin-bottom:8px">
-        <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#1e40af">🔒 Сдача в сейф</div>
-        <div style="font-size:11px;color:#888;margin-bottom:5px">Сумма</div>
-        <input type="number" id="safeDepositAmount" placeholder="0" inputmode="numeric"
-          style="width:100%;padding:10px 12px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:14px;font-weight:700;background:#fff;box-sizing:border-box;margin-bottom:10px">
-        <input type="text" id="safeDepositNote" placeholder="Примечание (необязательно)"
-          style="width:100%;padding:9px 12px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box;margin-bottom:12px">
-        <div style="display:flex;gap:8px">
-          <button onclick="cancelSafeForm()" style="flex:1;padding:11px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;color:#888;font-size:13px;cursor:pointer">Отмена</button>
-          <button onclick="submitSafeDeposit()" style="flex:2;padding:11px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">📤 Запросить подтверждение</button>
-        </div>
-      </div>
+    <!-- Фильтр по датам — применяется к плиткам "Общие" и к спискам вкладок Принятые/Передачи/Расходы -->
+    <div class="mc-date-row">
+      <div id="cashDateFilterRow" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;flex-wrap:nowrap"></div>
     </div>
 
     <!-- Вкладки (фиксированные) -->
     <div class="mc-tabs-row">
-      <button id="cashTabBtn_received" onclick="_cashTabSwitch('received')" style="flex:1;padding:9px 4px;border:none;border-bottom:2.5px solid var(--accent,#163E3B);background:none;font-size:12px;font-weight:700;color:var(--accent,#163E3B);cursor:pointer;margin-bottom:-2px">💰 Принятые</button>
+      <button id="cashTabBtn_overview" onclick="_cashTabSwitch('overview')" style="flex:1;padding:9px 4px;border:none;border-bottom:2.5px solid var(--accent,#163E3B);background:none;font-size:12px;font-weight:700;color:var(--accent,#163E3B);cursor:pointer;margin-bottom:-2px">📊 Общие</button>
+      <button id="cashTabBtn_received" onclick="_cashTabSwitch('received')" style="flex:1;padding:9px 4px;border:none;border-bottom:2.5px solid transparent;background:none;font-size:12px;font-weight:600;color:#888;cursor:pointer;margin-bottom:-2px">💰 Принятые</button>
       <button id="cashTabBtn_sent" onclick="_cashTabSwitch('sent')" style="flex:1;padding:9px 4px;border:none;border-bottom:2.5px solid transparent;background:none;font-size:12px;font-weight:600;color:#888;cursor:pointer;margin-bottom:-2px">📤 Передачи</button>
       <button id="cashTabBtn_expenses" onclick="_cashTabSwitch('expenses')" style="flex:1;padding:9px 4px;border:none;border-bottom:2.5px solid transparent;background:none;font-size:12px;font-weight:600;color:#888;cursor:pointer;margin-bottom:-2px">🧾 Расходы</button>
     </div>
 
     <!-- Скролящийся контент вкладок -->
     <div class="mc-scroll">
-      <div id="myCashPaymentsList"></div>
+      <!-- Вкладка "Общие" (по умолчанию) -->
+      <div id="myCashOverviewTab">
+        <div id="myCashBalance" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;width:100%"></div>
+        <div id="myCashPendingIn" style="display:none;background:#fef3c7;border-radius:12px;padding:12px;margin-bottom:10px"></div>
+        <div id="myCashPendingExpenses" style="display:none;background:#eff6ff;border-radius:12px;padding:12px;margin-bottom:10px"></div>
+
+        <!-- Сдать в кассу (не-админы) -->
+        <div id="myCashHandoverSection" style="display:none;margin-bottom:8px">
+          <button id="myCash_handoverBtn" onclick="openHandoverForm()" style="width:100%;padding:11px;background:linear-gradient(135deg,#163E3B,#1e5e59);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">💰 Сдать в кассу</button>
+        </div>
+        <!-- Сдать в сейф (только админ) -->
+        <div id="myCashSafeSection" style="display:none;margin-bottom:8px">
+          <button onclick="openSafeForm()" style="width:100%;padding:11px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">🔒 Сдать в сейф</button>
+        </div>
+
+        <!-- Форма сдачи в кассу -->
+        <div id="myCashHandoverForm" style="display:none;background:#f3f4f6;border-radius:12px;padding:14px;margin-bottom:8px">
+          <div id="myCash_formTitle" style="font-size:13px;font-weight:700;margin-bottom:10px">Передать наличные</div>
+          <div id="myCash_toLabel" style="font-size:11px;color:#888;margin-bottom:5px">Кому</div>
+          <select id="handoverToSelect" style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box;margin-bottom:10px">
+            <option id="myCash_toDefault" value="">— выбрать ответственного —</option>
+          </select>
+          <div id="myCash_amtLabel" style="font-size:11px;color:#888;margin-bottom:5px">Сумма</div>
+          <input type="number" id="handoverAmount" placeholder="0" inputmode="numeric"
+            style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-weight:700;background:#fff;box-sizing:border-box;margin-bottom:10px">
+          <input type="text" id="handoverNote" placeholder="Примечание (необязательно)"
+            style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box;margin-bottom:12px">
+          <div style="display:flex;gap:8px">
+            <button id="myCash_cancelBtn" onclick="cancelHandoverForm()" style="flex:1;padding:11px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;color:#888;font-size:13px;cursor:pointer">Отмена</button>
+            <button id="myCash_submitBtn" onclick="submitHandover()" style="flex:2;padding:11px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">💾 Отправить</button>
+          </div>
+        </div>
+
+        <!-- Форма сдачи в сейф (админ) -->
+        <div id="myCashSafeForm" style="display:none;background:#eff6ff;border-radius:12px;padding:14px;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#1e40af">🔒 Сдача в сейф</div>
+          <div style="font-size:11px;color:#888;margin-bottom:5px">Сумма</div>
+          <input type="number" id="safeDepositAmount" placeholder="0" inputmode="numeric"
+            style="width:100%;padding:10px 12px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:14px;font-weight:700;background:#fff;box-sizing:border-box;margin-bottom:10px">
+          <input type="text" id="safeDepositNote" placeholder="Примечание (необязательно)"
+            style="width:100%;padding:9px 12px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box;margin-bottom:12px">
+          <div style="display:flex;gap:8px">
+            <button onclick="cancelSafeForm()" style="flex:1;padding:11px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;color:#888;font-size:13px;cursor:pointer">Отмена</button>
+            <button onclick="submitSafeDeposit()" style="flex:2;padding:11px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">📤 Запросить подтверждение</button>
+          </div>
+        </div>
+      </div>
+      <div id="myCashPaymentsList" style="display:none"></div>
       <div id="myCashHandoversList" style="display:none"></div>
       <div id="myCashExpensesList" style="display:none"></div>
     </div>
