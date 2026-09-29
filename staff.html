@@ -6752,6 +6752,60 @@ const SVC_LIST = ['Ковры','Ковры на дому','Диваны','Мат
 const SVC_LIST_KEYS = ['carpet','carpet_home','sofa','mattress','curtains']; // тот же порядок, что SVC_LIST — для UZ через _svcName()
 let _svcTarget = null;
 
+// ─── "ПО УСЛУГАМ" ПРИ ЗАБОРЕ (степпер по живому каталогу услуг) ──────
+// Портировано из ARTEZ (запрос пользователя 2026-09-28/29): раньше был
+// свободный текстовый ввод названия услуги. Список услуг читается из
+// /api/services (публичный эндпоинт, без прав на цены — только названия),
+// поэтому будущие добавленные услуги появятся здесь сами.
+let _pkpServiceCatalog = null; // [{key,name_ru,name_uz,emoji,order_idx}], кэш на сессию
+const _pkpQty = {}; // {prefix: {index: qty}}
+
+async function _pkpLoadServiceCatalog() {
+  if (_pkpServiceCatalog) return _pkpServiceCatalog;
+  try {
+    // /api/staff/services — company-scoped (через get_current_staff), а не
+    // публичный /api/services (требует company_slug) — SaaS мультитенантный.
+    const r = await apiFetch(`/staff/services`);
+    const d = await r.json();
+    _pkpServiceCatalog = d?.services || [];
+  } catch { _pkpServiceCatalog = []; }
+  return _pkpServiceCatalog;
+}
+
+function _pkpResetQty(prefix) { _pkpQty[prefix] = {}; }
+
+function _pkpSvcRowsHtml(prefix, catalog) {
+  // Индекс i (а не s.key) идёт в onclick/id — key приходит из БД (админ мог
+  // задать его с апострофом/кавычкой), а i всегда просто число из .map(),
+  // interpolate-safe без экранирования. См. [[feedback_onclick_data_interpolation_xss]].
+  return catalog.map((s, i) => {
+    const label = _lang === 'uz' ? (s.name_uz || s.name_ru) : s.name_ru;
+    return `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(128,128,128,.3)">
+      <span style="font-size:13px">${_esc(s.emoji || '🏷')} ${_esc(label)}</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button type="button" onclick="_pkpChangeQty('${prefix}',${i},-1)" style="width:28px;height:28px;border-radius:8px;border:1.5px solid rgba(128,128,128,.4);background:rgba(128,128,128,.14);color:inherit;font-size:16px;font-weight:700;cursor:pointer;line-height:1">−</button>
+        <span id="${prefix}_qty_${i}" style="min-width:22px;text-align:center;font-weight:700;font-size:14px">0</span>
+        <button type="button" onclick="_pkpChangeQty('${prefix}',${i},1)" style="width:28px;height:28px;border-radius:8px;border:1.5px solid rgba(128,128,128,.4);background:rgba(128,128,128,.14);color:inherit;font-size:16px;font-weight:700;cursor:pointer;line-height:1">+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _pkpChangeQty(prefix, idx, delta) {
+  const bucket = _pkpQty[prefix] || (_pkpQty[prefix] = {});
+  bucket[idx] = Math.max(0, (bucket[idx] || 0) + delta);
+  const el = document.getElementById(`${prefix}_qty_${idx}`);
+  if (el) el.textContent = bucket[idx];
+}
+
+function _pkpCollectItems(prefix, catalog) {
+  const bucket = _pkpQty[prefix] || {};
+  const items = {};
+  catalog.forEach((s, i) => { const q = bucket[i]; if (q > 0) items[s.key] = q; });
+  return items;
+}
+
 function openSvcPicker(targetId) {
   _svcTarget = targetId;
   const _ss = (id, txt) => { const el=document.getElementById(id); if(el) el.textContent=txt; };
@@ -8274,7 +8328,6 @@ function pagePickup() {
 
 let _pkpOrder = null;
 let _pkpMode  = 'count';
-let _pkpSvcRowN = 0;
 
 async function pkpSearch() {
   const phoneRaw = document.getElementById('pkp_phone')?.value.trim();
@@ -8285,7 +8338,7 @@ async function pkpSearch() {
     const r = await apiFetch(`/api/staff/pickup/lookup?phone=${encodeURIComponent(phoneRaw)}`);
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail || 'Ошибка');
-    if (d.order) _pkpRenderFound(d.order);
+    if (d.order) await _pkpRenderFound(d.order);
     else _pkpRenderNotFound(phoneRaw);
   } catch(e) {
     resEl.innerHTML = `<div style="color:#ef4444;padding:12px;text-align:center">⚠️ ${e.message}</div>`;
@@ -8313,8 +8366,10 @@ function pkpCreateNew(phone) {
   setTimeout(() => document.getElementById('or_name')?.focus(), 200);
 }
 
-function _pkpRenderFound(o) {
-  _pkpOrder = o; _pkpMode = 'count'; _pkpSvcRowN = 0; _pkpLang = 'ru';
+async function _pkpRenderFound(o) {
+  _pkpOrder = o; _pkpMode = 'count'; _pkpLang = 'ru';
+  _pkpResetQty('pkp');
+  const catalog = await _pkpLoadServiceCatalog();
   const name = [o.client_first_name, o.client_last_name].filter(Boolean).join(' ') || '—';
   document.getElementById('pkpResult').innerHTML = `
     <div style="background:var(--surface);border:1.5px solid #163E3B;border-radius:14px;padding:14px;margin-bottom:12px">
@@ -8332,8 +8387,7 @@ function _pkpRenderFound(o) {
         <input id="pkp_count" type="number" min="1" value="1" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px">
       </div>
       <div id="pkp_mode_svc_wrap" style="display:none">
-        <div id="pkp_svc_rows"></div>
-        <button onclick="_pkpAddSvcRow()" style="margin-top:6px;padding:6px 12px;border:1.5px dashed var(--border);border-radius:8px;background:none;color:var(--text2);font-size:12px;cursor:pointer">+ Добавить услугу</button>
+        <div id="pkp_svc_rows">${_pkpSvcRowsHtml('pkp', catalog)}</div>
       </div>
       <div style="margin-top:12px">
         <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text)">💬 Язык SMS клиенту</div>
@@ -8345,7 +8399,6 @@ function _pkpRenderFound(o) {
       <button onclick="pkpTake()" id="pkpTakeBtn" style="width:100%;margin-top:14px;padding:12px;background:#163E3B;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✅ Забрал</button>
       <button onclick="pkpNotTaken()" style="width:100%;margin-top:8px;padding:10px;background:none;border:1.5px solid #ef4444;color:#ef4444;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">❌ Не забрал</button>
     </div>`;
-  _pkpAddSvcRow();
 }
 
 let _pkpLang = 'ru';
@@ -8363,31 +8416,12 @@ function _pkpSetMode(mode) {
   document.getElementById('pkp_mode_svc_wrap').style.display   = mode === 'by_service' ? '' : 'none';
 }
 
-function _pkpAddSvcRow() {
-  const wrap = document.getElementById('pkp_svc_rows');
-  if (!wrap) return;
-  const id = _pkpSvcRowN++;
-  const row = document.createElement('div');
-  row.id = `pkp_svc_row_${id}`;
-  row.style.cssText = 'display:flex;gap:8px;margin-bottom:6px';
-  row.innerHTML = `
-    <input type="text" placeholder="Услуга (ковёр, диван…)" class="pkp-svc-name" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
-    <input type="number" min="1" value="1" class="pkp-svc-qty" style="width:70px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
-    <button onclick="document.getElementById('pkp_svc_row_${id}').remove()" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0 6px">✕</button>`;
-  wrap.appendChild(row);
-}
-
 async function pkpTake() {
   if (!_pkpOrder) return;
   const btn = document.getElementById('pkpTakeBtn');
   const body = { mode: _pkpMode, sms_lang: _pkpLang };
   if (_pkpMode === 'by_service') {
-    const items = {};
-    document.querySelectorAll('#pkp_svc_rows > div').forEach(row => {
-      const name = row.querySelector('.pkp-svc-name')?.value.trim();
-      const qty  = parseInt(row.querySelector('.pkp-svc-qty')?.value) || 0;
-      if (name && qty > 0) items[name] = (items[name] || 0) + qty;
-    });
+    const items = _pkpCollectItems('pkp', await _pkpLoadServiceCatalog());
     if (!Object.keys(items).length) { showToast('Укажите хотя бы одну услугу', 'error'); return; }
     body.items = items;
   } else {
@@ -8559,7 +8593,12 @@ function _drvRouteCard(route, ri) {
 function _drvStopCard(stop, si, route) {
   // order_status is authoritative — stop_status may lag behind manager edits
   const ost = stop.order_status;
-  const isPickupRoute = route?.type === 'pickup';
+  // Этап забора/доставки определяется статусом ОСТАНОВКИ, а не типом маршрута —
+  // в "🔄 Смешанном" маршруте (mixed) одна остановка может быть ещё на этапе
+  // забора (ost=new/confirmed/pickup), а другая уже на этапе доставки, поэтому
+  // route.type==='pickup' ошибочно решал за ВСЕ остановки сразу. Портировано
+  // из ARTEZ (запрос пользователя 2026-09-27/28).
+  const isPickupPhase = !['ready','delivery','delivered'].includes(ost);
   const ordId = stop.order_id;
   const itemCount = stop.item_count || 0;
   const rawNum = (stop.order_num || '').replace(/^[A-Z0-9]+-/, '');
@@ -8581,7 +8620,7 @@ function _drvStopCard(stop, si, route) {
   const routeClosed = route?.status === 'done';
   let st, stLabel, buttons = '';
 
-  if (isPickupRoute) {
+  if (isPickupPhase) {
     // Маршрут «Забор»: confirmed/new (ждём забора у клиента) → pickup (забрали,
     // ждём сдачи в мастерскую) → received+ (готово). Портировано из прода.
     const stage = (ost === 'cancelled' || stop.stop_status === 'skipped') ? 'skipped'
@@ -8684,10 +8723,12 @@ function _drvCloseSheet() {
 }
 
 // ── «Забрал» на маршруте типа «Забор» — портировано из прода ──
-let _drvPkpOrderId = null, _drvPkpMode = 'count', _drvPkpSvcRowN = 0, _drvPkpLang = 'ru';
+let _drvPkpOrderId = null, _drvPkpMode = 'count', _drvPkpLang = 'ru';
 
-function drvOpenPickupForm(orderId) {
-  _drvPkpOrderId = orderId; _drvPkpMode = 'count'; _drvPkpSvcRowN = 0; _drvPkpLang = 'ru';
+async function drvOpenPickupForm(orderId) {
+  _drvPkpOrderId = orderId; _drvPkpMode = 'count'; _drvPkpLang = 'ru';
+  _pkpResetQty('drv_pkp');
+  const catalog = await _pkpLoadServiceCatalog();
   _drvOpenSheet(t('drv.pkp.title'), `
     <div class="filter-chips" style="margin-bottom:10px">
       <button class="fchip active" id="drv_pkp_mode_count_btn" onclick="_drvPkpSetMode('count')">${t('drv.pkp.count_mode')}</button>
@@ -8697,8 +8738,7 @@ function drvOpenPickupForm(orderId) {
       <input id="drv_pkp_count" type="number" min="1" value="1" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px">
     </div>
     <div id="drv_pkp_mode_svc_wrap" style="display:none">
-      <div id="drv_pkp_svc_rows"></div>
-      <button onclick="_drvPkpAddSvcRow()" style="margin-top:6px;padding:6px 12px;border:1.5px dashed var(--border);border-radius:8px;background:none;color:var(--text2);font-size:12px;cursor:pointer">${t('drv.pkp.add_svc')}</button>
+      <div id="drv_pkp_svc_rows">${_pkpSvcRowsHtml('drv_pkp', catalog)}</div>
     </div>
     <div style="margin-top:12px">
       <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text)">${t('drv.pkp.lang_title')}</div>
@@ -8709,7 +8749,6 @@ function drvOpenPickupForm(orderId) {
     </div>
     <button onclick="drvSubmitPickup()" id="drvPkpSubmitBtn" style="width:100%;margin-top:14px;padding:12px;background:#163E3B;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">${t('drv.pkp.submit')}</button>
   `);
-  _drvPkpAddSvcRow();
 }
 
 function _drvPkpSetMode(mode) {
@@ -8726,31 +8765,12 @@ function _drvPkpSetLang(lang) {
   document.getElementById('drv_pkp_lang_uz')?.classList.toggle('active', lang === 'uz');
 }
 
-function _drvPkpAddSvcRow() {
-  const wrap = document.getElementById('drv_pkp_svc_rows');
-  if (!wrap) return;
-  const id = _drvPkpSvcRowN++;
-  const row = document.createElement('div');
-  row.id = `drv_pkp_svc_row_${id}`;
-  row.style.cssText = 'display:flex;gap:8px;margin-bottom:6px';
-  row.innerHTML = `
-    <input type="text" placeholder="${t('drv.pkp.svc_placeholder')}" class="drv-pkp-svc-name" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
-    <input type="number" min="1" value="1" class="drv-pkp-svc-qty" style="width:70px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
-    <button onclick="document.getElementById('drv_pkp_svc_row_${id}').remove()" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0 6px">✕</button>`;
-  wrap.appendChild(row);
-}
-
 async function drvSubmitPickup() {
   if (!_drvPkpOrderId) return;
   const btn = document.getElementById('drvPkpSubmitBtn');
   const body = { mode: _drvPkpMode, sms_lang: _drvPkpLang };
   if (_drvPkpMode === 'by_service') {
-    const items = {};
-    document.querySelectorAll('#drv_pkp_svc_rows > div').forEach(row => {
-      const name = row.querySelector('.drv-pkp-svc-name')?.value.trim();
-      const qty  = parseInt(row.querySelector('.drv-pkp-svc-qty')?.value) || 0;
-      if (name && qty > 0) items[name] = (items[name] || 0) + qty;
-    });
+    const items = _pkpCollectItems('drv_pkp', await _pkpLoadServiceCatalog());
     if (!Object.keys(items).length) { showToast(t('drv.pkp.svc_required'), 'error'); return; }
     body.items = items;
   } else {
