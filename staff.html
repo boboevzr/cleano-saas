@@ -8566,7 +8566,92 @@ function _renderRouteDetail(route) {
     ${_drvRouteCard(route, 0)}
     <div style="padding:16px;text-align:center">
       <button onclick="loadDelivery(true)" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--sep);background:none;color:var(--text2);font-size:14px;font-weight:600;cursor:pointer">${t('drv.btn.refresh')}</button>
+    </div>
+    <div style="margin:0 14px 16px;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+      <div id="drvRoutesMapEl" style="height:280px;width:100%"></div>
     </div>`;
+  setTimeout(() => _initDrvRoutesMap([route]), 30);
+}
+
+// Локация остановки: "lat,lon" строка или JSON {"lat":...,"lon":...} — как в admin.html
+function _parseStopLoc(val) {
+  if (!val) return null;
+  try {
+    const j = JSON.parse(val);
+    if (j?.lat && j?.lon) return { lat: +j.lat, lon: +j.lon };
+  } catch {}
+  const parts = String(val).split(',').map(Number);
+  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) return { lat: parts[0], lon: parts[1] };
+  return null;
+}
+
+// Депо филиала — берём из уже загруженного window._BRANCHES (company-scoped,
+// в отличие от ARTEZ, где всего 2 фиксированных филиала), см. admin.html getBranchDepot().
+function _drvBranchDepot(slug) {
+  const b = (window._BRANCHES || []).find(x => x.slug === slug);
+  return (b && b.lat && b.lon) ? { lat: parseFloat(b.lat), lon: parseFloat(b.lon) } : null;
+}
+
+let _drvRoutesMap = null;
+function _initDrvRoutesMap(routes) {
+  const mapEl = document.getElementById('drvRoutesMapEl');
+  if (!mapEl) return;
+  const allStops = routes.flatMap(r => (r.stops || []).map(s => ({ ...s, _route: r })));
+  _loadLeaflet(() => {
+    mapEl.innerHTML = '';
+    if (_drvRoutesMap) { try { _drvRoutesMap.remove(); } catch(e){} _drvRoutesMap = null; }
+    const branches = [...new Set(routes.map(r => r.branch).filter(Boolean))];
+    const firstDepot = branches.map(_drvBranchDepot).find(Boolean);
+    const fallbackCenter = firstDepot ? [firstDepot.lat, firstDepot.lon] : [41.3111, 69.2401];
+    _drvRoutesMap = L.map('drvRoutesMapEl', { zoomControl: true }).setView(fallbackCenter, 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap', maxZoom: 19
+    }).addTo(_drvRoutesMap);
+
+    const bounds = [];
+    branches.forEach(b => {
+      const depot = _drvBranchDepot(b);
+      if (!depot) return;
+      bounds.push([depot.lat, depot.lon]);
+      const depotIcon = L.divIcon({
+        className: '', iconSize: [34, 34], iconAnchor: [17, 17],
+        html: `<div style="width:34px;height:34px;border-radius:10px;background:#F59E0B;border:2.5px solid #fff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 10px rgba(0,0,0,.4)">🏭</div>`
+      });
+      L.marker([depot.lat, depot.lon], { icon: depotIcon }).addTo(_drvRoutesMap).bindPopup('🏭 Цех');
+    });
+
+    const stopCoords = [];
+    allStops.forEach((s, i) => {
+      const loc = _parseStopLoc(s.location);
+      if (!loc) return;
+      bounds.push([loc.lat, loc.lon]);
+      stopCoords.push([loc.lat, loc.lon]);
+      const bg = s.stop_status === 'done' ? '#22c55e' : s.stop_status === 'skipped' ? '#ef4444' : '#163E3B';
+      const icon = L.divIcon({
+        className: '', iconSize: [30, 30], iconAnchor: [15, 15],
+        html: `<div style="width:30px;height:30px;border-radius:50%;background:${bg};border:2.5px solid #fff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;box-shadow:0 2px 10px rgba(0,0,0,.4)">${i+1}</div>`
+      });
+      const client = `${s.client_first_name||''} ${s.client_last_name||''}`.trim();
+      const addr = s.short_address || s.address || '—';
+      const yandexUrl = `https://yandex.com/maps/?rtext=~${loc.lat},${loc.lon}&rtt=auto`;
+      L.marker([loc.lat, loc.lon], { icon }).addTo(_drvRoutesMap).bindPopup(
+        `<div style="font-size:13px;line-height:1.5">
+          <b>#${i+1} ${_esc(s.order_num||'')}</b><br>
+          ${_esc(client)}<br>
+          ${_esc(addr)}<br>
+          ${_esc(_drvStatusLabel(s.stop_status))}
+          <div style="margin-top:8px"><a href="${yandexUrl}" target="_blank" rel="noopener" style="display:inline-block;padding:6px 14px;background:#163E3B;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:12px">🗺 Маршрут</a></div>
+        </div>`
+      );
+    });
+
+    if (stopCoords.length > 1) {
+      L.polyline(stopCoords, { color: '#163E3B', weight: 3, opacity: .7, dashArray: '8,6' }).addTo(_drvRoutesMap);
+    }
+
+    if (bounds.length > 1) _drvRoutesMap.fitBounds(bounds, { padding: [30, 30] });
+    else if (bounds.length === 1) _drvRoutesMap.setView(bounds[0], 15);
+  });
 }
 
 function _drvStatusLabel(st) {
