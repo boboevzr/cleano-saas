@@ -218,6 +218,7 @@
       'promo.soundOff': '🔊 Включить звук',
       'promo.soundOn': '🔊 Звук включён',
       'promo.bannerLabel': 'скидка активна',
+      'promo.bannerLabelNoPct': 'акция активна',
       'promo.detail': 'Подробнее',
       'promo.left': 'Осталось:',
       'promo.expired': 'Акция завершена',
@@ -439,6 +440,7 @@
       'promo.soundOff': '🔊 Ovozni yoqish',
       'promo.soundOn': '🔊 Ovoz yoniq',
       'promo.bannerLabel': 'chegirma faol',
+      'promo.bannerLabelNoPct': 'aksiya faol',
       'promo.detail': "Batafsil",
       'promo.left': 'Qoldi:',
       'promo.expired': 'Aksiya tugadi',
@@ -2391,24 +2393,33 @@
 
   function _promoRenderTexts(){
     if (!_promoData) return;
+    const hasPct = Number(_promoData.discount_pct || 0) > 0;
     const pctStr = '-' + Number(_promoData.discount_pct || 0).toString() + '%';
     const pctEl = document.getElementById('promoModalPct');
+    if (pctEl) pctEl.style.display = hasPct ? '' : 'none';
     if (pctEl) pctEl.textContent = pctStr;
     const titleEl = document.getElementById('promoModalTitle');
     if (titleEl) titleEl.textContent = _promoLangText('title');
     const textEl = document.getElementById('promoModalText');
     if (textEl) textEl.textContent = _promoLangText('text');
     const ctaEl = document.getElementById('promoModalCta');
-    if (ctaEl) ctaEl.textContent = _promoIsAnon ? t('promo.ctaRegister') : t('promo.cta');
+    if (ctaEl) ctaEl.textContent = !currentUser ? t('promo.ctaRegister') : (hasPct ? t('promo.cta') : t('nav.orderBtn'));
+    const loginWrap = document.getElementById('promoModalLoginWrap');
+    if (loginWrap) loginWrap.style.display = !currentUser ? '' : 'none';
+    const hasAccEl = document.getElementById('promoModalHasAccount');
+    if (hasAccEl) hasAccEl.textContent = t('auth.hasAccount');
+    const loginLinkEl = document.getElementById('promoModalLoginLink');
+    if (loginLinkEl) loginLinkEl.textContent = t('auth.loginBtn');
     const soundBtn = document.getElementById('promoSoundBtn');
     if (soundBtn){
       soundBtn.textContent = _promoSoundOn ? t('promo.soundOn') : t('promo.soundOff');
       soundBtn.classList.toggle('on', _promoSoundOn);
     }
     const bPct = document.getElementById('promoBannerPct');
+    if (bPct) bPct.style.display = hasPct ? '' : 'none';
     if (bPct) bPct.textContent = pctStr;
     const bLabel = document.getElementById('promoBannerLabel');
-    if (bLabel) bLabel.textContent = t('promo.bannerLabel');
+    if (bLabel) bLabel.textContent = hasPct ? t('promo.bannerLabel') : t('promo.bannerLabelNoPct');
     const bDetail = document.getElementById('promoBannerDetail');
     if (bDetail) bDetail.textContent = t('promo.detail');
   }
@@ -2501,8 +2512,13 @@
 
   function _promoCtaClick(){
     closePromoModal();
-    if (_promoIsAnon){ sideNavGo('cabinet'); showStep('register'); }
+    if (!currentUser){ sideNavGo('cabinet'); showStep('register'); }
     else openOrderModal();
+  }
+
+  function _promoLoginClick(){
+    closePromoModal();
+    sideNavGo('cabinet'); showStep('login');
   }
 
   // ===== ORDER MODAL =====

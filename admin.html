@@ -22577,12 +22577,15 @@ function promoRenderTable() {
     return `<tr>
       <td data-label="Код"><b>${p.code}</b></td>
       <td data-label="Название">${p.title_ru || '—'}</td>
-      <td data-label="Скидка">${p.discount_pct}%</td>
+      <td data-label="Скидка">${p.discount_pct > 0 ? p.discount_pct + '%' : 'Без скидки'}</td>
       <td data-label="Период" style="font-size:12px;white-space:nowrap">${period}</td>
       <td data-label="Вкл/Выкл">${toggleBtn}</td>
       <td data-label="Статус">${stateBadge}</td>
       <td data-label="Показов / Использ.">👁 ${p.shown_count || 0} / ✅ ${p.used_count || 0}</td>
-      <td class="cl-actions"><button class="btn btn-sm" onclick="promoOpenModal(${p.id})">✏️</button></td>
+      <td class="cl-actions">
+        <button class="btn btn-sm" onclick="promoOpenModal(${p.id})">✏️</button>
+        <button class="btn btn-sm" onclick="promoResetTracking(${p.id})" title="Сбросить показы — клиенты увидят акцию снова">🔄</button>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -22612,7 +22615,7 @@ function promoOpenModal(id = null) {
   document.getElementById('promoDiscount').value = '';
   document.getElementById('promoStarts').value = '';
   document.getElementById('promoEnds').value = '';
-  document.getElementById('promoWindowHours').value = '48';
+  document.getElementById('promoWindowHours').value = '';
   document.getElementById('promoSound').checked = true;
   document.getElementById('promoNewOnly').checked = false;
   document.getElementById('promoActive').checked = false;
@@ -22628,7 +22631,7 @@ function promoOpenModal(id = null) {
       document.getElementById('promoDiscount').value = p.discount_pct ?? '';
       document.getElementById('promoStarts').value = promoIsoToLocal(p.starts_at);
       document.getElementById('promoEnds').value = promoIsoToLocal(p.ends_at);
-      document.getElementById('promoWindowHours').value = p.window_hours ?? 48;
+      document.getElementById('promoWindowHours').value = p.window_hours || '';
       document.getElementById('promoSound').checked = p.sound_enabled !== false;
       document.getElementById('promoNewOnly').checked = !!p.target_new_only;
       document.getElementById('promoActive').checked = !!p.is_active;
@@ -22649,7 +22652,8 @@ async function promoSave() {
   const title_uz  = document.getElementById('promoTitleUz').value.trim();
   const text_ru   = document.getElementById('promoTextRu').value.trim();
   const text_uz   = document.getElementById('promoTextUz').value.trim();
-  const discount_pct = parseFloat(document.getElementById('promoDiscount').value);
+  const discountRaw = document.getElementById('promoDiscount').value;
+  const discount_pct = discountRaw ? parseFloat(discountRaw) : 0;
   const starts_at = document.getElementById('promoStarts').value || null;
   const ends_at   = document.getElementById('promoEnds').value;
   const window_hours = document.getElementById('promoWindowHours').value ? parseInt(document.getElementById('promoWindowHours').value) : null;
@@ -22658,7 +22662,7 @@ async function promoSave() {
   if (!_promoEditId && !code) { promoShowErr('Укажите код акции'); return; }
   if (!title_ru) { promoShowErr('Укажите название (RU)'); return; }
   if (!ends_at) { promoShowErr('Укажите дату окончания'); return; }
-  if (!discount_pct || discount_pct <= 0 || discount_pct > 100) { promoShowErr('Скидка должна быть в диапазоне от 0 до 100%'); return; }
+  if (isNaN(discount_pct) || discount_pct < 0 || discount_pct > 100) { promoShowErr('Скидка должна быть в диапазоне от 0 до 100%'); return; }
 
   if (is_active && _promoList.some(x => x.is_active && x.id !== _promoEditId)) {
     const other = _promoList.find(x => x.is_active && x.id !== _promoEditId);
@@ -22700,6 +22704,14 @@ async function promoToggleActive(id, val) {
   const r = await apiPatch(`/admin/promotions/${id}`, { is_active: val }).catch(() => null);
   if (!r?.ok) { showToast(r?.detail || 'Ошибка', 'error'); return; }
   showToast(val ? 'Акция включена' : 'Акция выключена');
+  promoLoad();
+}
+
+async function promoResetTracking(id) {
+  if (!confirm('Сбросить показы акции? Клиенты, уже видевшие её, увидят снова.')) return;
+  const r = await apiPost(`/admin/promotions/${id}/reset-tracking`, {}).catch(() => null);
+  if (!r?.ok) { showToast(r?.detail || 'Ошибка', 'error'); return; }
+  showToast(`Показы сброшены (${r.deleted || 0})`);
   promoLoad();
 }
 
@@ -24616,12 +24628,12 @@ function confirmBranchLoc() {
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <div>
-        <label class="cfg-label">Скидка, %</label>
-        <input id="promoDiscount" type="number" min="0" max="100" step="0.1" class="price-input" style="width:100%" placeholder="20">
+        <label class="cfg-label">Скидка, % (необязательно)</label>
+        <input id="promoDiscount" type="number" min="0" max="100" step="0.1" class="price-input" style="width:100%" placeholder="20 (пусто — без %, напр. розыгрыш)">
       </div>
       <div>
-        <label class="cfg-label">Окно показа клиенту, часов</label>
-        <input id="promoWindowHours" type="number" min="1" class="price-input" style="width:100%" placeholder="48">
+        <label class="cfg-label">Напоминать клиенту ещё, часов (необязательно)</label>
+        <input id="promoWindowHours" type="number" min="1" class="price-input" style="width:100%" placeholder="пусто — до конца акции">
       </div>
     </div>
 
