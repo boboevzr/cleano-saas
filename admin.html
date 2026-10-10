@@ -15796,15 +15796,19 @@ function renderOrderItems(items) {
     }
     const minNote = it.pos_clamped
       ? `<div style="font-size:10px;color:#b45309;margin-top:2px">мин. ${Number(it.pos_min).toFixed(2)} м²</div>` : '';
+    // Скидка: цена по договору ниже цены по прайсу (снимок позиции, см. resolve_price_snapshot)
+    const hasDisc = it.list_price != null && parseFloat(it.price_per_sqm || 0) > 0 && parseFloat(it.price_per_sqm) < parseFloat(it.list_price);
+    const discPrice = hasDisc ? `<div style="font-size:10px;color:#b45309">прайс ${Number(it.list_price).toLocaleString('ru')}</div>` : '';
+    const discNote  = hasDisc ? `<div style="font-size:11px;color:#b45309;margin-top:2px">🏷 скидка ${(Number(it.list_price) - Number(it.price_per_sqm)).toLocaleString('ru')} сум/м²${it.discount_note ? ' · ' + _esc(it.discount_note) : ''}</div>` : '';
     const msIcon = it.measure_status === 'confirmed' ? ' <span style="color:#22c55e;font-size:11px">✓</span>'
                  : it.measure_status === 'corrected'  ? ' <span style="color:#f59e0b;font-size:11px">⚠</span>'
                  : it.measure_status === 'pending'    ? ' <span style="color:#94a3b8;font-size:11px">○</span>' : '';
     return `<tr style="border-bottom:1px solid var(--border)">
       <td style="color:var(--text2);text-align:center;padding:8px 4px">${i+1}</td>
-      <td style="padding:8px"><b style="font-size:13px">${it.service}</b>${msIcon}</td>
+      <td style="padding:8px"><b style="font-size:13px">${_esc(it.service)}</b>${msIcon}${discNote}</td>
       <td style="text-align:center;padding:8px;font-size:12px">${dimsCell}</td>
       <td style="text-align:center;padding:8px;white-space:nowrap">${sqmCell}${minNote}</td>
-      <td style="text-align:right;padding:8px;white-space:nowrap;color:var(--text2)">${Number(it.price_per_sqm).toLocaleString('ru')}</td>
+      <td style="text-align:right;padding:8px;white-space:nowrap;color:var(--text2)">${Number(it.price_per_sqm).toLocaleString('ru')}${discPrice}</td>
       <td style="text-align:right;padding:8px;white-space:nowrap;font-weight:700">${Number(useTotal).toLocaleString('ru')} сум</td>
       <td style="text-align:center;padding:8px;white-space:nowrap">
         <button onclick="openOrderItemForm(${it.id})" style="background:none;border:none;cursor:pointer;font-size:16px;padding:3px 5px" title="Изменить">✏️</button>
@@ -15863,6 +15867,7 @@ async function openOrderItemForm(itemId) {
   document.getElementById('oif_sqm').value     = '';
   document.getElementById('oif_price').value   = '';
   document.getElementById('oif_preview').textContent = '';
+  _oifSetList('', '');
 
   // При открытии — имя заблокировано (ждём выбор из прайса)
   const nameEl = document.getElementById('oif_service_name');
@@ -15884,6 +15889,7 @@ async function openOrderItemForm(itemId) {
       document.getElementById('oif_length').value = item.length_cm || '';
       document.getElementById('oif_sqm').value    = item.sqm       || '';
       document.getElementById('oif_price').value  = item.price_per_sqm || '';
+      _oifSetList(item.list_price || '', item.discount_note || '');
       oifUpdatePreview();
     }
   }
@@ -15933,6 +15939,7 @@ function oifOnTypeChange() {
   document.getElementById('oif_from_price_btn').style.display = 'none';
 
   document.getElementById('oif_price').value = price;
+  _oifSetList(price);
   oifUpdatePreview();
 }
 
@@ -15976,7 +15983,22 @@ function oifCalcSqm() {
   oifUpdatePreview();
 }
 
+function _oifSetList(listPrice, note) {
+  document.getElementById('oif_price').dataset.listPrice = listPrice ? String(listPrice) : '';
+  if (note !== undefined) document.getElementById('oif_disc_note').value = note || '';
+}
+
+function _oifSyncDiscount() {
+  const el = document.getElementById('oif_price'), box = document.getElementById('oif_disc_box');
+  const list = parseFloat(el.dataset.listPrice || '0'), p = parseFloat(el.value || '0');
+  const show = list > 0 && p > 0 && p < list;
+  box.style.display = show ? '' : 'none';
+  if (show) document.getElementById('oif_disc_info').textContent =
+    `🏷 Прайс ${list.toLocaleString('ru')} · скидка ${(list - p).toLocaleString('ru')} сум`;
+}
+
 function oifUpdatePreview() {
+  _oifSyncDiscount();
   const sqm   = parseFloat(document.getElementById('oif_sqm').value)   || 0;
   const price = parseFloat(document.getElementById('oif_price').value)  || 0;
   const prev  = document.getElementById('oif_preview');
@@ -16003,7 +16025,12 @@ async function saveOrderItemForm() {
   if (!sqm && width && length) sqm = parseFloat((width * length / 10000).toFixed(3));
   if (!sqm || sqm <= 0) { showToast('Укажите площадь или ширину и длину', 'error'); return; }
 
-  const body   = { service, sqm, width_cm: width, length_cm: length, price_per_sqm: price };
+  const body   = { service, sqm, width_cm: width, length_cm: length, price_per_sqm: price,
+                   discount_note: document.getElementById('oif_disc_box').style.display !== 'none'
+                     ? (document.getElementById('oif_disc_note').value.trim() || null) : null };
+  // ключи прайса — если услуга выбрана из справочника (не «своя»)
+  const _sv = document.getElementById('oif_svc_select'), _tv = document.getElementById('oif_type_select');
+  if (!_sv.disabled && _sv.value && _tv.value) Object.assign(body, { service_key: _sv.value, type_key: _tv.value });
   const url    = _orderItemEdit
     ? `/admin/orders/${_orderModalId}/items/${_orderItemEdit}`
     : `/admin/orders/${_orderModalId}/items`;
@@ -24032,8 +24059,13 @@ function confirmBranchLoc() {
 
       <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Цена за м²</label>
       <div style="position:relative;margin-bottom:6px">
-        <input class="form-input" id="oif_price" type="number" inputmode="numeric" placeholder="0" min="0" step="500" style="width:100%;padding-right:40px">
+        <input class="form-input" id="oif_price" type="number" inputmode="numeric" placeholder="0" min="0" step="500" style="width:100%;padding-right:40px" oninput="oifUpdatePreview()">
         <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text2);pointer-events:none">сум</span>
+      </div>
+      <!-- цена ниже прайса = скидка (2026-10-10): причина — необязательно, кто/когда сохраняет сервер -->
+      <div id="oif_disc_box" style="display:none;margin:2px 0 8px">
+        <div id="oif_disc_info" style="font-size:12px;color:#b45309;font-weight:600;margin-bottom:4px"></div>
+        <input class="form-input" id="oif_disc_note" type="text" maxlength="500" placeholder="Причина скидки (необязательно)" style="width:100%">
       </div>
       <div id="oif_preview" style="font-size:13px;font-weight:600;color:var(--accent);text-align:right;min-height:20px"></div>
 

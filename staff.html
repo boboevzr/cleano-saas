@@ -1207,9 +1207,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
       </div>
       <div class="field-inp"><textarea id="or_note" placeholder="Детали заявки..." rows="3"></textarea></div>
     </div>
-    <div class="field-inline" style="margin-bottom:0">
+    <div style="margin-bottom:0">
       <div class="field-label" id="orItemCountLabel">Кол-во позиций</div>
-      <div class="field-inp" style="flex:0 0 90px"><input id="or_item_count" type="number" min="0" placeholder="0"></div>
+      <!-- позиции сразу с услугой (цена — по прайсу); без услуги создать нельзя (2026-10-10) -->
+      <div id="or_items_svc" style="margin-top:4px"></div>
+      <input id="or_item_count" type="hidden" value="">
     </div>
   </div>
   <div class="modal-fs-foot">
@@ -1605,7 +1607,7 @@ const _i18n = {
     'so.lbl.client':'Клиент','so.lbl.created':'Создан','so.lbl.deadline':'Дедлайн: ','so.lbl.address':'Адрес',
     'so.open_geo':'Открыть геолокацию','so.btn.edit':'✏️ Редактировать','so.btn.new_order':'➕ Новый заказ',
     'so.history':'История заказа','so.items_history':'История позиций','so.payment_history':'История операций',
-    'so.bulk.label':'Принято:','so.bulk.units':'позиций','so.bulk.create':'Создать пустые','so.add_item':'Добавить позицию',
+    'so.bulk.label':'Принято:','so.bulk.units':'позиций','so.bulk.create':'Создать позиции','so.bulk.svc_required':'Выберите услугу и количество','so.add_item':'Добавить позицию',
     'so.photo.before':'До','so.photo.after':'После','so.photo.damage':'Повр.','so.photo.uploading':'⏳ Загрузка…',
     'so.lbl.total':'Сумма позиций','so.lbl.net':'К оплате','so.selfpickup':'🏠 Клиент привозит','so.selfdelivery':'🏠 Клиент забирает',
     'so.lbl.discount':'Скидка','so.lbl.paid':'Оплачено','so.lbl.debt':'Долг','so.lbl.pending':'На проверке',
@@ -1613,7 +1615,7 @@ const _i18n = {
     'so.notif_empty':'Пока нет уведомлений','so.notif_loading':'Загрузка…',
     'svc.carpet':'Чистка ковра','svc.carpet_home':'Чистка ковра на дому','svc.sofa':'Диван, кресло','svc.mattress':'Матрас, одеяло','svc.curtains':'Шторы',
     'svc.type.standard':'Стандарт','svc.type.express':'Экспресс',
-    'items.empty':'Нет позиций — нажмите «+ Добавить»','items.total':'Итого:','items.enter_count':'Введите количество',
+    'items.empty':'Нет позиций — нажмите «+ Добавить»','items.total':'Итого:','price.list':'Прайс','price.discount':'скидка','price.disc_note_ph':'Причина скидки (необязательно)','price.locked':'Цену по договору меняет менеджер','items.enter_count':'Введите количество',
     'item.empty':'не заполнено','item.i_work':'🧼 Я работаю','item.refuse':'Отказаться','item.take':'✋ Взять позицию',
     'item.change':'— изменить —','item.unassign':'Снять мойщика','item.no_washer':'⚠️ Нет мойщика','item.assign':'— Назначить мойщика —',
     'msr.enter':'Ввести замер','msr.fix':'Исправить замер','msr.pending_mgr':'⏳ На проверке у менеджера',
@@ -1927,7 +1929,7 @@ const _i18n = {
     'so.lbl.client':'Mijoz','so.lbl.created':'Yaratilgan','so.lbl.deadline':'Muddat: ','so.lbl.address':'Manzil',
     'so.open_geo':'Geolokatsiyani ochish','so.btn.edit':`✏️ Tahrirlash`,'so.btn.new_order':'➕ Yangi buyurtma',
     'so.history':'Buyurtma tarixi','so.items_history':'Pozitsiyalar tarixi','so.payment_history':'Amallar tarixi',
-    'so.bulk.label':'Qabul:','so.bulk.units':'ta','so.bulk.create':`Boʻsh yaratish`,'so.add_item':`Pozitsiya qoʻshish`,
+    'so.bulk.label':'Qabul:','so.bulk.units':'ta','so.bulk.create':`Pozitsiyalarni yaratish`,'so.bulk.svc_required':'Xizmat va miqdorni tanlang','so.add_item':`Pozitsiya qoʻshish`,
     'so.photo.before':'Oldin','so.photo.after':'Keyin','so.photo.damage':'Shikast.','so.photo.uploading':'⏳ Yuklanmoqda…',
     'so.lbl.total':'Pozitsiyalar summasi','so.lbl.net':`Toʻlash kerak`,'so.selfpickup':'🏠 Mijoz olib keladi','so.selfdelivery':'🏠 Mijoz olib ketadi',
     'so.lbl.discount':'Chegirma','so.lbl.paid':`Toʻlangan`,'so.lbl.debt':'Qarz','so.lbl.pending':'Tekshirilmoqda',
@@ -1935,7 +1937,7 @@ const _i18n = {
     'so.notif_empty':`Hozircha bildirishnoma yoʻq`,'so.notif_loading':'Yuklanmoqda…',
     'svc.carpet':'Gilam tozalash','svc.carpet_home':'Uyda gilam tozalash','svc.sofa':'Divan, kreslo','svc.mattress':`Matras, koʻrpa`,'svc.curtains':'Pardalar',
     'svc.type.standard':'Standart','svc.type.express':'Ekspress',
-    'items.empty':`Pozitsiya yoʻq — «+ Qoʻshish» tugmasini bosing`,'items.total':'Jami:','items.enter_count':'Miqdorni kiriting',
+    'items.empty':`Pozitsiya yoʻq — «+ Qoʻshish» tugmasini bosing`,'items.total':'Jami:','price.list':'Prays','price.discount':'chegirma','price.disc_note_ph':'Chegirma sababi (ixtiyoriy)','price.locked':'Kelishilgan narxni menejer oʻzgartiradi','items.enter_count':'Miqdorni kiriting',
     'item.empty':`toʻldirilmagan`,'item.i_work':'🧼 Men ishlamoqdaman','item.refuse':'Rad etish','item.take':`✋ Pozitsiyani olish`,
     'item.change':'— oʻzgartirish —','item.unassign':'Yuvuvchini olish','item.no_washer':`⚠️ Yuvuvchi yoʻq`,'item.assign':'— Yuvuvchi belgilash —',
     'msr.enter':`Oʻlchovni kiritish`,'msr.fix':`Oʻlchovni tuzatish`,'msr.pending_mgr':`⏳ Menejer tekshiruvida`,
@@ -2613,6 +2615,7 @@ function clearOrderForm() {
   });
   orSetDeliveryAddrDiffers(false);
   _orSetSmsLang('ru');
+  _orRenderItemRows();
   const svc = document.getElementById('or_service'); if (svc) svc.value = '';
   _setOrBranch(currentStaff?.branch || window._BRANCHES?.[0]?.slug || '');
   const locDisp = document.getElementById('locDisplay');
@@ -3357,7 +3360,8 @@ async function submitOrder() {
         note:             document.getElementById('or_note').value.trim() || '',
         pickup_date:      document.getElementById('or_pickup_date')?.value || '',
         pickup_time:      document.getElementById('or_pickup_time')?.value || '',
-        item_count:       parseInt(document.getElementById('or_item_count')?.value) || 0,
+        item_count:       _pkpSum('or'),
+        items:            _pkpCollectItems('or', _pkpServiceCatalog || []),
         sms_lang:         _orSmsLang,
       })
     });
@@ -8370,7 +8374,7 @@ function pkpCreateNew(phone) {
 }
 
 async function _pkpRenderFound(o) {
-  _pkpOrder = o; _pkpMode = 'count'; _pkpLang = 'ru';
+  _pkpOrder = o; _pkpMode = 'by_service'; _pkpLang = 'ru';  // услуга обязательна (2026-10-10)
   _pkpResetQty('pkp');
   const catalog = await _pkpLoadServiceCatalog();
   const name = [o.client_first_name, o.client_last_name].filter(Boolean).join(' ') || '—';
@@ -8382,14 +8386,14 @@ async function _pkpRenderFound(o) {
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px">
       <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text)">📦 Сколько позиций забираете?</div>
-      <div class="filter-chips" style="margin-bottom:10px">
-        <button class="fchip active" id="pkp_mode_count_btn" onclick="_pkpSetMode('count')">Общее число</button>
+      <div class="filter-chips" style="margin-bottom:10px;display:none">
+        <button class="fchip" id="pkp_mode_count_btn" onclick="_pkpSetMode('count')">Общее число</button>
         <button class="fchip" id="pkp_mode_svc_btn" onclick="_pkpSetMode('by_service')">По услугам</button>
       </div>
-      <div id="pkp_mode_count_wrap">
+      <div id="pkp_mode_count_wrap" style="display:none">
         <input id="pkp_count" type="number" min="1" value="1" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px">
       </div>
-      <div id="pkp_mode_svc_wrap" style="display:none">
+      <div id="pkp_mode_svc_wrap">
         <div id="pkp_svc_rows">${_pkpSvcRowsHtml('pkp', catalog)}</div>
       </div>
       <div style="margin-top:12px">
@@ -8811,21 +8815,21 @@ function _drvCloseSheet() {
 }
 
 // ── «Забрал» на маршруте типа «Забор» — портировано из прода ──
-let _drvPkpOrderId = null, _drvPkpMode = 'count', _drvPkpLang = 'ru';
+let _drvPkpOrderId = null, _drvPkpMode = 'by_service', _drvPkpLang = 'ru';
 
 async function drvOpenPickupForm(orderId) {
-  _drvPkpOrderId = orderId; _drvPkpMode = 'count'; _drvPkpLang = 'ru';
+  _drvPkpOrderId = orderId; _drvPkpMode = 'by_service'; _drvPkpLang = 'ru';  // услуга обязательна (2026-10-10)
   _pkpResetQty('drv_pkp');
   const catalog = await _pkpLoadServiceCatalog();
   _drvOpenSheet(t('drv.pkp.title'), `
-    <div class="filter-chips" style="margin-bottom:10px">
-      <button class="fchip active" id="drv_pkp_mode_count_btn" onclick="_drvPkpSetMode('count')">${t('drv.pkp.count_mode')}</button>
+    <div class="filter-chips" style="margin-bottom:10px;display:none">
+      <button class="fchip" id="drv_pkp_mode_count_btn" onclick="_drvPkpSetMode('count')">${t('drv.pkp.count_mode')}</button>
       <button class="fchip" id="drv_pkp_mode_svc_btn" onclick="_drvPkpSetMode('by_service')">${t('drv.pkp.svc_mode')}</button>
     </div>
-    <div id="drv_pkp_mode_count_wrap">
+    <div id="drv_pkp_mode_count_wrap" style="display:none">
       <input id="drv_pkp_count" type="number" min="1" value="1" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px">
     </div>
-    <div id="drv_pkp_mode_svc_wrap" style="display:none">
+    <div id="drv_pkp_mode_svc_wrap">
       <div id="drv_pkp_svc_rows">${_pkpSvcRowsHtml('drv_pkp', catalog)}</div>
     </div>
     <div style="margin-top:12px">
@@ -9590,13 +9594,17 @@ document.addEventListener('click', e => {
     <!-- Вкладка: Позиции -->
     <div id="so-tab-items" style="flex:1;min-height:0;display:none;flex-direction:column">
       <div id="so_items_preview_row" style="padding:8px 20px 0"></div>
-      <div id="so_bulk_row" style="padding:8px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;flex-shrink:0;background:#fafafa">
-        <span id="soBulkLbl" style="font-size:12px;color:#888;flex-shrink:0">Принято:</span>
-        <input id="so_bulk_count" type="number" min="1" max="50" placeholder="0" inputmode="numeric"
-               style="width:56px;padding:5px 8px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:14px;text-align:center;outline:none"
-               onkeydown="if(event.key==='Enter')staffBulkCreate()">
-        <span id="soBulkUnitsLbl" style="font-size:12px;color:#888;flex-shrink:0">позиций</span>
-        <button id="soBulkCreateBtn" onclick="staffBulkCreate()" style="padding:5px 14px;background:#e8f4ff;border:1.5px solid #007aff;color:#007aff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Создать пустые</button>
+      <div id="so_bulk_row" style="padding:8px 20px;border-bottom:1px solid #f0f0f0;flex-shrink:0;background:#fafafa">
+        <!-- позиции по услугам (цена по прайсу) — без услуги менеджер позицию не создаёт (2026-10-10) -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer" onclick="_soBulkToggle()">
+          <span id="soBulkLbl" style="font-size:12px;color:#888;flex-shrink:0">Принято:</span>
+          <span id="soBulkArrow" style="font-size:12px;color:#007aff;font-weight:700">🏷 ▾</span>
+        </div>
+        <div id="so_bulk_svc" style="display:none;margin-top:4px;color:#1a1a1a"></div>
+        <div id="so_bulk_actions" style="display:none;justify-content:flex-end;margin-top:6px">
+          <button id="soBulkCreateBtn" onclick="staffBulkCreate()" style="padding:6px 14px;background:#e8f4ff;border:1.5px solid #007aff;color:#007aff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Создать позиции</button>
+        </div>
+        <input id="so_bulk_count" type="hidden">
       </div>
       <div id="so_items" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:12px 20px"></div>
       <div id="so_add_btn_row" style="padding:8px 16px 12px;flex-shrink:0;background:#fafafa;border-top:1px solid #f0f0f0">
@@ -9906,6 +9914,7 @@ document.addEventListener('click', e => {
                style="width:100%;padding:12px 44px 12px 14px;border:1.5px solid #e5e5e5;border-radius:12px;font-size:15px;background:#fafafa;box-sizing:border-box;outline:none">
         <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:#aaa">сум</span>
       </div>
+      <div id="sif_disc_box" style="display:none;margin:4px 0 8px"><div id="sif_disc_info" style="font-size:12px;color:#b45309;font-weight:600;margin-bottom:4px"></div><input id="sif_disc_note" type="text" maxlength="500" style="width:100%;padding:9px 12px;border:1.5px solid #fcd34d;border-radius:10px;font-size:13px;background:#fffbeb;box-sizing:border-box;outline:none"></div>
       </div><!-- /sif_price_section -->
       <div id="sif_preview" style="font-size:13px;font-weight:600;color:#007aff;text-align:right;min-height:18px"></div>
 
@@ -10204,6 +10213,7 @@ async function staffOpenOrder(orderId) {
   _sActivityCache = null;
   _sActiveTab     = 'info';
   const _sbc = document.getElementById('so_bulk_count'); if (_sbc) _sbc.value = '';
+  const _sbs = document.getElementById('so_bulk_svc'); if (_sbs && _sbs.style.display !== 'none') _soBulkToggle();  // свернуть «Принято» от прошлого заказа
   document.getElementById('staffModalOrder').classList.add('open');
   _applyOrderCardI18n();
   soSwitchTab('info');
@@ -12081,6 +12091,9 @@ function staffRenderItems(items, containerEl) {
         ${parseFloat(it.price_per_sqm||0) > 0
           ? `<div style="font-size:11px;color:#888;margin-top:1px">${Number(it.price_per_sqm).toLocaleString('ru')} ${t('unit.sum')}/${_posUnitKey === 'pcs' ? t('unit.pcs') : t('unit.m2')}</div>`
           : ''}
+        ${(!isWasher && it.list_price != null && parseFloat(it.price_per_sqm||0) > 0 && parseFloat(it.price_per_sqm) < parseFloat(it.list_price))
+          ? `<div style="font-size:11px;color:#b45309;margin-top:1px;font-weight:600">🏷 ${t('price.list')} ${Number(it.list_price).toLocaleString('ru')} → ${Number(it.price_per_sqm).toLocaleString('ru')} (${t('price.discount')} ${(Number(it.list_price) - Number(it.price_per_sqm)).toLocaleString('ru')})${it.discount_note ? ' · ' + _esc(it.discount_note) : ''}</div>`
+          : ''}
         ${(it.service && parseFloat(it.sqm||0) > 0)
           ? `<div style="font-size:12px;color:#888;margin-top:2px">${hasDims ? it.width_cm+'×'+it.length_cm+' '+t('unit.cm')+' · ' : ''}${_posUnitKey === 'pcs' ? parseFloat(it.sqm).toFixed(0)+' '+t('unit.pcs') : parseFloat(it.sqm).toFixed(2)+' '+t('unit.m2')}</div>`
           : ''}
@@ -12131,7 +12144,44 @@ async function smConfirmDirect(itemId) {
   _measureItemId = null;
 }
 
+async function _soBulkToggle(forceOpen) {
+  const box = document.getElementById('so_bulk_svc'), act = document.getElementById('so_bulk_actions');
+  if (!box) return;
+  const open = forceOpen === true || box.style.display === 'none';
+  if (open) { _pkpResetQty('so_blk'); box.innerHTML = _pkpSvcRowsHtml('so_blk', await _pkpLoadServiceCatalog()); }
+  box.style.display = open ? '' : 'none';
+  if (act) act.style.display = open ? 'flex' : 'none';
+  const ar = document.getElementById('soBulkArrow'); if (ar) ar.textContent = open ? '🏷 ▴' : '🏷 ▾';
+}
+
+function _pkpSum(prefix) {
+  return Object.values(_pkpQty[prefix] || {}).reduce((a, b) => a + (b || 0), 0);
+}
+
+async function _orRenderItemRows() {
+  _pkpResetQty('or');
+  const box = document.getElementById('or_items_svc');
+  if (box) box.innerHTML = _pkpSvcRowsHtml('or', await _pkpLoadServiceCatalog());
+}
+
 async function staffBulkCreate() {
+  if (_activeOrderModal !== 'washer') {
+    const items = _pkpCollectItems('so_blk', await _pkpLoadServiceCatalog());
+    if (!Object.keys(items).length) { showToast(t('so.bulk.svc_required'), 'error'); return; }
+    const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items/bulk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_staffToken()}` },
+      body: JSON.stringify({ items }),
+    });
+    if (!res.ok) { const e = await res.json().catch(()=>({})); showToast(e.detail||'Ошибка', 'error'); return; }
+    const d = await res.json();
+    _sItemsCache = [..._sItemsCache, ...d.items];
+    _reRenderItems();
+    _soBulkToggle();
+    showToast(`Создано ${d.count} позиций`, 'success');
+    if (_sOrderStatus === 'washing') { _notifyWasherItemId = null; _openNotifyWasherModal(); }
+    return;
+  }
   const inp = _activeOrderModal === 'washer'
     ? document.getElementById('wmo_bulk_count')
     : document.getElementById('so_bulk_count');
@@ -12248,8 +12298,8 @@ async function staffOpenItemForm(itemId) {
       document.getElementById('sif_width').value  = item.width_cm  || '';
       document.getElementById('sif_length').value = item.length_cm || '';
       document.getElementById('sif_sqm').value    = item.sqm       || '';
-      // Попробовать найти в прайсе
-      const match = sifFindPriceMatch(item.service || '');
+      // Ключи из снимка позиции (с 2026-10-10), иначе — найти в прайсе по тексту
+      const match = (item.service_key && item.type_key) ? { svcKey: item.service_key, typeKey: item.type_key } : sifFindPriceMatch(item.service || '');
       const isEmpty = !item.service && !item.price_per_sqm;
       if (match) {
         sifSwitchTab('price');
@@ -12259,6 +12309,8 @@ async function staffOpenItemForm(itemId) {
         sifOnTypeChange();
         // Restore actual item price (don't overwrite with pricelist default)
         if (item.price_per_sqm) document.getElementById('sif_price').value = item.price_per_sqm;
+        // цена по прайсу — из снимка позиции (для старых позиций неизвестна — скидку не показываем)
+        _setListPrice('sif', item.list_price || '', item.discount_note);
       } else if (isEmpty) {
         sifSwitchTab('price'); // пустая позиция → сразу в прайс
       } else {
@@ -12274,6 +12326,9 @@ async function staffOpenItemForm(itemId) {
     typeSel.innerHTML = `<option value="">${t('svc.select_type_first')}</option>`;
     typeSel.disabled = true; typeSel.style.opacity = '.5';
   }
+
+  _applyPriceLock('sif');
+  _syncDiscountUi('sif');
 
   // Размеры вводятся только мойщиком через модалку замера — в форме позиции скрыты всегда
   document.getElementById('sif_dims_section').style.display = 'none';
@@ -12381,6 +12436,7 @@ function sifOnSvcChange() {
   document.getElementById('sif_service_name').value = '';
   document.getElementById('sif_price').value        = '';
   document.getElementById('sif_preview').textContent = '';
+  _setListPrice('sif', '', '');
 
   if (!svcKey || !prices[svcKey]) return;
 
@@ -12409,6 +12465,7 @@ function sifOnTypeChange() {
   if (n) { n.value = `${svcName} — ${typeName}`; }
 
   document.getElementById('sif_price').value = price;
+  _setListPrice('sif', price);
   sifUpdatePreview();
 }
 
@@ -13026,6 +13083,7 @@ function sifCalcSqm() {
 }
 
 function sifUpdatePreview() {
+  _syncDiscountUi('sif');
   const sqm   = parseFloat(document.getElementById('sif_sqm').value)   || 0;
   const price = parseFloat(document.getElementById('sif_price').value)  || 0;
   const prev  = document.getElementById('sif_preview');
@@ -13056,7 +13114,13 @@ async function staffSaveItemForm() {
   if (!service) { alert('Укажите название услуги'); return; }
   if (!sqm && width && length) sqm = parseFloat((width * length / 10000).toFixed(3));
 
-  const body   = { service, sqm, width_cm: width, length_cm: length, price_per_sqm: price };
+  const body   = { service, sqm, width_cm: width, length_cm: length, price_per_sqm: price,
+                   discount_note: _discountNote('sif') };
+  if (!isCustom) {
+    const _sk = document.getElementById('sif_svc_select')?.value, _tk = document.getElementById('sif_type_select')?.value;
+    if (_sk && _tk) Object.assign(body, { service_key: _sk, type_key: _tk,
+      service_ru: `${_svcName(_sk,'ru')} — ${_typeName(_tk,'ru')}`, service_uz: `${_svcName(_sk,'uz')} — ${_typeName(_tk,'uz')}` });
+  }
   const url    = _sItemEdit
     ? `/admin/orders/${_sOrderId}/items/${_sItemEdit}`
     : `/admin/orders/${_sOrderId}/items`;
@@ -13147,11 +13211,53 @@ function smcOnTypeChange() {
   nameEl.value = name; nameEl.style.display = '';
   const priceEl = document.getElementById('smc_price');
   if (priceEl) priceEl.value = price;
+  _setListPrice('smc', price);
   _smIsPcs = (prices[svcKey]?.[typeKey]?.unit_key || 'm2') === 'pcs';
   document.getElementById('sm_dims_edit').style.display = (_smCanEdit && !_smIsPcs) ? '' : 'none';
   document.getElementById('sm_qty_edit').style.display  = (_smCanEdit && _smIsPcs) ? '' : 'none';
   const _smPriceLabelEl = document.getElementById('smPriceLabel');
   if (_smPriceLabelEl) _smPriceLabelEl.textContent = _smIsPcs ? t('sm.pricePerPcs') : t('sm.pricePerM2');
+}
+
+// ── Цена по прайсу / по договору (2026-10-10) ─────────────────────────────
+// Цену по договору (в т.ч. скидку ниже прайса) меняют только менеджер/админ/право
+// can_edit_price — сервер проверяет сам (_is_price_editor в main.py), тут — только UI.
+// data-list-price на поле цены = цена по прайсу (снимок позиции или прайс выбранной услуги).
+function _canEditPrice() {
+  const r = currentStaff?.role;
+  return r === 'admin' || r === 'manager' || currentStaff?.can_edit_price === true;
+}
+function _applyPriceLock(prefix) {
+  const el = document.getElementById(prefix + '_price');
+  if (!el) return;
+  const ok = _canEditPrice();
+  el.readOnly = !ok;
+  el.style.background = ok ? '' : '#f5f5f7';
+  el.title = ok ? '' : t('price.locked');
+  const note = document.getElementById(prefix + '_disc_note');
+  if (note) note.placeholder = t('price.disc_note_ph');
+}
+function _setListPrice(prefix, listPrice, note) {
+  const el = document.getElementById(prefix + '_price');
+  if (el) el.dataset.listPrice = listPrice ? String(listPrice) : '';
+  if (note !== undefined) { const n = document.getElementById(prefix + '_disc_note'); if (n) n.value = note || ''; }
+  _syncDiscountUi(prefix);
+}
+function _syncDiscountUi(prefix) {
+  const el  = document.getElementById(prefix + '_price');
+  const box = document.getElementById(prefix + '_disc_box');
+  if (!el || !box) return;
+  const list = parseFloat(el.dataset.listPrice || '0');
+  const p    = parseFloat(el.value || '0');
+  const show = _canEditPrice() && list > 0 && p > 0 && p < list;
+  box.style.display = show ? '' : 'none';
+  if (show) document.getElementById(prefix + '_disc_info').textContent =
+    `🏷 ${t('price.list')} ${list.toLocaleString('ru')} · ${t('price.discount')} ${(list - p).toLocaleString('ru')} ${t('unit.sum')}`;
+}
+function _discountNote(prefix) {
+  const box = document.getElementById(prefix + '_disc_box');
+  if (!box || box.style.display === 'none') return null;
+  return document.getElementById(prefix + '_disc_note')?.value.trim() || null;
 }
 
 function smcGetService() {
@@ -13165,6 +13271,13 @@ function smcGetService() {
 // "Своя услуга" не переводится — service_ru/uz остаются пустыми, рендер фолбэкается на service.
 function smcGetServiceBilingual() {
   const isCustom = document.getElementById('smc-panel-custom')?.style.display !== 'none';
+function _smcKeys() {
+  const isCustom = document.getElementById('smc-panel-custom')?.style.display !== 'none';
+  if (isCustom) return { service_key: null, type_key: null };
+  return { service_key: document.getElementById('smc_svc_select')?.value || null,
+           type_key:    document.getElementById('smc_type_select')?.value || null };
+}
+
   if (isCustom) {
     return { service: document.getElementById('smc_custom_name')?.value.trim() || '', service_ru: null, service_uz: null };
   }
@@ -13189,7 +13302,8 @@ async function smcFillFromItem(item) {
   svcOrder.forEach(k => {
     if ((_sPrices||{})[k]) svcSel.innerHTML += `<option value="${k}">${_svcName(k)}</option>`;
   });
-  const match = item.service ? sifFindPriceMatch(item.service) : null;
+  const match = (item.service_key && item.type_key) ? { svcKey: item.service_key, typeKey: item.type_key }
+              : (item.service ? sifFindPriceMatch(item.service) : null);
   if (match) {
     smcSwitchTab('price');
     svcSel.value = match.svcKey;
@@ -13199,6 +13313,7 @@ async function smcFillFromItem(item) {
     // Restore actual item price (don't overwrite with pricelist default)
     const smcPriceEl = document.getElementById('smc_price');
     if (item.price_per_sqm && smcPriceEl) smcPriceEl.value = item.price_per_sqm;
+    _setListPrice('smc', item.list_price || '', item.discount_note);
   } else if (item.service) {
     smcSwitchTab('custom');
     document.getElementById('smc_custom_name').value = item.service;
@@ -13211,6 +13326,9 @@ async function smcFillFromItem(item) {
     document.getElementById('smc_service_name').value = '';
     document.getElementById('smc_service_name').style.display = 'none';
   }
+  if (!match) _setListPrice('smc', '', item.discount_note);
+  _applyPriceLock('smc');
+  _syncDiscountUi('smc');
 }
 
 async function smSaveItemInfo() {
@@ -13230,7 +13348,8 @@ async function smSaveItemInfo() {
   const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items/${_measureItemId}`, {
     method: 'PUT',
     headers: { 'Content-Type':'application/json', Authorization:`Bearer ${_staffToken()}` },
-    body: JSON.stringify({ service, service_ru, service_uz, price_per_sqm: price, sqm, width_cm: w, length_cm: l })
+    body: JSON.stringify({ service, service_ru, service_uz, ..._smcKeys(), price_per_sqm: price, sqm, width_cm: w, length_cm: l,
+                           discount_note: _discountNote('smc') })
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); if (await _reloadItemsOnNotFound(e.detail)) return false; showToast(e.detail||'Ошибка', 'error'); return false; }
   const d = await res.json().catch(()=>({}));
@@ -13351,12 +13470,12 @@ function svpOnSvcChange() {
 
 async function svpConfirm() {
   const isCustom = document.getElementById('svp-panel-custom')?.style.display !== 'none';
-  let service = '', service_ru = null, service_uz = null;
+  let service = '', service_ru = null, service_uz = null, svcKey = '', typeKey = '';
   if (isCustom) {
     service = document.getElementById('svp_custom_name')?.value.trim() || '';
   } else {
-    const svcKey  = document.getElementById('svp_svc_select')?.value || '';
-    const typeKey = document.getElementById('svp_type_select')?.value || '';
+    svcKey  = document.getElementById('svp_svc_select')?.value || '';
+    typeKey = document.getElementById('svp_type_select')?.value || '';
     if (!svcKey || !typeKey) { showToast(t('svc.select_required'), 'warning'); return; }
     service    = `${_svcName(svcKey)} — ${_typeName(typeKey)}`;
     service_ru = `${_svcName(svcKey,'ru')} — ${_typeName(typeKey,'ru')}`;
@@ -13372,7 +13491,7 @@ async function svpConfirm() {
     method: 'PUT',
     headers: { 'Content-Type':'application/json', Authorization:`Bearer ${_staffToken()}` },
     body: JSON.stringify({
-      service, service_ru, service_uz,
+      service, service_ru, service_uz, service_key: svcKey || null, type_key: typeKey || null,
       price_per_sqm: cur.price_per_sqm || 0,
       sqm: cur.sqm || null, width_cm: cur.width_cm || null, length_cm: cur.length_cm || null,
     })
@@ -16116,9 +16235,10 @@ function staffChatSend() {
         <div id="smc_price_row" style="display:none;margin-top:10px">
           <div id="smPriceLabel" style="font-size:11px;color:#888;margin-bottom:4px">Цена за м²</div>
           <div style="position:relative">
-            <input id="smc_price" type="number" inputmode="numeric" placeholder="0" min="0" style="width:100%;padding:10px 44px 10px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;background:#fff;box-sizing:border-box;outline:none">
+            <input id="smc_price" type="number" inputmode="numeric" placeholder="0" min="0" oninput="_syncDiscountUi('smc')" style="width:100%;padding:10px 44px 10px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;background:#fff;box-sizing:border-box;outline:none">
             <span id="smPriceCur" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:#aaa">сум</span>
           </div>
+          <div id="smc_disc_box" style="display:none;margin:4px 0 8px"><div id="smc_disc_info" style="font-size:12px;color:#b45309;font-weight:600;margin-bottom:4px"></div><input id="smc_disc_note" type="text" maxlength="500" style="width:100%;padding:9px 12px;border:1.5px solid #fcd34d;border-radius:10px;font-size:13px;background:#fffbeb;box-sizing:border-box;outline:none"></div>
         </div>
       </div>
 
