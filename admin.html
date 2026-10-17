@@ -1570,6 +1570,7 @@
         <div class="nav-group-items" id="ng-items-hr" style="display:none;">
           <div class="nav-sub-item" data-page="staff"       onclick="switchSubPage(this)">👥 Сотрудники</div>
           <div class="nav-sub-item" data-page="agents"      onclick="switchSubPage(this)">🤝 Агенты</div>
+          <div class="nav-sub-item" data-page="staff-sessions" onclick="switchSubPage(this)">🔐 Сессии</div>
           <div class="nav-sub-item" data-page="departments" onclick="switchSubPage(this)">🏢 Отделы</div>
           <div class="nav-sub-item" data-page="positions"   onclick="switchSubPage(this)">🎯 Должности</div>
           <div class="nav-sub-item" data-page="timesheet"   onclick="switchSubPage(this)">📅 Табель</div>
@@ -2538,6 +2539,16 @@
       </div>
 
       <!-- STAFF -->
+      <div class="page" id="page-staff-sessions">
+        <div class="section-header">
+          <h2>🔐 Активные сессии</h2>
+          <button class="btn btn-sm" onclick="ssLoad()">🔄 Обновить</button>
+        </div>
+        <p style="font-size:13px;color:var(--text2);margin:-6px 0 12px">Где сейчас вошли сотрудники (staff). «Завершить» — на этом устройстве потребуется войти заново. Смена пароля сотрудника тоже завершает все его сессии.</p>
+        <input class="form-input" id="ssSearch" placeholder="🔍 Сотрудник, логин, устройство, IP…" oninput="ssRender()" style="margin-bottom:12px;max-width:420px">
+        <div id="ssList"><div class="loader">Загрузка…</div></div>
+      </div>
+
       <div class="page" id="page-staff">
         <!-- ── Сотрудники ── -->
         <div class="section-header">
@@ -5841,6 +5852,15 @@
           <div id="sf_changePwdRow" style="display:none">
             <label class="form-label" data-i18n="sf.lbl.new.pass">Новый пароль</label>
             <input class="form-input" type="password" id="sf_newPassword" data-i18n-ph="ph.sf.new.pass" placeholder="Оставьте пустым чтобы не менять">
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px">Смена пароля завершает все сессии — на всех телефонах потребуется войти заново.</div>
+          <!-- Активные сессии (перенос из ARTEZ 2026-10-17): где вошли этим логином -->
+          <div id="sf_sessions_box" style="display:none;margin-top:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
+              <label class="form-label" style="margin:0">Активные сессии</label>
+              <button type="button" class="btn btn-sm" onclick="sfRevokeAllSessions()" style="background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.3);color:#ef4444">🚪 Выйти на всех устройствах</button>
+            </div>
+            <div id="sf_sessions_list" style="display:flex;flex-direction:column;gap:6px;font-size:12px"></div>
           </div>
         </div>
       </div>
@@ -10826,6 +10846,7 @@ function _activatePage(page) {
   if (page === 'tariff')      loadTariffPage();
   if (page === 'staff')       loadStaffFromAPI();
   if (page === 'agents')      loadStaffFromAPI();
+  if (page === 'staff-sessions') ssLoad();
   if (page === 'leads')       adminLoadLeads();
   if (page === 'clients')     adminLoadClients();
   if (page === 'active-contacts') adminLoadActiveContacts();
@@ -13672,11 +13693,130 @@ async function openStaffModal(id=null) {
     sfUpdateAvatar(); sfUpdateRoleBadge(); // также скроет правую панель для агентов
     if (passHint) passHint.textContent = _t('sf.pass.opt');
     if (changePwdRow) changePwdRow.style.display = 'none';
+    sfLoadSessions(id);
   } else {
     if (passHint) passHint.textContent = _t('sf.pass.required');
     if (changePwdRow) changePwdRow.style.display = 'none';
+    const sb = document.getElementById('sf_sessions_box'); if (sb) sb.style.display = 'none';
   }
   openModal('modalStaff');
+}
+
+// ── Активные сессии сотрудника (2026-10-17) ─────────────────────────────────
+// Устройство — по User-Agent (грубо: телефон/ПК + браузер/приложение); данные
+// (UA, IP) — только через _esc, в onclick — только числовые id.
+function _sfDeviceLabel(ua) {
+  ua = ua || '';
+  const os = /iPhone|iPad/.test(ua) ? '📱 iPhone' : /Android/.test(ua) ? '📱 Android' : /Windows/.test(ua) ? '💻 Windows' : /Mac OS/.test(ua) ? '💻 Mac' : '❔ Устройство';
+  const br = /YaBrowser/.test(ua) ? 'Яндекс' : /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : /Firefox\//.test(ua) ? 'Firefox' : '';
+  return br ? `${os} · ${br}` : os;
+}
+async function sfLoadSessions(staffId) {
+  const box = document.getElementById('sf_sessions_box');
+  const list = document.getElementById('sf_sessions_list');
+  if (!box || !list) return;
+  box.style.display = '';
+  list.innerHTML = '<span style="color:var(--text2)">Загрузка…</span>';
+  try {
+    const res = await apiFetch(`${API_BASE}/admin/staff/${staffId}/sessions`);
+    const d = await res.json();
+    const ss = d.sessions || [];
+    const fmt = v => v ? new Date(v).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
+    list.innerHTML = ss.length ? ss.map(s => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600">${_esc(_sfDeviceLabel(s.user_agent))}</div>
+          <div style="color:var(--text2)">вход ${fmt(s.created_at)} · был ${fmt(s.last_seen_at)}${s.ip ? ' · IP ' + _esc(s.ip) : ''}</div>
+        </div>
+        <button type="button" class="btn btn-sm" onclick="sfRevokeSession(${Number(staffId)}, ${Number(s.id)})" style="flex-shrink:0">Завершить</button>
+      </div>`).join('')
+      : '<span style="color:var(--text2)">Нет активных сессий — никто не вошёл этим логином.</span>';
+  } catch (e) {
+    list.innerHTML = '<span style="color:#ef4444">Не удалось загрузить сессии</span>';
+  }
+}
+async function sfRevokeSession(staffId, sid) {
+  if (!confirm('Завершить эту сессию? На этом устройстве потребуется войти заново.')) return;
+  const res = await apiFetch(`${API_BASE}/admin/staff/${staffId}/sessions/${sid}`, { method: 'DELETE' });
+  const d = await res.json().catch(() => ({}));
+  showToast(res.ok ? 'Сессия завершена' : (d.detail || 'Ошибка'), res.ok ? 'success' : 'error');
+  sfLoadSessions(staffId);
+}
+// ── Страница «🔐 Сессии»: все активные сессии, сгруппированы по сотруднику ──
+// Имена/UA/IP — только через _esc (текст), в onclick — только числовые id.
+let _ssAll = [];
+const _SS_ROLE = { admin:'Админ', manager:'Менеджер', callcenter:'Колл-центр', driver:'Водитель',
+                   logistics:'Логист', washer:'Мойщик', packer:'Упаковщик', agent:'Агент' };
+async function ssLoad() {
+  const el = document.getElementById('ssList');
+  if (!el) return;
+  try {
+    const res = await apiFetch(`${API_BASE}/admin/staff-sessions`);
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.detail || 'Ошибка');
+    _ssAll = d.sessions || [];
+    ssRender();
+  } catch (e) {
+    el.innerHTML = `<div class="card" style="color:#ef4444">Не удалось загрузить: ${_esc(e.message)}</div>`;
+  }
+}
+function ssRender() {
+  const el = document.getElementById('ssList');
+  if (!el) return;
+  const q = (document.getElementById('ssSearch')?.value || '').toLowerCase().trim();
+  const fmt = v => v ? new Date(v).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
+  const name = s => [s.last_name, s.first_name].filter(Boolean).join(' ') || s.login;
+  const rows = _ssAll.filter(s => !q || `${name(s)} ${s.login} ${_SS_ROLE[s.role]||s.role} ${_sfDeviceLabel(s.user_agent)} ${s.ip||''}`.toLowerCase().includes(q));
+  if (!rows.length) {
+    el.innerHTML = `<div class="card" style="color:var(--text2);text-align:center">${_ssAll.length ? 'Ничего не найдено' : 'Активных сессий нет'}</div>`;
+    return;
+  }
+  const groups = new Map();
+  rows.forEach(s => { if (!groups.has(s.staff_id)) groups.set(s.staff_id, []); groups.get(s.staff_id).push(s); });
+  el.innerHTML = [...groups.values()].map(list => {
+    const s0 = list[0];
+    return `<div class="card" style="margin-bottom:12px;padding:14px 16px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700">${_esc(name(s0))}${s0.active === false ? ' <span style="color:#ef4444;font-size:11px">· неактивен</span>' : ''}</div>
+          <div style="font-size:12px;color:var(--text2)">${_esc(s0.login)} · ${_esc(_SS_ROLE[s0.role] || s0.role || '')}${s0.position ? ' · ' + _esc(s0.position) : ''} · сессий: ${list.length}</div>
+        </div>
+        <button class="btn btn-sm" onclick="ssRevokeAll(${Number(s0.staff_id)}, ${list.length})" style="background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.3);color:#ef4444">🚪 Выйти на всех устройствах</button>
+      </div>
+      ${list.map(s => `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;margin-top:6px">
+          <div style="flex:1;min-width:0;font-size:12px">
+            <div style="font-weight:600;font-size:13px">${_esc(_sfDeviceLabel(s.user_agent))}</div>
+            <div style="color:var(--text2)">вход ${fmt(s.created_at)} · был ${fmt(s.last_seen_at)}${s.ip ? ' · IP ' + _esc(s.ip) : ''}</div>
+          </div>
+          <button class="btn btn-sm" onclick="ssRevoke(${Number(s.staff_id)}, ${Number(s.id)})" style="flex-shrink:0">Завершить</button>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+async function ssRevoke(staffId, sid) {
+  if (!confirm('Завершить эту сессию? На этом устройстве потребуется войти заново.')) return;
+  const res = await apiFetch(`${API_BASE}/admin/staff/${staffId}/sessions/${sid}`, { method: 'DELETE' });
+  const d = await res.json().catch(() => ({}));
+  showToast(res.ok ? 'Сессия завершена' : (d.detail || 'Ошибка'), res.ok ? 'success' : 'error');
+  ssLoad();
+}
+async function ssRevokeAll(staffId, n) {
+  if (!confirm(`Выйти на всех устройствах этого сотрудника (${n})? Все его телефоны вылетят на экран входа.`)) return;
+  const res = await apiFetch(`${API_BASE}/admin/staff/${staffId}/sessions/revoke-all`, { method: 'POST' });
+  const d = await res.json().catch(() => ({}));
+  showToast(res.ok ? `Завершено сессий: ${d.sessions_ended ?? 0}` : (d.detail || 'Ошибка'), res.ok ? 'success' : 'error');
+  ssLoad();
+}
+
+async function sfRevokeAllSessions() {
+  const staffId = Number(document.getElementById('staffEditId').value);
+  if (!staffId) return;
+  if (!confirm('Выйти на всех устройствах? Все, кто вошёл этим логином, вылетят на экран входа.')) return;
+  const res = await apiFetch(`${API_BASE}/admin/staff/${staffId}/sessions/revoke-all`, { method: 'POST' });
+  const d = await res.json().catch(() => ({}));
+  showToast(res.ok ? `Завершено сессий: ${d.sessions_ended ?? 0}` : (d.detail || 'Ошибка'), res.ok ? 'success' : 'error');
+  sfLoadSessions(staffId);
 }
 
 async function deleteStaff() {
@@ -20777,6 +20917,7 @@ function tgClientsDoSearch() {
       if (page === 'orders')      { ordersPage = 1; loadOrders(''); }
       else if (page === 'dashboard')  loadDashboard();
       else if (page === 'staff' || page === 'agents') loadStaffFromAPI();
+      else if (page === 'staff-sessions') ssLoad();
       else if (page === 'leads')       adminLoadLeads();
       else if (page === 'clients')     adminLoadClients();
       else if (page === 'prices')      loadPrices();
@@ -25042,6 +25183,7 @@ function confirmBranchLoc() {
     <div class="mob-drawer-sub" id="mobDrawerHrItems" style="display:none;">
       <div class="mob-drawer-sub-item" data-page="staff"       onclick="mobDrawerGoHr(this)">👥 Сотрудники</div>
       <div class="mob-drawer-sub-item" data-page="agents"      onclick="mobDrawerGoHr(this)">🤝 Агенты</div>
+      <div class="mob-drawer-sub-item" data-page="staff-sessions" onclick="mobDrawerGoHr(this)">🔐 Сессии</div>
       <div class="mob-drawer-sub-item" data-page="departments" onclick="mobDrawerGoHr(this)">🏢 Отделы</div>
       <div class="mob-drawer-sub-item" data-page="positions"   onclick="mobDrawerGoHr(this)">🎯 Должности</div>
       <div class="mob-drawer-sub-item" data-page="timesheet"   onclick="mobDrawerGoHr(this)">📅 Табель</div>

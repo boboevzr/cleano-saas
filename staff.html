@@ -2393,18 +2393,22 @@ function startApp() {
   initReminderPolling();
   _initCallbackOverdueTimer();
   // Периодически проверяем роль — если стал агентом через бот, обновляем без F5
-  if (currentStaff?.role !== 'admin') {
-    setInterval(async () => {
-      try {
-        const token = localStorage.getItem(TOKEN_KEY);
-        if (!token) return;
-        const r = await fetch(`${API_BASE}/staff/me`, { headers: { Authorization: `Bearer ${token}` } });
-        if (!r.ok) return;
-        const fresh = (await r.json()).staff;
-        if (fresh && fresh.role !== currentStaff?.role) location.reload();
-      } catch {}
-    }, 20000);
-  }
+  // + сессия: завершили (смена пароля, «Выйти на всех устройствах», деактивация) → на экран входа
+  setInterval(async () => {
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) return;
+      const r = await fetch(`${API_BASE}/staff/me`, { headers: { Authorization: `Bearer ${token}` } });
+      if (r.status === 401) {
+        doLogout();
+        showToast(_lang === 'uz' ? 'Sessiya tugatildi — qayta kiring' : 'Сессия завершена — войдите заново', 'error');
+        return;
+      }
+      if (!r.ok) return;
+      const fresh = (await r.json()).staff;
+      if (currentStaff?.role !== 'admin' && fresh && fresh.role !== currentStaff?.role) location.reload();
+    } catch {}
+  }, 20000);
   if (currentStaff?.can_approve_measure) { _initMeasureReviewPolling(); setInterval(_pollPositionRequests, 300000); }
   if (currentStaff?.can_manage_cash || currentStaff?.role === 'admin') _initPaymentReviewPolling();
   if (currentStaff?.role === 'admin' || currentStaff?.role === 'manager') {
