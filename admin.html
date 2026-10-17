@@ -1806,6 +1806,18 @@
           <div id="svcsCardContent"></div>
         </div>
 
+        <!-- Скидка «заявка через бот/сайт» (перенос из ARTEZ 2026-10-17) — настройка компании, 0 = выкл. -->
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">🌐 Скидка за заявку через бот/сайт</div>
+          <p style="color:var(--text2);font-size:12px;margin-bottom:10px">Применяется автоматически к новым заказам, оформленным клиентом в боте или на сайте. Не суммируется со скидками за самовывоз/доставку. 0 — выключено.</p>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <input class="form-input" type="number" id="clientDiscOnlineInput" min="0" max="50" step="0.5" inputmode="decimal" style="width:100px" placeholder="0">
+            <span style="color:var(--text2)">%</span>
+            <button class="btn btn-save btn-sm" onclick="saveClientDiscountSetting()">💾 Сохранить</button>
+            <span id="clientDiscSaved" style="display:none;color:#16a34a;font-size:13px">✅ Сохранено</span>
+          </div>
+        </div>
+
         <div class="card">
           <p style="color:var(--text2); font-size:13px; margin-bottom:16px;">
             <span data-i18n="prices.save.info">Изменения сохраняются в базе данных и сразу отображаются на сайте и в боте.</span>
@@ -11072,6 +11084,10 @@ let _svcData   = {};
 async function loadPrices() {
   document.getElementById('pricesLoading').style.display = 'block';
   document.getElementById('pricesTable').style.display   = 'none';
+  apiGet('/admin/settings/client-discount').then(d => {
+    const inp = document.getElementById('clientDiscOnlineInput');
+    if (inp && d?.ok) inp.value = d.online_pct || 0;
+  }).catch(() => {});
   let pricesData, unitsData, svcsRes, svcTypesData;
   try {
     [pricesData, unitsData, svcsRes, svcTypesData] = await Promise.all([
@@ -12437,6 +12453,16 @@ async function deleteSvc(key) {
   else showToast(res?.detail || _t('prices.msg.error'), 'error');
 }
 
+async function saveClientDiscountSetting() {
+  const v = parseFloat(document.getElementById('clientDiscOnlineInput')?.value) || 0;
+  if (v < 0 || v > 50) { showToast('Скидка — от 0 до 50%', 'error'); return; }
+  const res = await apiPut('/admin/settings/client-discount', { online_pct: v });
+  if (!res?.ok) { showToast(res?.detail || 'Ошибка', 'error'); return; }
+  const st = document.getElementById('clientDiscSaved');
+  if (st) { st.style.display = ''; setTimeout(() => { st.style.display = 'none'; }, 2500); }
+  showToast(v > 0 ? `Скидка ${v}% для заявок с бота/сайта включена` : 'Скидка за заявку через бот/сайт выключена');
+}
+
 async function toggleSvcActive(key, active) {
   const res = await apiPatch(`/admin/services/${key}/active`, { active });
   if (res?.ok) { showToast(active ? 'Услуга снова видна' : 'Услуга скрыта'); loadPrices(); }
@@ -12866,7 +12892,7 @@ const fmtMoney = n => (n != null && n !== '' && Number(n) !== 0) ? Number(n).toL
 // Используется и в _payRow, и в фильтре «Долги».
 function _orderNet(o) {
   const total = Number(o.items_total ?? o.total_price ?? 0);
-  const disc  = Number(o.discount_sum||0) + Number(o.delivery_discount||0) + Number(o.manual_discount||0);
+  const disc  = Number(o.discount_sum||0) + Number(o.delivery_discount||0) + Number(o.manual_discount||0) + Number(o.client_discount||0);
   const net   = Math.max(0, total - disc);
   return net - (net % 1000);
 }
@@ -16481,6 +16507,7 @@ async function saveOrderItemForm() {
   _orderItemsCache = data?.items || [];
   _odItemsMeta = {groups: data?.groups || [], order_total: data?.order_total ?? null};
   renderOrderItems(_orderItemsCache);
+  _odRefreshClientDiscount();
   showToast(_orderItemEdit ? 'Позиция обновлена' : 'Позиция добавлена');
 }
 
@@ -16502,20 +16529,40 @@ async function changeOrderStatus() {
   if (document.getElementById('od-tab-notif')?.style.display === 'flex') { _odRenderReceiptButtons(); _odRenderNotifications(); }
 }
 
+// Скидка клиента «заявка через бот/сайт» (перенос из ARTEZ 2026-10-17, в SaaS — настройка
+// компании): процент решает сервер (recalc_client_discount), сумма — от текущего итога
+// позиций той же формулой (half-up), не складывается со скидками за самовывоз/доставку.
+const CLIENT_DISC_LABELS = { online: '🌐 Заявка через бот/сайт', pensioner: '🎗️ Пенсионер', disabled: '♿ Инвалидность' };
+function _odClientDiscount(pickupDisc, deliveryDisc) {
+  const pct = parseFloat(_adminOrderCache?.client_discount_pct || 0);
+  if (!pct || pickupDisc > 0 || deliveryDisc > 0) return 0;
+  return Math.round(_odItemsTotal * pct / 100);
+}
+async function _odRefreshClientDiscount() {
+  if (!_orderModalId || !_adminOrderCache) return;
+  const d = await apiGet(`/admin/orders/${_orderModalId}`).catch(() => null);
+  if (d?.ok && d.order) {
+    _adminOrderCache.client_discount_pct  = d.order.client_discount_pct;
+    _adminOrderCache.client_discount_kind = d.order.client_discount_kind;
+    _adminOrderCache.client_discount      = d.order.client_discount;
+    odUpdateTotal();
+  }
+}
 function odUpdateTotal() {
   const pickupDisc   = parseFloat(_adminOrderCache?.discount_sum      || 0);
   const deliveryDisc = parseFloat(_adminOrderCache?.delivery_discount  || 0);
+  const clientDisc   = _odClientDiscount(pickupDisc, deliveryDisc);
   const mdInput = document.getElementById('od_manual_disc_input');
   let manualDisc = parseFloat(mdInput?.value || 0) || 0;
   // Скидка не задана вручную — автоматически округляем сумму к оплате вниз до
   // тысячи (остаток < 1000 уходит в скидку). Не трогаем, если сотрудник сейчас
   // печатает в поле, и не трогаем, если скидка уже задана (не 0).
   if (manualDisc === 0 && mdInput && document.activeElement !== mdInput) {
-    const beforeManual = Math.max(0, _odItemsTotal - pickupDisc - deliveryDisc);
+    const beforeManual = Math.max(0, _odItemsTotal - pickupDisc - deliveryDisc - clientDisc);
     const rounding = beforeManual % 1000;
     if (rounding > 0) { manualDisc = rounding; mdInput.value = rounding; }
   }
-  const totalDisc    = pickupDisc + deliveryDisc + manualDisc;
+  const totalDisc    = pickupDisc + deliveryDisc + manualDisc + clientDisc;
   const net  = Math.max(0, _odItemsTotal - totalDisc);
   _pmOrderNet = net;
   const debt = Math.max(0, net - _pmCachedPaid);
@@ -16534,6 +16581,14 @@ function odUpdateTotal() {
   if (sdBox) {
     sdBox.style.display = deliveryDisc > 0 ? '' : 'none';
     if (el('od_selfdelivery_disc_val')) el('od_selfdelivery_disc_val').textContent = Number(deliveryDisc).toLocaleString('ru');
+  }
+  const cdBox = el('od_client_disc_box');
+  if (cdBox) {
+    cdBox.style.display = clientDisc > 0 ? '' : 'none';
+    const kind = _adminOrderCache?.client_discount_kind;
+    if (el('od_client_disc_lbl')) el('od_client_disc_lbl').textContent =
+      `${CLIENT_DISC_LABELS[kind] || 'Скидка'} −${Number(_adminOrderCache?.client_discount_pct || 0)}%`;
+    if (el('od_client_disc_val')) el('od_client_disc_val').textContent = Number(clientDisc).toLocaleString('ru');
   }
   const pendBox = el('od_pending_box');
   if (pendBox) {
@@ -17201,6 +17256,7 @@ async function deleteOrderItem(itemId) {
     _orderItemsCache = data?.items || [];
     _odItemsMeta = {groups: data?.groups || [], order_total: data?.order_total ?? null};
     renderOrderItems(_orderItemsCache);
+    _odRefreshClientDiscount();
     showToast('Позиция удалена');
   }
 }
@@ -21426,7 +21482,7 @@ function _renderStop(s, num, routeId) {
   const addr = s.short_address || s.address || s.location_address || '—';
   const orderStatusLabel = RT_ORDER_STATUS[s.order_status] || s.order_status || '—';
   const totalPrice = (s.items_total != null ? s.items_total : null) ?? s.total_price ?? 0;
-  const totalDiscount = (s.discount_sum || 0) + (s.delivery_discount || 0) + (s.manual_discount || 0);
+  const totalDiscount = (s.discount_sum || 0) + (s.delivery_discount || 0) + (s.manual_discount || 0) + (s.client_discount || 0);
   const netPrice  = Math.max(0, totalPrice - totalDiscount);
   const paidAmt   = s.paid_amount ?? 0;
   const debt = Math.max(0, netPrice - paidAmt);
@@ -21657,7 +21713,7 @@ async function printRouteSheet() {
       const groups  = itemsArr[k]?.groups || [];
       const posCnt  = groups.reduce((a, g) => a + (Number(g.count) || 0), 0);
       const total   = Number(s.items_total ?? s.total_price ?? 0);
-      const disc    = Number(s.discount_sum || 0) + Number(s.delivery_discount || 0) + Number(s.manual_discount || 0);
+      const disc    = Number(s.discount_sum || 0) + Number(s.delivery_discount || 0) + Number(s.manual_discount || 0) + Number(s.client_discount || 0);
       const net     = _orderNet(s);
       const paid    = Number(s.paid_amount || 0);
       const due     = Math.max(0, net - paid);
@@ -21956,7 +22012,7 @@ function renderRouteOrdersPicker() {
       shownNoLocLabel = true;
     }
     const totalPrice = (o.items_total != null ? o.items_total : null) ?? o.total_price ?? 0;
-    const totalDiscount = (o.discount_sum || 0) + (o.delivery_discount || 0) + (o.manual_discount || 0);
+    const totalDiscount = (o.discount_sum || 0) + (o.delivery_discount || 0) + (o.manual_discount || 0) + (o.client_discount || 0);
     const netPrice  = Math.max(0, totalPrice - totalDiscount);
     const paidAmt   = o.paid_amount ?? 0;
     const debt = Math.max(0, netPrice - paidAmt);
@@ -24380,6 +24436,14 @@ function confirmBranchLoc() {
           <div style="display:flex;align-items:baseline;gap:3px">
             <span id="od_selfdelivery_disc_val" style="font-weight:700;font-size:15px;color:#6d28d9">—</span>
             <span style="font-size:11px;color:#6d28d9;white-space:nowrap;margin-left:2px">сум</span>
+          </div>
+        </div>
+        <!-- Скидка клиента (реклама 2026-10-17): 5% бот/сайт, 10% пенсионер/инвалид — считает сервер -->
+        <div id="od_client_disc_box" style="display:none;background:#dcfce7;border-radius:10px;padding:10px 12px">
+          <div id="od_client_disc_lbl" style="font-size:11px;color:#15803d;margin-bottom:4px">Скидка</div>
+          <div style="display:flex;align-items:baseline;gap:3px">
+            <span id="od_client_disc_val" style="font-weight:700;font-size:15px;color:#15803d">—</span>
+            <span style="font-size:11px;color:#15803d;white-space:nowrap;margin-left:2px">сум</span>
           </div>
         </div>
         <!-- Скидка ручная (редактируется) -->

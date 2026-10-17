@@ -1443,6 +1443,7 @@ const _i18n = {
     'drv.pkp.title':'Сколько забираете?','drv.pkp.count_mode':'Общее число','drv.pkp.svc_mode':'По услугам',
     'drv.pkp.svc_placeholder':'Услуга (ковёр, диван…)','drv.pkp.add_svc':'+ Добавить услугу',
     'drv.pkp.lang_title':'Язык SMS клиенту','drv.pkp.submit':'✅ Забрал','drv.pkp.svc_required':'Укажите хотя бы одну услугу',
+    'cdisc.online':'🌐 Заявка через бот/сайт','cdisc.pensioner':'🎗️ Пенсионер','cdisc.disabled':'♿ Инвалидность',
     'drv.btn.positions':'📦 Позиции','drv.btn.history':'📋 История','drv.btn.refresh':'🔄 Обновить','drv.btn.back_to_routes':'← К маршрутам',
     'rc.title':'🗺 Выбрать регион','rc.filter_ph':'🔍 Фильтр, или «11-27» — объект-дом по всему каталогу',
     'rc.global_found':'🌐 Найдено по всему каталогу','rc.back':'← Назад','rc.loading':'Загружаю…',
@@ -1767,6 +1768,7 @@ const _i18n = {
     'drv.pkp.title':'Nechta pozitsiya olib ketyapsiz?','drv.pkp.count_mode':'Umumiy son','drv.pkp.svc_mode':'Xizmat boʻyicha',
     'drv.pkp.svc_placeholder':'Xizmat (gilam, divan…)','drv.pkp.add_svc':'+ Xizmat qoʻshish',
     'drv.pkp.lang_title':'Mijozga SMS tili','drv.pkp.submit':'✅ Oldim','drv.pkp.svc_required':'Kamida bitta xizmat kiriting',
+    'cdisc.online':'🌐 Bot/sayt orqali buyurtma','cdisc.pensioner':'🎗️ Nafaqaxoʻr','cdisc.disabled':'♿ Nogironlik',
     'drv.btn.positions':'📦 Pozitsiyalar','drv.btn.history':'📋 Tarix','drv.btn.refresh':'🔄 Yangilash','drv.btn.back_to_routes':'← Marshrutlarga',
     'rc.title':'🗺 Hududni tanlash','rc.filter_ph':'🔍 Filtr, yoki «11-27» — butun katalog boʻyicha obyekt-uy',
     'rc.global_found':'🌐 Butun katalogdan topildi','rc.back':'← Orqaga','rc.loading':'Yuklanmoqda…',
@@ -4334,7 +4336,7 @@ function _fmtPhoneUZ(phone) {
 // с тем, что видит сотрудник в самой карточке (254 500 → 254 000).
 function _orderPrintNet(o) {
   const total = o.items_total ?? o.total_price ?? 0;
-  const discSum = parseFloat(o.discount_sum||0) + parseFloat(o.delivery_discount||0) + parseFloat(o.manual_discount||0);
+  const discSum = parseFloat(o.discount_sum||0) + parseFloat(o.delivery_discount||0) + parseFloat(o.manual_discount||0) + parseFloat(o.client_discount||0);
   const netRaw = Math.max(0, total - discSum);
   return netRaw - (netRaw % 1000);
 }
@@ -7312,7 +7314,7 @@ const fmtMoney = n => (n != null && n !== '' && Number(n) !== 0) ? Number(n).toL
 // все скидки минус уже учтённые платежи. Используется и в _payRow, и в фильтре «Долги».
 function _orderDebtAmount(o) {
   const total = Number(o.items_total ?? o.total_price ?? 0);
-  const disc  = Number(o.discount_sum||0) + Number(o.delivery_discount||0) + Number(o.manual_discount||0);
+  const disc  = Number(o.discount_sum||0) + Number(o.delivery_discount||0) + Number(o.manual_discount||0) + Number(o.client_discount||0);
   const net   = Math.max(0, total - disc);
   const paid  = Number(o.paid_amount ?? 0);
   return Math.max(0, net - paid);
@@ -7322,7 +7324,7 @@ function _orderHasDebt(o) {
 }
 function _payRow(o) {
   const total = Number(o.items_total ?? o.total_price ?? 0);
-  const disc  = Number(o.discount_sum||0) + Number(o.delivery_discount||0) + Number(o.manual_discount||0);
+  const disc  = Number(o.discount_sum||0) + Number(o.delivery_discount||0) + Number(o.manual_discount||0) + Number(o.client_discount||0);
   const net   = Math.max(0, total - disc);
   const paid  = Number(o.paid_amount ?? 0);
   const debt  = _orderDebtAmount(o);
@@ -7751,7 +7753,7 @@ function acSelect(idx, dropId, prefix) {
       if (c.discount_category === 'pensioner' || c.discount_category === 'disabled') {
         const icon = c.discount_category === 'pensioner' ? '🎗️ Пенсионер' : '♿ Инвалид';
         const pct  = c.discount_category_pct != null ? c.discount_category_pct : '?';
-        db.textContent = `${icon} — скидка ${pct}%. Не забудьте применить вручную.`;
+        db.textContent = `${icon} — скидка 10% применится к заказу автоматически.`;
         db.style.display = '';
       } else {
         db.style.display = 'none';
@@ -9847,6 +9849,15 @@ document.addEventListener('click', e => {
             <span id="soSelfDeliveryDiscCur" style="font-size:11px;color:#6d28d9;white-space:nowrap;margin-left:2px">сум</span>
           </div>
         </div>
+        <!-- Скидка клиента (реклама 2026-10-17): 5% заявка через бот/сайт, 10% пенсионер/инвалид —
+             считается сервером (client_discount_pct), только отображение -->
+        <div id="so_client_disc_box" style="display:none;background:#dcfce7;border-radius:10px;padding:10px 12px">
+          <div id="so_client_disc_lbl" style="font-size:11px;color:#15803d;margin-bottom:4px">Скидка</div>
+          <div style="display:flex;align-items:baseline;gap:3px">
+            <span id="so_client_disc_val" style="font-weight:700;font-size:15px;color:#15803d">—</span>
+            <span id="so_client_disc_cur" style="font-size:11px;color:#15803d;white-space:nowrap;margin-left:2px">сум</span>
+          </div>
+        </div>
         <!-- Скидка (ручная) -->
         <div id="so_manual_disc_box" style="background:#f3f4f6;border-radius:10px;padding:10px 12px">
           <div id="soLblDiscount" style="font-size:11px;color:#888;margin-bottom:4px">Скидка</div>
@@ -10346,7 +10357,9 @@ async function soRecalcAutoDiscounts() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(patch),
-    }).catch(() => {});
+    }).catch(() => {}).then(_sRefreshClientDiscount);
+  } else {
+    _sRefreshClientDiscount();
   }
 
   sUpdatePaymentDisplay();
@@ -10919,11 +10932,41 @@ let _sItemsTotal = 0;
 let _sDiscountSum = 0;
 let _sDeliveryDiscount = 0;
 let _sManualDiscount = 0;
+// Скидка клиента (реклама 2026-10-17): процент и тип решает сервер
+// (db.recalc_client_discount), сумму показываем от текущего итога позиций по той
+// же формуле (half-up), чтобы она сразу менялась при правке позиций.
+let _sClientDiscPct = 0;
+let _sClientDiscKind = null;
+function _sClientDiscount() {
+  // не складывается со скидками за самовывоз/доставку — как на сервере
+  if (!_sClientDiscPct || _sDiscountSum > 0 || _sDeliveryDiscount > 0) return 0;
+  return Math.round(_sItemsTotal * _sClientDiscPct / 100);
+}
+function _clientDiscLabel(kind, pct) {
+  const name = kind === 'pensioner' ? t('cdisc.pensioner')
+             : kind === 'disabled'  ? t('cdisc.disabled')
+             :                        t('cdisc.online');
+  return `${name} −${Number(pct)}%`;
+}
+// Перечитать тип/процент с сервера — после изменений позиций/скидок заказа.
+async function _sRefreshClientDiscount() {
+  if (!_sOrderId) return;
+  try {
+    const d = await fetch(`${API_BASE}/admin/orders/${_sOrderId}`, { headers:{Authorization:`Bearer ${_staffToken()}`} }).then(r=>r.json());
+    if (d?.ok && d.order) {
+      _sClientDiscPct  = parseFloat(d.order.client_discount_pct || 0);
+      _sClientDiscKind = d.order.client_discount_kind || null;
+      sUpdatePaymentDisplay();
+    }
+  } catch(e) {}
+}
 
 async function sLoadOrderPayment(o) {
   _sDiscountSum      = parseFloat(o.discount_sum      || 0);
   _sDeliveryDiscount = parseFloat(o.delivery_discount || 0);
   _sManualDiscount   = parseFloat(o.manual_discount   || 0);
+  _sClientDiscPct    = parseFloat(o.client_discount_pct || 0);
+  _sClientDiscKind   = o.client_discount_kind || null;
   const token = localStorage.getItem(TOKEN_KEY);
   const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/payments`, { headers:{Authorization:`Bearer ${token}`} });
   const data = await res.json();
@@ -10942,15 +10985,16 @@ async function sLoadOrderPayment(o) {
 function sUpdatePaymentDisplay() {
   const mdInput = document.getElementById('so_manual_disc_input');
   let manualDiscount = _sManualDiscount;
+  const clientDiscount = _sClientDiscount();
   // Скидка не задана вручную — автоматически округляем сумму к оплате вниз до
   // тысячи (остаток < 1000 уходит в скидку). Не трогаем, если сотрудник сейчас
   // печатает в поле, и не трогаем, если скидка уже задана (не 0).
   if (manualDiscount === 0 && mdInput && document.activeElement !== mdInput) {
-    const beforeManual = Math.max(0, _sItemsTotal - _sDiscountSum - _sDeliveryDiscount);
+    const beforeManual = Math.max(0, _sItemsTotal - _sDiscountSum - _sDeliveryDiscount - clientDiscount);
     const rounding = beforeManual % 1000;
     if (rounding > 0) manualDiscount = rounding;
   }
-  const totalDiscount = _sDiscountSum + _sDeliveryDiscount + manualDiscount;
+  const totalDiscount = _sDiscountSum + _sDeliveryDiscount + manualDiscount + clientDiscount;
   const net  = Math.max(0, _sItemsTotal - totalDiscount);
   _sPmOrderNet = net;
   const debt = Math.max(0, net - _sPmCachedPaid);
@@ -10972,8 +11016,15 @@ function sUpdatePaymentDisplay() {
   const mdBox = el('so_manual_disc_box');
   if (spBox) spBox.style.display = isReceiving ? '' : 'none';
   if (sdBox) sdBox.style.display = isDelivery  ? '' : 'none';
+  const cdBox = el('so_client_disc_box');
+  if (cdBox) {
+    cdBox.style.display = clientDiscount > 0 ? '' : 'none';
+    if (el('so_client_disc_lbl')) el('so_client_disc_lbl').textContent = _clientDiscLabel(_sClientDiscKind, _sClientDiscPct);
+    if (el('so_client_disc_val')) el('so_client_disc_val').textContent = Number(clientDiscount).toLocaleString('ru');
+    if (el('so_client_disc_cur')) el('so_client_disc_cur').textContent = t('unit.sum');
+  }
   if (mdBox) {
-    const hasDiscBoxes = isReceiving || isDelivery;
+    const hasDiscBoxes = isReceiving || isDelivery || clientDiscount > 0;
     mdBox.style.gridColumn = hasDiscBoxes ? '' : '1 / -1';
   }
   if (el('so_selfpickup_disc_val'))  el('so_selfpickup_disc_val').textContent  = _sDiscountSum      > 0 ? Number(Math.round(_sDiscountSum)).toLocaleString('ru')      : '0';
