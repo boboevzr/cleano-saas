@@ -13430,7 +13430,7 @@ function smcOnSvcChange() {
   if (!svcKey || !prices[svcKey]) return;
   Object.entries(prices[svcKey]).forEach(([typeKey, info]) => {
     const _unitLabel = (info.unit_key === 'pcs') ? t('unit.pcs') : t('unit.m2');
-    typeSel.innerHTML += `<option value="${typeKey}" data-price="${info.price||0}">${_typeName(typeKey)} — ${(info.price||0).toLocaleString('ru')} ${t('unit.sum')}/${_unitLabel}</option>`;
+    typeSel.innerHTML += `<option value="${typeKey}" data-price="${info.price||0}">${_esc(_typeName(typeKey))} — ${(info.price||0).toLocaleString('ru')} ${t('unit.sum')}/${_unitLabel}</option>`;
   });
   // Авто-выбор типа из заказа (пользователь не меняет)
   const _smOrderType = _sOrderCache?.service_type || 'standard';
@@ -13701,7 +13701,7 @@ function svpOnSvcChange() {
   typeSel.innerHTML = `<option value="">${t('svc.select_type_placeholder')}</option>`;
   if (!svcKey || !prices[svcKey]) return;
   Object.entries(prices[svcKey]).forEach(([typeKey, info]) => {
-    typeSel.innerHTML += `<option value="${typeKey}">${_typeName(typeKey)} — ${(info.price||0).toLocaleString('ru')} ${t('unit.sum')}/${t('unit.m2')}</option>`;
+    typeSel.innerHTML += `<option value="${typeKey}">${_esc(_typeName(typeKey))} — ${(info.price||0).toLocaleString('ru')} ${t('unit.sum')}/${t('unit.m2')}</option>`;
   });
   const _orderType = _sOrderCache?.service_type || 'standard';
   const _match = Array.from(typeSel.options).find(o => o.value === _orderType);
