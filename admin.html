@@ -20841,6 +20841,12 @@ async function saveTgMessage(status, silent = false) {
 let _tgClientsSearchTimer = null;
 
 let _tgClientsCache = [];
+// ЧС из списка — данные из кэша по индексу (имя из Telegram в onclick-строке = XSS через &#39;)
+function _tgBlToggle(idx) {
+  const c = _tgClientsCache[idx];
+  if (!c) return;
+  toggleBlacklist(c.phone || '', !!c.blacklisted, () => loadTgClients(), [c.first_name, c.last_name].filter(Boolean).join(' '));
+}
 async function loadTgClients(search = '') {
   const tbody = document.getElementById('tgClientsTbody');
   const countEl = document.getElementById('tgClientsCount');
@@ -20885,7 +20891,7 @@ async function loadTgClients(search = '') {
         <td style="padding:8px 10px;border:1px solid var(--border);color:var(--muted);">${lastOrder}</td>
         <td style="padding:6px 8px;border:1px solid var(--border);text-align:center;white-space:nowrap;">
           <button class="btn btn-sm" style="padding:4px 10px;font-size:12px" onclick="openTgClientCard(_tgClientsCache[${idx}])">✏️</button>
-          <button class="btn btn-sm" style="padding:4px 10px;font-size:12px;background:var(--surface2);color:${bl?'#16a34a':'#dc2626'}" onclick="toggleBlacklist('${_escJs(c.phone||'')}', ${bl}, () => loadTgClients(), '${_escJs([c.first_name, c.last_name].filter(Boolean).join(' '))}')" title="${bl?'Убрать из ЧС':'В чёрный список'}">🚫</button>
+          <button class="btn btn-sm" style="padding:4px 10px;font-size:12px;background:var(--surface2);color:${bl?'#16a34a':'#dc2626'}" onclick="_tgBlToggle(${idx})" title="${bl?'Убрать из ЧС':'В чёрный список'}">🚫</button>
         </td>
       </tr>`;
     }).join('');
