@@ -3076,6 +3076,14 @@
         </div>
       </div>
 
+      <!-- Размер — только у услуг с размерами (admin → Цены → «+ Размер»), см. _rebuildTypeSelect -->
+      <div class="field" id="sizeField" style="display:none">
+        <label for="sizeSelect" data-i18n="calc.sizeLabel">Размер</label>
+        <div class="select-wrap">
+          <select id="sizeSelect"></select>
+        </div>
+      </div>
+
       <div class="calc-total">
         <div class="label" data-i18n="calc.totalLabel">Сумма оплаты:</div>
         <div class="amount" id="totalAmount">0 <span data-i18n="unit.sum">сум</span></div>
@@ -3687,6 +3695,12 @@
           </div>
         </div>
 
+        <!-- Размер — только у услуг с размерами, см. selectServiceType -->
+        <div class="field" id="dSizeField" style="display:none">
+          <label data-i18n="calc.sizeLabel">Размер</label>
+          <div class="pill-group" id="sizeTypeGroup"></div>
+        </div>
+
         <div class="field">
           <label data-i18n="order.dateLabel">Дата вывоза</label>
           <div class="pill-group" id="dateGroup">
@@ -3861,7 +3875,7 @@
   </div>
 </div>
 
-<script src="site-common.js?v=23"></script>
+<script src="site-common.js?v=24"></script>
 
 <!-- ══════════════════════════════
      OVERLAY + CABINET DRAWER

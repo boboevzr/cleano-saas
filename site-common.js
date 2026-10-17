@@ -11,7 +11,7 @@
       'hero.prevSlide': 'Предыдущий слайд', 'hero.nextSlide': 'Следующий слайд', 'hero.slideBtn': 'Рассчитать стоимость',
       'calc.title': 'Рассчитайте стоимость услуги',
       'calc.sub': 'Теперь вам не нужно звонить, чтобы узнать цену за чистку ваших вещей.',
-      'calc.serviceLabel': 'Услуга', 'calc.typeLabel': 'Тип услуги', 'calc.areaLabel': 'Площадь',
+      'calc.serviceLabel': 'Услуга', 'calc.typeLabel': 'Тип услуги', 'calc.areaLabel': 'Площадь', 'calc.sizeLabel': 'Размер', 'calc.qtyLabel': 'Количество',
       'calc.totalLabel': 'Сумма оплаты:',
       'calc.note': 'Минимальный заказ — 10 м². Вывоз и доставка — бесплатно.',
       'calc.freeDelivery': 'Вывоз и доставка — бесплатно.',
@@ -233,7 +233,7 @@
       'hero.prevSlide': 'Oldingi slayd', 'hero.nextSlide': 'Keyingi slayd', 'hero.slideBtn': 'Narxni hisoblash',
       'calc.title': 'Xizmat narxini hisoblang',
       'calc.sub': "Endi buyumlaringizni tozalash narxini bilish uchun qo'ng'iroq qilishingiz shart emas.",
-      'calc.serviceLabel': 'Xizmat', 'calc.typeLabel': 'Xizmat turi', 'calc.areaLabel': 'Maydon',
+      'calc.serviceLabel': 'Xizmat', 'calc.typeLabel': 'Xizmat turi', 'calc.areaLabel': 'Maydon', 'calc.sizeLabel': "O'lcham", 'calc.qtyLabel': 'Soni',
       'calc.totalLabel': "To'lov summasi:",
       'calc.note': "Minimal buyurtma — 10 m². Olib ketish va yetkazib berish — bepul.",
       'calc.freeDelivery': "Olib ketish va yetkazib berish — bepul.",
@@ -479,6 +479,7 @@
     lang = newLang;
     localStorage.setItem('artez_lang', lang);
     applyI18n();
+    if (typeof _renderCatalogFromDb === 'function') _renderCatalogFromDb();  // имена услуг из БД на новом языке
     if (typeof recalc === 'function') recalc();
     if (typeof refreshDynamicUI === 'function') refreshDynamicUI();
     _reloadSiteVideoForLang();
@@ -626,6 +627,162 @@
     return u['symbol_' + lang] || u.symbol_ru;
   }
 
+  // ===== Варианты цены и каталог услуг из базы (перенос из ARTEZ 2026-10-17) =====
+  // Варианты услуги — живой каталог компании (скорость, размер и т.п.). Выбор в два
+  // шага: «Тип» = скорость, затем «Размер» — только у услуг с размерами. Карточки
+  // «Услуги и цены» и списки услуг строятся из /api/services + /api/prices +
+  // /api/service-types; статичная вёрстка остаётся запасным вариантом без API.
+  // Имена из базы — только через textContent. var, не let: setLang()/serviceName()
+  // могут вызваться раньше этой строки (TDZ уронил бы весь скрипт страницы).
+  var SVC_TYPES = {};
+  var SVC_LIST = [];
+  var _pricesFromApi = false;
+  function _companyQs(prefix) {
+    return `${prefix}company_slug=${encodeURIComponent(window.APP_COMPANY_SLUG || '')}`;
+  }
+  async function loadServiceTypes() {
+    try {
+      const res = await fetch(`${API_BASE}/service-types${_companyQs('?')}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      SVC_TYPES = {};
+      (data.types || []).forEach(tp => (SVC_TYPES[tp.service_key] = SVC_TYPES[tp.service_key] || []).push(tp));
+    } catch (e) { console.warn('Не удалось загрузить варианты услуг из API:', e); }
+  }
+  async function loadServicesList() {
+    try {
+      const res = await fetch(`${API_BASE}/services${_companyQs('?')}`);
+      if (!res.ok) return;
+      SVC_LIST = (await res.json()).services || [];
+    } catch (e) { console.warn('Не удалось загрузить услуги из API:', e); }
+  }
+  function _el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function _svcDbLabel(s) {
+    const name = (lang === 'uz' ? s.name_uz : s.name_ru) || s.name_ru || s.key;
+    return `${s.emoji || ''} ${name}`.trim();
+  }
+  function _sizedTypes(svc) {
+    return (SVC_TYPES[svc] || []).filter(tp => tp.size_key && (PRICES[svc] || {})[tp.type_key]);
+  }
+  function _speedsOf(sized) {
+    return ['standard', 'express'].filter(sp => sized.some(tp => tp.speed_key === sp));
+  }
+  function _speedLabel(speed) { return t('type.' + speed); }
+  function _sizeLabel(tp) {
+    return (lang === 'uz' ? tp.size_name_uz : tp.size_name_ru) || tp.size_name_ru || tp.name_ru;
+  }
+  function _typeForSpeedSize(sized, speed, sizeKey) {
+    return sized.find(tp => tp.speed_key === speed && tp.size_key === sizeKey)
+        || sized.find(tp => tp.speed_key === speed) || sized[0];
+  }
+  function _rebuildTypeSelect(svcKey) {
+    const sel = document.getElementById('typeSelect');
+    if (!sel) return;
+    const types = (SVC_TYPES[svcKey] || []).filter(tp => (PRICES[svcKey] || {})[tp.type_key]);
+    if (!types.length) return; // до загрузки каталога — оставляем статичные standard/express
+    const prevVal = sel.value;
+    const sized = _sizedTypes(svcKey);
+    const sizeField = document.getElementById('sizeField');
+    sel.innerHTML = '';
+    if (sized.length) {
+      const speeds = _speedsOf(sized);
+      speeds.forEach(sp => { const o = _el('option', null, _speedLabel(sp)); o.value = sp; sel.appendChild(o); });
+      sel.value = speeds.includes(prevVal) ? prevVal : (String(prevVal).startsWith('express') && speeds.includes('express') ? 'express' : speeds[0]);
+      if (sizeField) sizeField.style.display = '';
+      _rebuildSizeSelect(svcKey);
+    } else {
+      types.forEach(tp => { const o = _el('option', null, tp[lang === 'uz' ? 'name_uz' : 'name_ru'] || tp.name_ru); o.value = tp.type_key; sel.appendChild(o); });
+      sel.value = types.some(tp => tp.type_key === prevVal) ? prevVal : types[0].type_key;
+      if (sizeField) sizeField.style.display = 'none';
+    }
+    if (typeof recalc === 'function') recalc();
+  }
+  function _rebuildSizeSelect(svcKey) {
+    const ss = document.getElementById('sizeSelect');
+    if (!ss) return;
+    const prevSize = ss.selectedOptions[0]?.dataset.size;
+    const list = _sizedTypes(svcKey).filter(tp => tp.speed_key === document.getElementById('typeSelect').value);
+    ss.innerHTML = '';
+    list.forEach(tp => { const o = _el('option', null, _sizeLabel(tp)); o.value = tp.type_key; o.dataset.size = tp.size_key; ss.appendChild(o); });
+    const keep = list.find(tp => tp.size_key === prevSize);
+    if (keep) ss.value = keep.type_key;
+  }
+  // Итоговый ключ варианта калькулятора: размер (если есть) или «Тип»
+  function _calcTypeKey() {
+    const sf = document.getElementById('sizeField');
+    const ss = document.getElementById('sizeSelect');
+    return (sf && ss && sf.style.display !== 'none' && ss.value) ? ss.value : document.getElementById('typeSelect').value;
+  }
+  function _rebuildServiceTypeGroup(svcKey) {
+    const group = document.getElementById('serviceTypeGroup');
+    if (!group) return;
+    const types = (SVC_TYPES[svcKey] || []).filter(tp => (PRICES[svcKey] || {})[tp.type_key]);
+    if (!types.length) return;
+    const prevType = selectedServiceType;
+    const sized = _sizedTypes(svcKey);
+    const items = sized.length
+      ? _speedsOf(sized).map(sp => ({ key: sp, label: _speedLabel(sp) }))
+      : types.map(tp => ({ key: tp.type_key, label: tp[lang === 'uz' ? 'name_uz' : 'name_ru'] || tp.name_ru }));
+    group.innerHTML = '';
+    items.forEach(it => {
+      const b = _el('button', 'pill-btn', it.label);
+      b.type = 'button'; b.dataset.type = it.key;
+      b.addEventListener('click', () => selectServiceType(it.key));
+      group.appendChild(b);
+    });
+    selectServiceType(prevType);
+  }
+  function _renderCatalogFromDb() {
+    if (!SVC_LIST || !SVC_LIST.length || !_pricesFromApi) return;  // нет данных API — остаётся статика
+    const visible = SVC_LIST.filter(s => PRICES[s.key] && Object.keys(PRICES[s.key]).length);
+    if (!visible.length) return;
+    const cur = lang === 'uz' ? "so'm" : 'сум';
+    const typeOrder = svc => {
+      const fromTypes = (SVC_TYPES[svc] || []).map(tp => tp.type_key).filter(tp => PRICES[svc][tp]);
+      return fromTypes.length ? fromTypes : Object.keys(PRICES[svc]);
+    };
+    const grid = document.querySelector('#services .services-grid') || document.querySelector('.services-grid');
+    if (grid) {
+      grid.innerHTML = '';
+      visible.forEach((s, i) => {
+        const card = _el('div', `service-card reveal visible reveal-d${Math.min(i + 1, 4)}`);
+        card.id = `svc-card-${s.key}`;
+        card.appendChild(_el('div', `service-icon service-icon-${(i % 5) + 1}`, s.emoji || '🧺'));
+        card.appendChild(_el('h3', null, (lang === 'uz' ? s.name_uz : s.name_ru) || s.name_ru));
+        const tps = typeOrder(s.key);
+        card.appendChild(_el('div', 'price-unit', `${cur} / ${unitSymbol(PRICES[s.key][tps[0]].unit_key)}`));
+        tps.forEach(tp => {
+          const row = _el('div', 'price-row');
+          row.appendChild(_el('span', null, serviceTypeName(tp, s.key)));
+          const b = _el('b', null, PRICES[s.key][tp].price.toLocaleString('ru-RU').replace(/,/g, ' '));
+          b.id = `price-${s.key}-${tp}`;
+          row.appendChild(b);
+          card.appendChild(row);
+        });
+        grid.appendChild(card);
+      });
+    }
+    ['svcSelect', 'dService'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const prev = sel.value;
+      sel.innerHTML = '';
+      visible.forEach(s => {
+        const o = _el('option', null, _svcDbLabel(s));
+        o.value = s.key;
+        sel.appendChild(o);
+      });
+      sel.value = visible.some(s => s.key === prev) ? prev : visible[0].key;
+    });
+    _rebuildTypeSelect(document.getElementById('svcSelect')?.value);
+    _rebuildServiceTypeGroup(document.getElementById('dService')?.value || document.getElementById('svcSelect')?.value);
+  }
+
   // Загружаем актуальные цены из БД и обновляем страницу
   async function loadPrices() {
     try {
@@ -635,6 +792,7 @@
       if (data.units) UNITS = data.units;
       if (!data.prices) return;
       PRICES = data.prices;
+      _pricesFromApi = true;
 
       // Обновляем прайс-лист на странице
       for (const [svc, types] of Object.entries(PRICES)) {
@@ -666,13 +824,29 @@
 
   let lastCalcTotal = 0;
 
+  // Поле количества калькулятора по единице услуги: м² — «Площадь», 10 по умолчанию;
+  // шт и др. — «Количество», 1. Значение по умолчанию — только при смене единицы.
+  let _calcUnitKey = null;
+  function _syncCalcUnit(unitKey) {
+    const isArea = unitKey === 'm2';
+    if (unitKey !== _calcUnitKey) {
+      areaInput.value = isArea ? 10 : 1;
+      areaInput.step = isArea ? '0.5' : '1';
+      _calcUnitKey = unitKey;
+    }
+    const lbl = document.querySelector('label[for="areaInput"]');
+    if (lbl) lbl.textContent = t(isArea ? 'calc.areaLabel' : 'calc.qtyLabel');
+    const suf = areaInput.parentElement?.querySelector('span');
+    if (suf) suf.textContent = unitSymbol(unitKey);
+  }
+
   function recalc(){
     const svc  = svcSelect.value;
-    const type = typeSelect.value;
+    const type = _calcTypeKey();
+    const priceInfo = (PRICES[svc] || {})[type] || { price: 0, unit_key: 'm2', min_order: null };
+    _syncCalcUnit(priceInfo.unit_key || 'm2');
     let area = parseFloat(areaInput.value);
     if (isNaN(area) || area < 0) area = 0;
-
-    const priceInfo = (PRICES[svc] || {})[type] || { price: 0, unit_key: 'm2', min_order: null };
     const unitSym = unitSymbol(priceInfo.unit_key);
     const minOrder = priceInfo.min_order;
     const billedArea = minOrder ? Math.max(area, minOrder) : area;
@@ -693,8 +867,14 @@
   }
 
   [svcSelect, typeSelect, areaInput].forEach(el => el.addEventListener('input', recalc));
+  svcSelect.addEventListener('change', () => _rebuildTypeSelect(svcSelect.value));
+  // смена скорости — пересобрать список размеров этой скорости (размер сохраняется)
+  typeSelect.addEventListener('change', () => { if (_sizedTypes(svcSelect.value).length) _rebuildSizeSelect(svcSelect.value); recalc(); });
+  document.getElementById('sizeSelect')?.addEventListener('change', recalc);
   recalc();
-  loadPrices(); // загружаем актуальные цены из БД
+  // цены, варианты (размер и т.п.) и сами услуги из БД — после всех трёх
+  // перестраиваем карточки и списки услуг (_renderCatalogFromDb)
+  Promise.all([loadPrices(), loadServiceTypes(), loadServicesList()]).then(_renderCatalogFromDb);
 
   // ===== AUTH / PERSONAL CABINET =====
   const authTabs    = document.getElementById('authTabs');
@@ -2523,8 +2703,17 @@
 
   // ===== ORDER MODAL =====
   function branchName(key){ const c = _siteBranches.find(b => b.slug === key); return c ? _branchName(c) : key; }
-  function serviceName(key){ return t('svc.' + key); }
-  function serviceTypeName(key){ return t('type.' + key); }
+  function serviceName(key){
+    // услуга из БД компании (в т.ч. новые, которых нет в словаре) — иначе словарь
+    const s = (SVC_LIST || []).find(x => x.key === key);
+    return s ? _svcDbLabel(s) : t('svc.' + key);
+  }
+  function serviceTypeName(key, svcKey){
+    svcKey = svcKey || document.getElementById('dService')?.value;
+    const t2 = (SVC_TYPES[svcKey] || []).find(x => x.type_key === key);
+    if (t2) return t2[lang === 'uz' ? 'name_uz' : 'name_ru'] || t2.name_ru;
+    return t('type.' + key);
+  }
 
   const orderModalOverlay = document.getElementById('orderModalOverlay');
   const orderFormWrap = document.getElementById('orderFormWrap');
@@ -2602,8 +2791,8 @@
 
     // Префилл услуги/типа из калькулятора
     const svcVal = document.getElementById('svcSelect')?.value;
-    const typeVal = document.getElementById('typeSelect')?.value;
-    if (svcVal) document.getElementById('dService').value = svcVal;
+    const typeVal = document.getElementById('typeSelect') ? _calcTypeKey() : '';   // с учётом размера
+    if (svcVal) { document.getElementById('dService').value = svcVal; _rebuildServiceTypeGroup(svcVal); }
     if (typeVal) selectServiceType(typeVal);
 
   };
@@ -2689,16 +2878,54 @@
   });
 
   // ── ТИП УСЛУГИ ──
+  // type — скорость ('standard'/'express') или полный ключ варианта (в т.ч. размера).
+  // У услуги с размерами: подсветить скорость, показать кнопки размеров этой скорости,
+  // selectedServiceType = ключ выбранного размера.
   function selectServiceType(type){
-    selectedServiceType = type;
+    const svc = document.getElementById('dService')?.value;
+    const sized = svc ? _sizedTypes(svc) : [];
+    const sizeField = document.getElementById('dSizeField');
+    if (!sized.length) {
+      // ключ размера от другой услуги — сводим к скорости
+      const own = (SVC_TYPES[svc] || []).map(x => x.type_key);
+      if (own.length && !own.includes(type)) {
+        const sp = String(type).startsWith('express') ? 'express' : 'standard';
+        type = own.includes(sp) ? sp : own[0];
+      }
+      selectedServiceType = type;
+      document.querySelectorAll('#serviceTypeGroup .pill-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.type === type);
+      });
+      if (sizeField) sizeField.style.display = 'none';
+      return;
+    }
+    const speeds = _speedsOf(sized);
+    const full = sized.find(x => x.type_key === type);
+    let speed = full ? full.speed_key : (speeds.includes(type) ? type : (String(type).startsWith('express') ? 'express' : 'standard'));
+    if (!speeds.includes(speed)) speed = speeds[0];
+    const prevSize = full ? full.size_key : (sized.find(x => x.type_key === selectedServiceType) || {}).size_key;
+    const chosen = _typeForSpeedSize(sized, speed, prevSize);
+    selectedServiceType = chosen.type_key;
     document.querySelectorAll('#serviceTypeGroup .pill-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.type === type);
+      b.classList.toggle('active', b.dataset.type === speed);
     });
+    const group = document.getElementById('sizeTypeGroup');
+    if (group) {
+      group.innerHTML = '';
+      sized.filter(x => x.speed_key === speed).forEach(x => {
+        const b = _el('button', 'pill-btn' + (x.type_key === chosen.type_key ? ' active' : ''), _sizeLabel(x));
+        b.type = 'button'; b.dataset.type = x.type_key;
+        b.addEventListener('click', () => selectServiceType(x.type_key));
+        group.appendChild(b);
+      });
+    }
+    if (sizeField) sizeField.style.display = '';
   }
   document.querySelectorAll('#serviceTypeGroup .pill-btn').forEach(btn => {
     btn.addEventListener('click', () => selectServiceType(btn.dataset.type));
   });
   selectServiceType('standard');
+  document.getElementById('dService')?.addEventListener('change', (e) => _rebuildServiceTypeGroup(e.target.value));
 
   // ── ВРЕМЯ ВЫВОЗА ──
   document.querySelectorAll('#timeGroup .pill-btn').forEach(btn => {

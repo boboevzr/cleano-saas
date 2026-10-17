@@ -6690,14 +6690,12 @@
     <div id="pmNewFields" style="display:none">
       <div class="form-group" style="margin-bottom:12px">
         <label class="form-label" data-i18n="prices.modal.svc.lbl">Услуга *</label>
-        <select class="form-input" id="pm_svc"></select>
+        <select class="form-input" id="pm_svc" onchange="_fillPmTypes(this.value)"></select>
       </div>
       <div class="form-group" style="margin-bottom:12px">
         <label class="form-label" data-i18n="prices.modal.type.lbl">Тип *</label>
-        <select class="form-input" id="pm_tp">
-          <option value="standard" data-i18n="prices.type.standard">Стандартный</option>
-          <option value="express" data-i18n="prices.type.express">Быстрый</option>
-        </select>
+        <select class="form-input" id="pm_tp"></select>
+        <div style="margin-top:6px;font-size:12px;color:var(--text2)">Нужен размер (маленький/большой)? — кнопка «+ Размер» у услуги в таблице цен.</div>
       </div>
     </div>
     <div class="form-grid">
@@ -6721,6 +6719,23 @@
     <div class="modal-actions">
       <button class="btn btn-cancel" onclick="closePriceModal()" data-i18n="btn.cancel">Отмена</button>
       <button class="btn btn-save" onclick="savePriceModal()" data-i18n="btn.save">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Размер услуги (openSizeModal) — перенос из ARTEZ 2026-10-17 -->
+<div id="sizeModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-title" id="sizeModalTitle">Новый размер</div>
+    <div id="sizeModalSvc" style="font-size:13px;color:var(--text2);margin-bottom:12px"></div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Создаётся сразу два варианта — «Стандартный — …» и «Быстрый — …». Пока у услуги есть размеры, клиенты выбирают только их.</p>
+    <div class="form-grid">
+      <div class="form-group span-full"><label class="form-label">Название RU *</label><input class="form-input" type="text" id="size_ru" maxlength="60" placeholder="Большой (1,5 или 2 спальный)"></div>
+      <div class="form-group span-full"><label class="form-label">Nomi UZ *</label><input class="form-input" type="text" id="size_uz" maxlength="60" placeholder="Katta (1,5 yoki 2 kishilik)"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeSizeModal()" data-i18n="btn.cancel">Отмена</button>
+      <button class="btn btn-save" onclick="saveSize()" data-i18n="btn.save">💾 Сохранить</button>
     </div>
   </div>
 </div>
@@ -6801,6 +6816,24 @@ const SVC_NAMES_UZ = {
 };
 const TYPE_NAMES  = { standard: 'Стандартный', express: 'Быстрый' };
 const TYPE_NAMES_UZ = { standard: 'Standart', express: 'Tezkor' };
+
+// Варианты цены услуги — живой каталог компании per-service (скорость, размер и т.д.),
+// фолбэк TYPE_NAMES — пока каталог не загружен. Перенос из ARTEZ 2026-10-17.
+let _svcTypesCache = null;
+async function _loadSvcTypesCache(force) {
+  if (_svcTypesCache && !force) return _svcTypesCache;
+  const data = await apiGet('/admin/service-types');
+  const grouped = {};
+  (data?.types || []).forEach(t => (grouped[t.service_key] = grouped[t.service_key] || []).push(t));
+  _svcTypesCache = grouped;
+  return _svcTypesCache;
+}
+function _typeNameAdmin(svcKey, typeKey) {
+  const t = (_svcTypesCache?.[svcKey] || []).find(x => x.type_key === typeKey);
+  const uz = typeof _adminLang !== 'undefined' && _adminLang === 'uz';
+  if (t) return (uz && t.name_uz) ? t.name_uz : t.name_ru;
+  return (uz ? TYPE_NAMES_UZ[typeKey] : TYPE_NAMES[typeKey]) || typeKey;
+}
 const STATUS_NAMES = {
   new: 'Новый', confirmed: 'Подтверждён', pickup: 'Вывоз',
   received: 'В мастерской', washing: 'Мойка', drying: 'Сушка',
@@ -11039,12 +11072,13 @@ let _svcData   = {};
 async function loadPrices() {
   document.getElementById('pricesLoading').style.display = 'block';
   document.getElementById('pricesTable').style.display   = 'none';
-  let pricesData, unitsData, svcsRes;
+  let pricesData, unitsData, svcsRes, svcTypesData;
   try {
-    [pricesData, unitsData, svcsRes] = await Promise.all([
+    [pricesData, unitsData, svcsRes, svcTypesData] = await Promise.all([
       apiGet('/admin/prices'),
       apiGet('/admin/units'),
       apiGet('/admin/services'),
+      _loadSvcTypesCache(true),
     ]);
   } catch(e) {
     document.getElementById('pricesLoading').textContent = '⚠ ' + (e.message || _t('prices.err.load'));
@@ -11067,39 +11101,74 @@ async function loadPrices() {
   const tbody = document.getElementById('priceRows');
   tbody.innerHTML = '';
   const order = services.length > 0 ? services.map(s => s.key) : ['carpet','carpet_home','sofa','mattress','curtains'];
-  const types  = ['standard','express'];
+  const isUz     = _adminLang === 'uz';
+  const currency = _t('lbl.sum');
+  // Строка цены одного варианта (svc, tp — ключи из БД: латиница/цифры/_, генерируются
+  // сервером; подписи — только через _esc)
+  const priceRow = (svc, tp, label, opts = {}) => {
+    const info          = (pricesData.prices[svc] || {})[tp] || {};
+    const price         = info.price || 0;
+    const unitKey       = info.unit_key || 'm2';
+    const minOrder      = info.min_order ?? null;
+    const minOrderTotal = info.min_order_total ?? null;
+    const unitObj  = unitsCache.find(u => u.key === unitKey);
+    const unitSym  = (isUz ? unitObj?.symbol_uz : unitObj?.symbol_ru) || unitKey;
+    const tr = document.createElement('tr');
+    if (opts.muted) tr.style.opacity = '.55';
+    tr.innerHTML = `
+      <td style="padding-left:18px">${label}</td>
+      <td style="font-weight:600">${price ? price.toLocaleString('ru-RU') + ' ' + currency : '<span style="color:#ef4444">не задана</span>'}</td>
+      <td style="color:var(--text2);font-size:13px">${_esc(unitSym)}</td>
+      <td style="color:var(--text2);font-size:13px">${minOrder != null ? `${minOrder} ${_esc(unitSym)}` : '—'}</td>
+      <td style="color:var(--text2);font-size:13px">${minOrderTotal != null ? `${minOrderTotal} ${_esc(unitSym)}` : '—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm" style="background:none;border:1.5px solid var(--border);color:var(--text)"
+          onclick="openPriceModal('${svc}','${tp}',${price},'${unitKey}',${minOrder ?? 'null'},${minOrderTotal ?? 'null'})">✏️</button>
+      </td>`;
+    tbody.appendChild(tr);
+  };
+  const tName = t => (isUz && t.name_uz) ? t.name_uz : t.name_ru;
   for (const svc of order) {
-    for (const tp of types) {
-      const info     = (pricesData.prices[svc] || {})[tp] || {};
-      const price    = info.price || 0;
-      const unitKey  = info.unit_key || 'm2';
-      const minOrder = info.min_order ?? null;
-      const minOrderTotal = info.min_order_total ?? null;
-      const sd       = _svcData[svc];
-      const isUz    = _adminLang === 'uz';
-      const svcName = sd ? ((isUz && sd.name_uz) ? sd.name_uz : sd.name_ru)
+    const sd       = _svcData[svc];
+    const svcName  = sd ? ((isUz && sd.name_uz) ? sd.name_uz : sd.name_ru)
                         : ((isUz ? SVC_NAMES_UZ[svc] : null) || SVC_NAMES[svc] || svc);
-      const svcLabel = sd ? `${sd.emoji} ${svcName}`.trim() : svcName;
-      const unitObj  = unitsCache.find(u => u.key === unitKey);
-      const unitSym  = (isUz ? unitObj?.symbol_uz : unitObj?.symbol_ru) || unitKey;
-      const currency = _t('lbl.sum');
-      const typeName = (isUz ? TYPE_NAMES_UZ[tp] : TYPE_NAMES[tp]) || tp;
-      const minLabel = minOrder != null ? `${minOrder} ${unitSym}` : '—';
-      const minTotalLabel = minOrderTotal != null ? `${minOrderTotal} ${unitSym}` : '—';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><span class="svc-badge">${svcLabel}</span> <span class="type-tag type-${tp}" style="margin-left:6px">${typeName}</span></td>
-        <td style="font-weight:600">${price ? price.toLocaleString('ru-RU') + ' ' + currency : '—'}</td>
-        <td style="color:var(--text2);font-size:13px">${unitSym}</td>
-        <td style="color:var(--text2);font-size:13px">${minLabel}</td>
-        <td style="color:var(--text2);font-size:13px">${minTotalLabel}</td>
-        <td>
-          <button class="btn btn-sm" style="background:none;border:1.5px solid var(--border);color:var(--text)"
-            onclick="openPriceModal('${svc}','${tp}',${price},'${unitKey}',${minOrder ?? 'null'},${minOrderTotal ?? 'null'})">✏️</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    }
+    const svcLabel = `${_esc(sd?.emoji || '')} ${_esc(svcName)}`.trim();
+    const hidden   = sd && sd.active === false;
+    const types    = svcTypesData?.[svc] || [];
+    const sizes    = [];   // [{size_key, name_ru, name_uz, bySpeed:{standard,express}}]
+    types.filter(t => t.size_key).forEach(t => {
+      let s = sizes.find(x => x.size_key === t.size_key);
+      if (!s) sizes.push(s = { size_key: t.size_key, name_ru: t.size_name_ru, name_uz: t.size_name_uz, bySpeed: {} });
+      s.bySpeed[t.speed_key || 'standard'] = t.type_key;
+    });
+    const base = types.filter(t => !t.size_key);
+    const head = document.createElement('tr');
+    head.innerHTML = `<td colspan="6" style="padding-top:16px;border-bottom:1.5px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="svc-badge" style="font-size:14px">${svcLabel}</span>
+        ${hidden ? '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(239,68,68,.12);color:#ef4444">скрыта</span>' : ''}
+        <span style="flex:1"></span>
+        <button class="btn btn-sm" onclick="openSizeModal('${svc}')" style="border:1.5px dashed var(--border);background:none;color:var(--text)">+ Размер</button>
+      </div></td>`;
+    tbody.appendChild(head);
+    // Базовые варианты (скорость без размера). У услуги с размерами клиенты их не видят.
+    base.forEach(t => priceRow(svc, t.type_key,
+      `<span class="type-tag type-${t.type_key}">${_esc(tName(t))}</span>` +
+      (sizes.length ? ' <span style="font-size:11px;color:var(--text2)">· без размера, клиентам не видна</span>' : ''),
+      { muted: sizes.length > 0 }));
+    sizes.forEach(s => {
+      const sub = document.createElement('tr');
+      sub.innerHTML = `<td colspan="6" style="padding:10px 0 2px 18px">
+        <b>📐 ${_esc(s.name_ru)}</b> <span style="color:var(--text2);font-size:12px">/ ${_esc(s.name_uz || '')}</span>
+        <button class="btn btn-sm" onclick="openSizeModal('${svc}','${s.size_key}')" style="margin-left:8px;background:none;border:1.5px solid var(--border);color:var(--text)">✏️</button>
+        <button class="btn btn-sm" onclick="deleteSize('${svc}','${s.size_key}')" style="background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.3);color:#ef4444">🗑</button>
+      </td>`;
+      tbody.appendChild(sub);
+      [['standard', isUz ? 'Standart' : 'Стандартный'], ['express', isUz ? 'Tezkor' : 'Быстрый']].forEach(([sp, spLabel]) => {
+        const tp = s.bySpeed[sp];
+        if (tp) priceRow(svc, tp, `<span class="type-tag type-${sp}">${spLabel}</span>`);
+      });
+    });
   }
   // Кнопка добавить новую пару сервис+тип
   const addRow = document.createElement('tr');
@@ -11130,7 +11199,8 @@ function _renderServicesCard(services) {
         style="border:1.5px solid var(--border);border-radius:8px;padding:5px 6px;font-size:13px;background:var(--surface);color:var(--text);width:52px"></td>
       <td style="padding:4px;white-space:nowrap">
         <button onclick="saveSvc('${s.key}')" class="btn btn-save btn-sm" style="margin-right:4px">💾</button>
-        <button onclick="deleteSvc('${s.key}')" class="btn btn-sm" style="background:#ef4444;color:#fff">🗑</button>
+        <button onclick="toggleSvcActive('${s.key}', ${s.active === false})" class="btn btn-sm" style="margin-right:4px" title="${s.active === false ? 'Показать на сайте, в боте и формах' : 'Скрыть с сайта, из бота и форм (история заказов сохраняется)'}">${s.active === false ? '👁' : '🙈'}</button>
+        <button onclick="deleteSvc('${s.key}')" class="btn btn-sm" style="background:#ef4444;color:#fff" title="Удалить совсем — только если услуги нет ни в одном заказе">🗑</button>
       </td>
     </tr>`).join('');
   el.innerHTML = `
@@ -12367,6 +12437,45 @@ async function deleteSvc(key) {
   else showToast(res?.detail || _t('prices.msg.error'), 'error');
 }
 
+async function toggleSvcActive(key, active) {
+  const res = await apiPatch(`/admin/services/${key}/active`, { active });
+  if (res?.ok) { showToast(active ? 'Услуга снова видна' : 'Услуга скрыта'); loadPrices(); }
+  else showToast(res?.detail || _t('prices.msg.error'), 'error');
+}
+
+// ── Размеры услуги (перенос из ARTEZ 2026-10-17): размер = пара вариантов
+// «Стандартный — X» / «Быстрый — X», ключ генерирует сервер. Цены — ✏️ в строках таблицы.
+let _sizeSvc = null, _sizeKey = null;
+function openSizeModal(svc, sizeKey) {
+  _sizeSvc = svc; _sizeKey = sizeKey || null;
+  const t = sizeKey ? (_svcTypesCache?.[svc] || []).find(x => x.size_key === sizeKey) : null;
+  const sd = _svcData[svc];
+  document.getElementById('sizeModalTitle').textContent = sizeKey ? 'Переименовать размер' : 'Новый размер';
+  document.getElementById('sizeModalSvc').textContent = sd ? `${sd.emoji || ''} ${sd.name_ru}`.trim() : svc;
+  document.getElementById('size_ru').value = t?.size_name_ru || '';
+  document.getElementById('size_uz').value = t?.size_name_uz || '';
+  document.getElementById('sizeModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('size_ru').focus(), 50);
+}
+function closeSizeModal() { document.getElementById('sizeModal').classList.add('hidden'); }
+async function saveSize() {
+  const name_ru = document.getElementById('size_ru').value.trim();
+  const name_uz = document.getElementById('size_uz').value.trim();
+  if (!name_ru || !name_uz) { showToast('Укажите название размера на RU и UZ', 'error'); return; }
+  const res = await apiPut('/admin/service-sizes', { service_key: _sizeSvc, size_key: _sizeKey, name_ru, name_uz });
+  if (!res?.ok) { showToast(res?.detail || 'Ошибка сохранения', 'error'); return; }
+  closeSizeModal();
+  showToast(_sizeKey ? 'Размер переименован' : 'Размер добавлен — задайте цены «Стандартный» и «Быстрый» (✏️)');
+  loadPrices();
+}
+async function deleteSize(svc, sizeKey) {
+  const t = (_svcTypesCache?.[svc] || []).find(x => x.size_key === sizeKey);
+  if (!confirm(`Удалить размер «${t?.size_name_ru || sizeKey}» вместе с его ценами?\n\nОткрытые заказы не изменятся (цена в них сохранена).`)) return;
+  const res = await apiDelete(`/admin/service-sizes/${svc}/${sizeKey}`);
+  if (res?.ok) { showToast('Размер удалён'); loadPrices(); }
+  else showToast(res?.detail || 'Ошибка', 'error');
+}
+
 async function addSvc() {
   const key      = document.getElementById('se-new-key')?.value.trim().toLowerCase().replace(/\s+/g,'_');
   const name_ru  = document.getElementById('se-new-ru')?.value.trim();
@@ -12513,8 +12622,7 @@ function openPriceModal(svc, tp, price, unitKey, minOrder, minOrderTotal) {
   const sd = _svcData[svc];
   const svcLabel = sd ? `${sd.emoji} ${sd.name_ru}`.trim() : (SVC_NAMES[svc] || svc);
   document.getElementById('pmTitle').textContent = _t('prices.modal.edit.title');
-  const tpName = (_adminLang === 'uz' ? TYPE_NAMES_UZ[tp] : TYPE_NAMES[tp]) || tp;
-  document.getElementById('pmSvcLabel').textContent = `${svcLabel} — ${tpName}`;
+  document.getElementById('pmSvcLabel').textContent = `${svcLabel} — ${_typeNameAdmin(svc, tp)}`;
   document.getElementById('pmNewFields').style.display = 'none';
   document.getElementById('pm_price').value = price || '';
   document.getElementById('pm_min').value   = minOrder ?? '';
@@ -12524,11 +12632,20 @@ function openPriceModal(svc, tp, price, unitKey, minOrder, minOrderTotal) {
   setTimeout(() => document.getElementById('pm_price').focus(), 50);
 }
 
-function openPriceModalNew() {
+function _fillPmTypes(svc) {
+  const sel = document.getElementById('pm_tp');
+  const types = _svcTypesCache?.[svc] || [];
+  sel.innerHTML = types.length
+    ? types.map(t => `<option value="${_esc(t.type_key)}">${_esc(_typeNameAdmin(svc, t.type_key))}</option>`).join('')
+    : '<option value="">— нет вариантов —</option>';
+}
+
+async function openPriceModalNew() {
   _pmSvc = null; _pmTp = null;
   document.getElementById('pmTitle').textContent = _t('prices.modal.add.title');
   document.getElementById('pmSvcLabel').textContent = '';
   document.getElementById('pmNewFields').style.display = '';
+  await _loadSvcTypesCache(true);
   // Заполняем услуги
   const svcSel = document.getElementById('pm_svc');
   const svcs = Object.keys(_svcData).length > 0 ? Object.keys(_svcData) : Object.keys(SVC_NAMES);
@@ -12537,6 +12654,7 @@ function openPriceModalNew() {
     const label = sd ? `${sd.emoji} ${sd.name_ru}`.trim() : (SVC_NAMES[k] || k);
     return `<option value="${k}">${label}</option>`;
   }).join('');
+  _fillPmTypes(svcs[0]);
   document.getElementById('pm_price').value = '';
   document.getElementById('pm_min').value   = '';
   document.getElementById('pm_min_total').value = '';
@@ -12564,8 +12682,7 @@ async function savePriceModal() {
   if (data?.ok) {
     const sd = _svcData[svc];
     const svcLabel = sd ? `${sd.emoji} ${sd.name_ru}`.trim() : (SVC_NAMES[svc] || svc);
-    const tpName = (_adminLang === 'uz' ? TYPE_NAMES_UZ[tp] : TYPE_NAMES[tp]) || tp;
-    showToast(`${svcLabel} / ${tpName} = ${price.toLocaleString('ru-RU')} ${_t('lbl.sum')}`);
+    showToast(`${svcLabel} / ${_typeNameAdmin(svc, tp)} = ${price.toLocaleString('ru-RU')} ${_t('lbl.sum')}`);
     closePriceModal();
     loadPrices();
   } else {
@@ -15968,7 +16085,7 @@ function _orderToken() {
 
 async function _loadPricesCache() {
   if (_pricesCache) return _pricesCache;
-  const data = await apiGet('/prices');
+  const [data] = await Promise.all([apiGet('/prices'), _loadSvcTypesCache().catch(() => null)]);
   _pricesCache = data?.prices || data || {};
   return _pricesCache;
 }
@@ -16222,7 +16339,7 @@ function oifOnSvcChange() {
   if (!svcKey || !prices[svcKey]) { typeSel.disabled = true; return; }
 
   Object.entries(prices[svcKey]).forEach(([typeKey, info]) => {
-    const name  = TYPE_NAMES[typeKey] || typeKey;
+    const name  = _esc(_typeNameAdmin(svcKey, typeKey));
     const price = (info.price || 0).toLocaleString('ru');
     typeSel.innerHTML += `<option value="${typeKey}" data-price="${info.price || 0}">${name} — ${price} сум/м²</option>`;
   });
@@ -16237,7 +16354,7 @@ function oifOnTypeChange() {
   if (!svcKey || !typeKey) return;
 
   const svcName  = (SVC_NAMES[svcKey]  || svcKey).replace(/^[^\s]+\s/, '');
-  const typeName = TYPE_NAMES[typeKey] || typeKey;
+  const typeName = _typeNameAdmin(svcKey, typeKey);
   const price    = prices[svcKey]?.[typeKey]?.price || 0;
 
   const nameEl = document.getElementById('oif_service_name');
@@ -21965,7 +22082,7 @@ function _sfSalPriceLabel(svc, tp) {
   const svcN = sd
     ? `${sd.emoji||''} ${(_adminLang==='uz'&&sd.name_uz)?sd.name_uz:sd.name_ru}`.trim()
     : ((_adminLang==='uz'?SVC_NAMES_UZ[svc]:null) || SVC_NAMES[svc] || svc);
-  const tpN = (_adminLang==='uz'?TYPE_NAMES_UZ[tp]:null) || TYPE_NAMES[tp] || tp;
+  const tpN = _typeNameAdmin(svc, tp);
   return `${svcN} — ${tpN}`;
 }
 

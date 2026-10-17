@@ -10025,6 +10025,12 @@ document.addEventListener('click', e => {
         <select id="sif_type_select" style="display:none">
           <option value="">— Сначала выберите услугу —</option>
         </select>
+        <!-- Размер — только у услуг с размерами (перенос из ARTEZ 2026-10-17); скорость по-прежнему из заказа -->
+        <div id="sif_size_wrap" style="display:none;margin-bottom:12px">
+          <div id="sif_size_label" style="font-size:12px;color:#888;margin-bottom:6px">Размер</div>
+          <select id="sif_size_select" onchange="sifOnSizeChange()"
+                  style="width:100%;padding:13px 14px;border:1.5px solid #e5e5e5;border-radius:12px;font-size:15px;background:#fafafa;box-sizing:border-box;outline:none;color:#1a1a1a"></select>
+        </div>
         <div style="font-size:12px;color:#888;margin-bottom:4px;display:flex;align-items:center;gap:6px"><span id="sif_name_label">Название</span> <span id="sif_price_lock_label" style="color:#aaa;font-size:11px">🔒 из прайса</span><span id="sif_type_hint" style="font-size:11px;padding:1px 7px;border-radius:10px;font-weight:600"></span></div>
         <input id="sif_service_name" type="text" readonly placeholder="Выберите услугу и тип выше"
                style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:12px;font-size:15px;background:#f5f5f7;margin-bottom:14px;box-sizing:border-box;outline:none;color:#1a1a1a;opacity:.7;cursor:default">
@@ -10112,6 +10118,7 @@ document.addEventListener('click', e => {
 const STAFF_SVC_NAMES  = { carpet:'Чистка ковра', carpet_home:'Чистка ковра на дому', sofa:'Диван, кресло', mattress:'Матрас, одеяло', curtains:'Шторы' };
 const STAFF_TYPE_NAMES = { standard:'Стандарт', express:'Экспресс' };
 let _svcApiData = {};  // ключ → {name_ru, name_uz, emoji}
+let _svcTypeApiData = {}; // type_key → {name_ru, name_uz, speed_key, size_key…} — живой каталог вариантов цены
 function _svcName(k, lang) {
   lang = lang || _lang;
   const d = _svcApiData[k];
@@ -10120,6 +10127,8 @@ function _svcName(k, lang) {
 }
 function _typeName(k, lang) {
   lang = lang || _lang;
+  const d = _svcTypeApiData[k];
+  if (d) return lang === 'uz' ? (d.name_uz || d.name_ru) : d.name_ru;
   return (_i18n[lang]||{})['svc.type.'+k] || (_i18n.ru||{})['svc.type.'+k] || STAFF_TYPE_NAMES[k] || k;
 }
 
@@ -10155,14 +10164,19 @@ async function _loadStaffPrices() {
     // молча отдают прайс company_id=1. Для сотрудника нужен ЕГО прайс — /api/staff/*
     // резолвит company_id из токена (см. фикс staffRenderItems/этого бага).
     const authHeaders = { Authorization: `Bearer ${_staffToken()}` };
-    const [pr, sr] = await Promise.all([
+    const [pr, sr, tr] = await Promise.all([
       fetch(`${API_BASE}/staff/prices`, { headers: authHeaders }).then(r => r.json()),
       fetch(`${API_BASE}/staff/services`, { headers: authHeaders }).then(r => r.json()).catch(() => null),
+      fetch(`${API_BASE}/staff/service-types`, { headers: authHeaders }).then(r => r.json()).catch(() => null),
     ]);
     _sPrices = pr.prices || pr || {};
     if (sr?.services) {
       _svcApiData = {};
       sr.services.forEach(s => { _svcApiData[s.key] = s; });
+    }
+    if (tr?.types) {
+      _svcTypeApiData = {};
+      tr.types.forEach(t => { _svcTypeApiData[t.type_key] = t; });
     }
   } catch { _sPrices = {}; }
   return _sPrices;
@@ -12479,7 +12493,9 @@ async function staffOpenItemForm(itemId) {
         sifSwitchTab('price');
         svcSel.value = match.svcKey;
         sifOnSvcChange();
+        _ensureTypeOption('sif_type_select', match.typeKey, item.price_per_sqm);
         document.getElementById('sif_type_select').value = match.typeKey;
+        _sifSyncSizePicker();
         sifOnTypeChange();
         // Restore actual item price (don't overwrite with pricelist default)
         if (item.price_per_sqm) document.getElementById('sif_price').value = item.price_per_sqm;
@@ -12601,6 +12617,19 @@ async function sifDeleteMedia(mediaId) {
   sifRenderMediaGrid();
 }
 
+// Позиция со скрытым сейчас вариантом (базовый standard/express у услуги, которой
+// добавили размеры) — вариант не в публичном прайсе, но позиция должна открыться
+// со своим вариантом, а не перескочить на другой.
+function _ensureTypeOption(selId, typeKey, price) {
+  const sel = document.getElementById(selId);
+  if (!sel || !typeKey || Array.from(sel.options).some(o => o.value === typeKey)) return;
+  const opt = document.createElement('option');
+  opt.value = typeKey;
+  opt.dataset.price = price || 0;
+  opt.textContent = _typeName(typeKey);
+  sel.appendChild(opt);
+}
+
 function sifOnSvcChange() {
   const prices  = _sPrices || {};
   const svcKey  = document.getElementById('sif_svc_select').value;
@@ -12615,13 +12644,50 @@ function sifOnSvcChange() {
   if (!svcKey || !prices[svcKey]) return;
 
   Object.entries(prices[svcKey]).forEach(([typeKey, info]) => {
-    typeSel.innerHTML += `<option value="${typeKey}" data-price="${info.price||0}">${typeKey}</option>`;
+    typeSel.innerHTML += `<option value="${_esc(typeKey)}" data-price="${info.price||0}">${_esc(_typeName(typeKey))}</option>`;
   });
-  // Авто-выбор типа из заказа (пользователь менять не может)
+  // Авто-выбор типа из заказа (пользователь менять не может). У услуги с размерами
+  // базового standard/express в списке нет — берём первый размер той же скорости.
   const _orderType = _sOrderCache?.service_type || 'standard';
-  const _matchOpt  = Array.from(typeSel.options).find(o => o.value === _orderType);
-  if (_matchOpt) { typeSel.value = _orderType; }
+  const _matchOpt  = Array.from(typeSel.options).find(o => o.value === _orderType)
+                  || Array.from(typeSel.options).find(o => o.value.startsWith(_orderType + '_'));
+  if (_matchOpt) { typeSel.value = _matchOpt.value; }
   else if (typeSel.options.length >= 2) { typeSel.selectedIndex = 1; }
+  _sifSyncSizePicker();
+  sifOnTypeChange();
+}
+
+// Выбор размера в форме позиции: размеры услуги той же скорости, что заказ
+// (standard_…/express_…); выбор размера = выбор варианта в скрытом sif_type_select.
+function _sifSyncSizePicker() {
+  const typeSel = document.getElementById('sif_type_select');
+  const wrap = document.getElementById('sif_size_wrap');
+  const sizeSel = document.getElementById('sif_size_select');
+  if (!typeSel || !wrap || !sizeSel) return;
+  const sized = Array.from(typeSel.options).filter(o => o.value && (_svcTypeApiData[o.value] || {}).size_key);
+  if (!sized.length) { wrap.style.display = 'none'; return; }
+  const speed = (_svcTypeApiData[typeSel.value] || {}).speed_key
+             || (String(_sOrderCache?.service_type || '').startsWith('express') ? 'express' : 'standard');
+  let list = sized.filter(o => (_svcTypeApiData[o.value] || {}).speed_key === speed);
+  if (!list.length) list = sized;
+  sizeSel.innerHTML = '';
+  list.forEach(o => {
+    const d = _svcTypeApiData[o.value] || {};
+    const opt = document.createElement('option');
+    opt.value = o.value;
+    opt.textContent = (_lang === 'uz' ? d.size_name_uz : d.size_name_ru) || o.textContent;
+    sizeSel.appendChild(opt);
+  });
+  if (list.some(o => o.value === typeSel.value)) sizeSel.value = typeSel.value;
+  else { sizeSel.value = list[0].value; typeSel.value = list[0].value; }
+  const lbl = document.getElementById('sif_size_label');
+  if (lbl) lbl.textContent = _lang === 'uz' ? "O'lcham" : 'Размер';
+  wrap.style.display = '';
+}
+function sifOnSizeChange() {
+  const v = document.getElementById('sif_size_select').value;
+  if (!v) return;
+  document.getElementById('sif_type_select').value = v;
   sifOnTypeChange();
 }
 
@@ -13482,6 +13548,7 @@ async function smcFillFromItem(item) {
     smcSwitchTab('price');
     svcSel.value = match.svcKey;
     smcOnSvcChange();
+    _ensureTypeOption('smc_type_select', match.typeKey, item.price_per_sqm);
     document.getElementById('smc_type_select').value = match.typeKey;
     smcOnTypeChange();
     // Restore actual item price (don't overwrite with pricelist default)
