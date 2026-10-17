@@ -3924,14 +3924,15 @@
                 <th style="padding:8px 10px;border:1px solid var(--border);white-space:nowrap;" data-i18n="th.client">Клиент</th>
                 <th style="padding:8px 10px;border:1px solid var(--border);white-space:nowrap;" data-i18n="th.phone">Телефон</th>
                 <th style="padding:8px 10px;border:1px solid var(--border);white-space:nowrap;">Telegram</th>
+                <th style="padding:8px 10px;border:1px solid var(--border);white-space:nowrap;">Активность</th>
                 <th style="padding:8px 10px;border:1px solid var(--border);white-space:nowrap;text-align:center;" data-i18n="th.orders">Заказов</th>
-                <th style="padding:8px 10px;border:1px solid var(--border);white-space:nowrap;text-align:center;width:60px;"></th>
-                <th style="padding:8px 10px;border:1px solid var(--border);white-space:nowrap;text-align:right;" data-i18n="th.orders.spent">Потрачено</th>
+                <th style="padding:8px 10px;border:1px solid var(--border);white-space:nowrap;text-align:right;">Оплачено</th>
                 <th style="padding:8px 10px;border:1px solid var(--border);white-space:nowrap;" data-i18n="th.last.order.tg">Последний заказ</th>
+                <th style="padding:8px 10px;border:1px solid var(--border);white-space:nowrap;text-align:center;width:60px;"></th>
               </tr>
             </thead>
             <tbody id="tgClientsTbody">
-              <tr><td colspan="6" style="padding:20px;text-align:center;color:var(--muted);">Загрузка...</td></tr>
+              <tr><td colspan="8" style="padding:20px;text-align:center;color:var(--muted);">Загрузка...</td></tr>
             </tbody>
           </table>
         </div>
@@ -20839,6 +20840,7 @@ async function saveTgMessage(status, silent = false) {
 // ── Клиенты Telegram ─────────────────────
 let _tgClientsSearchTimer = null;
 
+let _tgClientsCache = [];
 async function loadTgClients(search = '') {
   const tbody = document.getElementById('tgClientsTbody');
   const countEl = document.getElementById('tgClientsCount');
@@ -20852,12 +20854,22 @@ async function loadTgClients(search = '') {
     const clients = data.clients || [];
     if (countEl) countEl.textContent = `${_t('tg.found')} ${clients.length}`;
     if (!clients.length) {
-      tbody.innerHTML = `<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--muted);">${_t('empty.tg.clients')}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--muted);">${_t('empty.tg.clients')}</td></tr>`;
       return;
     }
-    tbody.innerHTML = clients.map(c => {
-      const name = [c.first_name, c.last_name].filter(Boolean).join(' ') || '—';
-      const tg = c.tg_username ? `@${c.tg_username}` : `ID: ${c.tg_id}`;
+    // Имя/ник задаёт сам пользователь Telegram — только через _esc, а в onclick —
+    // индекс в _tgClientsCache, не JSON записи (правило: onclick + данные клиента = XSS).
+    _tgClientsCache = clients;
+    const _d  = v => v ? new Date(v).toLocaleDateString('ru-RU') : '';
+    const _dt = v => v ? new Date(v).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit'}) : '';
+    tbody.innerHTML = clients.map((c, idx) => {
+      const name = _esc([c.first_name, c.last_name].filter(Boolean).join(' ')) || '—';
+      const tg = c.tg_username ? `@${_esc(c.tg_username)}` : `ID: ${_esc(c.tg_id)}`;
+      const seen  = c.last_seen_at || c.updated_at;
+      const botLine  = `🤖 с ${_d(c.created_at) || '—'}${seen ? ` · был ${_dt(seen)}` : ''}`;
+      const siteLine = c.site_registered_at
+        ? `🌐 сайт: рег. ${_d(c.site_registered_at)}${c.site_last_login ? ` · вход ${_dt(c.site_last_login)}` : ''}`
+        : '<span style="color:var(--muted)">🌐 на сайте нет</span>';
       const lastOrder = c.last_order_at ? new Date(c.last_order_at).toLocaleDateString('ru-RU') : '—';
       const spent = c.total_spent > 0 ? Number(c.total_spent).toLocaleString('ru-RU') + ' сум' : '—';
       const blockedBadge = c.blocked ? `<span style="font-size:10px;background:#ff3b30;color:#fff;padding:1px 5px;border-radius:4px;margin-left:5px">🚫 блок</span>` : '';
@@ -20865,19 +20877,20 @@ async function loadTgClients(search = '') {
       const blBadge = bl ? `<span style="font-size:10px;background:#dc2626;color:#fff;padding:1px 5px;border-radius:4px;margin-left:5px">🚫 ЧС</span>` : '';
       return `<tr style="${(c.blocked||bl)?'opacity:.6':''}">
         <td style="padding:8px 10px;border:1px solid var(--border);">${name}${blockedBadge}${blBadge}</td>
-        <td style="padding:8px 10px;border:1px solid var(--border);font-family:monospace;white-space:nowrap;">${c.phone||'—'}</td>
+        <td style="padding:8px 10px;border:1px solid var(--border);font-family:monospace;white-space:nowrap;">${_esc(c.phone)||'—'}</td>
         <td style="padding:8px 10px;border:1px solid var(--border);white-space:nowrap;color:var(--accent)">${tg}</td>
+        <td style="padding:8px 10px;border:1px solid var(--border);white-space:nowrap;font-size:12px;line-height:1.5">${botLine}<br>${siteLine}</td>
         <td style="padding:8px 10px;border:1px solid var(--border);text-align:center;">${c.orders_count||0}</td>
         <td style="padding:8px 10px;border:1px solid var(--border);text-align:right;white-space:nowrap;">${spent}</td>
         <td style="padding:8px 10px;border:1px solid var(--border);color:var(--muted);">${lastOrder}</td>
         <td style="padding:6px 8px;border:1px solid var(--border);text-align:center;white-space:nowrap;">
-          <button class="btn btn-sm" style="padding:4px 10px;font-size:12px" onclick="openTgClientCard(${JSON.stringify(c).replace(/"/g,'&quot;')})">✏️</button>
-          <button class="btn btn-sm" style="padding:4px 10px;font-size:12px;background:var(--surface2);color:${bl?'#16a34a':'#dc2626'}" onclick="toggleBlacklist('${_escJs(c.phone||'')}', ${bl}, () => loadTgClients(), '${_escJs(name==='—'?'':name)}')" title="${bl?'Убрать из ЧС':'В чёрный список'}">🚫</button>
+          <button class="btn btn-sm" style="padding:4px 10px;font-size:12px" onclick="openTgClientCard(_tgClientsCache[${idx}])">✏️</button>
+          <button class="btn btn-sm" style="padding:4px 10px;font-size:12px;background:var(--surface2);color:${bl?'#16a34a':'#dc2626'}" onclick="toggleBlacklist('${_escJs(c.phone||'')}', ${bl}, () => loadTgClients(), '${_escJs([c.first_name, c.last_name].filter(Boolean).join(' '))}')" title="${bl?'Убрать из ЧС':'В чёрный список'}">🚫</button>
         </td>
       </tr>`;
     }).join('');
   } catch(e) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--red);">Ошибка загрузки</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--red);">Ошибка загрузки</td></tr>`;
   }
 }
 

@@ -8838,7 +8838,8 @@ function _drvStopCard(stop, si, route) {
     || stop.short_address || stop.address || '—';
   const loc = (isDeliveryLeg && stop.delivery_location) || stop.location || '';
   let mapUrl = '';
-  if (loc) { try { const [la,lo]=loc.split(',').map(s=>s.trim()); mapUrl=`https://yandex.uz/maps/?pt=${lo},${la}&z=16`; } catch(e){} }
+  // координаты — только числа (строка из БД попадает в href: без проверки — XSS)
+  if (loc) { const [la,lo]=String(loc).split(',').map(s=>parseFloat(s)); if (isFinite(la) && isFinite(lo) && Math.abs(la)<=90 && Math.abs(lo)<=180) mapUrl=`https://yandex.uz/maps/?pt=${lo},${la}&z=16`; }
   const orderTotalRaw = Math.max(0, (stop.items_total || 0) - (stop.total_discount || 0));
   const orderTotal = orderTotalRaw - (orderTotalRaw % 1000); // округление вниз до 1000, портировано из прода
   const paid = stop.paid_amount || 0;
@@ -8928,13 +8929,13 @@ function _drvStopCard(stop, si, route) {
   return `
     <div style="padding:14px 16px 14px 13px;border-top:4px solid #fb923c;background:${cardBg};${debtBorder}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
-        <div style="font-weight:700;font-size:15px;color:var(--text);flex:1;min-width:0">📦 ${num} — ${client}</div>
+        <div style="font-weight:700;font-size:15px;color:var(--text);flex:1;min-width:0">📦 ${_esc(num)} — ${_esc(client)}</div>
         <div style="font-size:11px;font-weight:700;color:${stColor};text-transform:uppercase;flex-shrink:0;margin-left:8px;padding-top:2px">${stLabel}</div>
       </div>
       ${mapUrl
-        ? `<a href="${mapUrl}" target="_blank" style="font-size:13px;color:var(--accent);text-decoration:none;display:block;margin-bottom:2px">📍 ${addr}</a>`
-        : `<div style="font-size:13px;color:var(--text2);margin-bottom:2px">📍 ${addr}</div>`}
-      ${phone ? `<a href="tel:${phone}" style="font-size:13px;color:var(--accent);text-decoration:none;display:block;margin-bottom:4px">📞 ${phone}</a>` : ''}
+        ? `<a href="${mapUrl}" target="_blank" style="font-size:13px;color:var(--accent);text-decoration:none;display:block;margin-bottom:2px">📍 ${_esc(addr)}</a>`
+        : `<div style="font-size:13px;color:var(--text2);margin-bottom:2px">📍 ${_esc(addr)}</div>`}
+      ${phone ? `<a href="tel:${String(phone).replace(/[^0-9+]/g, '')}" style="font-size:13px;color:var(--accent);text-decoration:none;display:block;margin-bottom:4px">📞 ${_esc(phone)}</a>` : ''}
       ${phone2 ? `<a href="tel:${String(phone2).replace(/[^0-9+]/g, '')}" style="font-size:13px;color:var(--accent);text-decoration:none;display:block;margin-bottom:4px">📞 ${_esc(phone2)}</a>` : ''}
       <div style="font-size:13px;color:var(--text2);margin-bottom:8px">${payLine}</div>
       ${buttons ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">${buttons}</div>` : ''}
