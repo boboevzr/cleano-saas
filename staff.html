@@ -105,8 +105,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 
 /* ── AUTOCOMPLETE ── */
 .ac-wrap{position:relative}
+/* Список подсказок — под самим полем (absolute в .ac-wrap), а не по экранным
+   координатам (fixed): при открытой клавиатуре / прокрутке формы список
+   оставался на старом месте экрана — «плавал» где-то вверху (2026-10-17). */
 .ac-dropdown{
-  position:fixed;
+  position:absolute;top:calc(100% + 3px);left:0;right:0;
   background:#fff;border-radius:var(--radius-sm);
   box-shadow:0 6px 24px rgba(0,0,0,.15);
   z-index:9999;max-height:220px;overflow-y:auto;display:none;
@@ -359,6 +362,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 .li-body{flex:1;min-width:0}
 .li-name{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .li-sub{font-size:13px;color:var(--text2);margin-top:1px}
+/* Адрес в списках заказов/лидов — крупно и чёрным: адреса вида «14-5-1»
+   (микрорайон-дом-квартира), мелким серым не читались (2026-10-17) */
+.li-addr{font-size:15px;font-weight:700;color:var(--text);margin-top:3px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .li-badge{
   font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;
   white-space:nowrap;flex-shrink:0;
@@ -3994,8 +4000,9 @@ function renderLeads() {
       <div class="list-item" onclick="toggleLeadSelect(${l.id},this)" style="${isAgent?'background:#f0f7ff;border-left:3px solid #3b82f6':''};cursor:pointer;${_selectedLeads.has(l.id)?'outline:2px solid #163E3B;outline-offset:-2px':''}">
         <input type="checkbox" ${_selectedLeads.has(l.id)?'checked':''} onclick="event.stopPropagation();toggleLeadSelect(${l.id},this.closest('.list-item'))" style="width:18px;height:18px;accent-color:#163E3B;flex-shrink:0;margin-right:4px;cursor:pointer">
         <div class="li-body">
-          <div class="li-name"><b>${l.client_name||t('lead.no_name')}</b> · ${l.client_phone}</div>
-          <div class="li-sub">${l.note||'—'} · ${branchLabel(l.branch)}</div>
+          <div class="li-name"><b>${_esc(l.client_name)||t('lead.no_name')}</b> · ${_esc(l.client_phone)}</div>
+          ${(l.short_address || l.address) ? `<div class="li-addr">📍 ${_esc(l.short_address || l.address)}</div>` : ''}
+          <div class="li-sub">${_esc(l.note)||'—'} · ${branchLabel(l.branch)}</div>
         </div>
         ${l.promo_id ? `<span class="li-badge-promo">${t('promo.badge')}</span>` : ''}
         <span class="li-badge badge-${l.status}">${leadStatusLabel(l.status)}</span>
@@ -4026,13 +4033,25 @@ function renderLeads() {
         ${l.lead_code?`<span class="li-icon-code">${l.lead_code}</span>`:''}
       </div>
       <div class="li-body">
-        <div class="li-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b>${l.client_name||t('lead.no_name')}</b> · ${l.client_phone} ${assignBadge}${overdueBadge}</div>
-        <div class="li-sub">${fmtLeadDate(l.created_at)} · ${branchLabel(l.branch)}${agentStr?' · '+agentStr:''}</div>
+        <div class="li-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b>${_esc(l.client_name)||t('lead.no_name')}</b> · ${_esc(l.client_phone)} ${assignBadge}${overdueBadge}</div>
+        ${(l.short_address || l.address) ? `<div class="li-addr">📍 ${_esc(l.short_address || l.address)}</div>` : ''}
+        <div class="li-sub">${fmtLeadDate(l.created_at)} · ${branchLabel(l.branch)}${agentStr?' · '+_esc(agentStr):''}</div>
+        ${_callBtns(l.client_phone, l.client_phone2)}
       </div>
       ${l.promo_id ? `<span class="li-badge-promo">${t('promo.badge')}</span>` : ''}
       <span class="li-badge badge-${l.status}">${leadStatusLabel(l.status)}</span>
     </div>`;
   }).join('')}</div>`;
+}
+
+// Кнопки звонка прямо в списке заказов/лидов (перенос из ARTEZ 2026-10-17): раньше, чтобы
+// позвонить, открывали карточку. Второй — если у клиента есть запасной номер.
+// Номер скрыт сервером (hide_client_phone) — кнопок нет. stopPropagation — не открывать карточку.
+function _callBtns(p1, p2) {
+  const btn = (p, label) => `<a href="tel:${String(p).replace(/[^0-9+]/g, '')}" onclick="event.stopPropagation()"
+      style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:20px;background:#dcfce7;color:#15803d;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap">📞 ${label}</a>`;
+  const out = [p1 && btn(p1, _esc(p1)), p2 && btn(p2, _esc(p2))].filter(Boolean);
+  return out.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${out.join('')}</div>` : '';
 }
 
 const LEAD_STATUS_ICONS = { new:'🆕', no_answer:'📵', callback:'🔔', converted:'🏆', lost:'❌' };
@@ -6116,11 +6135,7 @@ function acAgentInput(el) {
       (a.login||'').includes(q)
     ).slice(0, 8);
     if (!_acAgentMatches.length) { drop.style.display='none'; return; }
-    const wrap = drop.closest('.ac-wrap') || drop.parentElement;
-    const rect = wrap.getBoundingClientRect();
-    drop.style.top = (rect.bottom + 3) + 'px';
-    drop.style.left = rect.left + 'px';
-    drop.style.width = rect.width + 'px';
+    _acPlace(drop);
     drop.innerHTML = _acAgentMatches.map((a, i) => {
       const name = [a.first_name, a.last_name].filter(Boolean).join(' ') || '—';
       return `<div class="ac-item" ontouchstart="" onclick="acAgentSelect(${i})">
@@ -7376,7 +7391,8 @@ function renderOrders() {
       <div class="li-body">
         <div class="li-name">${sourceIcon(o.source)} #${(o.order_num||'').replace(/^[A-Z0-9]+-/,'')}${o.item_count > 0 ? `<span style="color:#888">/${o.item_count}</span>` : ''}${o.corrected_count > 0 ? `<span style="color:#f97316;font-size:11px;margin-left:5px">⚠️${o.corrected_count}</span>` : ''}${hasMeasure ? `<span style="background:#163E3B;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px">📐${measureCnt}</span>` : ''} ${_esc(o.client_first_name||'')} ${_esc(o.client_last_name||'')}</div>
         <div class="li-sub">${o.client_phone ? `📞 ${_esc(o.client_phone)} · ` : ''}${_esc(o.service||'')}</div>
-        ${(o.short_address || o.address) ? `<div class="li-sub" style="font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${_esc(o.short_address || o.address || '')}">📍 ${_esc(o.short_address || o.address)}</div>` : ''}
+        ${(o.short_address || o.address) ? `<div class="li-addr" title="${_esc(o.short_address || o.address || '').replace(/"/g, '&quot;')}">📍 ${_esc(o.short_address || o.address)}</div>` : ''}
+        ${_callBtns(o.client_phone, o.client_phone2)}
         <div class="li-sub" style="font-size:11px;margin-top:2px">${_payRow(o)}</div>
       </div>
       ${o.promo_id ? `<span class="li-badge-promo">${t('promo.badge')}</span>` : ''}
@@ -7709,11 +7725,7 @@ function acRender(dropId, prefix) {
   const drop = document.getElementById(dropId);
   if (!drop) return;
   if (!_acContacts.length) { drop.style.display = 'none'; return; }
-  const wrap = drop.closest('.ac-wrap') || drop.parentElement;
-  const rect = wrap.getBoundingClientRect();
-  drop.style.top = (rect.bottom + 3) + 'px';
-  drop.style.left = rect.left + 'px';
-  drop.style.width = rect.width + 'px';
+  _acPlace(drop);
   drop.innerHTML = _acContacts.map((c, i) => {
     const name = [c.last_name, c.first_name, c.middle_name].filter(Boolean).join(' ') || '—';
     const phones = [c.phone, c.phone2].filter(Boolean).join(' · ');
@@ -7755,6 +7767,14 @@ function acSelect(idx, dropId, prefix) {
     const p  = document.getElementById('nc_phone'); if(p)  p.value  = c.phone;
     const p2 = document.getElementById('nc_phone2');if(p2) p2.value = c.phone2 || '';
   }
+}
+
+// Список подсказок — под своим полем (CSS .ac-dropdown absolute): сбрасываем
+// старые экранные координаты (если остались) и после показа докручиваем форму,
+// чтобы список целиком был виден, а не прятался под клавиатурой (перенос из ARTEZ 2026-10-17).
+function _acPlace(drop) {
+  drop.style.top = drop.style.left = drop.style.width = '';
+  setTimeout(() => { try { drop.scrollIntoView({ block: 'nearest' }); } catch (e) {} }, 0);
 }
 
 // Закрыть dropdown при клике вне
@@ -8578,6 +8598,96 @@ function _drvRouteListCard(route) {
 }
 
 function _openRouteDetail(routeId) { _drvSelectedRouteId = routeId; _renderDelivery(); }
+
+// ── Управление маршрутом из «Доставки» — только admin и менеджер (2026-10-17),
+// те же API, что admin.html → Маршруты. В onclick — только числовые id и индексы.
+function _drvCanManage() { return ['admin', 'manager'].includes(currentStaff?.role); }
+
+async function drvDeleteRoute(routeId) {
+  if (!confirm('Удалить маршрут? Заказы останутся, но уйдут из маршрута. Действие необратимо.')) return;
+  const r = await apiFetch(`/api/admin/routes/${routeId}`, { method: 'DELETE' });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { showToast('⚠️ ' + (d.detail || 'Ошибка'), 'error'); return; }
+  showToast('Маршрут удалён', 'success');
+  _drvSelectedRouteId = null;
+  loadDelivery(true);
+}
+
+async function drvRemoveStop(routeId, orderId) {
+  if (!confirm('Убрать заказ из маршрута?')) return;
+  const r = await apiFetch(`/api/admin/routes/${routeId}/orders/${orderId}`, { method: 'DELETE' });
+  if (!r.ok) { const d = await r.json().catch(() => ({})); showToast('⚠️ ' + (d.detail || 'Ошибка'), 'error'); return; }
+  showToast('Заказ убран из маршрута', 'success');
+  loadDelivery(true);
+}
+
+// Добавление заказов: какие статусы подходят — по типу маршрута, как в admin
+// (RO_STATUSES_BY_TYPE). Заказы в другом активном маршруте показываются, но не выбираются.
+const _DRV_ADD_STATUSES = { pickup: ['confirmed'], delivery: ['ready', 'delivery'], mixed: ['confirmed', 'ready', 'delivery'] };
+let _drvAdd = { routeId: null, list: [], sel: new Set(), q: '' };
+
+async function drvOpenAddOrders(routeId) {
+  const route = _drvRoutes.find(r => r.id === routeId);
+  const statuses = _DRV_ADD_STATUSES[route?.type] || _DRV_ADD_STATUSES.mixed;
+  _drvAdd = { routeId, list: [], sel: new Set(), q: '' };
+  _drvOpenSheet('+ Добавить заказы', `<div style="text-align:center;padding:20px;color:var(--text2)">${t('drv.sheet.loading')}</div>`);
+  try {
+    const [lists, active] = await Promise.all([
+      Promise.all(statuses.map(st => apiFetch(`/api/staff/orders?status=${st}&limit=500`).then(r => r.json()).catch(() => ({})))),
+      apiFetch('/api/admin/routes/active-order-ids').then(r => r.json()).catch(() => ({})),
+    ]);
+    const inRoute = new Set((route?.stops || []).map(s => s.order_id));
+    _drvAdd.list = lists.flatMap(d => d.orders || [])
+      .filter(o => !inRoute.has(o.id))
+      .map(o => ({ o, busy: active[o.id] && active[o.id].route_id !== routeId ? active[o.id] : null }));
+    _drvRenderAddOrders();
+  } catch (e) {
+    document.getElementById('drvSheetBody').innerHTML = `<div style="color:#ef4444">${t('drv.sheet.error')} ${_esc(e.message)}</div>`;
+  }
+}
+
+function _drvRenderAddOrders() {
+  const q = _drvAdd.q.toLowerCase();
+  const rows = _drvAdd.list.map((it, i) => ({ ...it, i })).filter(({ o }) =>
+    !q || `${o.order_num} ${o.client_first_name || ''} ${o.client_last_name || ''} ${o.short_address || o.address || ''}`.toLowerCase().includes(q));
+  const body = document.getElementById('drvSheetBody');
+  body.innerHTML = `
+    <input id="drvAddSearch" type="search" placeholder="Номер, имя, адрес…" value="${_esc(_drvAdd.q).replace(/"/g, '&quot;')}"
+      oninput="_drvAdd.q=this.value;_drvRenderAddOrders();document.getElementById('drvAddSearch').focus()"
+      style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--sep);border-radius:10px;margin-bottom:10px;font-size:14px;background:var(--bg);color:var(--text)">
+    ${rows.length ? rows.map(({ o, busy, i }) => {
+      const sel = _drvAdd.sel.has(o.id);
+      return `<div ${busy ? '' : `onclick="_drvToggleAdd(${i})"`} style="display:flex;gap:10px;align-items:center;padding:10px;border-radius:10px;margin-bottom:6px;border:1.5px solid ${sel ? 'var(--accent)' : 'var(--sep)'};background:${sel ? 'rgba(22,62,59,.08)' : 'none'};opacity:${busy ? '.5' : '1'};cursor:${busy ? 'default' : 'pointer'}">
+        <div style="width:20px;height:20px;border-radius:6px;flex-shrink:0;border:2px solid ${sel ? 'var(--accent)' : 'var(--sep)'};background:${sel ? 'var(--accent)' : 'none'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px">${sel ? '✓' : ''}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:13px">${_esc(o.order_num)} — ${_esc([o.client_first_name, o.client_last_name].filter(Boolean).join(' '))}</div>
+          <div style="font-size:12px;color:var(--text2)">${o.location ? '📍' : '⚠️'} ${_esc(o.short_address || o.address || '—')} · ${_esc(statusLabel(o.status))}</div>
+          ${busy ? `<div style="font-size:11px;color:#f59e0b">🚦 Уже в маршруте «${_esc(busy.route_name)}»</div>` : ''}
+        </div>
+      </div>`; }).join('')
+      : '<div style="text-align:center;padding:16px;color:var(--text2)">Нет подходящих заказов</div>'}
+    <button onclick="drvSubmitAddOrders()" ${_drvAdd.sel.size ? '' : 'disabled'} style="width:100%;margin-top:8px;padding:12px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-size:15px;font-weight:700;cursor:pointer;opacity:${_drvAdd.sel.size ? '1' : '.5'}">Добавить (${_drvAdd.sel.size})</button>`;
+}
+
+function _drvToggleAdd(i) {
+  const it = _drvAdd.list[i];
+  if (!it || it.busy) return;
+  _drvAdd.sel.has(it.o.id) ? _drvAdd.sel.delete(it.o.id) : _drvAdd.sel.add(it.o.id);
+  _drvRenderAddOrders();
+}
+
+async function drvSubmitAddOrders() {
+  if (!_drvAdd.sel.size) return;
+  const r = await apiFetch(`/api/admin/routes/${_drvAdd.routeId}/orders`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ order_ids: [..._drvAdd.sel] }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { showToast('⚠️ ' + (d.detail || 'Ошибка'), 'error'); return; }
+  _drvCloseSheet();
+  showToast(`Добавлено: ${d.added ?? _drvAdd.sel.size}`, 'success');
+  loadDelivery(true);
+}
 function _backToRouteList()        { _drvSelectedRouteId = null;    _renderDelivery(); }
 
 function _renderRouteDetail(route) {
@@ -8586,6 +8696,11 @@ function _renderRouteDetail(route) {
     <div style="padding:12px 14px 0">
       <button onclick="_backToRouteList()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--sep);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">${t('drv.btn.back_to_routes')}</button>
     </div>
+    ${_drvCanManage() ? `
+    <div style="display:flex;gap:8px;padding:12px 14px 0">
+      <button onclick="drvOpenAddOrders(${Number(route.id)})" style="flex:1;padding:10px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer">+ ${_lang === 'uz' ? 'Buyurtma qoʻshish' : 'Добавить заказы'}</button>
+      <button onclick="drvDeleteRoute(${Number(route.id)})" style="padding:10px 14px;border-radius:12px;border:1.5px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);color:#ef4444;font-size:14px;font-weight:700;cursor:pointer">🗑 ${_lang === 'uz' ? 'Oʻchirish' : 'Удалить'}</button>
+    </div>` : ''}
     ${_drvRouteCard(route, 0)}
     <div style="padding:16px;text-align:center">
       <button onclick="loadDelivery(true)" style="padding:10px 20px;border-radius:12px;border:1.5px solid var(--sep);background:none;color:var(--text2);font-size:14px;font-weight:600;cursor:pointer">${t('drv.btn.refresh')}</button>
@@ -8706,15 +8821,22 @@ function _drvStopCard(stop, si, route) {
   // забора (ost=new/confirmed/pickup), а другая уже на этапе доставки, поэтому
   // route.type==='pickup' ошибочно решал за ВСЕ остановки сразу. Портировано
   // из ARTEZ (запрос пользователя 2026-09-27/28).
-  const isPickupPhase = !['ready','delivery','delivered'].includes(ost);
+  // С 2026-10-17 цель остановки хранится (stop.leg): забранный заказ в смешанном
+  // маршруте, ставший «Готов», больше не превращается в доставку. Старые данные без
+  // leg — как раньше, по статусу заказа.
+  const isDeliveryLeg = stop.leg ? stop.leg === 'delivery' : ['ready','delivery','delivered'].includes(ost);
+  const isPickupPhase = !isDeliveryLeg;
   const ordId = stop.order_id;
   const itemCount = stop.item_count || 0;
   const rawNum = (stop.order_num || '').replace(/^[A-Z0-9]+-/, '');
   const num = rawNum ? `№${rawNum}${itemCount ? ` / ${itemCount}` : ''}` : `#${ordId}`;
   const client = [stop.client_first_name, stop.client_last_name].filter(Boolean).join(' ') || '—';
   const phone = stop.client_phone || '';
-  const addr = stop.short_address || stop.address || '—';
-  const loc = stop.location || '';
+  const phone2 = stop.client_phone2 || '';
+  // На этапе доставки — адрес доставки, если указан отдельно от адреса вывоза
+  const addr = (isDeliveryLeg && (stop.delivery_short_address || stop.delivery_address))
+    || stop.short_address || stop.address || '—';
+  const loc = (isDeliveryLeg && stop.delivery_location) || stop.location || '';
   let mapUrl = '';
   if (loc) { try { const [la,lo]=loc.split(',').map(s=>s.trim()); mapUrl=`https://yandex.uz/maps/?pt=${lo},${la}&z=16`; } catch(e){} }
   const orderTotalRaw = Math.max(0, (stop.items_total || 0) - (stop.total_discount || 0));
@@ -8788,6 +8910,7 @@ function _drvStopCard(stop, si, route) {
       <button onclick="drvOpenItems(${ordId})" style="${_drvBtnStyle2()}">${t('drv.btn.positions')}</button>
       <button onclick="drvOpenHistory(${ordId})" style="${_drvBtnStyle2()}">${t('drv.btn.history')}</button>
       <button onclick="loadDelivery(true)" style="${_drvBtnStyle2()}">${t('drv.btn.refresh')}</button>
+      ${_drvCanManage() ? `<button onclick="drvRemoveStop(${Number(route.id)},${Number(ordId)})" title="Убрать из маршрута" style="${_drvBtnStyle2()};flex:0 0 auto;color:#ef4444">✕</button>` : ''}
     </div>`;
 
   const disc = stop.total_discount || 0;
@@ -8812,6 +8935,7 @@ function _drvStopCard(stop, si, route) {
         ? `<a href="${mapUrl}" target="_blank" style="font-size:13px;color:var(--accent);text-decoration:none;display:block;margin-bottom:2px">📍 ${addr}</a>`
         : `<div style="font-size:13px;color:var(--text2);margin-bottom:2px">📍 ${addr}</div>`}
       ${phone ? `<a href="tel:${phone}" style="font-size:13px;color:var(--accent);text-decoration:none;display:block;margin-bottom:4px">📞 ${phone}</a>` : ''}
+      ${phone2 ? `<a href="tel:${String(phone2).replace(/[^0-9+]/g, '')}" style="font-size:13px;color:var(--accent);text-decoration:none;display:block;margin-bottom:4px">📞 ${_esc(phone2)}</a>` : ''}
       <div style="font-size:13px;color:var(--text2);margin-bottom:8px">${payLine}</div>
       ${buttons ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">${buttons}</div>` : ''}
       ${infoBtns}
@@ -9573,6 +9697,7 @@ document.addEventListener('click', e => {
           <button onclick="_saveContactFromOrder()" title="Сохранить контакт в телефон" style="flex-shrink:0;padding:4px 10px;background:#f3f4f6;border:1.5px solid #d1d5db;color:#374151;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap"><span id="soSaveContactBtnLbl">📇 В контакты</span></button>
           <button onclick="soNewOrderForClient()" id="so_new_order_btn" style="display:none;flex-shrink:0;padding:4px 10px;background:#e8f4ff;border:1.5px solid #007aff;color:#007aff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap"><span id="soNewOrderBtnLbl">➕ Новый заказ</span></button>
         </div>
+        <a id="so_phone2" href="#" style="display:none;grid-column:1/-1;font-size:17px;font-weight:700;color:#007aff;text-decoration:underline;text-underline-offset:2px;margin-top:-4px"></a>
         <div style="grid-column:1/-1">
           <div id="soLblAddress" style="font-size:11px;color:#888;margin-bottom:2px">Адрес</div>
           <div id="so_short_address" style="font-size:13px;font-weight:600;color:#1a1a1a"></div>
@@ -10317,6 +10442,17 @@ async function staffOpenOrder(orderId) {
   document.getElementById('so_summary_address').textContent = o.short_address || o.address || '—';
   document.getElementById('so_phone').textContent  = '📞 ' + _fmtUzPhone(o.client_phone);
   document.getElementById('so_phone').href         = `tel:${o.client_phone}`;
+  // запасной номер — так же, как основной (перенос из ARTEZ 2026-10-17)
+  const _sp2b = document.getElementById('so_phone2');
+  if (_sp2b) {
+    if (o.client_phone2) {
+      _sp2b.textContent = '📞 ' + _fmtUzPhone(o.client_phone2);
+      _sp2b.href = `tel:${String(o.client_phone2).replace(/[^0-9+]/g, '')}`;
+      _sp2b.style.display = '';
+    } else {
+      _sp2b.style.display = 'none';
+    }
+  }
   const _newOrdBtn = document.getElementById('so_new_order_btn');
   if (_newOrdBtn) _newOrdBtn.style.display = hasPermission('orders') ? '' : 'none';
   const soCreatedAt = o.created_at ? (_parseUTC(o.created_at)||new Date()).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:_TZ}) : '—';
@@ -17572,11 +17708,7 @@ function regionAcRender(dropId, prefix) {
   const drop = document.getElementById(dropId);
   if (!drop) return;
   if (!_regionAcResults.length) { drop.style.display = 'none'; return; }
-  const wrap = drop.closest('.ac-wrap') || drop.parentElement;
-  const rect = wrap.getBoundingClientRect();
-  drop.style.top = (rect.bottom + 3) + 'px';
-  drop.style.left = rect.left + 'px';
-  drop.style.width = rect.width + 'px';
+  _acPlace(drop);
   drop.innerHTML = _regionAcResults.map((r, i) => `
     <div class="ac-item" ontouchstart="" onclick="regionAcSelect(${i},'${dropId}','${prefix}')">
       <div class="ac-name">${r.lat ? '📍' : '🗺'} ${_esc(r.name_ru_full || r.name_ru)}</div>
@@ -17594,6 +17726,12 @@ function regionAcSelect(idx, dropId, prefix) {
   if (addrEl)   addrEl.value = r.short_fill || r.breadcrumb || r.name_ru;
   if (regionEl) regionEl.value = r.id;
   if (r.lat) _applyRegionAutoLocation(prefix, r.lat, r.location_address);
+  // курсор — в конец адреса: дописать квартиру сразу, без тапа в конец строки
+  if (addrEl) {
+    addrEl.focus();
+    const n = addrEl.value.length;
+    try { addrEl.setSelectionRange(n, n); } catch (e) {}
+  }
 }
 
 // Подставляет локацию вывоза (координаты + адрес) из каталога регионов —

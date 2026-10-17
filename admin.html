@@ -12789,6 +12789,7 @@ function renderOrderCards(orders, containerId) {
       <div class="order-meta">
         <span>👤 ${o.client_first_name || ''} ${o.client_last_name || ''}</span>
         <span>📞 <a href="tel:${o.client_phone}" onclick="event.stopPropagation()">${o.client_phone || '—'}</a></span>
+        ${o.client_phone2 ? `<span>📞 <a href="tel:${String(o.client_phone2).replace(/[^0-9+]/g,'')}" onclick="event.stopPropagation()">${_esc(o.client_phone2)}</a></span>` : ''}
       </div>
       <div class="order-meta">
         <span>🧺 ${o.service || '—'}</span>
@@ -18336,7 +18337,7 @@ function _renderAdminLeadsTable(leads) {
       ${_adminLeadsSelectMode ? `<td><input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();adminToggleLeadSelect(${l.id});this.closest('tr').style.outline=_adminSelectedLeads.has(${l.id})?'2px solid #163E3B':'';_updateAdminLeadsBulkCount()" style="accent-color:#163E3B"></td>` : ''}
       <td>${i+1}</td>
       <td data-label="Клиент"><span style="display:inline-flex;align-items:center;gap:5px">${srcIco} <b>${name}</b></span></td>
-      <td data-label="Телефон"><a href="tel:${l.client_phone}" onclick="event.stopPropagation()">${l.client_phone}</a></td>
+      <td data-label="Телефон"><a href="tel:${l.client_phone}" onclick="event.stopPropagation()">${l.client_phone}</a>${l.client_phone2 ? `<br><a href="tel:${String(l.client_phone2).replace(/[^0-9+]/g,'')}" onclick="event.stopPropagation()">${_esc(l.client_phone2)}</a>` : ''}</td>
       <td data-label="Услуга">${l.service || '—'}</td>
       <td data-label="Адрес">${l.short_address || l.address || '—'}</td>
       <td data-label="Филиал">${branchName(l.branch)}</td>
@@ -21311,6 +21312,7 @@ function _renderStop(s, num, routeId) {
           : `<button onclick="openRouteLocPicker(${s.order_id},'${routeId}','${(s.location||'').replace(/'/g,'')}',true)" style="margin-top:4px;font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-weight:600">📍 Локация заказа</button>`
         }
         ${s.client_phone?`<div style="font-size:12px;margin-top:2px">📞 <a href="tel:${s.client_phone}" style="color:var(--accent);font-weight:600">${s.client_phone}</a></div>`:''}
+        ${s.client_phone2?`<div style="font-size:12px;margin-top:2px">📞 <a href="tel:${String(s.client_phone2).replace(/[^0-9+]/g,'')}" style="color:var(--accent);font-weight:600">${_esc(s.client_phone2)}</a></div>`:''}
         ${dateRow?`<div style="font-size:11px;color:var(--text2);margin-top:3px">${dateRow}</div>`:''}
         <div style="font-size:11px;color:var(--text2);margin-top:3px;flex-wrap:wrap">💰 ${fmtSum(netPrice)} · <span style="color:${paidAmt>0?'#22c55e':'var(--text2)'}">Опл: ${fmtSum(paidAmt)}</span> · Долг: <span style="color:${debt>0?'#ef4444':'var(--text2)'}">${fmtSum(debt)}</span></div>
         <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;align-items:center">
@@ -21536,6 +21538,7 @@ async function printRouteSheet() {
         <div style="font-weight:700">${_esc(s.order_num)} · позиций: ${posCnt}</div>
         ${items ? `<div style="margin:3px 0">${items}</div>` : ''}
         <div>Тел: ${_esc(fmtPhone(s.client_phone))}</div>
+        ${s.client_phone2 ? `<div>Тел: ${_esc(fmtPhone(s.client_phone2))}</div>` : ''}
         <div>Сумма: ${fmtMoney(total)}</div>
         <div>Оплачено: ${fmtMoney(paid)} · Скидка: ${fmtMoney(disc)}</div>
         <div style="font-weight:700">Остаток: ${due > 0 ? fmtMoney(due) : '0 сум'}</div>`;
