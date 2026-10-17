@@ -1339,6 +1339,16 @@
   .demo-video-upload-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -6px color-mix(in srgb, var(--accent) 75%, transparent); filter: brightness(1.05); }
   .demo-video-upload-btn:active { transform: translateY(0); }
   .demo-video-upload-btn:disabled { opacity: .55; cursor: default; transform: none; filter: none; box-shadow: none; }
+
+  /* Печать маршрута на 80мм (printRouteSheet) — тот же приём, что у печати
+     списка заказов в staff.html (visibility, а не display). Только при
+     body.rt-printing, чтобы не трогать обычный Ctrl+P остальных страниц. */
+  @media print {
+    body.rt-printing * { visibility: hidden; }
+    body.rt-printing #rtPrintArea, body.rt-printing #rtPrintArea * { visibility: visible; }
+    body.rt-printing #rtPrintArea { position: fixed; top: 0; left: 0; width: 80mm; padding: 0 4mm; box-sizing: border-box; color: #000; background: #fff; font-family: Arial, sans-serif; font-size: 13px; line-height: 1.35; }
+    @page { margin: 0; }
+  }
 </style>
 <link rel="manifest" href="admin-manifest.json">
 <script src="config.js"></script>
@@ -2934,6 +2944,7 @@
           <button class="s-tab"        data-stab="faq"        onclick="switchStab(this)" data-i18n="cfg.tab.faq">❓ FAQ</button>
           <button class="s-tab"        data-stab="rules"      onclick="switchStab(this);loadOrderRules()" data-i18n="cfg.tab.rules">📋 Правила приёма</button>
           <button class="s-tab"        data-stab="bulkprint"  onclick="switchStab(this);loadBulkPrintTemplate()">🖨 Печать заказов</button>
+          <button class="s-tab"        data-stab="mgrcards"   onclick="switchStab(this);loadManagerCards()">💳 Карты менеджеров</button>
         </div>
 
         <div class="scfg-content">
@@ -3396,6 +3407,22 @@
               <button class="btn btn-ghost" id="bpResetBtn" onclick="resetBulkPrintTemplate()" style="display:none">↺ Сбросить к дефолту</button>
               <button class="btn btn-ghost    s-cancel-btn" id="bpCancelBtn" onclick="bpCancelEdit()" style="display:none">Отмена</button>
               <span class="s-msg" id="msg_bulkprint"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── Карты менеджеров ─── -->
+        <div class="s-panel" id="stab-mgrcards" style="display:none;max-width:760px;">
+          <div class="card">
+            <div class="cfg-title-row">
+              <h3 class="cfg-title">💳 Карты менеджеров</h3>
+            </div>
+            <p class="cfg-hint">Карты для оплаты клиентом через Click / перевод (до 10). 🖨 печатает бумажку с номером карты для водителя на 80мм-принтере — количество копий указывается рядом. Та же печать есть в Маршрутах → «💳 Печать ПК».</p>
+            <div id="mcList" style="display:flex;flex-direction:column;gap:8px;margin-top:10px"></div>
+            <div class="cfg-actions" style="margin-top:14px">
+              <button class="btn btn-ghost" id="mcAddBtn" onclick="mcAddCard()">+ Добавить карту</button>
+              <button class="btn btn-primary" onclick="saveManagerCards()">💾 Сохранить</button>
+              <span class="s-msg" id="msg_mgrcards"></span>
             </div>
           </div>
         </div>
@@ -6287,6 +6314,27 @@
 </div>
 
 <!-- ROUTE MODAL -->
+<!-- «💳 Печать ПК» в маршруте — см. openRouteCardPrint -->
+<div id="modalRouteCardPrint" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:440px">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border)">
+      <div style="font-size:16px;font-weight:700">💳 Печать карты для водителя</div>
+      <button onclick="closeModal('modalRouteCardPrint')" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--text2);cursor:pointer">✕</button>
+    </div>
+    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+      <div class="form-group">
+        <label class="form-label">Карта</label>
+        <select id="rcpCard" class="form-input"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Количество копий</label>
+        <input type="number" id="rcpCopies" class="form-input" min="1" max="50" value="1">
+      </div>
+      <button class="btn btn-primary" onclick="doRouteCardPrint()">🖨 Печать</button>
+    </div>
+  </div>
+</div>
+
 <div id="modalRoute" class="modal-overlay hidden">
   <div class="modal-box" style="max-width:480px">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border)">
@@ -15615,6 +15663,128 @@ async function saveBulkPrintTemplate() {
   }
 }
 
+// ── Карты менеджеров (оплата Click/перевод на карту) ─────────────────────
+// Хранятся в settings.manager_cards (JSON [{number,name}], до 10) — бэкенд
+// нормализует номер до 16 цифр. Печать — через тот же #rtPrintArea, что и
+// печать маршрута (printRouteSheet).
+const MC_MAX = 10;
+let _mcCards = [];
+
+function _mcFmtNumber(n) {
+  return String(n || '').replace(/\D/g, '').slice(0, 16).replace(/(\d{4})(?=\d)/g, '$1 ');
+}
+
+async function loadManagerCards() {
+  try {
+    const data = await apiGet('/admin/settings/site');
+    let cards = [];
+    try { cards = JSON.parse(data?.settings?.manager_cards || '[]'); } catch(e) {}
+    _mcCards = Array.isArray(cards) ? cards : [];
+    renderManagerCards();
+  } catch(e) { console.error('loadManagerCards', e); }
+}
+
+function renderManagerCards() {
+  const el = document.getElementById('mcList');
+  if (!el) return;
+  el.innerHTML = _mcCards.length ? _mcCards.map((c, i) => `
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px;border:1px solid var(--border);border-radius:10px">
+      <span style="font-weight:700;color:var(--text2);width:20px">${i + 1}.</span>
+      <input class="form-input" style="flex:1 1 190px;font-family:monospace;letter-spacing:.04em" placeholder="8600 0000 0000 0000" inputmode="numeric" maxlength="19"
+        value="${_esc(_mcFmtNumber(c.number))}" oninput="this.value=_mcFmtNumber(this.value);_mcCards[${i}].number=this.value">
+      <input class="form-input" style="flex:1 1 170px;text-transform:uppercase" placeholder="BOBOYEV DALER" maxlength="60"
+        value="${_esc(c.name || '').replace(/"/g, '&quot;')}" oninput="_mcCards[${i}].name=this.value.toUpperCase()">
+      <input type="number" id="mcCopies_${i}" class="form-input" style="width:64px" min="1" max="50" value="1" title="Сколько копий печатать">
+      <button class="btn btn-sm" style="border:1.5px solid var(--border);background:none;color:var(--text)" onclick="mcPrintFromSettings(${i})" title="Печать">🖨</button>
+      <button class="btn btn-sm" style="border:1.5px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08);color:#ef4444" onclick="mcRemoveCard(${i})" title="Удалить">✕</button>
+    </div>`).join('')
+    : '<div style="color:var(--text2);font-size:13px">Карт нет — нажмите «+ Добавить карту»</div>';
+  const add = document.getElementById('mcAddBtn');
+  if (add) add.disabled = _mcCards.length >= MC_MAX;
+}
+
+function mcAddCard() {
+  if (_mcCards.length >= MC_MAX) { showToast(`Не больше ${MC_MAX} карт`, 'error'); return; }
+  _mcCards.push({ number: '', name: '' });
+  renderManagerCards();
+}
+
+function mcRemoveCard(i) {
+  if (!confirm('Удалить карту? Не забудьте нажать «Сохранить».')) return;
+  _mcCards.splice(i, 1);
+  renderManagerCards();
+}
+
+async function saveManagerCards() {
+  const msg = document.getElementById('msg_mgrcards');
+  const cards = _mcCards.map(c => ({ number: String(c.number || '').replace(/\D/g, ''), name: String(c.name || '').trim().toUpperCase() }));
+  const bad = cards.findIndex(c => c.number.length !== 16 || !c.name);
+  if (bad >= 0) { showToast(`Карта ${bad + 1}: нужен номер из 16 цифр и Ф.И.О.`, 'error'); return; }
+  try {
+    const res = await fetch(`${API_BASE}/admin/settings/site`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ manager_cards: JSON.stringify(cards) })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    _mcCards = cards;
+    renderManagerCards();
+    showToast('Сохранено');
+    if (msg) { msg.textContent = '✅ Сохранено'; setTimeout(() => msg.textContent = '', 2000); }
+  } catch(e) {
+    showToast('Ошибка: ' + e.message, 'error');
+  }
+}
+
+function mcPrintFromSettings(i) {
+  const c = _mcCards[i];
+  if (String(c?.number || '').replace(/\D/g, '').length !== 16 || !c?.name) { showToast('Заполните номер (16 цифр) и Ф.И.О.', 'error'); return; }
+  printCardSlips(c, document.getElementById(`mcCopies_${i}`)?.value, '');
+}
+
+// Бумажка для водителя: N копий подряд, между копиями — линия отреза.
+// Без «двух колонок в строку» — термопринтеры их теряют (см. printRouteSheet).
+function printCardSlips(card, copies, subtitle) {
+  const n = Math.min(50, Math.max(1, parseInt(copies, 10) || 1));
+  const slip = `
+    <div style="text-align:center;padding:6px 0">
+      <div style="font-size:12px">Оплата на карту (Click / перевод)</div>
+      <div style="font-size:21px;font-weight:700;font-family:'Courier New',monospace;letter-spacing:.02em;margin:6px 0;white-space:nowrap">${_esc(_mcFmtNumber(card.number))}</div>
+      <div style="font-size:16px;font-weight:700">${_esc(card.name)}</div>
+      ${subtitle ? `<div style="font-size:11px;margin-top:4px">${_esc(subtitle)}</div>` : ''}
+    </div>`;
+  const cut = '<div style="border-top:1px dashed #000;margin:8px 0"></div>';
+  const area = document.getElementById('rtPrintArea');
+  _rtSecondReport = null;
+  area.innerHTML = Array(n).fill(slip).join(cut) + cut;
+  area.style.display = 'block';
+  document.body.classList.add('rt-printing');
+  window.print();
+}
+
+// «💳 Печать ПК» в Маршрутах — выбор карты + количество копий.
+async function openRouteCardPrint() {
+  const sel = document.getElementById('rcpCard');
+  sel.innerHTML = '<option value="">Загрузка…</option>';
+  openModal('modalRouteCardPrint');
+  const data = await apiFetch(`${API_BASE}/staff/manager-cards`).then(r => r.json()).catch(() => null);
+  const cards = data?.cards || [];
+  _rcpCards = cards;
+  sel.innerHTML = cards.length
+    ? cards.map((c, i) => `<option value="${i}">${_esc(_mcFmtNumber(c.number))} — ${_esc(c.name)}</option>`).join('')
+    : '<option value="">Нет карт — добавьте в Настройки → 💳 Карты менеджеров</option>';
+}
+let _rcpCards = [];
+function doRouteCardPrint() {
+  const i = document.getElementById('rcpCard').value;
+  const card = _rcpCards[i];
+  if (i === '' || !card) { showToast('Выберите карту', 'error'); return; }
+  const r = _currentRoute;
+  const sub = r ? `${r.name} · ${_rtFmtDate(r.date)}${r.driver_name ? ' · ' + r.driver_name : ''}` : '';
+  closeModal('modalRouteCardPrint');
+  printCardSlips(card, document.getElementById('rcpCopies').value, sub);
+}
+
 function resetBulkPrintTemplate() {
   if (!_bpEditing) return;
   if (!confirm('Сбросить формат печати к значениям по умолчанию? Не забудьте нажать «Сохранить».')) return;
@@ -20917,7 +21087,11 @@ async function openRouteDetail(routeId) {
     <div class="card" style="padding:0;overflow:hidden">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)">
         <div style="font-size:14px;font-weight:700;color:var(--text)">📍 Остановки (<span id="stopsCount">${_currentStops.length}</span>)</div>
-        ${route.status!=='done'?`<button onclick="openAddOrdersModal(${routeId})" class="btn btn-primary btn-sm">+ Добавить заказы</button>`:''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+          <button onclick="openRouteCardPrint()" class="btn btn-sm" style="border:1.5px solid var(--border);background:none;color:var(--text)" title="Бумажка с номером карты менеджера для оплаты Click">💳 Печать ПК</button>
+          ${_currentStops.length?`<button onclick="printRouteSheet()" id="rtPrintBtn" class="btn btn-sm" style="border:1.5px solid var(--border);background:none;color:var(--text)" title="Печать на 80мм: последний адрес сверху, первый — внизу (порядок загрузки)">🖨 Печать маршрута</button>`:''}
+          ${route.status!=='done'?`<button onclick="openAddOrdersModal(${routeId})" class="btn btn-primary btn-sm">+ Добавить заказы</button>`:''}
+        </div>
       </div>
       <div id="routeStopsList"></div>
       ${route.status!=='done'?`<div style="padding:14px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end">
@@ -21182,6 +21356,94 @@ function _initRouteMap(stops, branch) {
     noLocNote.remove();
   }
 }
+
+// Печать маршрута для загрузки машины (80мм, через системный диалог печати —
+// как printSelectedOrders в staff.html). Порядок ОБРАТНЫЙ: последняя остановка
+// печатается первой (грузится вниз), первая — последней (лежит сверху).
+// Номер «#N» — реальный номер остановки в маршруте.
+async function printRouteSheet() {
+  if (!_currentRoute || !_currentStops.length) { showToast('Нет остановок для печати'); return; }
+  const btn = document.getElementById('rtPrintBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Готовим…'; }
+  try {
+    const stops = _currentStops.map((s, i) => ({ s, num: i + 1 })).reverse();
+    const itemsArr = await Promise.all(stops.map(({ s }) =>
+      apiGet(`/admin/orders/${s.order_id}/items`).catch(() => null)));
+    const fmtPhone = p => {
+      const m = String(p || '').replace(/\D/g, '').match(/^998(\d{2})(\d{3})(\d{2})(\d{2})$/);
+      return m ? `+998 ${m[1]} ${m[2]} ${m[3]} ${m[4]}` : (p || '—');
+    };
+    const sep = '<div style="border-top:3px solid #000;margin:6px 0"></div>';
+    const blocks = stops.map(({ s, num }, k) => {
+      const groups  = itemsArr[k]?.groups || [];
+      const posCnt  = groups.reduce((a, g) => a + (Number(g.count) || 0), 0);
+      const total   = Number(s.items_total ?? s.total_price ?? 0);
+      const disc    = Number(s.discount_sum || 0) + Number(s.delivery_discount || 0) + Number(s.manual_discount || 0);
+      const net     = _orderNet(s);
+      const paid    = Number(s.paid_amount || 0);
+      const due     = Math.max(0, net - paid);
+      const addr    = s.short_address || s.address || s.location_address || '—';
+      // Термопринтеры через GDI-драйвер теряют «две колонки в строку» — только
+      // простые однострочные div'ы (см. комментарий в staff.html).
+      const items = groups.map((g, i) => {
+        const isPcs = g.unit_key === 'pcs';
+        const qty   = Number(g.raw_sqm || 0).toFixed(isPcs ? 0 : 2).replace('.', ',');
+        return `${i + 1}. ${_esc(g.label)} / ${g.count} п. - ${qty} ${isPcs ? 'шт' : 'м²'}`;
+      }).join('<br>');
+      return `
+        <div style="font-size:15px;font-weight:700">#${num} · ${_esc(addr)}</div>
+        <div style="font-weight:700">${_esc(s.order_num)} · позиций: ${posCnt}</div>
+        ${items ? `<div style="margin:3px 0">${items}</div>` : ''}
+        <div>Тел: ${_esc(fmtPhone(s.client_phone))}</div>
+        <div>Сумма: ${fmtMoney(total)}</div>
+        <div>Оплачено: ${fmtMoney(paid)} · Скидка: ${fmtMoney(disc)}</div>
+        <div style="font-weight:700">Остаток: ${due > 0 ? fmtMoney(due) : '0 сум'}</div>`;
+    }).join(sep);
+    const area = document.getElementById('rtPrintArea');
+    area.innerHTML = `
+      <div style="font-weight:700;text-align:center">${_esc(_currentRoute.name)}</div>
+      <div style="text-align:center">${_esc(_rtFmtDate(_currentRoute.date))}${_currentRoute.driver_name ? ' · ' + _esc(_currentRoute.driver_name) : ''}</div>
+      <div style="text-align:center;font-size:11px">Остановок: ${stops.length} · порядок загрузки (последний адрес — первым)</div>
+      ${sep}${blocks}${sep}`;
+    // Второй отчёт («сколько взять с клиента») — печатается сразу после
+    // первого из afterprint; порядок — как едет водитель (#1 → #N).
+    let dueTotal = 0;
+    const dueRows = _currentStops.map((s, i) => {
+      const due = Math.max(0, _orderNet(s) - Number(s.paid_amount || 0));
+      dueTotal += due;
+      const addr = s.short_address || s.address || s.location_address || '—';
+      return `<div style="margin-bottom:4px">#${i + 1} · ${_esc(addr)} — <b>${due > 0 ? fmtMoney(due) : '0 сум'}</b></div>`;
+    }).join('');
+    _rtSecondReport = `
+      <div style="font-weight:700;text-align:center">К оплате по маршруту</div>
+      <div style="text-align:center">${_esc(_currentRoute.name)} · ${_esc(_rtFmtDate(_currentRoute.date))}${_currentRoute.driver_name ? ' · ' + _esc(_currentRoute.driver_name) : ''}</div>
+      ${sep}${dueRows}${sep}
+      <div style="font-size:15px;font-weight:700">Итог маршрута: ${dueTotal > 0 ? fmtMoney(dueTotal) : '0 сум'}</div>
+      ${sep}`;
+    area.style.display = 'block';
+    document.body.classList.add('rt-printing');
+    window.print();
+  } catch (e) {
+    showToast('❌ Ошибка печати: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🖨 Печать маршрута'; }
+  }
+}
+let _rtSecondReport = null;
+window.addEventListener('afterprint', () => {
+  if (!document.body.classList.contains('rt-printing')) return;
+  if (_rtSecondReport) {
+    // Повторный print() прямо внутри afterprint браузер может проглотить —
+    // откладываем, чтобы первый диалог успел закрыться.
+    document.getElementById('rtPrintArea').innerHTML = _rtSecondReport;
+    _rtSecondReport = null;
+    setTimeout(() => window.print(), 300);
+    return;
+  }
+  document.body.classList.remove('rt-printing');
+  const area = document.getElementById('rtPrintArea');
+  if (area) { area.style.display = 'none'; area.innerHTML = ''; }
+});
 
 async function quickUpdateRouteStatus(routeId, status) {
   await apiFetch(`${API_BASE}/admin/routes/${routeId}`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status})});
@@ -27752,5 +28014,7 @@ async function adDoTest() {
     </div>
   </div>
 </div>
+<!-- Печать маршрута (printRouteSheet) — наполняется только перед window.print() -->
+<div id="rtPrintArea" style="display:none"></div>
 </body>
 </html>

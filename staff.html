@@ -29,6 +29,14 @@
   --text2:#8e8e93;
   --text3:#aeaeb2;
   --sep:#e5e5ea;
+  /* Алиасы под имена из admin.html — разметку переносили оттуда, а здесь эти
+     переменные не были объявлены: var(--surface,#1e2130)/var(--surface,#1a1d27)
+     уходили в тёмный фолбэк (тёмные модалки «Доставки», «Мои данные» агента),
+     а var(--border)/var(--surface) без фолбэка — в прозрачный фон/без рамки. */
+  --surface:var(--card);
+  --surface2:var(--bg);
+  --card-bg:var(--card);
+  --border:var(--sep);
   --accent:#007aff;
   --accent-bg:#e8f1ff;
   --green:#34c759;
@@ -1421,6 +1429,8 @@ const _i18n = {
     'ord.st.new':'Новый','ord.st.confirmed':'Подтверждён','ord.st.pickup':'Вывоз','ord.st.received':'В мастерской','ord.st.washing':'Мойка','ord.st.drying':'Сушка','ord.st.packing':'Упаковка','ord.st.ready':'Готов','ord.st.ready_postponed':'Отложенные','ord.st.delivery':'Доставка','ord.st.delivered':'Доставлен','ord.st.cancelled':'Отменён',
     'drv.btn.took':'✅ Забрал','drv.btn.not_taken':'❌ Не забрал','drv.btn.delivered':'🏠 Доставил',
     'drv.btn.payment':'💳 Оплата','drv.btn.returned':'🔙 Вернул','drv.btn.undo':'↩️ Отменить',
+    'drv.btn.resume':'↩️ Вернуть в маршрут','drv.confirm.resume_title':'↩️ Вернуть в маршрут?',
+    'drv.confirm.resume_body':'Клиент вышел на связь — остановка снова станет активной.','drv.toast.resumed':'↩️ Остановка снова в маршруте',
     'drv.btn.undo_delivered':'↩️ Отменить «Доставлен»',
     'drv.btn.take_delivery':'🚗 Везу клиенту','drv.btn.handoff':'🏭 Сдал в мастерскую','drv.btn.undo_pickup':'↩️ Не забирал',
     'drv.st.picked_up':'Забрал','drv.st.handed_off':'Сдано',
@@ -1743,6 +1753,8 @@ const _i18n = {
     'ord.st.new':'Yangi','ord.st.confirmed':'Tasdiqlangan','ord.st.pickup':`Olib ketish`,'ord.st.received':'Ustaxonada','ord.st.washing':'Yuvish','ord.st.drying':'Quritish','ord.st.packing':'Qadoqlash','ord.st.ready':'Tayyor','ord.st.ready_postponed':'Kechiktirilgan','ord.st.delivery':'Yetkazish','ord.st.delivered':'Yetkazildi','ord.st.cancelled':`Bekor qilindi`,
     'drv.btn.took':'✅ Oldim','drv.btn.not_taken':'❌ Olmadim','drv.btn.delivered':'🏠 Yetkazdim',
     'drv.btn.payment':'💳 Toʻlov','drv.btn.returned':'🔙 Qaytardim','drv.btn.undo':'↩️ Bekor qilish',
+    'drv.btn.resume':'↩️ Marshrutga qaytarish','drv.confirm.resume_title':'↩️ Marshrutga qaytarilsinmi?',
+    'drv.confirm.resume_body':'Mijoz aloqaga chiqdi — manzil yana faol boʻladi.','drv.toast.resumed':'↩️ Manzil yana marshrutda',
     'drv.btn.undo_delivered':'↩️ «Yetkazildi»ni bekor qilish',
     'drv.btn.take_delivery':'🚗 Mijozga olib ketyapman','drv.btn.handoff':'🏭 Ustaxonaga topshirdim','drv.btn.undo_pickup':'↩️ Olmadim',
     'drv.st.picked_up':'Oldim','drv.st.handed_off':'Topshirildi',
@@ -8759,6 +8771,12 @@ function _drvStopCard(stop, si, route) {
     // st === 'done' (Доставлен) — без кнопок, финальный статус.
   }
 
+  // Пропущена («Не забрал»/«Вернул»), но клиент вышел на связь — вернуть точку
+  // в маршрут (skipped → pending). Для отменённого заказа не показываем.
+  if (!routeClosed && st === 'skipped' && stop.stop_status === 'skipped' && ost !== 'cancelled') {
+    buttons = `<button onclick="drvConfirmResume(${ordId})" style="${_drvBtnStyle('accent')}">${t('drv.btn.resume')}</button>`;
+  }
+
   const stColor = st === 'done' ? 'var(--success,#22c55e)' : st === 'skipped' ? 'var(--text3,#888)' : 'var(--accent)';
 
   const infoBtns = `
@@ -8925,13 +8943,13 @@ async function drvOpenItems(orderId) {
                              : sqm ? `${+sqm.toFixed(2)} м²` : '';
       const priceLine = price && total ? `${fmtN(price)} с/м² · ${fmtN(total)} с`
                                        : total ? `${fmtN(total)} с` : '';
-      html += `<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
-        <div style="font-weight:700;font-size:14px;color:#f0f0f0">${i+1}. ${name}</div>
-        ${dimLine ? `<div style="margin-top:4px;font-size:13px;color:#9ca3af">${dimLine}</div>` : ''}
-        ${priceLine ? `<div style="margin-top:3px;font-size:13px;color:#60a5fa">${priceLine}</div>` : ''}
+      html += `<div style="padding:12px 0;border-bottom:1px solid var(--sep)">
+        <div style="font-weight:700;font-size:14px;color:var(--text)">${i+1}. ${name}</div>
+        ${dimLine ? `<div style="margin-top:4px;font-size:13px;color:var(--text2)">${dimLine}</div>` : ''}
+        ${priceLine ? `<div style="margin-top:3px;font-size:13px;color:#2563eb">${priceLine}</div>` : ''}
       </div>`;
     });
-    html += `<div style="padding:14px 0 4px;font-size:15px;font-weight:800;color:#4ade80">${t('drv.sheet.total')} ${fmtN(grand)} сум</div>`;
+    html += `<div style="padding:14px 0 4px;font-size:15px;font-weight:800;color:#16a34a">${t('drv.sheet.total')} ${fmtN(grand)} сум</div>`;
     document.getElementById('drvSheetBody').innerHTML = html;
   } catch(e) { document.getElementById('drvSheetBody').innerHTML = `<div style="color:#ef4444">${t('drv.sheet.error')} ${e.message}</div>`; }
 }
@@ -8966,14 +8984,14 @@ async function drvOpenHistory(orderId) {
         return dt.toLocaleString('ru-RU', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       } catch { return String(ts||'').slice(0,16).replace('T',' '); }
     };
-    const SEP = `<div style="border-top:1px solid rgba(255,255,255,0.08);margin:0"></div>`;
+    const SEP = `<div style="border-top:1px solid var(--sep);margin:0"></div>`;
     let html = '';
     [...acts].reverse().forEach(a => {
       const who = (a.staff_name || '').trim() || t('drv.sheet.driver');
       const detail = _localizeActivityText(a.details || a.action || '');
       html += `<div style="padding:10px 0">
         <div style="font-size:11px;color:#9ca3af">🕐 ${fmt(a.created_at)} · 👤 ${who}</div>
-        <div style="margin-top:4px;font-size:13px;color:#e5e7eb;line-height:1.4">${detail}</div>
+        <div style="margin-top:4px;font-size:13px;color:var(--text);line-height:1.4">${detail}</div>
       </div>${SEP}`;
     });
     document.getElementById('drvSheetBody').innerHTML = html;
@@ -8987,6 +9005,21 @@ async function drvUndoDelivery(orderId) {
     showToast(t('drv.toast.undo'), 'success');
     await loadDelivery(true);
   } catch(e) { showToast('Ошибка сети: ' + e.message, 'error'); }
+}
+
+// — Вернуть пропущенную остановку в маршрут (клиент вышел на связь)
+function drvConfirmResume(orderId) {
+  _drvConfirm(t('drv.confirm.resume_title'), t('drv.confirm.resume_body'), t('drv.btn.resume'),
+    () => drvResumeStop(orderId));
+}
+async function drvResumeStop(orderId) {
+  try {
+    const r = await apiFetch(`/api/staff/my-route/stops/${orderId}/resume`, { method:'POST' });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.detail || 'Ошибка');
+    showToast(t('drv.toast.resumed'), 'success');
+    await loadDelivery(true);
+  } catch(e) { showToast('⚠️ ' + e.message, 'error'); }
 }
 
 let _drvConfirmCb = null;
@@ -9224,10 +9257,10 @@ function _showDrvPartialConfirm(entered, stillOwed) {
   div.style.cssText = 'position:fixed;inset:0;z-index:10020;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center';
   const cur = t('drv.currency');
   div.innerHTML = `
-    <div style="background:var(--surface,#1e2130);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:500px;box-shadow:0 -4px 30px rgba(0,0,0,.3)">
-      <div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:12px">💳 ${t('drv.partial.title')}</div>
+    <div style="background:var(--card,#fff);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:500px;box-shadow:0 -4px 30px rgba(0,0,0,.3)">
+      <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:12px">💳 ${t('drv.partial.title')}</div>
       <div style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:12px 14px;margin-bottom:18px;line-height:2">
-        <div style="font-size:14px;color:var(--text2)">${t('drv.partial.received')}: <b style="color:#fff">${_fmt(entered)} ${cur}</b></div>
+        <div style="font-size:14px;color:var(--text2)">${t('drv.partial.received')}: <b style="color:var(--text)">${_fmt(entered)} ${cur}</b></div>
         <div style="font-size:14px;color:var(--text2)">${t('drv.partial.remaining')}: <b style="color:#ef4444">${_fmt(stillOwed)} ${cur}</b></div>
       </div>
       <button onclick="_drvPartialRecord()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">💾 ${t('drv.partial.record')}</button>
@@ -17297,7 +17330,9 @@ function staffChatSend() {
 <!-- Debt Approval Modal -->
 <!-- Driver: причина не забрал / вернул -->
 <div id="drvReasonModal" class="modal-overlay" style="z-index:10010;align-items:flex-end">
-  <div style="background:var(--surface,#1e2130);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:500px;margin:0 auto;box-shadow:0 -4px 30px rgba(0,0,0,.3);max-height:80vh;overflow-y:auto">
+  <!-- var(--card), не var(--surface): --surface в staff.html не объявлена, и
+       фолбэк #1e2130 давал тёмный фон под тёмным var(--text) — текст не читался. -->
+  <div style="background:var(--card,#fff);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:500px;margin:0 auto;box-shadow:0 -4px 30px rgba(0,0,0,.3);max-height:80vh;overflow-y:auto">
     <div id="drvReasonTitle" style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:16px">Причина</div>
     <div id="drvReasonList"></div>
     <button id="drvReasonCancelBtn" onclick="document.getElementById('drvReasonModal').classList.remove('open')" style="width:100%;padding:12px;border:1.5px solid var(--sep);border-radius:12px;background:none;color:var(--text2);font-size:14px;font-weight:600;cursor:pointer;margin-top:4px">Отмена</button>
@@ -17306,31 +17341,31 @@ function staffChatSend() {
 
 <!-- Driver: confirm action -->
 <div id="drvConfirmModal" class="modal-overlay" style="z-index:10020;align-items:flex-end">
-  <div style="background:var(--surface,#1e2130);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:500px;margin:0 auto;box-shadow:0 -4px 30px rgba(0,0,0,.3)">
-    <div id="drvConfirmTitle" style="font-size:16px;font-weight:800;color:#f0f0f0;margin-bottom:8px"></div>
-    <div id="drvConfirmBody" style="font-size:13px;color:#9ca3af;margin-bottom:20px"></div>
+  <div style="background:var(--card,#fff);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:500px;margin:0 auto;box-shadow:0 -4px 30px rgba(0,0,0,.3)">
+    <div id="drvConfirmTitle" style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:8px"></div>
+    <div id="drvConfirmBody" style="font-size:13px;color:var(--text2);margin-bottom:20px"></div>
     <div style="display:flex;gap:10px">
       <button id="drvConfirmYesBtn" onclick="_drvConfirmYes()" style="flex:1;padding:13px;border-radius:12px;border:none;background:#ef4444;color:#fff;font-size:14px;font-weight:700;cursor:pointer"></button>
-      <button id="drvConfirmNoBtn" onclick="_drvConfirmNo()" style="flex:1;padding:13px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.15);background:none;color:#9ca3af;font-size:14px;font-weight:600;cursor:pointer"></button>
+      <button id="drvConfirmNoBtn" onclick="_drvConfirmNo()" style="flex:1;padding:13px;border-radius:12px;border:1.5px solid var(--sep);background:none;color:var(--text2);font-size:14px;font-weight:600;cursor:pointer"></button>
     </div>
   </div>
 </div>
 
 <!-- Driver: позиции / история -->
 <div id="drvSheet" class="modal-overlay" style="z-index:10010;align-items:flex-end">
-  <div style="background:var(--surface,#1e2130);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:500px;margin:0 auto;box-shadow:0 -4px 30px rgba(0,0,0,.3);max-height:80vh;overflow-y:auto">
+  <div style="background:var(--card,#fff);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:500px;margin:0 auto;box-shadow:0 -4px 30px rgba(0,0,0,.3);max-height:80vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div id="drvSheetTitle" style="font-size:16px;font-weight:800;color:#f0f0f0"></div>
-      <button onclick="_drvCloseSheet()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#9ca3af;padding:0 0 0 12px">✕</button>
+      <div id="drvSheetTitle" style="font-size:16px;font-weight:800;color:var(--text)"></div>
+      <button onclick="_drvCloseSheet()" style="border:none;background:none;font-size:20px;cursor:pointer;color:var(--text2);padding:0 0 0 12px">✕</button>
     </div>
-    <div id="drvSheetBody" style="font-size:13px;color:#e5e7eb"></div>
+    <div id="drvSheetBody" style="font-size:13px;color:var(--text)"></div>
   </div>
 </div>
 
 <!-- Driver: оплата -->
 <div id="drvPayModal" class="modal-overlay" data-no-auto-close="1" style="z-index:10010;align-items:flex-end">
-  <div style="background:var(--surface,#1e2130);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:500px;margin:0 auto;box-shadow:0 -4px 30px rgba(0,0,0,.3)">
-    <div id="drvPayTitle" style="font-size:17px;font-weight:800;color:#fff;margin-bottom:12px">💳 Оплата при доставке</div>
+  <div style="background:var(--card,#fff);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:500px;margin:0 auto;box-shadow:0 -4px 30px rgba(0,0,0,.3)">
+    <div id="drvPayTitle" style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:12px">💳 Оплата при доставке</div>
     <div id="drvPayDebtRow" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
       <span id="drvPayDebtLabel" style="font-size:14px;color:var(--text2)">Остаток долга</span>
       <span id="drvPayDebt" style="font-size:16px;font-weight:800;color:#ef4444">0</span>
