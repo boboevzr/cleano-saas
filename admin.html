@@ -3844,9 +3844,12 @@
           </div>
 
           <!-- Карточка: Видео-инструкция бота при первом входе -->
-          <div class="card" id="card-bot-welcome-video" style="margin-bottom:14px">
+          <!-- Загрузка/удаление видео — только после ✏️ (bwv-locked прячет кнопки) -->
+          <style>#card-bot-welcome-video.bwv-locked .demo-video-filepicker, #card-bot-welcome-video.bwv-locked .demo-video-upload-btn, #card-bot-welcome-video.bwv-locked [id$="_delete_btn"], #card-bot-welcome-video:not(.bwv-locked) .s-edit-btn, #card-bot-welcome-video.bwv-locked .bwv-done-btn { display:none !important; }</style>
+          <div class="card bwv-locked" id="card-bot-welcome-video" style="margin-bottom:14px">
             <div class="cfg-title-row">
               <h3 class="cfg-title" data-i18n="tg.card.welcome_video">🎬 Видео-инструкция при первом входе</h3>
+              <button class="btn s-edit-btn" onclick="document.getElementById('card-bot-welcome-video').classList.remove('bwv-locked')">✏️</button>
             </div>
             <p class="cfg-hint" data-i18n="tg.welcome_video.hint">Отправляется автоматически один раз каждому новому клиенту бота, сразу после выбора языка — отдельное от видео-карточки на сайте. До 19 МБ.</p>
             <div class="demo-video-grid">
@@ -3881,7 +3884,10 @@
                 <button class="btn btn-sm" id="botWelcomeVideo_uz_delete_btn" onclick="deleteBotWelcomeVideo('uz')" style="display:none;background:var(--surface2);color:var(--text);width:100%" data-i18n="video.btn.delete">🗑️ Удалить</button>
               </div>
             </div>
-            <div style="margin-top:8px"><span class="s-msg" id="msg_bot_welcome_video"></span></div>
+            <div class="cfg-actions" style="margin-top:8px">
+              <button class="btn btn-ghost bwv-done-btn" onclick="document.getElementById('card-bot-welcome-video').classList.add('bwv-locked')">✔️ Готово</button>
+              <span class="s-msg" id="msg_bot_welcome_video"></span>
+            </div>
           </div>
 
           <!-- Карточка: Новые клиенты -->
@@ -3900,6 +3906,39 @@
               <button class="btn btn-primary s-save-btn" onclick="saveCard('card-tg-new-clients',['new_clients_group_id'])" style="display:none;">💾 Сохранить</button>
               <button class="btn btn-ghost   s-cancel-btn" onclick="cancelCard('card-tg-new-clients',['new_clients_group_id'])" style="display:none;">Отмена</button>
               <span class="s-msg" id="msg_card-tg-new-clients"></span>
+            </div>
+          </div>
+
+          <!-- Цвета кнопок главного меню бота (2026-10-18, Bot API style) — меняет только мастер-админ -->
+          <div class="card" id="card-bot-colors" style="margin-bottom:14px">
+            <div class="cfg-title-row">
+              <h3 class="cfg-title">🎨 Цвета кнопок бота</h3>
+              <button class="btn s-edit-btn" onclick="editBotButtonStyles()">✏️</button>
+            </div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5">
+              Главное меню внизу чата. Клиент увидит новые цвета, когда бот снова пришлёт меню (/start, /menu) — изменения доходят до бота в течение минуты.
+              Оттенок зависит от темы Telegram; в старых версиях приложения кнопка обычная.
+            </div>
+            <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+              <div id="botColorsRows" style="flex:1;min-width:250px"></div>
+              <div style="flex:0 0 250px;max-width:100%">
+                <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Предпросмотр</div>
+                <div id="botColorsPreview" style="background:#dfe7ee;border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:5px"></div>
+              </div>
+            </div>
+            <!-- Этап 2: одно правило для кнопок внутри разделов, один выключатель -->
+            <label style="display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;cursor:pointer">
+              <input type="checkbox" id="cfg_bot_inner_colors" disabled onchange="_botInnerColors=this.checked" style="margin-top:3px;width:18px;height:18px;flex-shrink:0">
+              <span>
+                <span style="font-weight:600;font-size:13px">Цвета кнопок внутри разделов</span>
+                <span style="display:block;font-size:12px;color:var(--text2);margin-top:3px;line-height:1.5">Одно правило на весь бот — в разделах и в постах канала водителей / групп (лиды, касса, долги): 🟢 добавить / подать / подтвердить, 🔴 удалить / отклонить / отменить, 🔵 оплатить. Остальные кнопки — обычные. Новые посты — сразу, уже отправленные — после следующего обновления.</span>
+              </span>
+            </label>
+            <div class="cfg-actions" style="margin-top:14px">
+              <button class="btn btn-primary s-save-btn" onclick="saveBotButtonStyles()" style="display:none;">💾 Сохранить</button>
+              <button class="btn btn-ghost bc-default-btn" onclick="resetBotButtonStyles()" style="display:none;">По умолчанию</button>
+              <button class="btn btn-ghost s-cancel-btn" onclick="cancelBotButtonStyles()" style="display:none;">Отмена</button>
+              <span class="s-msg" id="msg_bot_colors"></span>
             </div>
           </div>
 
@@ -9564,6 +9603,85 @@ async function siteVideoToggleEnabled(checked) {
   await apiPut('/admin/settings/site', { site_video_enabled: checked ? 'true' : 'false' });
 }
 
+// ── Цвета кнопок главного меню бота (2026-10-18) ─────────────────────
+// Ключи/умолчания — те же, что BTN_STYLE_DEFAULTS в order_bot_handlers.py и
+// BOT_BUTTON_STYLE_DEFAULTS в main.py — у каждой компании свои цвета (сервер нормализует ещё раз).
+const BOT_BTN_STYLE_DEFAULTS = { reg_start:'success', webapp:'primary', order:'success', status:'primary', prices:'', calc:'', profile:'', operator:'' };
+const BOT_BTN_LABELS = { reg_start:'📝 Зарегистрироваться', webapp:'🌐 Открыть приложение', order:'📋 Оставить заявку', status:'📦 Статус заказа', prices:'💰 Цены', calc:'🧮 Калькулятор', profile:'👤 Мой профиль', operator:'👨‍💼 Оператор' };
+const BOT_BTN_LAYOUT = [['reg_start'], ['webapp'], ['order'], ['status','prices'], ['calc','profile'], ['operator']];
+const BOT_STYLE_OPTS = [ ['', 'Обычная', '#ffffff', '#1f2937'], ['success', 'Зелёная', '#31b545', '#fff'], ['danger', 'Красная', '#e5484d', '#fff'], ['primary', 'Синяя', '#2f80ed', '#fff'] ];
+let _botBtnStyles = { ...BOT_BTN_STYLE_DEFAULTS };
+let _botBtnStylesSaved = { ...BOT_BTN_STYLE_DEFAULTS };  // последнее сохранённое — для «Отмена»
+let _botColorsEditing = false;                          // кружки активны только после ✏️
+let _botInnerColors = true, _botInnerColorsSaved = true;  // выключатель цветов внутри разделов
+function _botColorsSetEditing(on) {
+  _botColorsEditing = on;
+  const card = document.getElementById('card-bot-colors');
+  if (card) {
+    card.querySelector('.s-edit-btn').style.display    = on ? 'none' : '';
+    card.querySelector('.s-save-btn').style.display    = on ? '' : 'none';
+    card.querySelector('.s-cancel-btn').style.display  = on ? '' : 'none';
+    card.querySelector('.bc-default-btn').style.display = on ? '' : 'none';
+  }
+  const cb = document.getElementById('cfg_bot_inner_colors');
+  if (cb) { cb.disabled = !on; cb.checked = _botInnerColors; }
+  renderBotButtonStyles();
+}
+function editBotButtonStyles()   { _botColorsSetEditing(true); }
+function cancelBotButtonStyles() { _botBtnStyles = { ..._botBtnStylesSaved }; _botInnerColors = _botInnerColorsSaved; _botColorsSetEditing(false); }
+function _normBotBtnStyles(raw) {
+  let d = {};
+  try { d = typeof raw === 'string' && raw.trim() ? JSON.parse(raw) : (raw || {}); } catch (e) { d = {}; }
+  if (!d || typeof d !== 'object' || Array.isArray(d)) d = {};
+  const ok = BOT_STYLE_OPTS.map(o => o[0]);
+  const out = {};
+  Object.keys(BOT_BTN_STYLE_DEFAULTS).forEach(k => { out[k] = (k in d && ok.includes(d[k])) ? d[k] : BOT_BTN_STYLE_DEFAULTS[k]; });
+  return out;
+}
+async function loadBotButtonStyles() {
+  const res = await apiGet('/admin/settings/site');
+  _botBtnStyles = _normBotBtnStyles(res?.settings?.bot_button_styles);
+  _botBtnStylesSaved = { ..._botBtnStyles };
+  _botInnerColors = _botInnerColorsSaved = (res?.settings?.bot_inner_button_colors || 'true') !== 'false';
+  _botColorsSetEditing(false);
+}
+function setBotBtnStyle(key, style) {
+  if (!_botColorsEditing) return;
+  if (!(key in BOT_BTN_STYLE_DEFAULTS) || !BOT_STYLE_OPTS.some(o => o[0] === style)) return;
+  _botBtnStyles[key] = style;
+  renderBotButtonStyles();
+}
+function resetBotButtonStyles() { _botBtnStyles = { ...BOT_BTN_STYLE_DEFAULTS }; _botInnerColors = true; _botColorsSetEditing(true); }
+// В onclick — только ключи из констант выше (не данные с сервера)
+function renderBotButtonStyles() {
+  const rows = document.getElementById('botColorsRows');
+  const prev = document.getElementById('botColorsPreview');
+  if (!rows || !prev) return;
+  rows.innerHTML = Object.keys(BOT_BTN_LABELS).map(k => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px">${BOT_BTN_LABELS[k]}</span>
+      <span style="display:flex;gap:6px;flex-shrink:0">${BOT_STYLE_OPTS.map(([v, name, bg]) => {
+        const on = _botBtnStyles[k] === v;
+        return `<button type="button" title="${name}" ${_botColorsEditing ? '' : 'disabled'} onclick="setBotBtnStyle('${k}','${v}')" style="width:24px;height:24px;border-radius:50%;cursor:${_botColorsEditing ? 'pointer' : 'default'};opacity:${_botColorsEditing || on ? 1 : .45};padding:0;background:${bg};border:${on ? '3px solid var(--accent)' : '1.5px solid #c7ced6'};box-shadow:${on ? '0 0 0 2px var(--surface)' : 'none'}"></button>`;
+      }).join('')}</span>
+    </div>`).join('');
+  const btn = k => {
+    const o = BOT_STYLE_OPTS.find(x => x[0] === _botBtnStyles[k]) || BOT_STYLE_OPTS[0];
+    return `<div style="flex:1;min-width:0;text-align:center;padding:9px 4px;border-radius:8px;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:${o[2]};color:${o[3]};box-shadow:0 1px 1px rgba(0,0,0,.12)">${BOT_BTN_LABELS[k]}</div>`;
+  };
+  prev.innerHTML = BOT_BTN_LAYOUT.map(r => `<div style="display:flex;gap:5px">${r.map(btn).join('')}</div>`).join('');
+}
+async function saveBotButtonStyles() {
+  const msg = document.getElementById('msg_bot_colors');
+  const res = await apiPut('/admin/settings/site', { bot_button_styles: JSON.stringify(_botBtnStyles), bot_inner_button_colors: _botInnerColors ? 'true' : 'false' });
+  if (res?.ok) { _botBtnStylesSaved = { ..._botBtnStyles }; _botInnerColorsSaved = _botInnerColors; _botColorsSetEditing(false); }
+  if (msg) {
+    msg.textContent = res?.ok ? '✅ Сохранено — в боте в течение минуты' : ('❌ ' + (res?.detail || 'Ошибка (менять может только главный админ)'));
+    msg.style.color = res?.ok ? '#16a34a' : '#ef4444';
+    setTimeout(() => { msg.textContent = ''; }, 4000);
+  }
+}
+
 // ── Режим техработ (сайт + бот) ──────────────────────────────────────
 async function loadMaintenanceMode() {
   const res = await apiGet('/admin/settings/site');
@@ -10902,7 +11020,7 @@ function _activatePage(page) {
   if (page === 'siteconfig')  { loadSiteSettings(); staffMgmtLoad(); }
   if (page === 'company-settings') { _loadCompanyProfile(); loadSiteSettings(); _loadCompanySocial(); renderBranchContactCards(); loadBranches().then(() => renderBranchContactCards()); }
   if (page === 'site-design') designLoad();
-  if (page === 'tg-bot')      { loadSiteSettings(); loadBotWelcomeVideoStatus(); }
+  if (page === 'tg-bot')      { loadSiteSettings(); loadBotWelcomeVideoStatus(); loadBotButtonStyles(); }
   if (page === 'tg-messages') loadTgSettings();
   if (page === 'tg-clients')  loadTgClients();
   if (page === 'tg-vars')  loadProjVars();
