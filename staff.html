@@ -3385,7 +3385,7 @@ async function submitOrder() {
         pickup_date:      document.getElementById('or_pickup_date')?.value || '',
         pickup_time:      document.getElementById('or_pickup_time')?.value || '',
         item_count:       _pkpSum('or'),
-        items:            _pkpCollectItems('or', _pkpServiceCatalog || []),
+        items:            _pkpCollectItems('or', _pkpItemCatalog || []),
         sms_lang:         _orSmsLang,
       })
     });
@@ -6807,6 +6807,31 @@ async function _pkpLoadServiceCatalog() {
   return _pkpServiceCatalog;
 }
 
+// Каталог для счётчиков «по услугам» (забор, новый заказ, «🏷 ▾» в позициях): у услуги
+// с размерами (admin → Цены → «+ Размер») — отдельная строка на каждый размер, иначе
+// позиции создавались без размера, скрытым базовым вариантом (2026-10-19). Ключ строки
+// для сервера — 'услуга:размер' (ключи из БД — только [a-z0-9_], ':' не встречается).
+let _pkpItemCatalog = null; // [{key, name_ru, name_uz, emoji, size_key?, size_name_ru?, size_name_uz?}]
+async function _pkpLoadItemCatalog() {
+  if (_pkpItemCatalog) return _pkpItemCatalog;
+  const services = await _pkpLoadServiceCatalog();
+  let types = [];
+  // SaaS: варианты своей компании (company-scoped, по токену сотрудника)
+  try { types = (await (await apiFetch(`/staff/service-types`)).json())?.types || []; } catch { types = []; }
+  const out = [];
+  services.forEach(s => {
+    const sizes = [];
+    types.filter(tp => tp.service_key === s.key && tp.size_key).forEach(tp => {
+      if (!sizes.some(z => z.size_key === tp.size_key))
+        sizes.push({ size_key: tp.size_key, size_name_ru: tp.size_name_ru, size_name_uz: tp.size_name_uz });
+    });
+    if (sizes.length) sizes.forEach(z => out.push({ ...s, ...z }));
+    else out.push(s);
+  });
+  _pkpItemCatalog = out;
+  return out;
+}
+
 function _pkpResetQty(prefix) { _pkpQty[prefix] = {}; }
 
 function _pkpSvcRowsHtml(prefix, catalog) {
@@ -6815,9 +6840,10 @@ function _pkpSvcRowsHtml(prefix, catalog) {
   // interpolate-safe без экранирования. См. [[feedback_onclick_data_interpolation_xss]].
   return catalog.map((s, i) => {
     const label = _lang === 'uz' ? (s.name_uz || s.name_ru) : s.name_ru;
+    const size  = s.size_key ? ((_lang === 'uz' ? (s.size_name_uz || s.size_name_ru) : s.size_name_ru) || s.size_key) : '';
     return `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(128,128,128,.3)">
-      <span style="font-size:13px">${_esc(s.emoji || '🏷')} ${_esc(label)}</span>
+      <span style="font-size:13px">${_esc(s.emoji || '🏷')} ${_esc(label)}${size ? ` — 📐 ${_esc(size)}` : ''}</span>
       <div style="display:flex;align-items:center;gap:10px">
         <button type="button" onclick="_pkpChangeQty('${prefix}',${i},-1)" style="width:28px;height:28px;border-radius:8px;border:1.5px solid rgba(128,128,128,.4);background:rgba(128,128,128,.14);color:inherit;font-size:16px;font-weight:700;cursor:pointer;line-height:1">−</button>
         <span id="${prefix}_qty_${i}" style="min-width:22px;text-align:center;font-weight:700;font-size:14px">0</span>
@@ -6837,7 +6863,10 @@ function _pkpChangeQty(prefix, idx, delta) {
 function _pkpCollectItems(prefix, catalog) {
   const bucket = _pkpQty[prefix] || {};
   const items = {};
-  catalog.forEach((s, i) => { const q = bucket[i]; if (q > 0) items[s.key] = q; });
+  catalog.forEach((s, i) => {
+    const q = bucket[i];
+    if (q > 0) { const k = s.size_key ? `${s.key}:${s.size_key}` : s.key; items[k] = (items[k] || 0) + q; }
+  });
   return items;
 }
 
@@ -8414,7 +8443,7 @@ function pkpCreateNew(phone) {
 async function _pkpRenderFound(o) {
   _pkpOrder = o; _pkpMode = 'by_service'; _pkpLang = 'ru';  // услуга обязательна (2026-10-10)
   _pkpResetQty('pkp');
-  const catalog = await _pkpLoadServiceCatalog();
+  const catalog = await _pkpLoadItemCatalog();
   const name = [o.client_first_name, o.client_last_name].filter(Boolean).join(' ') || '—';
   document.getElementById('pkpResult').innerHTML = `
     <div style="background:var(--surface);border:1.5px solid #163E3B;border-radius:14px;padding:14px;margin-bottom:12px">
@@ -8466,7 +8495,7 @@ async function pkpTake() {
   const btn = document.getElementById('pkpTakeBtn');
   const body = { mode: _pkpMode, sms_lang: _pkpLang };
   if (_pkpMode === 'by_service') {
-    const items = _pkpCollectItems('pkp', await _pkpLoadServiceCatalog());
+    const items = _pkpCollectItems('pkp', await _pkpLoadItemCatalog());
     if (!Object.keys(items).length) { showToast('Укажите хотя бы одну услугу', 'error'); return; }
     body.items = items;
   } else {
@@ -8969,7 +8998,7 @@ let _drvPkpOrderId = null, _drvPkpMode = 'by_service', _drvPkpLang = 'ru';
 async function drvOpenPickupForm(orderId) {
   _drvPkpOrderId = orderId; _drvPkpMode = 'by_service'; _drvPkpLang = 'ru';  // услуга обязательна (2026-10-10)
   _pkpResetQty('drv_pkp');
-  const catalog = await _pkpLoadServiceCatalog();
+  const catalog = await _pkpLoadItemCatalog();
   _drvOpenSheet(t('drv.pkp.title'), `
     <div class="filter-chips" style="margin-bottom:10px;display:none">
       <button class="fchip" id="drv_pkp_mode_count_btn" onclick="_drvPkpSetMode('count')">${t('drv.pkp.count_mode')}</button>
@@ -9011,7 +9040,7 @@ async function drvSubmitPickup() {
   const btn = document.getElementById('drvPkpSubmitBtn');
   const body = { mode: _drvPkpMode, sms_lang: _drvPkpLang };
   if (_drvPkpMode === 'by_service') {
-    const items = _pkpCollectItems('drv_pkp', await _pkpLoadServiceCatalog());
+    const items = _pkpCollectItems('drv_pkp', await _pkpLoadItemCatalog());
     if (!Object.keys(items).length) { showToast(t('drv.pkp.svc_required'), 'error'); return; }
     body.items = items;
   } else {
@@ -12387,7 +12416,7 @@ async function _soBulkToggle(forceOpen) {
   const box = document.getElementById('so_bulk_svc'), act = document.getElementById('so_bulk_actions');
   if (!box) return;
   const open = forceOpen === true || box.style.display === 'none';
-  if (open) { _pkpResetQty('so_blk'); box.innerHTML = _pkpSvcRowsHtml('so_blk', await _pkpLoadServiceCatalog()); }
+  if (open) { _pkpResetQty('so_blk'); box.innerHTML = _pkpSvcRowsHtml('so_blk', await _pkpLoadItemCatalog()); }
   box.style.display = open ? '' : 'none';
   if (act) act.style.display = open ? 'flex' : 'none';
   const ar = document.getElementById('soBulkArrow'); if (ar) ar.textContent = open ? '🏷 ▴' : '🏷 ▾';
@@ -12400,12 +12429,12 @@ function _pkpSum(prefix) {
 async function _orRenderItemRows() {
   _pkpResetQty('or');
   const box = document.getElementById('or_items_svc');
-  if (box) box.innerHTML = _pkpSvcRowsHtml('or', await _pkpLoadServiceCatalog());
+  if (box) box.innerHTML = _pkpSvcRowsHtml('or', await _pkpLoadItemCatalog());
 }
 
 async function staffBulkCreate() {
   if (_activeOrderModal !== 'washer') {
-    const items = _pkpCollectItems('so_blk', await _pkpLoadServiceCatalog());
+    const items = _pkpCollectItems('so_blk', await _pkpLoadItemCatalog());
     if (!Object.keys(items).length) { showToast(t('so.bulk.svc_required'), 'error'); return; }
     const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items/bulk`, {
       method: 'POST',
@@ -13503,7 +13532,10 @@ function smcOnTypeChange() {
   const priceEl = document.getElementById('smc_price');
   if (priceEl) priceEl.value = price;
   _setListPrice('smc', price);
-  _smIsPcs = (prices[svcKey]?.[typeKey]?.unit_key || 'm2') === 'pcs';
+  // вариант не в публичном прайсе (скрытый базовый) — единица из снимка позиции
+  const _smItem = _sItemsCache.find(i => i.id === _measureItemId);
+  const _smSnapUnit = (_smItem && _smItem.service_key === svcKey && _smItem.type_key === typeKey) ? _smItem.unit_key_snap : null;
+  _smIsPcs = (prices[svcKey]?.[typeKey]?.unit_key || _smSnapUnit || 'm2') === 'pcs';
   document.getElementById('sm_dims_edit').style.display = (_smCanEdit && !_smIsPcs) ? '' : 'none';
   document.getElementById('sm_qty_edit').style.display  = (_smCanEdit && _smIsPcs) ? '' : 'none';
   const _smPriceLabelEl = document.getElementById('smPriceLabel');
@@ -13682,6 +13714,13 @@ async function smSaveAndClose() {
         const e = await res.json().catch(() => ({}));
         showToast(e.detail || 'Сохранено, но не удалось утвердить замер', 'error');
       }
+    } else {
+      // раньше молча «Сохранено» — замер оставался неутверждённым без объяснения
+      showToast(_smIsPcs ? 'Сохранено, но замер не утверждён — укажите количество'
+                         : 'Сохранено, но замер не утверждён — укажите ширину и длину', 'warning');
+      _sActivityCache = null;
+      await _refreshOpenOrderItems();
+      return;
     }
   }
 
@@ -13890,9 +13929,13 @@ async function staffOpenMeasure(itemId) {
     if (svcStatic) { svcStatic.style.display = ''; svcStatic.textContent = item.service || '—'; }
   }
 
-  // Штучная услуга (unit_key='pcs') — вместо Ш×Д нужно количество
-  let _mUnitKey = 'm2';
-  if (canEditService) {
+  // Штучная услуга (unit_key='pcs') — вместо Ш×Д нужно количество. Единица — из снимка
+  // самой позиции (unit_key_snap): вариант позиции может быть скрыт из публичного прайса
+  // (базовый вариант у услуги с размерами) — тогда по прайсу выходило «м²» (2026-10-19).
+  let _mUnitKey = item.unit_key_snap || 'm2';
+  if (item.unit_key_snap) {
+    // уже известна из позиции
+  } else if (canEditService) {
     const _svcKeyNow  = document.getElementById('smc_svc_select')?.value;
     const _typeKeyNow = document.getElementById('smc_type_select')?.value;
     if (_svcKeyNow && _typeKeyNow) _mUnitKey = (_sPrices||{})[_svcKeyNow]?.[_typeKeyNow]?.unit_key || 'm2';
@@ -13940,7 +13983,9 @@ async function staffOpenMeasure(itemId) {
 
   if (_smCanEdit) {
     if (_smIsPcs) {
-      document.getElementById('sm_actual_qty').value = item.sqm || '';
+      // штучная — по умолчанию 1 шт (как в калькуляторе), иначе пустое поле молча
+      // мешало утвердить замер кнопкой «Сохранить и утвердить»
+      document.getElementById('sm_actual_qty').value = Number(item.sqm) > 0 ? item.sqm : 1;
     } else {
       document.getElementById('sm_actual_w').value = item.width_cm || '';
       document.getElementById('sm_actual_l').value = item.length_cm || '';
