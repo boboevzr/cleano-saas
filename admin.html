@@ -1837,6 +1837,25 @@
             <tbody id="priceRows"></tbody>
           </table>
         </div>
+        <!-- Шаг цены позиции (стрелки ▲▼ у «Цена за») -->
+        <div class="card" style="margin-top:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em">Шаг цены позиции</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:4px">На сколько меняют цену стрелки ▲▼ в поле «Цена за» (staff и admin)</div>
+            </div>
+            <div id="ips_view" style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:20px;font-weight:800;color:var(--accent)">± <span id="ips_display">500</span> сум</span>
+              <button onclick="ipsEdit(true)" style="padding:6px 12px;background:none;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer">✏️ Изменить</button>
+            </div>
+            <div id="ips_edit" style="display:none;align-items:center;gap:8px">
+              <input id="ips_input" class="form-input" type="number" min="1" max="1000000" step="100" inputmode="numeric" style="width:120px">
+              <button onclick="saveItemPriceStep()" style="padding:7px 18px;background:#163E3B;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">💾 Сохранить</button>
+              <button onclick="ipsEdit(false)" style="padding:7px 12px;background:#f3f4f6;color:#555;border:none;border-radius:8px;font-size:13px;cursor:pointer">Отмена</button>
+            </div>
+          </div>
+        </div>
+
 
       </div>
 
@@ -2280,6 +2299,7 @@
           <button class="filter-btn" data-status="packing"   data-i18n="status.packing"   onclick="filterOrders(this)">📦 Упаковка</button>
           <button class="filter-btn" data-status="ready"     data-i18n="status.ready"     onclick="filterOrders(this)">✅ Готов</button>
           <button class="filter-btn" data-status="ready_postponed" data-i18n="status.ready_postponed" onclick="filterOrders(this)">⏸ Отложенные</button>
+          <button class="filter-btn" data-status="dslot" onclick="filterOrders(this)">📅 К доставке</button>
           <button class="filter-btn" data-status="delivery"  data-i18n="status.delivery"  onclick="filterOrders(this)">🚚 Доставка</button>
           <button class="filter-btn" data-status="delivered" data-i18n="status.delivered" onclick="filterOrders(this)">✅ Доставлен</button>
           <button class="filter-btn" data-status="cancelled" data-i18n="status.cancelled" onclick="filterOrders(this)">❌ Отменено</button>
@@ -6051,6 +6071,22 @@
             <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center">🙈</div>
             <div style="flex:1"><div class="sf-perm-title" data-i18n="sf.perm.hide_phone">Скрыть номер клиента</div><div class="sf-perm-desc" data-i18n="sf.perm.hide_phone.d">Не показывать телефон клиента в списке и карточке заказа</div></div>
             <div class="sf-track" id="sf_hide_client_phone_track" onclick="event.stopPropagation();document.getElementById('sf_hide_client_phone').click()"><div class="sf-thumb" id="sf_hide_client_phone_thumb"></div></div>
+          </label>
+        </div>
+        <div class="sf-perm-row" style="border-top:1px solid var(--border)">
+          <label style="display:contents;cursor:pointer">
+            <input type="checkbox" id="sf_notify_delivery_digest" style="opacity:0;width:0;height:0;position:absolute" onchange="_sfDigestTouched=true;sfToggleStyle('sf_notify_delivery_digest')">
+            <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center">📅</div>
+            <div style="flex:1"><div class="sf-perm-title">Сводка доставок в Telegram</div><div class="sf-perm-desc">08:30 — что доставить сегодня; 11:00 и 16:00 — окно доставки прошло/заканчивается. Нужен привязанный Telegram</div></div>
+            <div class="sf-track" id="sf_notify_delivery_digest_track" onclick="event.stopPropagation();document.getElementById('sf_notify_delivery_digest').click()"><div class="sf-thumb" id="sf_notify_delivery_digest_thumb"></div></div>
+          </label>
+        </div>
+        <div class="sf-perm-row" style="border-top:1px solid var(--border)">
+          <label style="display:contents;cursor:pointer">
+            <input type="checkbox" id="sf_notify_delivery_digest" style="opacity:0;width:0;height:0;position:absolute" onchange="_sfDigestTouched=true;sfToggleStyle('sf_notify_delivery_digest')">
+            <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center">📅</div>
+            <div style="flex:1"><div class="sf-perm-title">Сводка доставок в Telegram</div><div class="sf-perm-desc">08:30 — что доставить сегодня; 11:00 и 16:00 — окно доставки прошло/заканчивается. Нужен привязанный Telegram</div></div>
+            <div class="sf-track" id="sf_notify_delivery_digest_track" onclick="event.stopPropagation();document.getElementById('sf_notify_delivery_digest').click()"><div class="sf-thumb" id="sf_notify_delivery_digest_thumb"></div></div>
           </label>
         </div>
       </div>
@@ -11199,7 +11235,43 @@ async function loadDashboard() {
 let unitsCache = [];
 let _svcData   = {};
 
+// Шаг стрелок ▲▼ у «Цена за» позиции — item_price_step, настройка компании (перенос из ARTEZ 2026-10-22).
+let _itemPriceStep = 500;
+async function loadItemPriceStep() {
+  try {
+    const d = await apiGet('/admin/settings/site');
+    const n = parseInt(d.settings?.item_price_step, 10);
+    if (n > 0) _itemPriceStep = n;
+  } catch(e) {}
+  const disp = document.getElementById('ips_display');
+  if (disp) disp.textContent = _itemPriceStep.toLocaleString('ru-RU');
+  document.getElementById('oif_price')?.setAttribute('step', _itemPriceStep);
+}
+document.addEventListener('DOMContentLoaded', () => { if (adminToken) loadItemPriceStep(); });
+function ipsEdit(on) {
+  document.getElementById('ips_view').style.display = on ? 'none' : 'flex';
+  document.getElementById('ips_edit').style.display = on ? 'flex' : 'none';
+  if (on) { const inp = document.getElementById('ips_input'); inp.value = _itemPriceStep; inp.focus(); }
+}
+async function saveItemPriceStep() {
+  const n = parseInt(document.getElementById('ips_input').value, 10);
+  if (!(n >= 1 && n <= 1000000)) { showToast('Шаг — целое число от 1 до 1 000 000', 'error'); return; }
+  try {
+    const res = await fetch(`${API_BASE}/admin/settings/site`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ item_price_step: String(n) })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    _itemPriceStep = n;
+    ipsEdit(false);
+    await loadItemPriceStep();
+    showToast('Сохранено');
+  } catch(e) { showToast('Ошибка: ' + e.message, 'error'); }
+}
+
 async function loadPrices() {
+  loadItemPriceStep();
   document.getElementById('pricesLoading').style.display = 'block';
   document.getElementById('pricesTable').style.display   = 'none';
   apiGet('/admin/settings/client-discount').then(d => {
@@ -12934,6 +13006,18 @@ async function loadOrders(status) {
   // postponed_until — как и в staff.html, запрашиваем 'ready' с сервера и
   // разделяем на клиенте по postponed_until.
   const apiStatus = status === 'ready_postponed' ? 'ready' : status;
+  // «📅 К доставке» — Готов + Доставка целиком, по дате/времени согласованной доставки (2026-10-22)
+  if (status === 'dslot') {
+    const [r1, r2] = await Promise.all([apiGet('/admin/orders?limit=2000&status=ready'), apiGet('/admin/orders?limit=2000&status=delivery')]);
+    const key = o => o.delivery_date ? `0${String(o.delivery_date).slice(0, 10)}${(o.delivery_from || '')}` : (o.postponed_until ? '2' : '1');
+    _adminOrdersRawCache = [...(r1?.orders || []), ...(r2?.orders || [])]
+      .filter(o => o.delivery_type !== 'self')
+      .sort((a, b) => key(a).localeCompare(key(b)));
+    ordersTotal = 0;
+    _adminOrdersFilter();
+    _renderOrdersPager();
+    return;
+  }
   const path = (isDebt || hasExtraFilter)
     ? `/admin/orders?limit=2000${apiStatus ? `&status=${apiStatus}` : ''}`
     : `/admin/orders?limit=${ordersPageSize}&offset=${(ordersPage-1)*ordersPageSize}${apiStatus ? `&status=${apiStatus}` : ''}`;
@@ -12955,7 +13039,7 @@ function _renderOrdersPager() {
   const el = document.getElementById('ordersPager');
   if (!el) return;
   // «Долги» и активный доп. фильтр — без пагинации (грузим большой limit разом, см. loadOrders)
-  if (currentStatus === 'debt' || _adminOrdersHasExtraFilter()) { el.innerHTML = ''; return; }
+  if (currentStatus === 'debt' || currentStatus === 'dslot' || _adminOrdersHasExtraFilter()) { el.innerHTML = ''; return; }
   const totalPages = Math.max(1, Math.ceil(ordersTotal / ordersPageSize));
   if (ordersPage > totalPages) ordersPage = totalPages;
   el.innerHTML = `
@@ -13062,9 +13146,24 @@ function renderOrderCards(orders, containerId) {
         <span>🏢 ${branchName(o.branch)}</span>
         <span>📍 ${o.short_address || o.address || ''}</span>
       </div>
+      ${_adDslotBadge(o) ? `<div class="order-meta">${_adDslotBadge(o)}${o.delivery_note ? `<span>📝 ${_esc(o.delivery_note)}</span>` : ''}</div>` : ''}
       <div class="order-meta">${_payRow(o)}</div>
     </div>`;
   }).join('')}</div>`;
+}
+// Согласованная доставка (ставится в staff.html → карточка заказа «📅 Согласовать доставку»)
+function _adIsoLocal(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function _adDslotBadge(o) {
+  if (!o?.delivery_date || !['packing', 'ready', 'delivery'].includes(o.status)) return '';
+  const d = String(o.delivery_date).slice(0, 10);
+  const today = _adIsoLocal(new Date()), tomorrow = _adIsoLocal(new Date(Date.now() + 86400000));
+  const f = (o.delivery_from || '').slice(0, 5), to = (o.delivery_to || '').slice(0, 5);
+  const time = f && to ? `${f}–${to}` : f ? `с ${f}` : to ? `до ${to}` : 'в течение дня';
+  const day = d === today ? 'Сегодня' : d === tomorrow ? 'Завтра' : `${d.slice(8, 10)}.${d.slice(5, 7)}`;
+  const [bg, fg] = d < today ? ['#fee2e2', '#b91c1c'] : d === today ? ['#dcfce7', '#15803d'] : ['#e0f2fe', '#0369a1'];
+  return `<span style="background:${bg};color:${fg};border-radius:8px;padding:2px 8px;font-size:12px;font-weight:600">📅 ${day} ${time}</span>`;
 }
 // ══════════════════════════════════════
 //  LOCAL STORAGE HELPERS
@@ -13218,6 +13317,7 @@ function _staffChip(s, sz='') {
 
 let staffApiData = [];
 
+let _sfDigestTouched = false;  // тумблер «Сводка доставок» трогали в открытой форме
 async function loadStaffFromAPI() {
   const el = document.getElementById('staffTable');
   if (el) el.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text2)">Загрузка...</td></tr>';
@@ -13909,6 +14009,9 @@ async function openStaffModal(id=null) {
   sfSetToggle('sf_can_drive', false);
   sfSetToggle('sf_can_view_timesheet', false);
   sfSetToggle('sf_hide_client_phone', false);
+  // сводка доставок: у нового — по роли на сервере, пока тумблер не трогали (_sfDigestTouched)
+  _sfDigestTouched = false;
+  sfSetToggle('sf_notify_delivery_digest', false);
   sfSetGender('M');
   sfUpdateAvatar(); sfUpdateRoleBadge();
 
@@ -13948,6 +14051,7 @@ async function openStaffModal(id=null) {
     sfSetToggle('sf_can_view_timesheet',  !!s.can_view_timesheet);
     sfSetToggle('sf_notify_new_users',   s.notify_new_users === true);
     sfSetToggle('sf_hide_client_phone',  !!s.hide_client_phone);
+    sfSetToggle('sf_notify_delivery_digest', !!s.notify_delivery_digest);
     sfSetToggle('sf_can_measure',         !!s.can_measure);
     sfSetToggle('sf_can_approve_measure', !!s.can_approve_measure);
     sfSetToggle('sf_can_create_order',    s.can_create_order !== false);
@@ -14121,6 +14225,8 @@ async function saveStaff() {
   const canViewTimesheet     = document.getElementById('sf_can_view_timesheet')?.checked ?? false;
   const notifyNewUsers       = document.getElementById('sf_notify_new_users')?.checked ?? false;
   const hideClientPhone      = document.getElementById('sf_hide_client_phone')?.checked ?? false;
+  // null — не менять (новый сотрудник, тумблер не трогали → по роли)
+  const notifyDeliveryDigest = (id || _sfDigestTouched) ? (document.getElementById('sf_notify_delivery_digest')?.checked ?? false) : null;
   const canMeasure          = document.getElementById('sf_can_measure')?.checked ?? false;
   const canApproveMeasure   = document.getElementById('sf_can_approve_measure')?.checked ?? false;
   const canOverrideMeasure  = document.getElementById('sf_can_override_measure')?.checked ?? false;
@@ -14139,7 +14245,7 @@ async function saveStaff() {
     birth_date: document.getElementById('sf_birth_date').value || null,
   };
 
-  const permBody = { can_edit_items: canEditItems, can_measure: canMeasure, can_approve_measure: canApproveMeasure, can_override_measure: canOverrideMeasure, can_create_order: canCreateOrder, can_confirm_order: canConfirmOrder, can_edit_confirmed: canEditConfirmed, can_send_pickup: canSendPickup, can_edit_delivery: canEditDelivery, can_edit_price: canEditPrice, can_manage_cash: canManageCash, can_approve_debt: canApproveDebt, can_drive: canDrive, can_view_timesheet: canViewTimesheet, notify_new_users: notifyNewUsers, hide_client_phone: hideClientPhone };
+  const permBody = { can_edit_items: canEditItems, can_measure: canMeasure, can_approve_measure: canApproveMeasure, can_override_measure: canOverrideMeasure, can_create_order: canCreateOrder, can_confirm_order: canConfirmOrder, can_edit_confirmed: canEditConfirmed, can_send_pickup: canSendPickup, can_edit_delivery: canEditDelivery, can_edit_price: canEditPrice, can_manage_cash: canManageCash, can_approve_debt: canApproveDebt, can_drive: canDrive, can_view_timesheet: canViewTimesheet, notify_new_users: notifyNewUsers, hide_client_phone: hideClientPhone, notify_delivery_digest: notifyDeliveryDigest };
   try {
     if (id) {
       const res = await apiFetch(`${API_BASE}/staff/${id}`, {
@@ -15891,7 +15997,7 @@ const _BP_DEFAULT_BLOCKS = [
   { id:'items',       label:'Позиции',                   enabled:true, fontSize:11, bold:false, italic:false, underline:false, fontFamily:'inherit', marginTop:0, marginBottom:0 },
   { id:'client_name', label:'ФИО клиента',               enabled:true, fontSize:14, bold:true,  italic:true,  underline:false, fontFamily:'inherit', marginTop:7, marginBottom:0, prefix:'ФИО: ' },
   { id:'phone',       label:'Телефон',                   enabled:true, fontSize:15, bold:true,  italic:false, underline:false, fontFamily:'inherit', marginTop:0, marginBottom:0, prefix:'Тел: ' },
-  { id:'total',       label:'Итого',                     enabled:true, fontSize:16, bold:true,  italic:false, underline:false, fontFamily:'inherit', marginTop:8, marginBottom:0, prefix:'Итого: ' },
+  { id:'total',       label:'Сумма заказа / Скидка',     enabled:true, fontSize:16, bold:true,  italic:false, underline:false, fontFamily:'inherit', marginTop:8, marginBottom:0, prefix:'Итого: ' },
   { id:'payment',     label:'Оплачено/К оплате',         enabled:true, fontSize:13, bold:false, italic:false, underline:false, fontFamily:'inherit', marginTop:8, marginBottom:0 },
   { id:'separator',   label:'Разделитель между заказами',enabled:true, thickness:3, marginTop:6, marginBottom:6 },
 ];
@@ -15903,6 +16009,8 @@ const _BP_SAMPLE_ORDER = {
   client_name: 'Иванова Гульнора',
   phone: '+998 97 366 13 00',
   total: '254 000 сум',
+  gross: '264 000 сум',
+  disc: '10 000 сум',
   paid: '130 000 сум',
   due: '124 000 сум',
 };
@@ -16039,9 +16147,11 @@ function _renderBpPreview() {
     else if (b.id === 'items')       content = s.items.join('<br>');
     else if (b.id === 'client_name') content = `${b.prefix||''}${s.client_name}`;
     else if (b.id === 'phone')       content = `${b.prefix||''}${s.phone}`;
-    else if (b.id === 'total')       content = `${b.prefix||''}${s.total}`;
-    else if (b.id === 'payment')     content = `Оплачено: ${s.paid} · К оплате: ${s.due}`;
+    // как в staff.html печати: каждая сумма отдельной строкой (термопринтер)
+    else if (b.id === 'total')       content = [`Сумма заказа: ${s.gross}`, `Скидка: −${s.disc}`];
+    else if (b.id === 'payment')     content = [`Оплачено: ${s.paid}`, `К оплате: ${s.due}`];
     if (!content) return '';
+    if (Array.isArray(content)) return content.map((c, i) => `<div style="${i ? _bpStyleStr(b).replace(/margin-top:[^;]*/, 'margin-top:0px') : _bpStyleStr(b)}">${c}</div>`).join('');
     return `<div style="${_bpStyleStr(b)}">${content}</div>`;
   }).join('');
   el.innerHTML = html || '<div style="color:var(--text2);font-size:12px">Все блоки скрыты</div>';
@@ -16662,6 +16772,7 @@ async function _odRefreshClientDiscount() {
   if (d?.ok && d.order) {
     _adminOrderCache.client_discount_pct  = d.order.client_discount_pct;
     _adminOrderCache.client_discount_kind = d.order.client_discount_kind;
+    _adminOrderCache.client_discount_enabled = d.order.client_discount_enabled;
     _adminOrderCache.client_discount      = d.order.client_discount;
     odUpdateTotal();
   }
@@ -16702,11 +16813,24 @@ function odUpdateTotal() {
   }
   const cdBox = el('od_client_disc_box');
   if (cdBox) {
-    cdBox.style.display = clientDisc > 0 ? '' : 'none';
-    const kind = _adminOrderCache?.client_discount_kind;
-    if (el('od_client_disc_lbl')) el('od_client_disc_lbl').textContent =
-      `${CLIENT_DISC_LABELS[kind] || 'Скидка'} −${Number(_adminOrderCache?.client_discount_pct || 0)}%`;
-    if (el('od_client_disc_val')) el('od_client_disc_val').textContent = Number(clientDisc).toLocaleString('ru');
+    // Виден всегда (2026-10-20): есть скидка — зелёный с суммой, нет — серый «нет» с причиной
+    const on = clientDisc > 0;
+    const o = _adminOrderCache || {};
+    const kind = o.client_discount_kind;
+    cdBox.style.display = '';
+    cdBox.style.background = on ? '#dcfce7' : 'var(--surface2)';
+    const lbl = el('od_client_disc_lbl'), val = el('od_client_disc_val'), cur = el('od_client_disc_cur'), why = el('od_client_disc_why');
+    if (lbl) { lbl.textContent = on ? `${CLIENT_DISC_LABELS[kind] || 'Скидка'} −${Number(o.client_discount_pct || 0)}%` : '🏷 Системная скидка'; lbl.style.color = on ? '#15803d' : 'var(--text2)'; }
+    if (val) { val.textContent = on ? Number(clientDisc).toLocaleString('ru') : 'нет'; val.style.color = on ? '#15803d' : 'var(--text2)'; }
+    if (cur) cur.style.display = on ? '' : 'none';
+    if (why) {
+      why.style.display = on ? 'none' : '';
+      why.textContent = on ? '' :
+        (['delivered','cancelled'].includes(o.status) && !Number(o.client_discount_pct || 0)) ? 'заказ закрыт'
+        : (o.client_discount_enabled === false) ? 'заказ создан до включения системных скидок'
+        : (pickupDisc > 0 || deliveryDisc > 0) ? 'уже есть скидка за самовывоз/доставку'
+        : 'заказ оформлен оператором, не через бот/сайт, или скидка за бот/сайт выключена в настройках';
+    }
   }
   const pendBox = el('od_pending_box');
   if (pendBox) {
@@ -21624,6 +21748,7 @@ function _renderStop(s, num, routeId) {
         ${s.client_phone?`<div style="font-size:12px;margin-top:2px">📞 <a href="tel:${s.client_phone}" style="color:var(--accent);font-weight:600">${s.client_phone}</a></div>`:''}
         ${s.client_phone2?`<div style="font-size:12px;margin-top:2px">📞 <a href="tel:${String(s.client_phone2).replace(/[^0-9+]/g,'')}" style="color:var(--accent);font-weight:600">${_esc(s.client_phone2)}</a></div>`:''}
         ${dateRow?`<div style="font-size:11px;color:var(--text2);margin-top:3px">${dateRow}</div>`:''}
+        ${_adDslotBadge({ ...s, status: s.order_status }) ? `<div style="margin-top:3px">🕘 ${_adDslotBadge({ ...s, status: s.order_status })}${s.delivery_note ? ` <span style="font-size:11px;color:var(--text2)">📝 ${_esc(s.delivery_note)}</span>` : ''}</div>` : ''}
         <div style="font-size:11px;color:var(--text2);margin-top:3px;flex-wrap:wrap">💰 ${fmtSum(netPrice)} · <span style="color:${paidAmt>0?'#22c55e':'var(--text2)'}">Опл: ${fmtSum(paidAmt)}</span> · Долг: <span style="color:${debt>0?'#ef4444':'var(--text2)'}">${fmtSum(debt)}</span></div>
         <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;align-items:center">
           <span style="font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(99,102,241,.12);color:#818cf8;white-space:nowrap">${orderStatusLabel}</span>
@@ -22114,8 +22239,10 @@ function filterRouteOrdersPicker() {
 function renderRouteOrdersPicker() {
   const el = document.getElementById('roPickerList');
   if (!_roFiltered.length) { el.innerHTML=`<div style="padding:24px;text-align:center;color:var(--text2)">${_t('empty.orders')}</div>`; return; }
-  // Сортировка: с локацией — сверху, без локации — снизу
-  const sorted = [..._roFiltered].sort((a, b) => (!!b.location) - (!!a.location));
+  // Сортировка: с локацией — сверху, без локации — снизу; внутри — сначала согласованная
+  // доставка по дате/времени (перенос из ARTEZ 2026-10-22)
+  const _dk = o => o.delivery_date ? `0${String(o.delivery_date).slice(0, 10)}${o.delivery_from || ''}` : '1';
+  const sorted = [..._roFiltered].sort((a, b) => ((!!b.location) - (!!a.location)) || _dk(a).localeCompare(_dk(b)));
   const noLocCount = sorted.filter(o => !o.location).length;
   let html = '';
   if (noLocCount > 0 && noLocCount < sorted.length) {
@@ -22152,6 +22279,7 @@ function renderRouteOrdersPicker() {
         <div style="font-size:12px;color:${hasLoc?'var(--text2)':'#f59e0b'}">${hasLoc?'📍':' ⚠️'} ${o.short_address||o.address||'—'}</div>
         <div style="font-size:11px;color:var(--text2)">${RO_STATUS_OPTIONS[o.status]||o.status} ${o.client_phone?'· '+o.client_phone:''}</div>
         ${dateRow ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">${dateRow}</div>` : ''}
+        ${_adDslotBadge(o) ? `<div style="margin-top:3px">${_adDslotBadge(o)}</div>` : ''}
         <div style="font-size:11px;color:var(--text2);margin-top:2px">💰 ${fmtSum(netPrice)} · <span style="color:${paidAmt>0?'#22c55e':'var(--text2)'}">Опл: ${fmtSum(paidAmt)}</span> · Долг: <span style="color:${debt>0?'#ef4444':'var(--text2)'}">${fmtSum(debt)}</span></div>
         ${routeNote ? `<div style="font-size:11px;color:#d97706;font-weight:600;margin-top:3px">${routeNote}</div>` : ''}
       </div>
@@ -24561,8 +24689,10 @@ function confirmBranchLoc() {
           <div id="od_client_disc_lbl" style="font-size:11px;color:#15803d;margin-bottom:4px">Скидка</div>
           <div style="display:flex;align-items:baseline;gap:3px">
             <span id="od_client_disc_val" style="font-weight:700;font-size:15px;color:#15803d">—</span>
-            <span style="font-size:11px;color:#15803d;white-space:nowrap;margin-left:2px">сум</span>
+            <span id="od_client_disc_cur" style="font-size:11px;color:#15803d;white-space:nowrap;margin-left:2px">сум</span>
           </div>
+          <!-- почему системной скидки нет (2026-10-20) — блок виден всегда -->
+          <div id="od_client_disc_why" style="display:none;font-size:11px;color:#6b7280;margin-top:3px;line-height:1.35"></div>
         </div>
         <!-- Скидка ручная (редактируется) -->
         <div style="background:var(--surface2);border-radius:10px;padding:10px 12px">

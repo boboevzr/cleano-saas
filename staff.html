@@ -1454,7 +1454,7 @@ const _i18n = {
     'btn.find':'Найти',
     'drv.st.pending':'Ожидает','drv.st.done':'Доставлен','drv.st.skipped':'Пропущен',
     'drv.sheet.loading':'Загрузка…','drv.sheet.items_empty':'Позиции не найдены',
-    'drv.sheet.history_empty':'История пуста','drv.sheet.total':'💰 Итого:',
+    'drv.sheet.history_empty':'История пуста','drv.sheet.total':'💰 Итого:','drv.sheet.min':'мин.',
     'drv.sheet.error':'Ошибка:','drv.sheet.driver':'Водитель',
     'drv.confirm.deliver_title':'Подтвердить доставку?',
     'drv.confirm.deliver_body':'Заказ будет отмечен как Доставлен',
@@ -1530,6 +1530,8 @@ const _i18n = {
     'ord.title':'Заявки','ord.filters':'🔽 Фильтры','ord.select_all':'Все','ord.delete':'🗑 Удалить','ord.print':'🖨 Печать','ord.excel':'📊 в Excel','ord.reset':'↺ Сброс','ord.select':'☑️ Выбрать','ord.search_ph':'Номер, телефон…','ord.all':'🗂 Все','ord.mine':'👤 Мои','ord.debt':'💸 Долги','ord.pageSize':'На странице:',
     'ord.date.all':'Все даты','ord.date.today':'Сегодня','ord.date.yesterday':'Вчера','ord.date.week':'Неделя','ord.date.month':'Месяц','ord.date.period':'Период',
     'ord.staff.all':'👤 Все сотрудники','ord.staff.pick':'Выбрать сотрудника','ord.staff.none':'Заявок от сотрудников нет','ord.staff.not_found':'Не найдено','ord.staff.search_ph':'Имя…',
+    'ord.bulk_status':'Статус','ord.bulk_status_title':'Новый статус выбранных','ord.bulk_status_confirm':'Изменить статус {n} заказов на «{s}»?','ord.bulk_status_done':'Статус изменён: {ok}','ord.bulk_status_failed':'Не изменено',
+    'ord.sum.filtered':'Отфильтровано','ord.sum.total':'Сумма заказов','ord.sum.paid':'Оплачено','ord.sum.due':'Ожидается','ord.sum.show':'Сводка','ord.sum.hide':'Скрыть сводку',
     'ord.empty':'Заявок нет','ord.loading':'Загрузка…','ord.no_access':'Нет доступа','ord.tab.unavailable':'недоступна для вашей роли',
     'ord.ask_admin':'💡 Нужен доступ?','ord.ask_admin.text':'Обратитесь к администратору или менеджеру — они смогут расширить ваши права',
     'ord.workshop_btn':'📥 В мастерской','ord.washing_btn':'🧼 Мойка',
@@ -1541,6 +1543,8 @@ const _i18n = {
     'wf.postpone.until':'Отложить до даты','wf.postpone.reason':'Причина',
     'wf.postpone.reason_ph':'Например: ремонт, переезд, отпуск…',
     'wf.postpone.reason_repair':'🔧 Ремонт','wf.postpone.reason_move':'📦 Переезд','wf.postpone.reason_vacation':'🏖 Отпуск',
+    'cdisc.title':'🏷 Системная скидка','cdisc.none':'нет','cdisc.why_old':'заказ создан до включения системных скидок','cdisc.why_other':'уже есть скидка за самовывоз/доставку','cdisc.why_operator':'заказ оформлен оператором, не через бот/сайт, или скидка за бот/сайт выключена в настройках','cdisc.why_closed':'заказ закрыт',
+    'dslot.tab':'К доставке','dslot.set':'Согласовать доставку','dslot.edit':'Изменить','dslot.date':'День доставки','dslot.time':'Время','dslot.custom':'Своё время','dslot.any_time':'В течение дня','dslot.am':'До обеда','dslot.pm':'После обеда','dslot.from':'с','dslot.until':'до','dslot.today':'Сегодня','dslot.tomorrow':'Завтра','dslot.note':'Примечание','dslot.note_ph':'Например: позвонить за час, дома только жена…','dslot.clear':'Снять','dslot.clear_confirm':'Снять согласованную доставку?','dslot.save':'Сохранить','dslot.saved':'Доставка согласована','dslot.date_required':'Укажите день','dslot.bad_range':'Время «с» должно быть раньше «до»','dslot.client_waits':'Клиент ждёт:','dslot.g.overdue':'🔴 Просрочено','dslot.g.today_am':'☀️ Сегодня до обеда','dslot.g.today_pm':'🌇 Сегодня после обеда','dslot.g.today_any':'🕘 Сегодня в течение дня','dslot.g.tomorrow':'📆 Завтра','dslot.g.later':'🗓 Позже','dslot.g.postponed':'⏸ Отложенные','dslot.g.none':'❓ Не согласовано — позвонить',
     'wf.postpone.submit':'⏸ Отложить','wf.postpone.date_required':'Укажите дату','wf.postpone.saved':'Доставка отложена',
     'sms.cancel':'Отмена',
     'sms.modal.title':'📲 Отправить SMS клиенту','sms.modal.hint':'Выберите тип и язык — на каком клиент общается',
@@ -1779,7 +1783,7 @@ const _i18n = {
     'btn.find':'Qidirish',
     'drv.st.pending':'Kutilmoqda','drv.st.done':'Yetkazildi','drv.st.skipped':'Oʻtkazib yuborildi',
     'drv.sheet.loading':'Yuklanmoqda…','drv.sheet.items_empty':'Pozitsiyalar topilmadi',
-    'drv.sheet.history_empty':'Tarix boʻsh','drv.sheet.total':'💰 Jami:',
+    'drv.sheet.history_empty':'Tarix boʻsh','drv.sheet.total':'💰 Jami:','drv.sheet.min':'min.',
     'drv.sheet.error':'Xato:','drv.sheet.driver':'Haydovchi',
     'drv.confirm.deliver_title':'Yetkazib berishni tasdiqlaysizmi?',
     'drv.confirm.deliver_body':'Buyurtma Yetkazildi deb belgilanadi',
@@ -1855,6 +1859,8 @@ const _i18n = {
     'ord.title':'Buyurtmalar','ord.filters':'🔽 Filtrlar','ord.select_all':'Barchasi','ord.delete':`🗑 Oʻchirish`,'ord.print':'🖨 Chop etish','ord.excel':'📊 Excelga','ord.reset':`↺ Tozalash`,'ord.select':'☑️ Tanlash','ord.search_ph':'Raqam, telefon…','ord.all':'🗂 Barchasi','ord.mine':'👤 Mening','ord.debt':'💸 Qarzlar','ord.pageSize':'Sahifada:',
     'ord.date.all':'Barcha sana','ord.date.today':'Bugun','ord.date.yesterday':'Kecha','ord.date.week':'Hafta','ord.date.month':'Oy','ord.date.period':'Davr',
     'ord.staff.all':'👤 Barcha xodimlar','ord.staff.pick':'Xodim tanlash','ord.staff.none':`Xodimlardan buyurtma yoʻq`,'ord.staff.not_found':'Topilmadi','ord.staff.search_ph':'Ism…',
+    'ord.sum.filtered':'Saralangan','ord.sum.total':'Buyurtmalar summasi','ord.sum.paid':'Toʻlangan','ord.sum.due':'Kutilmoqda','ord.sum.show':'Hisobot','ord.sum.hide':'Hisobotni yashirish',
+    'ord.bulk_status':'Holat','ord.bulk_status_title':'Tanlanganlar uchun yangi holat','ord.bulk_status_confirm':'{n} ta buyurtma holatini «{s}» ga oʻzgartirasizmi?','ord.bulk_status_done':'Holat oʻzgartirildi: {ok}','ord.bulk_status_failed':'Oʻzgartirilmadi',
     'ord.empty':`Buyurtma yoʻq`,'ord.loading':'Yuklanmoqda…','ord.no_access':`Kirish yoʻq`,'ord.tab.unavailable':`sizning rolingiz uchun mavjud emas`,
     'ord.ask_admin':'💡 Kirish kerakmi?','ord.ask_admin.text':`Administrator yoki menejerga murojaat qiling — ular huquqlaringizni kengaytira oladi`,
     'ord.workshop_btn':'📥 Ustaxonada','ord.washing_btn':'🧼 Yuvish',
@@ -1866,6 +1872,8 @@ const _i18n = {
     'wf.postpone.until':'Qaysi sanagacha kechiktirish','wf.postpone.reason':'Sabab',
     'wf.postpone.reason_ph':'Masalan: ta’mirlash, koʻchish, ta’til…',
     'wf.postpone.reason_repair':'🔧 Ta’mirlash','wf.postpone.reason_move':'📦 Koʻchish','wf.postpone.reason_vacation':'🏖 Ta’til',
+    'cdisc.title':'🏷 Tizim chegirmasi','cdisc.none':'yoʻq','cdisc.why_old':'buyurtma tizim chegirmalari yoqilishidan oldin yaratilgan','cdisc.why_other':'oʻzi olib kelish/olib ketish chegirmasi bor','cdisc.why_operator':'buyurtma operator tomonidan, bot/sayt orqali emas yoki bot/sayt chegirmasi sozlamalarda oʻchirilgan','cdisc.why_closed':'buyurtma yopilgan',
+    'dslot.tab':'Yetkazishga','dslot.set':'Yetkazishni kelishish','dslot.edit':'Oʻzgartirish','dslot.date':'Yetkazish kuni','dslot.time':'Vaqt','dslot.custom':'Boshqa vaqt','dslot.any_time':'Kun davomida','dslot.am':'Tushgacha','dslot.pm':'Tushdan keyin','dslot.from':'dan','dslot.until':'gacha','dslot.today':'Bugun','dslot.tomorrow':'Ertaga','dslot.note':'Izoh','dslot.note_ph':'Masalan: bir soat oldin qoʻngʻiroq qilish…','dslot.clear':'Olib tashlash','dslot.clear_confirm':'Kelishilgan yetkazishni olib tashlaysizmi?','dslot.save':'Saqlash','dslot.saved':'Yetkazish kelishildi','dslot.date_required':'Kunni koʻrsating','dslot.bad_range':'«Dan» vaqti «gacha»dan oldin boʻlishi kerak','dslot.client_waits':'Mijoz kutadi:','dslot.g.overdue':'🔴 Muddati oʻtgan','dslot.g.today_am':'☀️ Bugun tushgacha','dslot.g.today_pm':'🌇 Bugun tushdan keyin','dslot.g.today_any':'🕘 Bugun kun davomida','dslot.g.tomorrow':'📆 Ertaga','dslot.g.later':'🗓 Keyinroq','dslot.g.postponed':'⏸ Kechiktirilgan','dslot.g.none':'❓ Kelishilmagan — qoʻngʻiroq qilish',
     'wf.postpone.submit':'⏸ Kechiktirish','wf.postpone.date_required':'Sanani koʻrsating','wf.postpone.saved':'Yetkazish kechiktirildi',
     'sms.cancel':'Bekor qilish',
     'sms.modal.title':'📲 Mijozga SMS yuborish','sms.modal.hint':'Turi va tilni tanlang — mijoz qaysi tilda gaplashadi',
@@ -4215,6 +4223,7 @@ function _resetOrdersSelect() {
   if (delBtn) delBtn.style.display = 'none';
   if (prBtn)  prBtn.style.display = 'none';
   if (xlsBtn) xlsBtn.style.display = 'none';
+  _syncBulkStatusBtn();
 }
 function toggleOrdersSelectMode() {
   _ordersSelectMode = !_ordersSelectMode;
@@ -4250,20 +4259,15 @@ function toggleOrderSelect(id, row) {
   if (prBtn) prBtn.style.display = _selectedOrders.size ? '' : 'none';
   const xlsBtn = document.getElementById('bulkOrdersExcelBtn');
   if (xlsBtn) xlsBtn.style.display = _selectedOrders.size ? '' : 'none';
+  _syncBulkStatusBtn();
 }
 function selectAllOrders() {
   // Поиск (search=) теперь применяется на сервере при загрузке ordersData —
   // здесь его больше не дублируем (раньше локальная копия даже не проверяла
   // адрес, из-за чего "Выбрать все" молчаливо пропускало заказы, найденные
   // поиском по адресу).
-  const _numFrom = parseInt(ordersNumFrom, 10), _numTo = parseInt(ordersNumTo, 10);
-  const visible = ordersData.filter(o => {
-    if (ordersFilter === 'debt' && !_orderHasDebt(o)) return false;
-    if (ordersFilter !== 'all' && ordersFilter !== 'debt' && o.status !== ordersFilter) return false;
-    if (!isNaN(_numFrom) && _orderNumInt(o.order_num) < _numFrom) return false;
-    if (!isNaN(_numTo)   && _orderNumInt(o.order_num) > _numTo)   return false;
-    return true;
-  });
+  // те же фильтры, что у списка; отложенные (Готов + postponed_until) — НЕ выбираются никогда (как в ARTEZ)
+  const visible = _filterOrdersClient(ordersData).filter(o => !(o.status === 'ready' && o.postponed_until));
   visible.forEach(o => _selectedOrders.add(o.id));
   const el = document.getElementById('bulkOrdersCount');
   if (el) el.textContent = `${_selectedOrders.size} выбрано`;
@@ -4273,23 +4277,72 @@ function selectAllOrders() {
   if (prBtn) prBtn.style.display = _selectedOrders.size ? '' : 'none';
   const xlsBtn = document.getElementById('bulkOrdersExcelBtn');
   if (xlsBtn) xlsBtn.style.display = _selectedOrders.size ? '' : 'none';
+  _syncBulkStatusBtn();
   renderOrders();
 }
-async function applyBulkOrdersStatus() {
-  const status = document.getElementById('bulkOrdersStatusSel')?.value;
-  if (!status) { alert('Выберите статус'); return; }
-  if (!_selectedOrders.size) { alert('Ничего не выбрано'); return; }
-  const token = localStorage.getItem(TOKEN_KEY);
-  const res = await fetch(`${API_BASE}/staff/orders/bulk-status`, {
-    method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
-    body: JSON.stringify({ status, ids: [..._selectedOrders] })
-  });
-  if (res.ok) {
-    const d = await res.json();
-    alert(`✅ Статус изменён для ${d.updated} заявок`);
-    _resetOrdersSelect();
-    await loadOrders();
-  } else { alert('Ошибка'); }
+// ── Смена статуса выбранных заказов (2026-10-20) ─────────────────────────────
+// Кнопка «🔄 Статус» — в режиме «☑️ Выбрать» на вкладке конкретного статуса (не «Все»).
+// Каждый заказ — тем же PATCH /admin/orders/{id}/status, что и одиночная смена: права
+// по ролям, синхронизация маршрутов/канала, уведомления клиенту, комиссия агента.
+// (Старый POST /staff/orders/bulk-status всё это обходил — теперь только для админа.)
+const _BULK_STATUS_LIST = ['new','confirmed','pickup','received','washing','drying','packing','ready','delivery','delivered','cancelled'];
+function _syncBulkStatusBtn() {
+  const b = document.getElementById('bulkOrdersStatusBtn');
+  if (b) b.style.display = (_ordersSelectMode && _selectedOrders.size && ordersFilter !== 'all') ? '' : 'none';
+}
+function openBulkOrdersStatus() {
+  if (!_selectedOrders.size) return;
+  const cur = _ordersFilterToStatus(ordersFilter);
+  let ov = document.getElementById('bulkStatusOverlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'bulkStatusOverlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center';
+    ov.onclick = e => { if (e.target === ov) ov.style.display = 'none'; };
+    document.body.appendChild(ov);
+  }
+  // в onclick — только индекс в константном списке статусов
+  ov.innerHTML = `<div style="background:#fff;color:#1a1a1a;width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:16px 16px calc(var(--safe-bot,0px) + 16px);max-height:80vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:16px;font-weight:800">🔄 ${t('ord.bulk_status_title')} (${_selectedOrders.size})</div>
+      <button onclick="document.getElementById('bulkStatusOverlay').style.display='none'" style="border:none;background:#f3f4f6;border-radius:10px;width:32px;height:32px;font-size:16px;cursor:pointer">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${_BULK_STATUS_LIST.map((s, i) => s === cur ? '' : `<button onclick="applyBulkOrdersStatus(${i})" style="text-align:left;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:12px;background:${s === 'cancelled' ? '#fff1f2' : '#fff'};color:${s === 'cancelled' ? '#dc2626' : '#1a1a1a'};font-size:14px;font-weight:600;cursor:pointer">${statusLabel(s)}</button>`).join('')}
+    </div>
+  </div>`;
+  ov.style.display = 'flex';
+}
+async function applyBulkOrdersStatus(idx) {
+  const status = _BULK_STATUS_LIST[idx];
+  if (!status || !_selectedOrders.size) return;
+  const ids = [..._selectedOrders];
+  if (!confirm(t('ord.bulk_status_confirm').replace('{n}', ids.length).replace('{s}', statusLabel(status)))) return;
+  const ov = document.getElementById('bulkStatusOverlay');
+  if (ov) ov.innerHTML = `<div style="background:#fff;color:#1a1a1a;border-radius:18px 18px 0 0;padding:24px;width:100%;max-width:480px;text-align:center" id="bulkStatusProgress">⏳ 0 / ${ids.length}</div>`;
+  let ok = 0; const fails = [];
+  for (const id of ids) {
+    try {
+      const res = await fetch(`${API_BASE}/admin/orders/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_staffToken()}` },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) ok++;
+      else {
+        const e = await res.json().catch(() => ({}));
+        const o = ordersData.find(x => x.id === id);
+        fails.push(`${o?.order_num || '#' + id}: ${e.detail || res.status}`);
+      }
+    } catch (e) { fails.push(`#${id}: нет соединения`); }
+    const pr = document.getElementById('bulkStatusProgress');
+    if (pr) pr.textContent = `⏳ ${ok + fails.length} / ${ids.length}`;
+  }
+  if (ov) ov.style.display = 'none';
+  _resetOrdersSelect();
+  await loadOrders();
+  if (fails.length) alert(`${t('ord.bulk_status_done').replace('{ok}', ok)}\n\n${t('ord.bulk_status_failed')}:\n${fails.join('\n')}`);
+  else showToast(t('ord.bulk_status_done').replace('{ok}', ok), 'success');
 }
 function openBulkOrdersDeleteModal() {
   if (!_selectedOrders.size) { alert('Ничего не выбрано'); return; }
@@ -4416,8 +4469,10 @@ async function _printSelectedOrdersImpl() {
     const clientName = `${o.client_first_name||''} ${o.client_last_name||''}`.trim() || '—';
     const phone      = _fmtPhoneUZ(o.client_phone);
     const net        = _orderPrintNet(o);
-    const paid       = o.paid_amount || 0;
+    const printDisc  = Number(o.discount_sum||0) + Number(o.delivery_discount||0) + Number(o.manual_discount||0) + Number(o.client_discount||0);
+    const paid       = Number(o.paid_amount || 0);
     const due        = Math.max(0, net - paid);
+    const gross      = Number(o.items_total ?? o.total_price ?? 0);  // до скидок, как в _orderPrintNet
     const itemsHtml = groups.map((g, i) => {
       const isPcs = g.unit_key === 'pcs';
       const qty   = Number(g.raw_sqm || 0).toFixed(isPcs ? 0 : 2).replace('.', ',');
@@ -4441,9 +4496,14 @@ async function _printSelectedOrdersImpl() {
       else if (b.id === 'items')       content = itemsHtml;
       else if (b.id === 'client_name') content = `${b.prefix||''}${_esc(clientName)}`;
       else if (b.id === 'phone')       content = `${b.prefix||''}${_esc(phone)}`;
-      else if (b.id === 'total')       content = `${b.prefix||''}${fmtMoney(net)}`;
-      else if (b.id === 'payment')     content = paid > 0 ? `Оплачено: ${fmtMoney(paid)} · К оплате: ${fmtMoney(due)}` : '';
-      if (!content) return '';
+      // Суммы — каждая отдельной строкой (одна строка текста на div — требование
+      // термопринтера, см. выше; 2026-10-21): «Итого» = сумма заказа + скидка (если есть),
+      // «Оплачено/К оплате» = оплачено (если есть) + к оплате (всегда).
+      else if (b.id === 'total')       content = [`Сумма заказа: ${fmtMoney(gross)}`, printDisc > 0 ? `Скидка: −${fmtMoney(printDisc)}` : ''];
+      else if (b.id === 'payment')     content = [paid > 0 ? `Оплачено: ${fmtMoney(paid)}` : '', `К оплате: ${fmtMoney(due)}`];
+      if (Array.isArray(content)) content = content.filter(Boolean);
+      if (!content || !content.length) return '';
+      if (Array.isArray(content)) return content.map((c, i) => `<div style="${i ? style.replace(/margin-top:[^;]*/, 'margin-top:0px') : style}">${c}</div>`).join('');
       return `<div style="${style}">${content}</div>`;
     }).join('');
     orderBlocks.push(rowsHtml);
@@ -6990,18 +7050,21 @@ function pageOrders() {
     </div>
     <div class="filter-chips">
       ${statuses.map(s=>`<button class="fchip ${s===ordersFilter?'active':''}" id="ofc_${s}" onclick="setOrdersFilter('${s}')">${s==='all'?t('ord.all'):statusLabel(s)}</button>`).join('')}
+      ${!_isWasherPage ? `<button class="fchip ${ordersFilter==='dslot'?'active':''}" id="ofc_dslot" onclick="setOrdersFilter('dslot')">📅 ${t('dslot.tab')}</button>` : ''}
       ${!_isWasherPage ? `<button class="fchip ${ordersFilter==='debt'?'active':''}" id="ofc_debt" onclick="setOrdersFilter('debt')">${t('ord.debt')}</button>` : ''}
     </div>
     ${hasPermission('orders') && !_isWasherPage ? `
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin:2px 0 10px">
       <span id="bulkOrdersCount" style="display:none;font-size:13px;font-weight:600;color:#374151"></span>
       <button id="bulkOrdersSelectAllBtn" onclick="selectAllOrders()" style="display:none;font-size:13px;font-weight:600;color:#163E3B;background:none;border:1.5px solid #163E3B;border-radius:10px;padding:5px 12px;cursor:pointer">${t('ord.select_all')}</button>
+      <button id="bulkOrdersStatusBtn" onclick="openBulkOrdersStatus()" style="display:none;padding:6px 14px;border:none;border-radius:10px;background:#ede9fe;color:#6d28d9;font-size:13px;font-weight:600;cursor:pointer">🔄 ${t('ord.bulk_status')}</button>
       <button id="bulkOrdersPrintBtn" onclick="printSelectedOrders()" style="display:none;padding:6px 14px;border:none;border-radius:10px;background:#e0f2fe;color:#0369a1;font-size:13px;font-weight:600;cursor:pointer">${t('ord.print')}</button>
       <button id="bulkOrdersExcelBtn" onclick="exportSelectedOrdersExcel()" style="display:none;padding:6px 14px;border:none;border-radius:10px;background:#dcfce7;color:#15803d;font-size:13px;font-weight:600;cursor:pointer">${t('ord.excel')}</button>
       <button id="bulkOrdersDeleteBtn" onclick="openBulkOrdersDeleteModal()" style="display:none;padding:6px 14px;border:none;border-radius:10px;background:#fee2e2;color:#ef4444;font-size:13px;font-weight:600;cursor:pointer">${t('ord.delete')}</button>
       <button id="ordersSelectBtn" onclick="toggleOrdersSelectMode()" style="background:none;border:1.5px solid var(--sep);border-radius:10px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer">${t('ord.select')}</button>
     </div>
     ` : ''}
+    <div id="ordersSummary" style="display:none"></div>
     <div id="ordersList"><div class="empty-box">${t('ord.loading')}</div></div>
     <div id="ordersPager"></div>
   `;
@@ -7036,6 +7099,7 @@ function setOrdersOwnerFilter(v) {
 function _ordersFilterToStatus(f) {
   if (f === 'all' || f === 'debt') return null;
   if (f === 'ready_postponed') return 'ready';
+  if (f === 'dslot') return 'ready,delivery';  // «📅 К доставке» — оба статуса
   return f;
 }
 
@@ -7056,6 +7120,7 @@ async function loadOrders(silent = false) {
     // «Долги» — не настоящий статус (считается по формуле на клиенте), поэтому
     // грузим без пагинации, с высоким limit — как и раньше, не трогаем.
     const isDebt = ordersFilter === 'debt';
+    const noPage = isDebt || ordersFilter === 'dslot';  // «К доставке» тоже целиком — группы по дням
     const si = document.getElementById('ordersSearch');
     if (si && !si.value) {
       const _sfSearch = JSON.parse(sessionStorage.getItem('sf_orders')||'null')?.s||'';
@@ -7068,14 +7133,14 @@ async function loadOrders(silent = false) {
     const search = (si?.value || '').trim();
     const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
     _syncClearBtn('ordersSearch','ordersSearchClear');
-    const params = isDebt
-      ? `limit=1000${searchParam}`
+    const params = noPage
+      ? `limit=1000${status ? `&status=${status}` : ''}${searchParam}`
       : `limit=${ordersPageSize}&offset=${(ordersPage-1)*ordersPageSize}${status ? `&status=${status}` : ''}${searchParam}`;
     const res = await fetch(`${API_BASE}${path}?${params}`, { headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) {
       const data = await res.json();
       ordersData  = data.orders || [];
-      ordersTotal = isDebt ? 0 : (data.total || 0);
+      ordersTotal = noPage ? 0 : (data.total || 0);
       renderOrders(); _updateOrdersFilterBtn();
     }
   } catch {}
@@ -7084,6 +7149,7 @@ async function loadOrders(silent = false) {
 function setOrdersFilter(s) {
   ordersFilter = s;
   ordersPage = 1;
+  _syncBulkStatusBtn();  // «🔄 Статус» — только не на вкладке «Все»
   document.querySelectorAll('.fchip[id^="ofc_"]').forEach(b=>b.classList.remove('active'));
   const fc = document.getElementById(`ofc_${s}`);
   if (fc) fc.classList.add('active');
@@ -7095,7 +7161,7 @@ const ORDERS_PAGE_SIZES = [50, 100, 200, 300, 500];
 function _renderOrdersPager() {
   const el = document.getElementById('ordersPager');
   if (!el) return;
-  if (ordersFilter === 'debt') { el.innerHTML = ''; return; } // «Долги» без пагинации
+  if (ordersFilter === 'debt' || ordersFilter === 'dslot') { el.innerHTML = ''; return; } // «Долги»/«К доставке» без пагинации
   const totalPages = Math.max(1, Math.ceil(ordersTotal / ordersPageSize));
   if (ordersPage > totalPages) ordersPage = totalPages;
   el.innerHTML = `
@@ -7339,6 +7405,99 @@ function selectOrdersStaff(name) {
 const WASHER_ALLOWED_STATUSES = new Set(['all','received','washing','drying','packing','ready']);
 
 const fmtMoney = n => (n != null && n !== '' && Number(n) !== 0) ? Number(n).toLocaleString('ru') + ' сум' : '—';
+// «К оплате» со скидками, округлено вниз до 1000 — как в ARTEZ (сводка над списком)
+function _orderNet(o) {
+  const total = Number(o.items_total ?? o.total_price ?? 0);
+  const disc  = Number(o.discount_sum||0) + Number(o.delivery_discount||0) + Number(o.manual_discount||0) + Number(o.client_discount||0);
+  const net   = Math.max(0, total - disc);
+  return net - (net % 1000);
+}
+// Фильтры списка заказов, которые применяются на клиенте (статус-вкладка, сотрудник,
+// номера, «мои», дата) — одна функция и для списка, и для сводки «Отфильтровано» (2026-10-20).
+function _filterOrdersClient(list) {
+  let items = list;
+  if (ordersFilter === 'debt') items = items.filter(_orderHasDebt);
+  else if (ordersFilter === 'ready') items = items.filter(o=>o.status==='ready' && !o.postponed_until);
+  else if (ordersFilter === 'ready_postponed') items = items.filter(o=>o.status==='ready' && !!o.postponed_until);
+  else if (ordersFilter === 'dslot') items = items.filter(o=>['ready','delivery'].includes(o.status) && o.delivery_type !== 'self');
+  else if (ordersFilter !== 'all') items = items.filter(o=>o.status===ordersFilter);
+  if (ordersStaffFilter) items = items.filter(o => _orderCreatorName(o) === ordersStaffFilter);
+  const _numFrom = parseInt(ordersNumFrom, 10), _numTo = parseInt(ordersNumTo, 10);
+  if (!isNaN(_numFrom)) items = items.filter(o => _orderNumInt(o.order_num) >= _numFrom);
+  if (!isNaN(_numTo))   items = items.filter(o => _orderNumInt(o.order_num) <= _numTo);
+  if (ordersOwnerFilter === 'mine') {
+    const myName = [currentStaff?.first_name, currentStaff?.last_name].filter(Boolean).join(' ');
+    items = items.filter(o => _orderCreatorName(o) === myName);
+  }
+  return _applyDateFilter(items, 'created_at', ordersDateFilter, ordersDateFrom, ordersDateTo);
+}
+
+// ── Сводка над списком заказов (2026-10-20): «Отфильтровано: N · Сумма заказов ·
+// Оплачено · Ожидается» — ожидаемая касса для админа и менеджера. Список грузится
+// постранично, поэтому для сводки — отдельный запрос ВСЕХ заказов той же вкладки и
+// поиска (кэш по параметрам), дальше те же клиентские фильтры, что у списка.
+// Сумма — «к оплате» со скидками (_orderNet), отменённые в деньги не входят.
+let _ordersSummaryCache = { key: null, orders: null, pending: null, at: 0 };
+const _ORDERS_SUMMARY_TTL = 120000; // мс — список обновляется раз в 30 с, «все заказы» для сводки — не чаще раза в 2 мин
+function _ordersSummaryAllowed() { return ['admin', 'manager'].includes(currentStaff?.role); }
+async function _ordersSummaryLoad() {
+  const status = _ordersFilterToStatus(ordersFilter);
+  const search = (document.getElementById('ordersSearch')?.value || '').trim();
+  const key = `${ordersFilter}|${status || ''}|${search}`;
+  if (_ordersSummaryCache.key === key && _ordersSummaryCache.orders && Date.now() - _ordersSummaryCache.at < _ORDERS_SUMMARY_TTL) return _ordersSummaryCache.orders;
+  if (ordersFilter === 'debt') { _ordersSummaryCache = { key, orders: ordersData, at: Date.now() }; return ordersData; } // «Долги» и так без пагинации
+  if (_ordersSummaryCache.key === key && _ordersSummaryCache.pending) return _ordersSummaryCache.pending;
+  const path = hasPermission('orders') ? '/staff/orders' : '/staff/orders/own';
+  const qs = `limit=5000${status ? `&status=${status}` : ''}${search ? `&search=${encodeURIComponent(search)}` : ''}`;
+  const p = fetch(`${API_BASE}${path}?${qs}`, { headers: { Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` } })
+    .then(r => r.ok ? r.json() : null).then(d => d?.orders || null).catch(() => null);
+  _ordersSummaryCache = { key, orders: _ordersSummaryCache.key === key ? _ordersSummaryCache.orders : null, pending: p, at: _ordersSummaryCache.at };
+  const orders = await p;
+  if (_ordersSummaryCache.key === key) _ordersSummaryCache = { key, orders, pending: null, at: Date.now() };
+  return orders;
+}
+// По умолчанию скрыта и ничего не грузит — считается только когда открыта кнопкой 👁 (2026-10-20)
+let _ordersSummaryOpen = false;
+function toggleOrdersSummary() {
+  _ordersSummaryOpen = !_ordersSummaryOpen;
+  if (!_ordersSummaryOpen) _ordersSummaryCache = { key: null, orders: null, pending: null, at: 0 };
+  _renderOrdersSummary();
+}
+async function _renderOrdersSummary() {
+  const box = document.getElementById('ordersSummary');
+  if (!box) return;
+  if (!_ordersSummaryAllowed()) { box.style.display = 'none'; return; }
+  const eyeBtn = (open) => `<button onclick="toggleOrdersSummary()" title="${open ? t('ord.sum.hide') : t('ord.sum.show')}" style="border:1.5px solid var(--sep);background:var(--bg);color:var(--text2);border-radius:10px;padding:3px 10px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">${open ? '🙈' : '👁 ' + t('ord.sum.show')}</button>`;
+  if (!_ordersSummaryOpen) {
+    box.style.cssText = 'display:flex;justify-content:flex-end;margin:0 0 8px';
+    box.innerHTML = eyeBtn(false);
+    return;
+  }
+  if (!_ordersSummaryCache.orders) {  // надпись — только при первой загрузке, без мигания каждые 30 с
+    box.style.cssText = 'display:flex;justify-content:flex-end;margin:0 0 8px';
+    box.innerHTML = `<span style="font-size:12.5px;color:var(--text2);padding:4px 0">${t('ord.loading')}</span>`;
+  }
+  const all = await _ordersSummaryLoad();
+  if (!_ordersSummaryOpen) return;  // закрыли, пока грузилось
+  if (!all) { box.innerHTML = eyeBtn(true); return; }
+  const items = _filterOrdersClient(all);
+  let total = 0, paid = 0, due = 0;
+  items.forEach(o => {
+    if (o.status === 'cancelled') return;
+    const net = _orderNet(o), p = Number(o.paid_amount || 0);
+    total += net; paid += p; due += Math.max(0, net - p);
+  });
+  const m = v => Number(Math.round(v)).toLocaleString('ru') + ' ' + t('unit.sum');
+  const sep = '<span style="opacity:.35"> · </span>';
+  box.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;padding:9px 12px;margin:0 0 8px;border-radius:12px;background:var(--green-bg,#f0fdf4);border:1px solid rgba(22,163,74,.25);font-size:12.5px;color:var(--text)';
+  box.innerHTML =
+    `<span>${t('ord.sum.filtered')}: <b>${items.length}</b></span>${sep}` +
+    `<span>${t('ord.sum.total')}: <b>${m(total)}</b></span>${sep}` +
+    `<span>${t('ord.sum.paid')}: <b style="color:#16a34a">${m(paid)}</b></span>${sep}` +
+    `<span>${t('ord.sum.due')}: <b style="color:#b45309">${m(due)}</b></span>` +
+    `<span style="margin-left:auto">${eyeBtn(true)}</span>`;
+}
+
 // Та же формула, что в get_orders_with_debt (бэкенд) — items_total/total_price минус
 // все скидки минус уже учтённые платежи. Используется и в _payRow, и в фильтре «Долги».
 function _orderDebtAmount(o) {
@@ -7389,24 +7548,28 @@ function renderOrders() {
   const WASHER_ORDER_STATUSES = new Set(['received','washing','drying','packing','ready']);
   _renderOrdersDateRow();
   _renderOrdersPager();
-  let items = isWasher ? ordersData.filter(o => WASHER_ORDER_STATUSES.has(o.status)) : ordersData;
-  if (ordersFilter === 'debt') items = items.filter(_orderHasDebt);
-  else if (ordersFilter === 'ready') items = items.filter(o=>o.status==='ready' && !o.postponed_until);
-  else if (ordersFilter === 'ready_postponed') items = items.filter(o=>o.status==='ready' && !!o.postponed_until);
-  else if (ordersFilter !== 'all') items = items.filter(o=>o.status===ordersFilter);
-  if (ordersStaffFilter) items = items.filter(o => _orderCreatorName(o) === ordersStaffFilter);
-  const _numFrom = parseInt(ordersNumFrom, 10), _numTo = parseInt(ordersNumTo, 10);
-  if (!isNaN(_numFrom)) items = items.filter(o => _orderNumInt(o.order_num) >= _numFrom);
-  if (!isNaN(_numTo))   items = items.filter(o => _orderNumInt(o.order_num) <= _numTo);
-  if (ordersOwnerFilter === 'mine') {
-    const myName = [currentStaff?.first_name, currentStaff?.last_name].filter(Boolean).join(' ');
-    items = items.filter(o => _orderCreatorName(o) === myName);
-  }
-  items = _applyDateFilter(items, 'created_at', ordersDateFilter, ordersDateFrom, ordersDateTo);
+  let items = _filterOrdersClient(isWasher ? ordersData.filter(o => WASHER_ORDER_STATUSES.has(o.status)) : ordersData);
   _renderOrdersStaffRow();
+  _renderOrdersSummary();
   if (!items.length) { el.innerHTML = `<div class="empty-box">${t('ord.empty')}</div>`; return; }
   const _pendingMeasureOrderIds = new Set(_pendingMeasureReviews.map(r => r.order_id));
+  // «📅 К доставке» — по группам: просрочено → сегодня до/после обеда → завтра → позже → отложенные → не согласовано
+  const _isDslotTab = ordersFilter === 'dslot';
+  const _dsCount = {};
+  if (_isDslotTab) {
+    const gi = o => _DSLOT_GROUPS.indexOf(_dslotGroup(o));
+    items = [...items].sort((a, b) => gi(a) - gi(b)
+      || String(a.delivery_date || '').localeCompare(String(b.delivery_date || ''))
+      || String(a.delivery_from || '').localeCompare(String(b.delivery_from || '')));
+    items.forEach(o => { const g = _dslotGroup(o); _dsCount[g] = (_dsCount[g] || 0) + 1; });
+  }
+  let _dsLast = null;
   el.innerHTML = `<div class="list-card">${items.map(o=>{
+    let _dsHdr = '';
+    if (_isDslotTab && _dslotGroup(o) !== _dsLast) {
+      _dsLast = _dslotGroup(o);
+      _dsHdr = `<div style="padding:10px 14px 6px;font-size:12px;font-weight:800;letter-spacing:.03em;color:${_dsLast === 'overdue' ? '#dc2626' : 'var(--text2)'};background:var(--bg)">${t('dslot.g.' + _dsLast)} (${_dsCount[_dsLast]})</div>`;
+    }
     const sel = _selectedOrders.has(o.id);
     const onclick = _ordersSelectMode ? `toggleOrderSelect(${o.id},this)` : `staffOpenOrder(${o.id})`;
     const outline = sel ? 'outline:2px solid #163E3B;outline-offset:-2px;' : '';
@@ -7417,12 +7580,13 @@ function renderOrders() {
     const expressStyle = isExpress && !measureStyle ? 'border-left:3px solid #f59e0b;background:rgba(245,158,11,.04);' : '';
     const cancelledStyle = o.status === 'cancelled' ? 'background:rgba(239,68,68,.08);border-left:3px solid #ef4444;' : '';
     const cardStyle = outline + (cancelledStyle || measureStyle || expressStyle);
-    return `<div class="list-item" onclick="${onclick}" style="cursor:pointer;${cardStyle}">
+    return _dsHdr + `<div class="list-item" onclick="${onclick}" style="cursor:pointer;${cardStyle}">
       ${_ordersSelectMode ? `<input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();toggleOrderSelect(${o.id},this.closest('.list-item'))" style="width:20px;height:20px;flex-shrink:0;accent-color:#163E3B">` : `<div class="li-icon" style="background:${isExpress?'#fef3c7':'var(--green-bg)'}">${isExpress?'⚡':'📦'}</div>`}
       <div class="li-body">
         <div class="li-name">${sourceIcon(o.source)} #${(o.order_num||'').replace(/^[A-Z0-9]+-/,'')}${o.item_count > 0 ? `<span style="color:#888">/${o.item_count}</span>` : ''}${o.corrected_count > 0 ? `<span style="color:#f97316;font-size:11px;margin-left:5px">⚠️${o.corrected_count}</span>` : ''}${hasMeasure ? `<span style="background:#163E3B;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px">📐${measureCnt}</span>` : ''} ${_esc(o.client_first_name||'')} ${_esc(o.client_last_name||'')}</div>
         <div class="li-sub">${o.client_phone ? `📞 ${_esc(o.client_phone)} · ` : ''}${_esc(o.service||'')}</div>
         ${(o.short_address || o.address) ? `<div class="li-addr" title="${_esc(o.short_address || o.address || '').replace(/"/g, '&quot;')}">📍 ${_esc(o.short_address || o.address)}</div>` : ''}
+        ${_dslotBadge(o) ? `<div style="margin-top:3px">${_dslotBadge(o)}${o.delivery_note ? ` <span style="font-size:11px;color:var(--text2)">📝 ${_esc(o.delivery_note)}</span>` : ''}</div>` : ''}
         ${_callBtns(o.client_phone, o.client_phone2)}
         <div class="li-sub" style="font-size:11px;margin-top:2px">${_payRow(o)}</div>
       </div>
@@ -8670,7 +8834,11 @@ async function drvOpenAddOrders(routeId) {
     const inRoute = new Set((route?.stops || []).map(s => s.order_id));
     _drvAdd.list = lists.flatMap(d => d.orders || [])
       .filter(o => !inRoute.has(o.id))
-      .map(o => ({ o, busy: active[o.id] && active[o.id].route_id !== routeId ? active[o.id] : null }));
+      .map(o => ({ o, busy: active[o.id] && active[o.id].route_id !== routeId ? active[o.id] : null }))
+      // сначала заказы с согласованной доставкой — по дате и времени (2026-10-22)
+      .sort((a, b) => (!a.o.delivery_date - !b.o.delivery_date)
+        || String(a.o.delivery_date || '').localeCompare(String(b.o.delivery_date || ''))
+        || String(a.o.delivery_from || '').localeCompare(String(b.o.delivery_from || '')));
     _drvRenderAddOrders();
   } catch (e) {
     document.getElementById('drvSheetBody').innerHTML = `<div style="color:#ef4444">${t('drv.sheet.error')} ${_esc(e.message)}</div>`;
@@ -8693,6 +8861,7 @@ function _drvRenderAddOrders() {
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:13px">${_esc(o.order_num)} — ${_esc([o.client_first_name, o.client_last_name].filter(Boolean).join(' '))}</div>
           <div style="font-size:12px;color:var(--text2)">${o.location ? '📍' : '⚠️'} ${_esc(o.short_address || o.address || '—')} · ${_esc(statusLabel(o.status))}</div>
+          ${_dslotBadge(o) ? `<div style="margin-top:2px">${_dslotBadge(o)}</div>` : ''}
           ${busy ? `<div style="font-size:11px;color:#f59e0b">🚦 Уже в маршруте «${_esc(busy.route_name)}»</div>` : ''}
         </div>
       </div>`; }).join('')
@@ -8968,6 +9137,7 @@ function _drvStopCard(stop, si, route) {
         : `<div style="font-size:13px;color:var(--text2);margin-bottom:2px">📍 ${_esc(addr)}</div>`}
       ${phone ? `<a href="tel:${String(phone).replace(/[^0-9+]/g, '')}" style="font-size:13px;color:var(--accent);text-decoration:none;display:block;margin-bottom:4px">📞 ${_esc(phone)}</a>` : ''}
       ${phone2 ? `<a href="tel:${String(phone2).replace(/[^0-9+]/g, '')}" style="font-size:13px;color:var(--accent);text-decoration:none;display:block;margin-bottom:4px">📞 ${_esc(phone2)}</a>` : ''}
+      ${isDeliveryLeg && _dslotBadge({ ...stop, status: ost }) ? `<div style="margin-bottom:6px">🕘 ${t('dslot.client_waits')} ${_dslotBadge({ ...stop, status: ost })}${stop.delivery_note ? `<div style="font-size:12px;color:var(--text2);margin-top:3px">📝 ${_esc(stop.delivery_note)}</div>` : ''}</div>` : ''}
       <div style="font-size:13px;color:var(--text2);margin-bottom:8px">${payLine}</div>
       ${buttons ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">${buttons}</div>` : ''}
       ${infoBtns}
@@ -9091,25 +9261,30 @@ async function drvOpenItems(orderId) {
     if (!items.length) { document.getElementById('drvSheetBody').innerHTML = `<div style="color:#9ca3af;text-align:center;padding:12px">${t('drv.sheet.items_empty')}</div>`; return; }
     const fmtN = n => Math.round(n).toLocaleString('ru-RU');
     let html = '';
+    // Суммы — с сервера (get_order_items_billing): billed_total с мин. по позиции,
+    // order_total с мин. по заказу — те же, что в карточке заказа и к оплате.
     let grand = 0;
     items.forEach((it, i) => {
       const name = it.service || it.name || '—';
       const w = parseFloat(it.width_cm || 0), l = parseFloat(it.length_cm || 0);
-      const sqm = parseFloat(it.sqm || 0);
+      const sqm = parseFloat(it.actual_sqm ?? it.sqm ?? 0);
       const price = parseFloat(it.price_per_sqm || 0);
-      const total = parseFloat(it.line_total || 0) || sqm * price;
+      const total = parseFloat(it.billed_total ?? 0) || sqm * price;
       grand += total;
-      const dimLine = w && l ? `${Math.round(w)}×${Math.round(l)} см · ${+sqm.toFixed(2)} м²`
-                             : sqm ? `${+sqm.toFixed(2)} м²` : '';
-      const priceLine = price && total ? `${fmtN(price)} с/м² · ${fmtN(total)} с`
-                                       : total ? `${fmtN(total)} с` : '';
+      const unit = it.unit_key_snap === 'pcs' ? t('unit.pcs') : t('unit.m2');
+      const dimLine = w && l ? `${Math.round(w)}×${Math.round(l)} ${t('unit.cm')} · ${+sqm.toFixed(2)} ${unit}`
+                             : sqm ? `${+sqm.toFixed(2)} ${unit}` : '';
+      const minNote = it.pos_clamped ? ` (${t('drv.sheet.min')} ${+parseFloat(it.pos_min).toFixed(2)} ${unit})` : '';
+      const priceLine = price && total ? `${fmtN(price)} ${t('unit.sum')}/${unit} · ${fmtN(total)} ${t('unit.sum')}${minNote}`
+                                       : total ? `${fmtN(total)} ${t('unit.sum')}` : '';
       html += `<div style="padding:12px 0;border-bottom:1px solid var(--sep)">
-        <div style="font-weight:700;font-size:14px;color:var(--text)">${i+1}. ${name}</div>
+        <div style="font-weight:700;font-size:14px;color:var(--text)">${i+1}. ${_esc(name)}</div>
         ${dimLine ? `<div style="margin-top:4px;font-size:13px;color:var(--text2)">${dimLine}</div>` : ''}
         ${priceLine ? `<div style="margin-top:3px;font-size:13px;color:#2563eb">${priceLine}</div>` : ''}
       </div>`;
     });
-    html += `<div style="padding:14px 0 4px;font-size:15px;font-weight:800;color:#16a34a">${t('drv.sheet.total')} ${fmtN(grand)} сум</div>`;
+    if (d.order_total != null) grand = parseFloat(d.order_total) || grand;
+    html += `<div style="padding:14px 0 4px;font-size:15px;font-weight:800;color:#16a34a">${t('drv.sheet.total')} ${fmtN(grand)} ${t('unit.sum')}</div>`;
     document.getElementById('drvSheetBody').innerHTML = html;
   } catch(e) { document.getElementById('drvSheetBody').innerHTML = `<div style="color:#ef4444">${t('drv.sheet.error')} ${e.message}</div>`; }
 }
@@ -9760,6 +9935,7 @@ document.addEventListener('click', e => {
       </div>
       </div>
       <!-- Workflow кнопки -->
+      <div id="so_dslot_bar" style="padding:6px 20px;border-top:1px solid #f0f0f0;flex-shrink:0;display:none"></div>
       <div id="so_workflow_row" style="padding:6px 20px;border-top:1px solid #f0f0f0;flex-shrink:0;display:none"></div>
       <!-- История заказа / Уведомления (сворачиваются, кнопки в одной строке, аккордеон) -->
       <div id="so_history_wrap" style="flex-shrink:0;border-top:1px solid #f0f0f0;background:#fafafa">
@@ -9886,6 +10062,8 @@ document.addEventListener('click', e => {
             <span id="so_client_disc_val" style="font-weight:700;font-size:15px;color:#15803d">—</span>
             <span id="so_client_disc_cur" style="font-size:11px;color:#15803d;white-space:nowrap;margin-left:2px">сум</span>
           </div>
+          <!-- почему системной скидки нет (2026-10-20) — блок виден всегда -->
+          <div id="so_client_disc_why" style="display:none;font-size:11px;color:#6b7280;margin-top:3px;line-height:1.35"></div>
         </div>
         <!-- Скидка (ручная) -->
         <div id="so_manual_disc_box" style="background:#f3f4f6;border-radius:10px;padding:10px 12px">
@@ -10197,7 +10375,21 @@ let _sActiveTab     = 'info';
 
 function _staffToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
 
+// Шаг стрелок ▲▼ у «Цена за» позиции — настройка компании item_price_step (admin → Цены);
+// читается по токену сотрудника (публичный /settings/site требует company_slug). Перенос из ARTEZ 2026-10-22.
+let _priceStepLoaded = false;
+async function _applyPriceStep() {
+  if (_priceStepLoaded || !_staffToken()) return;
+  _priceStepLoaded = true;
+  try {
+    const d = await (await fetch(`${API_BASE}/staff/ui-settings`, { headers: { Authorization: `Bearer ${_staffToken()}` } })).json();
+    const step = parseInt(d.settings?.item_price_step, 10);
+    if (step > 0) ['sif_price', 'smc_price'].forEach(id => document.getElementById(id)?.setAttribute('step', step));
+  } catch { _priceStepLoaded = false; }
+}
+
 async function _loadStaffPrices() {
+  _applyPriceStep();  // карточка заказа/формы позиции открываются через _loadStaffPrices
   if (_sPrices) return _sPrices;
   try {
     // /api/prices и /api/services — публичные (для сайта), без company_slug/токена
@@ -10470,6 +10662,8 @@ async function staffOpenOrder(orderId) {
   document.getElementById('so_items').innerHTML = `<div style="text-align:center;color:#aaa;padding:20px">${t('ord.loading')}</div>`;
   const _wfRow = document.getElementById('so_workflow_row');
   if (_wfRow) { _wfRow.style.display = 'none'; _wfRow.innerHTML = ''; }
+  const _dsBar = document.getElementById('so_dslot_bar');
+  if (_dsBar) { _dsBar.style.display = 'none'; _dsBar.innerHTML = ''; }
 
   const [od, oi] = await Promise.all([
     fetch(`${API_BASE}/admin/orders/${orderId}`, { headers:{Authorization:`Bearer ${_staffToken()}`} }).then(r=>r.json()).catch(()=>null),
@@ -10966,6 +11160,14 @@ let _sManualDiscount = 0;
 // же формуле (half-up), чтобы она сразу менялась при правке позиций.
 let _sClientDiscPct = 0;
 let _sClientDiscKind = null;
+let _sClientDiscEnabled = true;  // false — заказ создан до появления скидок (17.10)
+// Почему системной скидки нет — для серого блока во вкладке «Оплата»
+function _clientDiscWhy() {
+  if (['delivered','cancelled'].includes(_sOrderStatus) && !_sClientDiscPct) return t('cdisc.why_closed');
+  if (!_sClientDiscEnabled) return t('cdisc.why_old');
+  if (_sDiscountSum > 0 || _sDeliveryDiscount > 0) return t('cdisc.why_other');
+  return t('cdisc.why_operator');
+}
 function _sClientDiscount() {
   // не складывается со скидками за самовывоз/доставку — как на сервере
   if (!_sClientDiscPct || _sDiscountSum > 0 || _sDeliveryDiscount > 0) return 0;
@@ -10985,6 +11187,7 @@ async function _sRefreshClientDiscount() {
     if (d?.ok && d.order) {
       _sClientDiscPct  = parseFloat(d.order.client_discount_pct || 0);
       _sClientDiscKind = d.order.client_discount_kind || null;
+      _sClientDiscEnabled = d.order.client_discount_enabled !== false;
       sUpdatePaymentDisplay();
     }
   } catch(e) {}
@@ -10996,6 +11199,7 @@ async function sLoadOrderPayment(o) {
   _sManualDiscount   = parseFloat(o.manual_discount   || 0);
   _sClientDiscPct    = parseFloat(o.client_discount_pct || 0);
   _sClientDiscKind   = o.client_discount_kind || null;
+  _sClientDiscEnabled = o.client_discount_enabled !== false;
   const token = localStorage.getItem(TOKEN_KEY);
   const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/payments`, { headers:{Authorization:`Bearer ${token}`} });
   const data = await res.json();
@@ -11047,13 +11251,19 @@ function sUpdatePaymentDisplay() {
   if (sdBox) sdBox.style.display = isDelivery  ? '' : 'none';
   const cdBox = el('so_client_disc_box');
   if (cdBox) {
-    cdBox.style.display = clientDiscount > 0 ? '' : 'none';
-    if (el('so_client_disc_lbl')) el('so_client_disc_lbl').textContent = _clientDiscLabel(_sClientDiscKind, _sClientDiscPct);
-    if (el('so_client_disc_val')) el('so_client_disc_val').textContent = Number(clientDiscount).toLocaleString('ru');
-    if (el('so_client_disc_cur')) el('so_client_disc_cur').textContent = t('unit.sum');
+    // Виден всегда (2026-10-20): есть скидка — зелёный с суммой, нет — серый «нет» с причиной
+    const on = clientDiscount > 0;
+    cdBox.style.display = '';
+    cdBox.style.background = on ? '#dcfce7' : '#f3f4f6';
+    const lbl = el('so_client_disc_lbl'), val = el('so_client_disc_val'), cur = el('so_client_disc_cur'), why = el('so_client_disc_why');
+    if (lbl) { lbl.textContent = on ? _clientDiscLabel(_sClientDiscKind, _sClientDiscPct) : t('cdisc.title'); lbl.style.color = on ? '#15803d' : '#6b7280'; }
+    if (val) { val.textContent = on ? Number(clientDiscount).toLocaleString('ru') : t('cdisc.none'); val.style.color = on ? '#15803d' : '#6b7280'; }
+    if (cur) cur.style.display = on ? '' : 'none';
+    if (cur && on) cur.textContent = t('unit.sum');
+    if (why) { why.style.display = on ? 'none' : ''; why.textContent = on ? '' : _clientDiscWhy(); }
   }
   if (mdBox) {
-    const hasDiscBoxes = isReceiving || isDelivery || clientDiscount > 0;
+    const hasDiscBoxes = true;  // блок системной скидки виден всегда
     mdBox.style.gridColumn = hasDiscBoxes ? '' : '1 / -1';
   }
   if (el('so_selfpickup_disc_val'))  el('so_selfpickup_disc_val').textContent  = _sDiscountSum      > 0 ? Number(Math.round(_sDiscountSum)).toLocaleString('ru')      : '0';
@@ -12839,6 +13049,7 @@ const STAFF_STATUS_LABELS = new Proxy({}, { get: (_,s) => _orderSt(s) || s });
 const WORKFLOW_ICONS      = new Proxy({}, { get: (_,s) => _orderWf(s) || s });
 
 function staffRenderWorkflow(currentStatus, permissions, rowId) {
+  if (!rowId) _renderDeliverySlotBar();  // 📅 согласованная доставка — над кнопками статуса
   const row = document.getElementById(rowId || 'so_workflow_row');
   const perms = permissions || [];
   const canStatus      = perms.includes('status') || perms.includes('status_wash');
@@ -13284,6 +13495,195 @@ async function submitPostpone() {
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = t('wf.postpone.submit'); }
   }
+}
+
+// ── Согласованная доставка: день + окно времени (2026-10-22) ──────────────────
+// Оператор созвонился после SMS «готов» — клиент назвал день и время. Хранится в
+// orders.delivery_date/delivery_from/delivery_to/delivery_note (POST/DELETE
+// /admin/orders/{id}/delivery-slot), каждое изменение — в историю заказа; сводка и
+// контроль в TG — _delivery_digest_worker (main.py). Вкладка «📅 К доставке» — ниже.
+const _DSLOT_STATUSES = ['packing', 'ready', 'delivery'];
+const _DSLOT_ROLES = ['admin', 'manager', 'logistics', 'callcenter'];
+// пресеты окна: [с, до]; null — «в течение дня» (без времени)
+const _DSLOT_PRESETS = [
+  ['09:00', '12:00'], ['12:00', '15:00'], ['15:00', '18:00'], ['18:00', '21:00'],
+  ['09:00', '13:00'], ['14:00', '18:00'], null,
+];
+function _dslotPresetLabel(p) {
+  if (!p) return t('dslot.any_time');
+  if (p[0] === '09:00' && p[1] === '13:00') return `☀️ ${t('dslot.am')} 09–13`;
+  if (p[0] === '14:00' && p[1] === '18:00') return `🌇 ${t('dslot.pm')} 14–18`;
+  return `${p[0].slice(0, 2)}–${p[1].slice(0, 2)}`;
+}
+function _isoLocal(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function _dslotTime(o) {
+  const f = (o.delivery_from || '').slice(0, 5), to = (o.delivery_to || '').slice(0, 5);
+  if (f && to) return `${f}–${to}`;
+  if (f) return `${t('dslot.from')} ${f}`;
+  if (to) return `${t('dslot.until')} ${to}`;
+  return t('dslot.any_time');
+}
+// группа заказа на вкладке «К доставке» (порядок групп — _DSLOT_GROUPS)
+function _dslotGroup(o) {
+  const today = _isoLocal(new Date());
+  const tomorrow = _isoLocal(new Date(Date.now() + 86400000));
+  const d = o.delivery_date ? String(o.delivery_date).slice(0, 10) : '';
+  if (!d) return (o.status === 'ready' && o.postponed_until) ? 'postponed' : 'none';
+  if (d < today) return 'overdue';
+  if (d === today) {
+    const f = (o.delivery_from || '').slice(0, 5);
+    return !f ? 'today_any' : (f < '13:00' ? 'today_am' : 'today_pm');
+  }
+  return d === tomorrow ? 'tomorrow' : 'later';
+}
+const _DSLOT_GROUPS = ['overdue', 'today_am', 'today_pm', 'today_any', 'tomorrow', 'later', 'postponed', 'none'];
+function _dslotWhen(o) {
+  const d = String(o.delivery_date).slice(0, 10);
+  const g = _dslotGroup(o);
+  const day = g.startsWith('today') ? t('dslot.today') : g === 'tomorrow' ? t('dslot.tomorrow')
+    : d.slice(8, 10) + '.' + d.slice(5, 7);
+  return `${day} ${_dslotTime(o)}`;
+}
+function _dslotBadge(o) {
+  if (!o?.delivery_date || !_DSLOT_STATUSES.includes(o.status)) return '';
+  const g = _dslotGroup(o);
+  const [bg, fg] = g === 'overdue' ? ['#fee2e2', '#b91c1c'] : g.startsWith('today') ? ['#dcfce7', '#15803d'] : ['#e0f2fe', '#0369a1'];
+  return `<span style="background:${bg};color:${fg};border-radius:8px;padding:2px 8px;font-size:12px;font-weight:600;white-space:nowrap">📅 ${_esc(_dslotWhen(o))}</span>`;
+}
+function _canDslot() {
+  return _DSLOT_ROLES.includes(currentStaff?.role) || (currentStaff?.permissions || []).includes('status');
+}
+// строка в карточке заказа над кнопками статуса — видна и колл-центру (у него нет кнопок статуса)
+function _renderDeliverySlotBar() {
+  const bar = document.getElementById('so_dslot_bar');
+  if (!bar) return;
+  const o = _sOrderCache;
+  if (!o || !_DSLOT_STATUSES.includes(_sOrderStatus || o.status) || o.delivery_type === 'self' || !_canDslot()) {
+    bar.style.display = 'none'; bar.innerHTML = ''; return;
+  }
+  bar.style.display = '';
+  bar.innerHTML = o.delivery_date
+    ? `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+         ${_dslotBadge({ ...o, status: _sOrderStatus || o.status })}
+         ${o.delivery_note ? `<span style="font-size:12px;color:#555">📝 ${_esc(o.delivery_note)}</span>` : ''}
+         <button onclick="openDeliverySlotModal()" style="margin-left:auto;border:1.5px solid #e5e7eb;background:#fff;border-radius:10px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer">✏️ ${t('dslot.edit')}</button>
+       </div>`
+    : `<button onclick="openDeliverySlotModal()" style="width:100%;padding:10px;border:1.5px dashed #0ea5e9;background:#f0f9ff;color:#0369a1;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">📅 ${t('dslot.set')}</button>`;
+}
+let _dslotPick = -1;
+function openDeliverySlotModal() {
+  document.getElementById('dslotModal')?.remove();
+  const o = _sOrderCache || {};
+  const today = _isoLocal(new Date());
+  const cur = o.delivery_date ? String(o.delivery_date).slice(0, 10) : _isoLocal(new Date(Date.now() + 86400000));
+  const f = (o.delivery_from || '').slice(0, 5), to = (o.delivery_to || '').slice(0, 5);
+  _dslotPick = o.delivery_date ? _DSLOT_PRESETS.findIndex(p => p ? (p[0] === f && p[1] === to) : (!f && !to)) : -1;
+  const custom = !!o.delivery_date && _dslotPick < 0;
+  const days = [0, 1, 2, 3].map(n => _isoLocal(new Date(Date.now() + n * 86400000)));
+  const dayLbl = (iso, n) => n === 0 ? t('dslot.today') : n === 1 ? t('dslot.tomorrow') : iso.slice(8, 10) + '.' + iso.slice(5, 7);
+  const chip = 'padding:8px 12px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer';
+  const div = document.createElement('div');
+  div.id = 'dslotModal';
+  div.style.cssText = 'position:fixed;inset:0;z-index:10020;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px';
+  div.innerHTML = `
+    <div style="background:#fff;color:#1c1c1e;border-radius:20px;padding:22px;width:100%;max-width:460px;max-height:92vh;overflow-y:auto">
+      <div style="font-size:17px;font-weight:800;margin-bottom:12px">📅 ${t('dslot.set')}</div>
+      <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:6px">${t('dslot.date')}</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        ${days.map((d, n) => `<button type="button" style="${chip}" onclick="document.getElementById('dslot_date').value='${d}'">${dayLbl(d, n)}</button>`).join('')}
+      </div>
+      <input id="dslot_date" type="date" min="${today}" value="${cur}"
+        style="width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;margin-bottom:14px;box-sizing:border-box">
+      <label style="font-size:13px;font-weight:600;color:#555;display:block;margin-bottom:6px">${t('dslot.time')}</label>
+      <div id="dslot_presets" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        ${_DSLOT_PRESETS.map((p, i) => `<button type="button" data-i="${i}" style="${chip}" onclick="_dslotSetPreset(${i})">${_dslotPresetLabel(p)}</button>`).join('')}
+        <button type="button" data-i="custom" style="${chip}" onclick="_dslotSetPreset('custom')">✏️ ${t('dslot.custom')}</button>
+      </div>
+      <div id="dslot_custom" style="display:${custom ? 'flex' : 'none'};gap:8px;align-items:center;margin-bottom:12px">
+        <span style="font-size:13px;color:#555">${t('dslot.from')}</span>
+        <input type="time" id="dslot_from" value="${f || '09:00'}" style="border:1.5px solid #e5e5e5;border-radius:8px;padding:6px 10px;font-size:14px">
+        <span style="font-size:13px;color:#555">${t('dslot.until')}</span>
+        <input type="time" id="dslot_to" value="${to || '14:00'}" style="border:1.5px solid #e5e5e5;border-radius:8px;padding:6px 10px;font-size:14px">
+      </div>
+      <label style="font-size:13px;font-weight:600;color:#555;display:block;margin:4px 0 6px">${t('dslot.note')}</label>
+      <textarea id="dslot_note" rows="2" maxlength="500" placeholder="${t('dslot.note_ph')}"
+        style="width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;margin-bottom:16px;box-sizing:border-box;resize:vertical">${_esc(o.delivery_note || '')}</textarea>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        ${o.delivery_date ? `<button onclick="clearDeliverySlot()" style="padding:12px 14px;border:1.5px solid #fecaca;border-radius:10px;background:#fff1f2;color:#dc2626;font-size:14px;font-weight:600;cursor:pointer">✕ ${t('dslot.clear')}</button>` : ''}
+        <button onclick="document.getElementById('dslotModal')?.remove()" style="flex:1;padding:12px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;color:#888;font-size:14px;font-weight:600;cursor:pointer">${t('sms.cancel')}</button>
+        <button id="dslotSubmitBtn" onclick="submitDeliverySlot()" style="flex:2;padding:12px;background:#0ea5e9;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">${t('dslot.save')}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(div);
+  _dslotSetPreset(custom ? 'custom' : (_dslotPick >= 0 ? _dslotPick : 4));
+}
+function _dslotSetPreset(i) {
+  _dslotPick = i;
+  document.querySelectorAll('#dslot_presets button').forEach(b => {
+    const on = String(b.dataset.i) === String(i);
+    b.style.background = on ? '#0ea5e9' : '#fff';
+    b.style.color = on ? '#fff' : '#1c1c1e';
+    b.style.borderColor = on ? '#0ea5e9' : '#e5e7eb';
+  });
+  const c = document.getElementById('dslot_custom');
+  if (c) c.style.display = i === 'custom' ? 'flex' : 'none';
+}
+async function submitDeliverySlot() {
+  const date = document.getElementById('dslot_date')?.value;
+  if (!date) { showToast(t('dslot.date_required'), 'error'); return; }
+  let from = null, to = null;
+  if (_dslotPick === 'custom') {
+    from = document.getElementById('dslot_from')?.value || null;
+    to = document.getElementById('dslot_to')?.value || null;
+    if (from && to && from >= to) { showToast(t('dslot.bad_range'), 'error'); return; }
+  } else if (_DSLOT_PRESETS[_dslotPick]) {
+    [from, to] = _DSLOT_PRESETS[_dslotPick];
+  }
+  const note = document.getElementById('dslot_note')?.value.trim() || '';
+  const btn = document.getElementById('dslotSubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/delivery-slot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_staffToken()}` },
+      body: JSON.stringify({ date, time_from: from, time_to: to, note }),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.detail || 'Ошибка');
+    _dslotApply(d.order);
+    document.getElementById('dslotModal')?.remove();
+    showToast(t('dslot.saved'), 'success');
+  } catch (e) {
+    showToast('⚠️ ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = t('dslot.save'); }
+  }
+}
+async function clearDeliverySlot() {
+  if (!confirm(t('dslot.clear_confirm'))) return;
+  try {
+    const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/delivery-slot`, {
+      method: 'DELETE', headers: { Authorization: `Bearer ${_staffToken()}` },
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(d.detail || 'Ошибка');
+    _dslotApply(d.order);
+    document.getElementById('dslotModal')?.remove();
+  } catch (e) { showToast('⚠️ ' + e.message, 'error'); }
+}
+// обновить карточку и строку списка после сохранения/сброса
+function _dslotApply(order) {
+  if (!order) return;
+  const keys = ['delivery_date', 'delivery_from', 'delivery_to', 'delivery_note', 'postponed_until', 'postpone_reason'];
+  if (_sOrderCache) keys.forEach(k => { _sOrderCache[k] = order[k] ?? null; });
+  const row = ordersData.find(x => x.id === order.id);
+  if (row) keys.forEach(k => { row[k] = order[k] ?? null; });
+  document.querySelector('#so_status [data-postpone-badge]')?.remove();  // отсрочку сняли
+  _renderDeliverySlotBar();
+  staffRenderWorkflow(_sOrderStatus, currentStaff?.permissions || []);
+  if (document.getElementById('ordersList')) renderOrders();
 }
 
 async function staffMarkDelivered() {
@@ -16572,7 +16972,7 @@ function staffChatSend() {
         <div id="smc_price_row" style="display:none;margin-top:10px">
           <div id="smPriceLabel" style="font-size:11px;color:#888;margin-bottom:4px">Цена за м²</div>
           <div style="position:relative">
-            <input id="smc_price" type="number" inputmode="numeric" placeholder="0" min="0" oninput="_syncDiscountUi('smc')" style="width:100%;padding:10px 44px 10px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;background:#fff;box-sizing:border-box;outline:none">
+            <input id="smc_price" type="number" inputmode="numeric" placeholder="0" min="0" step="500" oninput="_syncDiscountUi('smc')" style="width:100%;padding:10px 44px 10px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;background:#fff;box-sizing:border-box;outline:none">
             <span id="smPriceCur" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:#aaa">сум</span>
           </div>
           <div id="smc_disc_box" style="display:none;margin:4px 0 8px"><div id="smc_disc_info" style="font-size:12px;color:#b45309;font-weight:600;margin-bottom:4px"></div><input id="smc_disc_note" type="text" maxlength="500" style="width:100%;padding:9px 12px;border:1.5px solid #fcd34d;border-radius:10px;font-size:13px;background:#fffbeb;box-sizing:border-box;outline:none"></div>
