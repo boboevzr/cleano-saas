@@ -10533,9 +10533,9 @@ async function _sRenderItemActivity() {
 }
 
 // Вкладка «Уведомления» — лог отправленных клиенту SMS и Telegram-уведомлений
-// (order_activity: sms_sent/sms_failed/tg_sent). Ретеншн/чистку старых записей
+// (order_activity: sms_sent/sms_failed/tg_sent/tg_failed). Ретеншн/чистку старых записей
 // решим позже отдельно, чтобы не мусорить базу (см. запрос пользователя 2026-07-30).
-const _NOTIF_ACTIONS = ['sms_sent', 'sms_failed', 'tg_sent'];
+const _NOTIF_ACTIONS = ['sms_sent', 'sms_failed', 'tg_sent', 'tg_failed'];
 async function _sRenderNotifications() {
   const el = document.getElementById('so_notif_list');
   if (!el) return;
@@ -10544,7 +10544,7 @@ async function _sRenderNotifications() {
   if (!acts.length) { el.innerHTML = `<div style="color:#aaa">${t('so.notif_empty')}</div>`; return; }
   el.innerHTML = acts.map(a => {
     const dt = (_parseUTC(a.created_at)||new Date()).toLocaleString('ru',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:_TZ});
-    const icon = a.action === 'tg_sent' ? '🔔' : (a.action === 'sms_failed' ? '❌' : '📲');
+    const icon = a.action === 'tg_sent' ? '🔔' : (a.action.endsWith('_failed') ? '❌' : '📲');
     return `<div style="padding:7px 0;border-bottom:1px solid #f0f0f0">
       <div>${icon} ${_esc(a.details||'')}</div>
       <div style="white-space:nowrap;color:#aaa;margin-top:2px">${dt} · ${_esc(a.staff_name||'—')}</div>

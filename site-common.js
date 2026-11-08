@@ -1964,7 +1964,7 @@
     const phone = currentUser?.phone;
     if (!phone) return;
     if (!confirm(t('agent.confirmReset').replace('{phone}', phone))) return;
-    apiFetch('/agent/reset-password', {method:'POST', body: JSON.stringify({phone})})
+    apiFetch('/agent/reset-password', {method:'POST', body: JSON.stringify({phone, company_slug: window.APP_COMPANY_SLUG})})
       .then(() => showOrderAlert(t('agent.resetSent')))
       .catch(() => showOrderAlert(t('common.adminError')));
   }
