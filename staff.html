@@ -5607,7 +5607,7 @@ async function _pollPaymentReviews() {
     if (fresh.length) {
       const p = fresh[0]; // показываем первый
       _payReviewShown.add(p.id);
-      const mLabel = { card:'💳 Карта', transfer:'📲 Перевод' };
+      const mLabel = { card:'💳 Карта', transfer:'📲 Перевод', online:'🌐 Карта онлайн', online_test:'🧪 Онлайн (тест)' };
       const pLabel = { prepayment:'Предоплата', partial:'Частичная оплата', final:'Расчёт', payment:'Оплата' };
       const title  = '💳 Оплата на проверку';
       const body   = `Заказ #${p.order_id} · ${pLabel[p.purpose]||''} · ${Number(p.amount).toLocaleString('ru')} сум`;
@@ -11567,7 +11567,7 @@ async function sLoadPaymentModal() {
   sUpdatePaymentDisplay();
   const debt = Math.max(0, _sPmOrderNet - _sPmCachedPaid);
   const fmt = v => Number(v).toLocaleString('ru');
-  const mLabel = { cash:t('pm.cash'), card:t('pm.card'), transfer:t('pm.transfer') };
+  const mLabel = { cash:t('pm.cash'), card:t('pm.card'), transfer:t('pm.transfer'), online:'🌐 '+t('pm.card')+' online', online_test:'🧪 online (test)' };
   const pLabel = { prepayment:t('pm.prepayment'), partial:t('pm.partial'), final:t('pm.final'), payment:t('pm.payment') };
   // totals grid is in the payment tab — sUpdatePaymentDisplay() keeps it fresh
   const myId        = currentStaff?.id;
@@ -11706,7 +11706,7 @@ let _deletingPaymentData = null;
 function sDeletePayment(paymentId, amount, method) {
   _deletingPaymentId   = paymentId;
   _deletingPaymentData = { amount, method };
-  const mLabel = { cash:t('pm.cash'), card:t('pm.card'), transfer:t('pm.transfer') };
+  const mLabel = { cash:t('pm.cash'), card:t('pm.card'), transfer:t('pm.transfer'), online:'🌐 '+t('pm.card')+' online', online_test:'🧪 online (test)' };
   const info = document.getElementById('deletePaymentInfo');
   if (info) info.textContent = `${Number(Math.round(amount)).toLocaleString('ru')} ${t('pm.currency')} · ${mLabel[method]||method}`;
   const inp = document.getElementById('deletePaymentReason');
@@ -14888,7 +14888,7 @@ async function _openPaymentReview(orderId, paymentId, paymentData) {
   _prPaymentId = paymentId;
   const modal = document.getElementById('paymentReviewModal');
   const token = localStorage.getItem(TOKEN_KEY);
-  const mLabel = { cash:t('pm.cash'), card:t('pm.card'), transfer:t('pm.transfer') };
+  const mLabel = { cash:t('pm.cash'), card:t('pm.card'), transfer:t('pm.transfer'), online:'🌐 '+t('pm.card')+' online', online_test:'🧪 online (test)' };
   const pLabel = { prepayment:t('pm.prepayment'), partial:t('pm.partial'), final:t('pm.final'), payment:t('pm.payment') };
   const fmt = v => Number(v).toLocaleString('ru');
   _applyPaymentReviewI18n();

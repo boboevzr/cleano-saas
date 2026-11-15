@@ -1488,6 +1488,9 @@
       <div class="nav-item" data-page="cash" onclick="switchPage(this)">
         <span class="nav-icon">💰</span> Касса
       </div>
+      <div class="nav-item" data-page="pay" onclick="switchPage(this)">
+        <span class="nav-icon">💳</span> Оплаты
+      </div>
       <div class="nav-item" data-page="promotions" onclick="switchPage(this)">
         <span class="nav-icon">🎉</span> Акции
       </div>
@@ -1915,6 +1918,7 @@
       </div>
 
       <!-- ORDERS -->
+      <div class="page" id="page-pay"></div><!-- 💳 онлайн-оплаты: заполняет admin-pay.js (перенос Э3) -->
       <div class="page" id="page-cash">
 
         <!-- Заголовок -->
@@ -3548,7 +3552,11 @@
           <button class="cs-tab"        data-cstab="contacts" onclick="switchCompanyStab(this)" data-i18n="cs.tab.contacts">📞 Контакты</button>
           <button class="cs-tab"        data-cstab="social"   onclick="switchCompanyStab(this)" data-i18n="cs.tab.social">📱 Соцсети</button>
           <button class="cs-tab"        data-cstab="branches" onclick="switchCompanyStab(this)" data-i18n="cs.tab.branches">🏢 Филиалы</button>
+          <button class="cs-tab"        data-cstab="plum"     onclick="switchCompanyStab(this)">💳 Онлайн-оплата (PLUM)</button>
         </div>
+
+        <!-- ─── 💳 Онлайн-оплата (PLUM): заполняет admin-pay.js (перенос Э3) ─── -->
+        <div class="cs-panel" id="cstab-plum" style="display:none;max-width:860px;"></div>
 
         <div style="max-width:660px;">
 
@@ -17252,7 +17260,7 @@ async function loadCashPage() {
     </div>`;
 
   // Список заказов
-  const pmLabel = { cash:'💵', card:'💳', transfer:'📲' };
+  const pmLabel = { cash:'💵', card:'💳', transfer:'📲', online:'🌐', online_test:'🧪' };
   const stLabel = { paid:_t('cash.pay.status.paid'), partial:_t('cash.pay.status.partial'), unpaid:'⬜' };
   const listEl = document.getElementById('cashOrdersList');
   const orders = data.orders || [];
@@ -25648,6 +25656,7 @@ function confirmBranchLoc() {
     <div class="nav-item" data-page="orders"         onclick="mobDrawerGo(this)"><span class="nav-icon">📋</span> Заказы</div>
     <div class="nav-item" data-page="routes"         onclick="mobDrawerGo(this)"><span class="nav-icon">🚗</span> Маршруты</div>
     <div class="nav-item" data-page="cash"           onclick="mobDrawerGo(this)"><span class="nav-icon">💰</span> Касса</div>
+    <div class="nav-item" data-page="pay"            onclick="mobDrawerGo(this)"><span class="nav-icon">💳</span> Оплаты</div>
     <div class="nav-item" data-page="promotions"     onclick="mobDrawerGo(this)"><span class="nav-icon">🎉</span> Акции</div>
     <div class="nav-item" data-page="tariff"         onclick="mobDrawerGo(this)"><span class="nav-icon">💳</span> Мой тариф</div>
 
@@ -28692,5 +28701,6 @@ async function adDoTest() {
 </div>
 <!-- Печать маршрута (printRouteSheet) — наполняется только перед window.print() -->
 <div id="rtPrintArea" style="display:none"></div>
+<script src="admin-pay.js?v=1"></script><!-- 💳 онлайн-оплаты (перенос Э3) -->
 </body>
 </html>
