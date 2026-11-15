@@ -2,7 +2,7 @@
 <html lang="ru" id="htmlRoot">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title data-i18n="meta.title">ARTEZ — Химчистка ковров и мебели на дому</title>
 <meta name="description" id="metaDescription" data-i18n-content="meta.description" content="Химчистка ковров, мягкой мебели, матрасов и штор на дому. Вывоз и доставка.">
 <meta property="og:title" id="metaOgTitle" content="ARTEZ — Химчистка ковров и мебели на дому">
@@ -938,6 +938,7 @@
     position:absolute; right:10px; top:50%; transform:translateY(-50%);
     background:none; border:none; cursor:pointer; font-size:15px; line-height:1;
     padding:0; opacity:.7; color:var(--ink-soft);
+    z-index:501; /* выше бокового меню-точек (.side-nav, z-index 500) */
   }
   .pwd-eye:hover{ opacity:1; }
   .cabinet-card .field label{ color:rgba(255,255,255,.75); }
@@ -1691,10 +1692,13 @@
     position:fixed; right:16px; top:50%; transform:translateY(-50%);
     z-index:500; display:flex; flex-direction:column; gap:10px;
     align-items:flex-end;
+    /* Пустое место меню не ловит нажатия — иначе оно перекрывало кнопки справа
+       (например, 👁 «показать пароль» в форме входа). Кликаются только пункты. */
+    pointer-events:none;
   }
   .side-nav-item{
     display:flex; align-items:center; gap:8px; cursor:pointer;
-    text-decoration:none;
+    text-decoration:none; pointer-events:auto;
   }
   .side-nav-label{
     font-family:"Sora",sans-serif; font-size:11px; font-weight:600;
@@ -1722,6 +1726,10 @@
   [data-theme="dark"] .side-nav-label{
     color:var(--ink); background:#1A2724; box-shadow:0 2px 10px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.08);
   }
+  /* Пока человек печатает в любом поле — меню-точки прячется и не перекрывает правый край полей */
+  body:has(:is(input,textarea,select):focus) .side-nav{ opacity:0; pointer-events:none; }
+  body:has(:is(input,textarea,select):focus) .side-nav-item{ pointer-events:none; }
+  .side-nav{ transition:opacity .2s; }
   @media(max-width:900px){
     .side-nav{ right:8px; gap:20px; }
     .side-nav-dot{ width:14px; height:14px; border-width:2.5px; }
@@ -2214,7 +2222,7 @@
   }
   .lb-content{
     position:relative; z-index:1;
-    width:100vw; height:100vh;
+    width:100vw; height:100vh; height:100dvh;
     display:flex; flex-direction:column;
     align-items:center; justify-content:center;
   }
@@ -2239,7 +2247,7 @@
     padding:70px 90px 60px;
   }
   .lb-img-wrap img{
-    max-width:100%; max-height:calc(100vh - 150px);
+    max-width:100%; max-height:calc(100vh - 150px); max-height:calc(100dvh - 150px);
     border-radius:14px; object-fit:contain;
     box-shadow:0 30px 80px rgba(0,0,0,.55);
     user-select:none; -webkit-user-drag:none;
@@ -2938,8 +2946,314 @@
   .ptr-indicator .ptr-spin{ display:inline-block; animation:ptrSpin .7s linear infinite; }
   @keyframes ptrSpin{ to{ transform:rotate(360deg); } }
 </style>
+<style id="mAppCss">
+  /* =====================================================================
+     МОБИЛЬНЫЙ САЙТ «КАК ПРИЛОЖЕНИЕ» (<768px) — 15.11.2026
+     Включается классом body.m-app (ставит скрипт mApp в конце страницы
+     только при ширине < 768px). Вкладка — body[data-mtab=home|orders|prices|cabinet].
+     Компьютер (>=768px) не затронут: все новые блоки скрыты по умолчанию.
+     Тема — через [data-theme] и переменные сайта.
+     ===================================================================== */
+  .m-only{ display:none; }
+  @keyframes mPop{ from{ opacity:0; transform:scale(.96); } to{ opacity:1; transform:none; } }
+  @keyframes mRise{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+
+  @media (max-width: 767px){
+    body.m-app{ --m-tab-h:62px; padding-bottom: calc(var(--m-tab-h) + 18px + env(safe-area-inset-bottom, 0px)); }
+
+    /* ── Шапка: одна строка — логотип · язык · тема ── */
+    body.m-app .topbar{ border-bottom:none; box-shadow:none; background:#0E2D2A; padding-top:env(safe-area-inset-top, 0px); }
+    body.m-app .topbar-inner{
+      display:grid; grid-template-columns: minmax(0,1fr) auto auto; grid-template-rows:auto;
+      column-gap:8px; row-gap:0; padding:8px 0; align-items:center;
+    }
+    body.m-app .logo{ grid-column:1; grid-row:1; min-width:0; }
+    body.m-app .logo-mark{ width:30px; height:30px; }
+    body.m-app .logo-title{ font-size:17px; }
+    body.m-app .lang-switch{ grid-column:2; grid-row:1; }
+    body.m-app .mobile-ctrl-row{ grid-column:3; grid-row:1; padding:0; gap:0; justify-content:flex-end; }
+    body.m-app .burger-btn,
+    body.m-app .mobile-nav,
+    body.m-app .nav-user-wrap,
+    body.m-app .topbar-actions > .btn-amber{ display:none !important; }
+    body.m-app #themeToggle{ width:34px; height:34px; font-size:15px; }
+
+    /* ── Лишнее на телефоне ── */
+    body.m-app .side-nav,
+    body.m-app .stats-strip,
+    body.m-app .scroll-top-btn,
+    body.m-app #agent-section{ display:none !important; }
+
+    /* ── Что видно на какой вкладке ── */
+    body.m-app .hero-section,
+    body.m-app #services,
+    body.m-app #cabinet,
+    body.m-app #mBar,
+    body.m-app #mHero,
+    body.m-app #mHome,
+    body.m-app #mOrders,
+    body.m-app #mCab{ display:none; }
+    body.m-app:not([data-mtab="home"]) #ba,
+    body.m-app:not([data-mtab="home"]) #hiw,
+    body.m-app:not([data-mtab="home"]) #reviews,
+    body.m-app:not([data-mtab="home"]) #faq,
+    body.m-app:not([data-mtab="home"]) #contacts,
+    body.m-app:not([data-mtab="home"]) .float-btn-wrap{ display:none !important; }
+    body.m-app[data-mtab="home"] #mHero,
+    body.m-app[data-mtab="home"] #mHome{ display:block; }
+    body.m-app:not([data-mtab="home"]) #mBar{ display:block; }
+    body.m-app[data-mtab="prices"] .hero-section,
+    body.m-app[data-mtab="prices"] #services{ display:block; }
+    body.m-app[data-mtab="orders"] #mOrders{ display:block; }
+    body.m-app[data-mtab="cabinet"].m-guest #cabinet{ display:block; }
+    body.m-app[data-mtab="cabinet"]:not(.m-guest) #mCab{ display:block; }
+    body.m-app [data-mscreen]{ animation: mRise .3s ease-out both; }
+
+    /* ── Герой главной ── */
+    #mHero{
+      position:relative; overflow:hidden; color:#fff;
+      background:
+        radial-gradient(120% 80% at 92% 0%, rgba(44,198,179,.38), transparent 60%),
+        linear-gradient(180deg, #0E2D2A 0%, #1A5C54 100%);
+      border-radius:0 0 28px 28px; padding:6px 0 26px;
+    }
+    #mHero::before{ /* барханы — перекрывающиеся дуги */
+      content:""; position:absolute; inset:0; opacity:.12; pointer-events:none;
+      background:
+        radial-gradient(circle at 50% 100%, transparent 15px, #fff 16px, transparent 17px) 0 0/36px 22px,
+        radial-gradient(circle at 50% 100%, transparent 15px, #fff 16px, transparent 17px) 18px 11px/36px 22px;
+    }
+    #mHero::after{ /* узор-зигзаг снизу, как в приложении */
+      content:""; position:absolute; left:0; right:0; bottom:8px; height:8px; opacity:.75;
+      background:
+        linear-gradient(135deg, transparent 45%, var(--amber) 45% 58%, transparent 58%) 0 0/14px 8px,
+        linear-gradient(45deg,  transparent 45%, var(--amber) 45% 58%, transparent 58%) 0 0/14px 8px;
+    }
+    #mHero > .wrap{ position:relative; z-index:1; }
+    .m-hello{ font-size:13px; opacity:.75; margin-top:6px; }
+    .m-name{ font-family:"Sora",sans-serif; font-weight:700; font-size:22px; line-height:1.2; margin-bottom:12px; overflow-wrap:anywhere; }
+    .m-glass{
+      display:grid; grid-template-columns:minmax(0,1fr) 78px; gap:10px; align-items:center;
+      background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16);
+      border-radius:22px; padding:16px; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    }
+    .m-glass h1{ font-family:"Sora",sans-serif; font-weight:700; font-size:19px; line-height:1.25; color:#fff; margin:0; text-wrap:balance; }
+    .m-glass p{ font-size:12.5px; color:rgba(255,255,255,.75); margin:6px 0 0; }
+    .m-glass svg{ width:78px; height:78px; }
+    .m-cta{
+      grid-column:1 / -1; display:flex; align-items:center; justify-content:center; gap:8px;
+      width:100%; border:0; border-radius:16px; padding:14px; margin-top:6px; cursor:pointer;
+      background:linear-gradient(90deg, var(--amber), #F2C46E); color:#1B1406;
+      font-family:"Sora",sans-serif; font-weight:700; font-size:15px;
+      box-shadow:0 12px 26px -12px rgba(232,168,60,.85);
+      transition:transform .12s ease;
+    }
+    .m-cta:active{ transform:scale(.97); }
+    .m-cta b{ font-size:20px; line-height:1; font-weight:600; }
+
+    /* ── Заголовок экранов (Заказы / Цены / Кабинет) ── */
+    #mBar{
+      color:#fff; background:linear-gradient(180deg, #0E2D2A 0%, #1A5C54 100%);
+      border-radius:0 0 24px 24px; padding:6px 0 18px;
+    }
+    #mBar h2{ font-family:"Sora",sans-serif; font-weight:700; font-size:22px; color:#fff; margin:0; }
+    #mBar p{ font-size:12.5px; color:rgba(255,255,255,.72); margin:4px 0 0; }
+    #mBar p:empty{ display:none; }
+
+    /* ── Общие блоки экранов ── */
+    .m-sec{ padding-top:16px; padding-bottom:4px; display:grid; gap:10px; }
+    .m-h{ display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+      font-family:"Sora",sans-serif; font-weight:700; font-size:16px; color:var(--ink); margin-top:4px; }
+    .m-h button{ border:0; background:none; color:var(--amber-deep); font:600 13px "Inter",sans-serif; cursor:pointer; padding:4px 0; }
+    [data-theme="dark"] .m-h button{ color:var(--amber); }
+    .m-card{ background:var(--sand-card); border:1px solid var(--line); border-radius:18px; padding:14px; color:var(--ink); }
+    button.m-card{ width:100%; text-align:left; font:inherit; cursor:pointer; display:block; }
+    button.m-card:active{ transform:scale(.985); }
+
+    /* Карточка заказа */
+    .m-ord-top{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .m-ord-num{ font-family:"Sora",sans-serif; font-weight:700; font-size:15px; min-width:0; overflow-wrap:anywhere; }
+    .m-badge{ flex:0 0 auto; font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:999px;
+      background:rgba(44,198,179,.14); color:var(--teal); white-space:nowrap; }
+    [data-theme="dark"] .m-badge{ color:#5FE0CF; }
+    .m-badge.is-work{ background:rgba(232,168,60,.16); color:#A86F12; }
+    [data-theme="dark"] .m-badge.is-work{ color:var(--amber); }
+    .m-badge.is-off{ background:rgba(210,90,80,.14); color:#C0473C; }
+    .m-prog{ display:grid; grid-template-columns:repeat(8,1fr); gap:4px; margin:12px 0 9px; }
+    .m-prog i{ height:5px; border-radius:5px; background:var(--line); }
+    .m-prog i.on{ background:var(--teal-soft); }
+    .m-prog i.now{ background:var(--amber); }
+    .m-meta{ display:flex; justify-content:space-between; gap:8px; font-size:13px; color:var(--ink-soft); flex-wrap:wrap; }
+    .m-meta b{ color:var(--amber-deep); font-weight:700; font-variant-numeric:tabular-nums; }
+    [data-theme="dark"] .m-meta b{ color:var(--amber); }
+    .m-empty{ text-align:center; color:var(--ink-soft); font-size:14px; padding:22px 14px; }
+
+    /* Гость: карточка «Войти» */
+    .m-login{ display:flex; align-items:center; gap:12px; }
+    .m-ico{ flex:0 0 auto; width:40px; height:40px; border-radius:13px; display:grid; place-items:center; font-size:19px; background:rgba(44,198,179,.14); }
+    .m-login div{ min-width:0; flex:1; }
+    .m-login b{ display:block; font-size:14.5px; }
+    .m-login small{ display:block; font-size:12.5px; color:var(--ink-soft); }
+    .m-btn-o{ flex:0 0 auto; border:1.5px solid var(--teal-soft); color:var(--teal); background:none; border-radius:12px;
+      padding:8px 14px; font:600 13px "Inter",sans-serif; cursor:pointer; }
+    [data-theme="dark"] .m-btn-o{ color:var(--teal-soft); }
+
+    /* Услуги мини-сеткой */
+    .m-svc-grid{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
+    .m-svc{ background:var(--sand-card); border:1px solid var(--line); border-radius:18px; padding:12px; text-align:left;
+      font:inherit; color:var(--ink); cursor:pointer; display:grid; gap:4px; align-content:start; }
+    .m-svc:active{ transform:scale(.97); }
+    .m-svc .m-ico{ width:36px; height:36px; font-size:18px; margin-bottom:4px; }
+    .m-svc b{ font-family:"Sora",sans-serif; font-weight:600; font-size:13.5px; line-height:1.25; overflow-wrap:anywhere; }
+    .m-svc span{ font-size:12px; color:var(--ink-soft); }
+    .m-svc em{ font-style:normal; font-weight:700; color:var(--amber-deep); font-variant-numeric:tabular-nums; }
+    [data-theme="dark"] .m-svc em{ color:var(--amber); }
+
+    /* Видео на главной — обычной карточкой, не поверх экрана */
+    #mVideoSlot:empty{ display:none; }
+    #mVideoSlot{ display:flex; justify-content:center; }
+    body.m-app #mVideoSlot .site-video-card{ position:relative !important; left:auto !important; right:auto !important;
+      bottom:auto !important; top:auto !important; width:170px !important; z-index:1; }
+
+    /* Фильтры заказов */
+    .m-chips{ display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+    .m-chips::-webkit-scrollbar{ display:none; }
+    .m-chips button{ flex:0 0 auto; border:1px solid var(--line); background:var(--sand-card); color:var(--ink-soft);
+      border-radius:999px; padding:7px 14px; font:600 13px "Inter",sans-serif; cursor:pointer; }
+    .m-chips button.on{ background:var(--teal); border-color:var(--teal); color:#fff; }
+
+    /* Кабинет (вошёл) */
+    .m-prof{ display:flex; align-items:center; gap:12px; }
+    .m-ava{ width:50px; height:50px; border-radius:50%; display:grid; place-items:center; color:#fff;
+      font-family:"Sora",sans-serif; font-weight:700; font-size:20px; background:var(--teal); flex:0 0 auto; }
+    .m-prof div{ min-width:0; }
+    .m-prof b{ display:block; font-size:16px; overflow-wrap:anywhere; }
+    .m-prof small{ color:var(--ink-soft); font-size:13px; }
+    .m-menu{ padding:4px 14px; }
+    .m-row{ display:flex; align-items:center; gap:12px; width:100%; padding:12px 0; border:0; border-bottom:1px solid var(--line);
+      background:none; color:var(--ink); font:500 14.5px "Inter",sans-serif; text-align:left; cursor:pointer; }
+    .m-row:last-child{ border-bottom:0; }
+    .m-row .m-ico{ width:34px; height:34px; font-size:16px; border-radius:11px; }
+    .m-row span.m-row-t{ flex:1; min-width:0; }
+    .m-row i{ font-style:normal; color:var(--ink-soft); font-size:18px; }
+    .m-logout{ width:100%; border:0; background:none; color:#C0473C; font:600 14px "Inter",sans-serif; padding:12px; cursor:pointer; }
+
+    /* ── Вкладка «Цены»: калькулятор без карусели + прайс ── */
+    body.m-app[data-mtab="prices"] .hero-section{ padding:14px 0 18px; background:transparent; }
+    body.m-app[data-mtab="prices"] .hero-section .carousel,
+    body.m-app[data-mtab="prices"] .hero-section .hero-orb,
+    body.m-app[data-mtab="prices"] #siteVideoSlotHero{ display:none !important; }
+    body.m-app[data-mtab="prices"] .hero-grid{ display:block; }
+    body.m-app[data-mtab="prices"] .calc-card{
+      background:linear-gradient(160deg, #1A5C54, #0E2D2A); border-radius:22px; padding:18px; color:#fff;
+    }
+    body.m-app[data-mtab="prices"] .calc-card h2{ font-size:16px; margin-bottom:12px; }
+    /* компактный калькулятор: поля ниже, «Тип» и «Площадь» в одну строку */
+    body.m-app[data-mtab="prices"] .calc-card .field{ margin-bottom:10px; }
+    body.m-app[data-mtab="prices"] .calc-card .field label{ font-size:10.5px; margin-bottom:5px; }
+    body.m-app[data-mtab="prices"] .calc-card .field select,
+    body.m-app[data-mtab="prices"] .calc-card .field input{ padding:10px 12px; font-size:14px; border-radius:12px; }
+    body.m-app[data-mtab="prices"] .calc-card .field-row{ grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:10px; }
+    body.m-app[data-mtab="prices"] .calc-card .input-suffix input{ padding-right:40px; }
+    body.m-app[data-mtab="prices"] .calc-card .calc-total{ padding-top:10px; }
+    body.m-app[data-mtab="prices"] .calc-card .calc-total .amount{ font-size:24px; }
+    body.m-app[data-mtab="prices"] .calc-card .calc-note{ font-size:11.5px; margin-top:6px; }
+    body.m-app[data-mtab="prices"] .calc-card .calc-cta{ margin-top:12px; padding-top:12px; padding-bottom:12px; }
+    body.m-app[data-mtab="prices"] .calc-card .calc-sub{ display:none; }
+    body.m-app[data-mtab="prices"] #services{ padding:4px 0 20px; }
+    body.m-app[data-mtab="prices"] #services .section-head h2,
+    body.m-app[data-mtab="prices"] #services .section-head .eyebrow{ display:none; }
+    body.m-app[data-mtab="prices"] #services .section-head{ margin-bottom:12px; }
+    body.m-app[data-mtab="prices"] #services .section-head p{ font-size:13px; margin:0; }
+
+    /* ── Вкладка «Кабинет» (гость): только карточка входа ── */
+    body.m-app #cabinet{ padding:16px 0 20px; background:transparent; }
+    body.m-app #cabinet .cabinet-grid{ display:block; }
+    body.m-app #cabinet .cabinet-grid > div:first-child{ display:none; }
+    body.m-app #cabinet .cabinet-card{ border-radius:22px; }
+
+    /* ── «Как это работает» — короткими строками ── */
+    body.m-app #hiw{ padding-bottom:28px; }
+    body.m-app #hiw .section-head{ margin-bottom:14px; gap:6px; }
+    body.m-app #hiw .section-head h2{ margin:0; }
+    body.m-app .reviews-section{ padding:36px 0; }
+    body.m-app .ba-section{ padding-bottom:24px; }
+    body.m-app #hiw .section-head h2{ font-size:22px; }
+    body.m-app #hiw .section-head p{ font-size:13px; margin-top:4px; }
+    body.m-app .hiw-grid{ gap:8px; }
+    body.m-app .hiw-step{ display:grid; grid-template-columns:40px minmax(0,1fr); grid-template-rows:auto 1fr; column-gap:12px; row-gap:0; align-items:start; align-content:start;
+      text-align:left; padding:12px 14px; border-radius:16px; background:var(--sand-card); }
+    body.m-app .hiw-step:hover{ transform:none; box-shadow:none; }
+    body.m-app .hiw-num{ grid-row:1 / 3; width:40px; height:40px; font-size:16px; margin:0; box-shadow:none; }
+    body.m-app .hiw-step h3{ font-size:15px; margin-bottom:2px; }
+    body.m-app .hiw-step p{ font-size:13px; line-height:1.45; margin:0; grid-column:2; }
+    body.m-app .hiw-step h3{ grid-column:2; }
+
+    /* ── Нижняя панель вкладок ── */
+    /* Прибита к низу во всю ширину; под системной полосой iPhone — сплошной фон
+       (padding-bottom = safe-area). ::after продолжает фон ниже края, чтобы не было
+       зазора, пока Safari прячет/показывает свою нижнюю панель при прокрутке. */
+    #mTabbar{
+      position:fixed; z-index:950; left:0; right:0; bottom:0;
+      height:calc(var(--m-tab-h, 62px) + env(safe-area-inset-bottom, 0px));
+      padding:0 max(6px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(6px, env(safe-area-inset-left, 0px));
+      box-sizing:border-box; border-radius:20px 20px 0 0; display:none;
+      grid-template-columns:repeat(4, minmax(0,1fr)); align-items:center;
+      background:var(--sand-card);
+      border-top:1px solid var(--line); box-shadow:0 -8px 24px -14px rgba(0,0,0,.35);
+    }
+    #mTabbar::after{ content:""; position:absolute; left:0; right:0; top:100%; height:120px; background:var(--sand-card); pointer-events:none; }
+    body.m-app #mTabbar{ display:grid; }
+    /* 4) клавиатура открыта — панель и 💬 прячем, чтобы не вставали над клавиатурой */
+    body.m-app.m-kb #mTabbar,
+    body.m-app.m-kb .float-btn-wrap{ display:none !important; }
+    #mTabbar button{ border:0; background:none; display:grid; justify-items:center; gap:2px; cursor:pointer; padding:0;
+      font:600 11px "Inter",sans-serif; color:var(--ink-soft); -webkit-tap-highlight-color:transparent; min-width:0; }
+    #mTabbar svg{ width:22px; height:22px; padding:4px 14px; box-sizing:content-box; border-radius:14px;
+      fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; transition:background .2s; }
+    #mTabbar button.on{ color:var(--amber-deep); }
+    [data-theme="dark"] #mTabbar button.on{ color:var(--amber); }
+    #mTabbar button.on svg{ background:#F2C46E; color:#1B1406; }
+    #mTabbar button:active svg{ transform:scale(.9); }
+    #mTabbar span{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* ── Плавающие элементы — над панелью ── */
+    body.m-app .float-btn-wrap{ right:max(14px, env(safe-area-inset-right, 0px)); bottom:calc(var(--m-tab-h) + 14px + env(safe-area-inset-bottom, 0px)); }
+    body.m-app .float-main-btn{ width:46px; height:46px; font-size:21px; }
+    body.m-app .float-main-btn::after{ display:none; }
+    /* 💬 уезжает вправо, пока листают вниз; возвращается при прокрутке вверх */
+    body.m-app .float-btn-wrap{ transition:transform .25s ease-out, opacity .25s ease-out; }
+    body.m-app.m-scroll-down .float-btn-wrap{ transform:translateX(90px); opacity:0; pointer-events:none; }
+    body.m-app .chat-widget{ bottom:calc(var(--m-tab-h) + 76px + env(safe-area-inset-bottom, 0px)); max-height:calc(100vh - 230px); max-height:calc(100dvh - 230px); }
+    body.m-app #clientPwaBanner{ bottom:calc(env(safe-area-inset-bottom,0px) + var(--m-tab-h) + 12px); }
+    body.m-app #clientPwaBanner:not(.show){ visibility:hidden; transform:translateY(40px); opacity:0; }
+    body.m-app #clientPwaBanner{ transition:transform .3s ease-out, opacity .3s ease-out, visibility .3s; }
+
+    /* ── Кабинет-дравер — на весь экран, панель вкладок видна поверх ── */
+    body.m-app .cabinet-drawer{ width:100%; padding-top:env(safe-area-inset-top, 0px); }
+    body.m-app .dr-body{ padding-bottom:calc(var(--m-tab-h) + 24px + env(safe-area-inset-bottom, 0px)); }
+    body.m-app .oc-full.m-flash{ box-shadow:0 0 0 2px var(--amber); transition:box-shadow .4s; }
+
+    /* ── Окна — по центру, фон размыт, появление без «прыжка» ── */
+    body.m-app .modal-overlay{ background:rgba(8,20,18,.5); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+    body.m-app .modal-box{ transform:none; transition:none; border-radius:22px; max-height:94vh; max-height:94dvh; }
+    body.m-app .modal-overlay.open .modal-box{ animation:mPop .18s ease-out both; }
+    body.m-app .contact-modal-overlay{ z-index:1000; align-items:center; justify-content:center; padding:20px; }
+    body.m-app .contact-modal-overlay.open{ background:rgba(8,20,18,.5); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+    body.m-app .contact-modal{ width:100%; max-width:360px; animation:mPop .18s ease-out both; }
+    body.m-app .contact-modal.closing{ animation:none; opacity:0; transition:opacity .15s; }
+    body.m-app .cb-modal-overlay,
+    body.m-app .promo-modal-overlay{ backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+    body.m-app .cb-modal-overlay.open .cb-modal-box,
+    body.m-app .promo-modal-overlay.open .promo-modal-box{ animation:mPop .18s ease-out both; }
+  }
+  @media (max-width: 767px) and (prefers-reduced-motion: reduce){
+    body.m-app [data-mscreen], body.m-app .modal-overlay.open .modal-box, body.m-app .contact-modal{ animation:none !important; }
+  }
+</style>
 </head>
 <body>
+<script>/* mApp: класс телефона до первой отрисовки */try{if(matchMedia('(max-width: 767px)').matches){document.body.classList.add('m-app');var _mt=sessionStorage.getItem('artez_mtab');document.body.dataset.mtab=/^(home|orders|prices|cabinet)$/.test(_mt||'')?_mt:'home';}}catch(_){}</script>
 
 <div id="scrollBar"></div>
 
@@ -3021,6 +3335,54 @@
     </div>
   </div>
 </header>
+<!-- ===== МОБИЛЬНЫЙ САЙТ «КАК ПРИЛОЖЕНИЕ» (<768px, см. #mAppCss и скрипт mApp внизу) ===== -->
+<div class="m-only" id="mBar" data-mscreen><div class="wrap"><h2 id="mBarTitle"></h2><p id="mBarSub"></p></div></div>
+
+<section class="m-only" id="mHero" data-mscreen>
+  <div class="wrap">
+    <div id="mHelloWrap" style="display:none"><div class="m-hello" id="mHello"></div><div class="m-name" id="mName"></div></div>
+    <div class="m-glass" style="margin-top:8px">
+      <div>
+        <h1 id="mHeroTitle"></h1>
+        <p id="mHeroSub"></p>
+      </div>
+      <svg viewBox="0 0 80 80" aria-hidden="true">
+        <circle cx="64" cy="10" r="4" fill="#2CC6B3"/><circle cx="72" cy="22" r="2.6" fill="#2CC6B3" opacity=".8"/><circle cx="57" cy="3" r="1.8" fill="#2CC6B3" opacity=".7"/>
+        <rect x="14" y="14" width="44" height="54" rx="6" fill="#EEF5F2"/>
+        <rect x="19" y="19" width="34" height="44" rx="3" fill="none" stroke="#1A5C54" stroke-width="2.4"/>
+        <path d="M36 27 L46 41 L36 55 L26 41 Z" fill="none" stroke="#E8A83C" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M36 35 L40.5 41 L36 47 L31.5 41 Z" fill="#1A5C54"/>
+        <g stroke="#EEF5F2" stroke-width="2" stroke-linecap="round"><path d="M20 68v6M26 68v6M32 68v6M38 68v6M44 68v6M50 68v6"/></g>
+      </svg>
+      <button type="button" class="m-cta" id="mCallCourier"><b>＋</b><span id="mCtaText"></span></button>
+    </div>
+  </div>
+</section>
+
+<div class="m-only" id="mHome" data-mscreen>
+  <div class="wrap m-sec">
+    <div id="mHomeOrders"></div>
+    <div class="m-h"><span id="mSvcTitle"></span><button type="button" data-mgo="prices" id="mSvcAll"></button></div>
+    <div class="m-svc-grid" id="mSvcGrid"></div>
+    <div id="mVideoSlot"></div>
+  </div>
+</div>
+
+<div class="m-only" id="mOrders" data-mscreen>
+  <div class="wrap m-sec">
+    <div class="m-chips" id="mChips"></div>
+    <div id="mOrdersList" style="display:grid;gap:10px"></div>
+  </div>
+</div>
+
+<div class="m-only" id="mCab" data-mscreen>
+  <div class="wrap m-sec">
+    <div class="m-card m-prof"><div class="m-ava" id="mCabAva">А</div><div><b id="mCabName"></b><small id="mCabPhone"></small></div></div>
+    <div class="m-card m-menu" id="mCabMenu"></div>
+    <button type="button" class="m-logout" id="mCabLogout"></button>
+  </div>
+</div>
+
 
 <section class="hero-section" id="hero">
   <div class="hero-orb hero-orb-1"></div>
@@ -3121,40 +3483,40 @@
         <div class="service-icon service-icon-1">🧺</div>
         <h3 data-i18n="svc.carpet.name">Чистка ковра</h3>
         <div class="price-unit" id="unit-carpet">сум / м²</div>
-        <div class="price-row"><span data-i18n="type.standard.name">Стандартный</span><b id="price-carpet-standard">13 000</b></div>
-        <div class="price-row"><span data-i18n="type.express.name">Быстрый</span><b id="price-carpet-express">18 000</b></div>
+        <div class="price-row"><span data-i18n="type.standard.name">Стандартный</span><b id="price-carpet-standard">…</b></div>
+        <div class="price-row"><span data-i18n="type.express.name">Быстрый</span><b id="price-carpet-express">…</b></div>
       </div>
 
       <div class="service-card reveal reveal-d2">
         <div class="service-icon service-icon-2">🏠</div>
         <h3 data-i18n="svc.carpet_home.name">Чистка ковра на дому</h3>
         <div class="price-unit" id="unit-carpet_home">сум / м²</div>
-        <div class="price-row"><span data-i18n="type.standard.name">Стандартный</span><b id="price-carpet_home-standard">15 000</b></div>
-        <div class="price-row"><span data-i18n="type.express.name">Быстрый</span><b id="price-carpet_home-express">20 000</b></div>
+        <div class="price-row"><span data-i18n="type.standard.name">Стандартный</span><b id="price-carpet_home-standard">…</b></div>
+        <div class="price-row"><span data-i18n="type.express.name">Быстрый</span><b id="price-carpet_home-express">…</b></div>
       </div>
 
       <div class="service-card reveal reveal-d3">
         <div class="service-icon service-icon-3">🛋</div>
         <h3 data-i18n="svc.sofa.name">Чистка диван, кресло</h3>
         <div class="price-unit" id="unit-sofa">сум / м²</div>
-        <div class="price-row"><span data-i18n="type.standard.name">Стандартный</span><b id="price-sofa-standard">100 000</b></div>
-        <div class="price-row"><span data-i18n="type.express.name">Быстрый</span><b id="price-sofa-express">150 000</b></div>
+        <div class="price-row"><span data-i18n="type.standard.name">Стандартный</span><b id="price-sofa-standard">…</b></div>
+        <div class="price-row"><span data-i18n="type.express.name">Быстрый</span><b id="price-sofa-express">…</b></div>
       </div>
 
       <div class="service-card reveal reveal-d4">
         <div class="service-icon service-icon-4">🛏</div>
         <h3 data-i18n="svc.mattress.name">Чистка матрас, одеяло</h3>
         <div class="price-unit" id="unit-mattress">сум / м²</div>
-        <div class="price-row"><span data-i18n="type.standard.name">Стандартный</span><b id="price-mattress-standard">30 000</b></div>
-        <div class="price-row"><span data-i18n="type.express.name">Быстрый</span><b id="price-mattress-express">40 000</b></div>
+        <div class="price-row"><span data-i18n="type.standard.name">Стандартный</span><b id="price-mattress-standard">…</b></div>
+        <div class="price-row"><span data-i18n="type.express.name">Быстрый</span><b id="price-mattress-express">…</b></div>
       </div>
 
       <div class="service-card reveal reveal-d4">
         <div class="service-icon service-icon-5">🪟</div>
         <h3 data-i18n="svc.curtains.name">Чистка штор</h3>
         <div class="price-unit" id="unit-curtains">сум / м²</div>
-        <div class="price-row"><span data-i18n="type.standard.name">Стандартный</span><b id="price-curtains-standard">5 000</b></div>
-        <div class="price-row"><span data-i18n="type.express.name">Быстрый</span><b id="price-curtains-express">8 000</b></div>
+        <div class="price-row"><span data-i18n="type.standard.name">Стандартный</span><b id="price-curtains-standard">…</b></div>
+        <div class="price-row"><span data-i18n="type.express.name">Быстрый</span><b id="price-curtains-express">…</b></div>
       </div>
 
     </div>
@@ -3338,7 +3700,10 @@
           </div>
           <div class="field">
             <label for="loginPass" data-i18n="auth.password">Пароль</label>
-            <input type="password" id="loginPass" placeholder="••••••••" required>
+            <div class="pwd-eye-wrap">
+              <input type="password" id="loginPass" placeholder="••••••••" required>
+              <button type="button" class="pwd-eye" onclick="togglePwd('loginPass',this)" tabindex="-1" aria-label="Показать пароль">👁</button>
+            </div>
           </div>
           <div class="small-note" style="text-align:right;margin:-8px 0 4px"><a href="#" id="goForgotPass" data-i18n="auth.forgotPass">Забыли пароль?</a></div>
           <button type="submit" class="btn btn-amber" data-i18n="auth.loginBtn">Войти</button>
@@ -3440,7 +3805,10 @@
             </div>
             <div class="field">
               <label for="regPass" data-i18n="auth.password">Пароль</label>
-              <input type="password" id="regPass" placeholder="Минимум 6 символов" data-i18n-placeholder="auth.passwordPlaceholder" required>
+              <div class="pwd-eye-wrap">
+                <input type="password" id="regPass" placeholder="Минимум 6 символов" data-i18n-placeholder="auth.passwordPlaceholder" required>
+                <button type="button" class="pwd-eye" onclick="togglePwd('regPass',this)" tabindex="-1" aria-label="Показать пароль">👁</button>
+              </div>
             </div>
             <button type="submit" class="btn btn-amber" id="regSubmitBtn" data-i18n="auth.getSmsCode">Получить код по SMS</button>
           </form>
@@ -3608,34 +3976,42 @@
 
       <!-- DETAILED FORM -->
       <form id="detailedOrderForm" style="display:none">
-        <div class="form-row-2">
-          <div class="field">
-            <label for="dName" data-i18n="auth.name">Имя</label>
-            <input type="text" id="dName" placeholder="Ваше имя" data-i18n-placeholder="auth.namePlaceholder" required>
-          </div>
-          <div class="field">
-            <label for="dPhone" data-i18n="auth.phone">Номер телефона</label>
-            <input type="tel" id="dPhone" placeholder="+998 90 123-45-67" required>
+        <div class="ow-head">
+          <div class="ow-head-row"><b id="owTitle"></b><span id="owCount"></span></div>
+          <div class="ow-bar" id="owBar"><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+
+        <!-- Шаг 1: что почистить (несколько услуг) -->
+        <div class="ow-step" data-ow="0">
+          <p class="ow-hint" data-i18n="ow.pickHint">Можно выбрать несколько — нажмите на услугу</p>
+          <div id="owSvcList" class="ow-svc-list"></div>
+          <!-- старый одиночный выбор услуги — скрыт, оставлен для калькулятора/префилла -->
+          <div style="display:none">
+            <div class="select-wrap">
+              <select id="dService">
+                <option value="carpet" data-i18n="svc.carpet">🧺 Чистка ковра</option>
+                <option value="carpet_home" data-i18n="svc.carpet_home">🏠 Чистка ковра на дому</option>
+                <option value="sofa" data-i18n="svc.sofa">🛋 Чистка диван, кресло</option>
+                <option value="mattress" data-i18n="svc.mattress">🛏 Чистка матрас, одеяло</option>
+                <option value="curtains" data-i18n="svc.curtains">🪟 Чистка штор</option>
+              </select>
+            </div>
+            <div class="pill-group" id="serviceTypeGroup">
+              <button type="button" class="pill-btn" data-type="standard" data-i18n="type.standard">🧺 Стандартный</button>
+              <button type="button" class="pill-btn" data-type="express" data-i18n="type.express">⚡ Быстрый</button>
+            </div>
+            <div class="field" id="dSizeField" style="display:none">
+              <div class="pill-group" id="sizeTypeGroup"></div>
+            </div>
           </div>
         </div>
 
-        <div class="field">
-          <label for="dPhone2" data-i18n="order.phone2">Запасной номер (необязательно)</label>
-          <input type="tel" id="dPhone2" placeholder="+998 90 123-45-67">
-        </div>
-
-        <!-- Блок: Адрес вывоза -->
-        <div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px">
+        <!-- Шаг 2: откуда забрать -->
+        <div class="ow-step" data-ow="1">
           <div class="field">
             <label data-i18n="order.branch">Филиал</label>
             <div class="pill-group" id="branchGroup"></div>
           </div>
-
-          <div class="field">
-            <label for="dAddress" data-i18n="order.addressLabel">Адрес (улица, дом, квартира)</label>
-            <input type="text" id="dAddress" placeholder="ул. Алишера Навои, дом 12, кв. 5" data-i18n-placeholder="order.addressPlaceholder" required>
-          </div>
-
           <div class="field">
             <div class="map-label-row">
               <label data-i18n="order.mapLabel">Локация на карте</label>
@@ -3647,19 +4023,21 @@
             <div class="map-hint" data-i18n="order.mapHint">Перетащите метку на нужное место — координаты сохранятся вместе с заявкой</div>
             <div id="mapAddrDisplay" style="display:none;font-size:13px;color:#555;margin-top:6px;padding:6px 10px;background:#f2f2f7;border-radius:8px;line-height:1.4"></div>
           </div>
+          <div class="field">
+            <label for="dAddress" data-i18n="order.addressLabel">Адрес (улица, дом, квартира)</label>
+            <input type="text" id="dAddress" placeholder="ул. Алишера Навои, дом 12, кв. 5" data-i18n-placeholder="order.addressPlaceholder" required>
+          </div>
         </div>
 
-        <!-- Блок: Адрес доставки -->
-        <div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px">
-          <div class="consent-row" style="margin-bottom:0">
-            <input type="checkbox" id="dDeliveryAddrDiffers">
-            <label for="dDeliveryAddrDiffers" data-i18n="order.deliveryAddrDiffers" style="font-size:14px;color:var(--ink,#1f2937);font-weight:600">Адрес доставки другой</label>
+        <!-- Шаг 3: куда вернуть -->
+        <div class="ow-step" data-ow="2">
+          <div class="pill-group" id="owDropGroup" style="margin-bottom:16px">
+            <button type="button" class="pill-btn" data-drop="same" data-i18n="ow.sameAddr">Тот же адрес</button>
+            <button type="button" class="pill-btn" data-drop="other" data-i18n="ow.otherAddr">Другой адрес</button>
           </div>
+          <input type="checkbox" id="dDeliveryAddrDiffers" style="display:none">
+          <div id="owSameCard" class="ow-same"></div>
           <div id="dDeliveryAddrWrap" style="display:none">
-            <div class="field">
-              <label for="dDeliveryAddress" data-i18n="order.deliveryAddressLabel">Адрес доставки</label>
-              <input type="text" id="dDeliveryAddress" placeholder="ул. Алишера Навои, дом 14, кв. 1" data-i18n-placeholder="order.addressPlaceholder">
-            </div>
             <div class="field">
               <div class="map-label-row">
                 <label data-i18n="order.deliveryMapLabel">Локация доставки на карте</label>
@@ -3671,72 +4049,74 @@
               <div class="map-hint" data-i18n="order.mapHint">Перетащите метку на нужное место — координаты сохранятся вместе с заявкой</div>
               <div id="deliveryMapAddrDisplay" style="display:none;font-size:13px;color:#555;margin-top:6px;padding:6px 10px;background:#f2f2f7;border-radius:8px;line-height:1.4"></div>
             </div>
+            <div class="field">
+              <label for="dDeliveryAddress" data-i18n="order.deliveryAddressLabel">Адрес доставки</label>
+              <input type="text" id="dDeliveryAddress" placeholder="ул. Алишера Навои, дом 14, кв. 1" data-i18n-placeholder="order.addressPlaceholder">
+            </div>
           </div>
         </div>
 
-        <div class="field">
-          <label for="dService" data-i18n="calc.serviceLabel">Услуга</label>
-          <div class="select-wrap">
-            <select id="dService">
-              <option value="carpet" data-i18n="svc.carpet">🧺 Чистка ковра</option>
-              <option value="carpet_home" data-i18n="svc.carpet_home">🏠 Чистка ковра на дому</option>
-              <option value="sofa" data-i18n="svc.sofa">🛋 Чистка диван, кресло</option>
-              <option value="mattress" data-i18n="svc.mattress">🛏 Чистка матрас, одеяло</option>
-              <option value="curtains" data-i18n="svc.curtains">🪟 Чистка штор</option>
-            </select>
+        <!-- Шаг 4: когда забрать -->
+        <div class="ow-step" data-ow="3">
+          <div class="field">
+            <label data-i18n="order.dateLabel">Дата вывоза</label>
+            <div class="pill-group" id="dateGroup">
+              <button type="button" class="pill-btn" data-date-opt="today" data-i18n="order.today">📅 Сегодня</button>
+              <button type="button" class="pill-btn" data-date-opt="tomorrow" data-i18n="order.tomorrow">📅 Завтра</button>
+              <button type="button" class="pill-btn" data-date-opt="pick" data-i18n="order.pickDate">🗓 Указать дату</button>
+            </div>
+            <div class="mini-cal" id="miniCal" style="display:none"></div>
           </div>
-        </div>
-
-        <div class="field">
-          <label data-i18n="calc.typeLabel">Тип услуги</label>
-          <div class="pill-group" id="serviceTypeGroup">
-            <button type="button" class="pill-btn" data-type="standard" data-i18n="type.standard">🧺 Стандартный</button>
-            <button type="button" class="pill-btn" data-type="express" data-i18n="type.express">⚡ Быстрый</button>
-          </div>
-        </div>
-
-        <!-- Размер — только у услуг с размерами, см. selectServiceType -->
-        <div class="field" id="dSizeField" style="display:none">
-          <label data-i18n="calc.sizeLabel">Размер</label>
-          <div class="pill-group" id="sizeTypeGroup"></div>
-        </div>
-
-        <div class="field">
-          <label data-i18n="order.dateLabel">Дата вывоза</label>
-          <div class="pill-group" id="dateGroup">
-            <button type="button" class="pill-btn" data-date-opt="today" data-i18n="order.today">📅 Сегодня</button>
-            <button type="button" class="pill-btn" data-date-opt="tomorrow" data-i18n="order.tomorrow">📅 Завтра</button>
-            <button type="button" class="pill-btn" data-date-opt="pick" data-i18n="order.pickDate">🗓 Указать дату</button>
-          </div>
-          <div class="mini-cal" id="miniCal" style="display:none"></div>
-        </div>
-
-        <div class="field">
-          <label data-i18n="order.timeLabel">Время вывоза</label>
-          <div class="pill-group" id="timeGroup">
-            <button type="button" class="pill-btn" data-time-opt="morning" data-i18n="order.timeMorning">🌅 До обеда (9:00–13:00)</button>
-            <button type="button" class="pill-btn" data-time-opt="evening" data-i18n="order.timeEvening">🌆 После обеда (13:00–20:00)</button>
-            <button type="button" class="pill-btn" data-time-opt="custom" data-i18n="order.timeCustom">⏰ Указать период</button>
-          </div>
-          <div id="customTimePicker" style="display:none; margin-top:10px;">
-            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-              <div class="field" style="margin:0; flex:1; min-width:100px;">
-                <label for="timeFrom" style="font-size:13px;" data-i18n="order.timeFrom">С</label>
-                <input type="time" id="timeFrom" value="09:00" style="color-scheme:light;color:#1a1a1a;background:#fff;">
-              </div>
-              <div class="field" style="margin:0; flex:1; min-width:100px;">
-                <label for="timeTo" style="font-size:13px;" data-i18n="order.timeTo">До</label>
-                <input type="time" id="timeTo" value="18:00" style="color-scheme:light;color:#1a1a1a;background:#fff;">
+          <div class="field">
+            <label data-i18n="order.timeLabel">Время вывоза</label>
+            <div class="pill-group" id="timeGroup">
+              <button type="button" class="pill-btn" data-time-opt="morning" data-i18n="order.timeMorning">🌅 До обеда (9:00–13:00)</button>
+              <button type="button" class="pill-btn" data-time-opt="evening" data-i18n="order.timeEvening">🌆 После обеда (13:00–20:00)</button>
+              <button type="button" class="pill-btn" data-time-opt="custom" data-i18n="order.timeCustom">⏰ Указать период</button>
+            </div>
+            <div id="customTimePicker" style="display:none; margin-top:10px;">
+              <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                <div class="field" style="margin:0; flex:1; min-width:100px;">
+                  <label for="timeFrom" style="font-size:13px;" data-i18n="order.timeFrom">С</label>
+                  <input type="time" id="timeFrom" value="09:00" style="color-scheme:light;color:#1a1a1a;background:#fff;">
+                </div>
+                <div class="field" style="margin:0; flex:1; min-width:100px;">
+                  <label for="timeTo" style="font-size:13px;" data-i18n="order.timeTo">До</label>
+                  <input type="time" id="timeTo" value="18:00" style="color-scheme:light;color:#1a1a1a;background:#fff;">
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="consent-row">
-          <input type="checkbox" id="dConsent" required>
-          <label for="dConsent"><span data-i18n="order.consentPre">Я согласен(а) с </span><a href="terms.html" target="_blank" data-i18n="order.terms">Условиями использования</a><span data-i18n="order.consentAnd"> и </span><a href="privacy.html" target="_blank" data-i18n="order.privacy">Политикой конфиденциальности</a><span data-i18n="order.consentAnd2">, </span><a href="pravila-priema.html" target="_blank" data-i18n="order.rules">Правилами приёма и выдачи заказов</a></label>
+        <!-- Шаг 5: контакты, проверка, отправка -->
+        <div class="ow-step" data-ow="4">
+          <div class="form-row-2">
+            <div class="field">
+              <label for="dName" data-i18n="auth.name">Имя</label>
+              <input type="text" id="dName" placeholder="Ваше имя" data-i18n-placeholder="auth.namePlaceholder" required>
+            </div>
+            <div class="field">
+              <label for="dPhone" data-i18n="auth.phone">Номер телефона</label>
+              <input type="tel" id="dPhone" placeholder="+998 90 123-45-67" required>
+            </div>
+          </div>
+          <div class="field">
+            <label for="dPhone2" data-i18n="order.phone2">Запасной номер (необязательно)</label>
+            <input type="tel" id="dPhone2" placeholder="+998 90 123-45-67">
+          </div>
+          <div id="owSummary" class="ow-summary"></div>
+          <div class="consent-row">
+            <input type="checkbox" id="dConsent" required>
+            <label for="dConsent"><span data-i18n="order.consentPre">Я согласен(а) с </span><a href="terms.html" target="_blank" data-i18n="order.terms">Условиями использования</a><span data-i18n="order.consentAnd"> и </span><a href="privacy.html" target="_blank" data-i18n="order.privacy">Политикой конфиденциальности</a><span data-i18n="order.consentAnd2">, </span><a href="pravila-priema.html" target="_blank" data-i18n="order.rules">Правилами приёма и выдачи заказов</a></label>
+          </div>
         </div>
-        <button type="submit" class="btn btn-amber" style="width:100%; margin-top:6px;" data-i18n="order.submit">Отправить заявку</button>
+
+        <div class="ow-nav">
+          <button type="button" class="btn ow-back" id="owBack" data-i18n="ow.back">‹ Назад</button>
+          <button type="button" class="btn btn-amber ow-next" id="owNext" data-i18n="ow.next">Далее ›</button>
+          <button type="submit" class="btn btn-amber ow-next" id="owSubmit" data-i18n="order.submit">Отправить заявку</button>
+        </div>
       </form>
     </div>
 
@@ -3875,7 +4255,405 @@
   </div>
 </div>
 
-<script src="site-common.js?v=24"></script>
+<script src="site-common.js?v=25"></script>
+<!-- ══ owWizard: «Подробная заявка» по шагам (перенос из ARTEZ 74469a3, 15.11.2026) ══ -->
+<style id="owCss">
+  #detailedOrderForm .ow-head{ margin:-6px 0 18px; }
+  #detailedOrderForm .ow-head-row{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:8px; }
+  #detailedOrderForm .ow-head-row b{ font-family:"Sora",sans-serif; font-size:17px; color:var(--ink); }
+  #detailedOrderForm .ow-head-row span{ font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+  #detailedOrderForm .ow-bar{ display:flex; gap:6px; }
+  #detailedOrderForm .ow-bar i{ flex:1; height:5px; border-radius:3px; background:var(--line); transition:background .25s ease; }
+  #detailedOrderForm .ow-bar i.on{ background:var(--amber); }
+  #detailedOrderForm .ow-step{ display:none; }
+  #detailedOrderForm .ow-step.on{ display:block; animation:owIn .26s ease-out; }
+  #detailedOrderForm .ow-step.on.back{ animation-name:owInBack; }
+  @keyframes owIn{ from{ opacity:0; transform:translateX(14px); } to{ opacity:1; transform:none; } }
+  @keyframes owInBack{ from{ opacity:0; transform:translateX(-14px); } to{ opacity:1; transform:none; } }
+  #detailedOrderForm .ow-hint{ font-size:13.5px; color:var(--ink-soft); margin:0 0 12px; }
+  .ow-svc-list{ display:flex; flex-direction:column; gap:10px; }
+  .ow-svc{ border:1.5px solid var(--line); border-radius:16px; background:var(--sand-card); transition:border-color .15s ease; }
+  .ow-svc.on{ border-color:var(--amber); }
+  .ow-svc-head{ display:flex; align-items:center; gap:12px; padding:12px 14px; cursor:pointer; width:100%; background:none; border:0; text-align:left; font:inherit; color:inherit; }
+  .ow-svc-emoji{ width:42px; height:42px; border-radius:13px; background:#F1ECE1; display:flex; align-items:center; justify-content:center; font-size:21px; flex:none; }
+  .ow-svc.on .ow-svc-emoji{ background:rgba(232,168,60,.18); }
+  .ow-svc-name{ flex:1; min-width:0; }
+  .ow-svc-name b{ display:block; font-size:15px; color:var(--ink); }
+  .ow-svc-name small{ font-size:13px; color:var(--ink-soft); }
+  .ow-check{ width:26px; height:26px; border-radius:50%; border:2px solid var(--line); flex:none; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:800; }
+  .ow-svc.on .ow-check{ background:var(--amber); border-color:var(--amber); }
+  .ow-svc-body{ padding:0 14px 14px; display:flex; flex-direction:column; gap:10px; }
+  .ow-svc-body .pill-group{ margin:0; }
+  .ow-qty{ display:flex; align-items:center; justify-content:space-between; }
+  .ow-qty span{ font-size:13px; font-weight:600; color:var(--ink-soft); }
+  .ow-qty div{ display:flex; align-items:center; gap:6px; }
+  .ow-qty button{ width:38px; height:38px; border-radius:12px; border:1.5px solid var(--line); background:#FBF9F4; font-size:20px; font-weight:700; color:var(--teal); cursor:pointer; line-height:1; }
+  .ow-qty button:disabled{ opacity:.4; cursor:default; }
+  .ow-qty b{ min-width:28px; text-align:center; font-size:17px; color:var(--ink); }
+  .ow-same{ border:1px solid var(--line); border-radius:14px; padding:14px; font-size:14px; color:var(--ink); line-height:1.45; }
+  .ow-same small{ display:block; color:var(--ink-soft); margin-top:4px; }
+  .ow-summary{ border:1px solid var(--line); border-radius:14px; padding:4px 14px; margin:4px 0 16px; }
+  .ow-sum-row{ display:flex; gap:12px; align-items:flex-start; padding:11px 0; }
+  .ow-sum-row + .ow-sum-row{ border-top:1px solid var(--line); }
+  .ow-sum-row > div{ flex:1; min-width:0; }
+  .ow-sum-row small{ display:block; font-size:12px; color:var(--ink-soft); margin-bottom:2px; }
+  .ow-sum-row p{ margin:0; font-size:14px; font-weight:600; color:var(--ink); white-space:pre-line; word-break:break-word; }
+  .ow-sum-row button{ flex:none; border:0; background:#F1ECE1; color:var(--teal); font-weight:700; font-size:12.5px; padding:7px 11px; border-radius:10px; cursor:pointer; }
+  #detailedOrderForm .ow-nav{ position:sticky; bottom:-28px; display:flex; gap:10px; margin:18px -28px -28px; padding:14px 28px 22px; background:var(--sand-card); border-top:1px solid var(--line); z-index:3; }
+  #detailedOrderForm .ow-nav .ow-back{ flex:0 0 auto; background:#F1ECE1; color:var(--teal); border:0; }
+  #detailedOrderForm .ow-nav .ow-next{ flex:1; margin:0; }
+  #detailedOrderForm .ow-nav [hidden]{ display:none !important; }
+  [data-theme="dark"] .ow-svc-emoji, [data-theme="dark"] .ow-sum-row button, [data-theme="dark"] #detailedOrderForm .ow-nav .ow-back{ background:rgba(255,255,255,.07); }
+  [data-theme="dark"] .ow-qty button{ background:rgba(255,255,255,.05); color:var(--teal-soft); }
+  [data-theme="dark"] .ow-sum-row button, [data-theme="dark"] #detailedOrderForm .ow-nav .ow-back{ color:var(--teal-soft); }
+  @media (max-width:767px){
+    #detailedOrderForm .ow-nav{ margin-left:-20px; margin-right:-20px; padding-left:20px; padding-right:20px; }
+  }
+</style>
+<script>
+(function owWizard(){
+  // Перенос из ARTEZ (74469a3) в Cleano SaaS 15.11.2026: без выбора города (у компании — филиалы),
+  // филиалы подгружаются из настроек компании, services[] API пока игнорирует → см. submit в site-common.js.
+  const form = document.getElementById('detailedOrderForm');
+  if (!form) return;
+  const KEY = 'order_draft';
+  const _ruUz = (ru, uz) => (lang === 'ru' ? ru : (uz || ru)) || ru || '';
+  const branchLabel = () => { const b = document.querySelector('#branchGroup .pill-btn.active'); return b ? b.textContent.replace(/^📍\s*/, '').trim() : ''; };
+  let pendingBranch = null;
+  const N = 5;
+  const $ = (id) => document.getElementById(id);
+
+  Object.assign(I18N.ru, {
+    'ow.stepOf': 'Шаг {n} из {total}',
+    'ow.steps': ['Что почистить', 'Откуда забрать', 'Куда вернуть', 'Когда забрать', 'Проверка и контакты'],
+    'ow.next': 'Далее ›', 'ow.back': '‹ Назад',
+    'ow.pickHint': 'Можно выбрать несколько — нажмите на услугу',
+    'ow.qty': 'Количество', 'ow.priceFrom': 'от {sum} за {u}',
+    'ow.needService': 'Выберите хотя бы одну услугу',
+    'ow.needAddress': 'Укажите адрес, откуда забрать',
+    'ow.needDropAddress': 'Укажите адрес доставки',
+    'ow.sameAddr': 'Тот же адрес', 'ow.otherAddr': 'Другой адрес',
+    'ow.sameNote': 'Вернём чистое туда же, откуда заберём',
+    'ow.sumServices': 'Услуги', 'ow.sumPickup': 'Заберём', 'ow.sumDrop': 'Вернём', 'ow.sumWhen': 'Когда',
+    'ow.edit': 'Изменить', 'ow.point': '📍 точка на карте',
+  });
+  Object.assign(I18N.uz, {
+    'ow.stepOf': '{total} tadan {n}-qadam',
+    'ow.steps': ['Nimani tozalash kerak', 'Qayerdan olib ketish', 'Qayerga qaytarish', 'Qachon olib ketish', 'Tekshirish va aloqa'],
+    'ow.next': 'Davom etish ›', 'ow.back': '‹ Orqaga',
+    'ow.pickHint': 'Bir nechtasini tanlash mumkin — xizmatni bosing',
+    'ow.qty': 'Soni', 'ow.priceFrom': '{u} uchun {sum} dan',
+    'ow.needService': 'Kamida bitta xizmatni tanlang',
+    'ow.needAddress': 'Olib ketish manzilini kiriting',
+    'ow.needDropAddress': 'Yetkazish manzilini kiriting',
+    'ow.sameAddr': 'Xuddi shu manzil', 'ow.otherAddr': 'Boshqa manzil',
+    'ow.sameNote': 'Tozalangan buyumni olib ketgan joyimizga qaytaramiz',
+    'ow.sumServices': 'Xizmatlar', 'ow.sumPickup': 'Olib ketamiz', 'ow.sumDrop': 'Qaytaramiz', 'ow.sumWhen': 'Qachon',
+    'ow.edit': 'Oʻzgartirish', 'ow.point': '📍 xaritada nuqta',
+  });
+
+  let step = 0;
+  let lines = [];          // [{key, qty, speed, size}]
+  let restoring = false;
+
+  // ---------- услуги из таблицы (те же /services, /prices, /service-types, что у калькулятора) ----------
+  const svcVisible = () => (SVC_LIST || []).filter(s => s.active !== false && PRICES[s.key] && Object.keys(PRICES[s.key]).length);
+  function typesOf(key){
+    const rows = PRICES[key] || {};
+    const known = (SVC_TYPES[key] || []).filter(x => rows[x.type_key]);
+    if (known.length) return known;
+    return Object.keys(rows).map(k => ({ type_key:k, name_ru:k, name_uz:k, speed_key: k.startsWith('express') ? 'express' : 'standard', size_key:null }));
+  }
+  function resolve(ln){
+    const types = typesOf(ln.key);
+    const speeds = ['standard','express'].filter(sp => types.some(x => (x.speed_key || 'standard') === sp));
+    const speed = speeds.includes(ln.speed) ? ln.speed : (speeds[0] || 'standard');
+    const sized = types.filter(x => (x.speed_key || 'standard') === speed && x.size_key);
+    const size = sized.some(x => x.size_key === ln.size) ? ln.size : (sized[0] ? sized[0].size_key : null);
+    const cur = types.find(x => (x.speed_key || 'standard') === speed && (x.size_key || null) === size)
+             || types.find(x => (x.speed_key || 'standard') === speed) || types[0];
+    return { speeds, speed, sized, size, cur };
+  }
+  function minRow(key){
+    const rows = Object.values(PRICES[key] || {}).filter(r => r && r.price > 0);
+    return rows.length ? rows.reduce((a, b) => b.price < a.price ? b : a) : null;
+  }
+  const money = (n) => `${Math.round(n || 0).toLocaleString('ru-RU').replace(/,/g, ' ')} ${lang === 'ru' ? 'сум' : "so'm"}`;
+  const variantName = (r) => (r.cur && (r.speeds.length > 1 || r.sized.length)) ? _ruUz(r.cur.name_ru, r.cur.name_uz) : '';
+
+  function renderServices(){
+    const box = $('owSvcList');
+    if (!box) return;
+    const list = svcVisible();
+    box.innerHTML = '';
+    list.forEach(s => {
+      const ln = lines.find(l => l.key === s.key);
+      const r = ln ? resolve(ln) : null;
+      const row = (r && r.cur && PRICES[s.key][r.cur.type_key]) || minRow(s.key);
+      const card = _el('div', 'ow-svc' + (ln ? ' on' : ''));
+      const head = _el('button', 'ow-svc-head'); head.type = 'button'; head.dataset.svc = s.key;
+      const em = _el('span', 'ow-svc-emoji', s.emoji || '🧺');
+      const nm = _el('span', 'ow-svc-name');
+      nm.appendChild(_el('b', null, _ruUz(s.name_ru, s.name_uz) || s.key));
+      if (row) nm.appendChild(_el('small', null, tFmt('ow.priceFrom', { sum: money(row.price), u: unitSymbol(row.unit_key) })));
+      const ck = _el('span', 'ow-check', ln ? '✓' : '');
+      head.append(em, nm, ck);
+      head.addEventListener('click', () => {
+        lines = ln ? lines.filter(l => l.key !== s.key) : [...lines, { key: s.key, qty: 1, speed: 'standard', size: null }];
+        renderServices(); save();
+      });
+      card.appendChild(head);
+      if (ln && r) {
+        const body = _el('div', 'ow-svc-body');
+        const set = (patch) => { Object.assign(ln, patch); renderServices(); save(); };
+        if (r.speeds.length > 1) {
+          const g = _el('div', 'pill-group');
+          r.speeds.forEach(sp => {
+            const b = _el('button', 'pill-btn' + (sp === r.speed ? ' active' : ''), t('type.' + sp));
+            b.type = 'button'; b.addEventListener('click', () => set({ speed: sp, size: null }));
+            g.appendChild(b);
+          });
+          body.appendChild(g);
+        }
+        if (r.sized.length) {
+          const g = _el('div', 'pill-group');
+          r.sized.forEach(x => {
+            const b = _el('button', 'pill-btn' + (x.size_key === r.size ? ' active' : ''), _sizeLabel(x));
+            b.type = 'button'; b.addEventListener('click', () => set({ size: x.size_key }));
+            g.appendChild(b);
+          });
+          body.appendChild(g);
+        }
+        const q = _el('div', 'ow-qty');
+        q.appendChild(_el('span', null, t('ow.qty')));
+        const qq = _el('div');
+        const minus = _el('button', null, '−'); minus.type = 'button'; minus.disabled = ln.qty <= 1;
+        minus.addEventListener('click', () => set({ qty: Math.max(1, ln.qty - 1) }));
+        const plus = _el('button', null, '+'); plus.type = 'button';
+        plus.addEventListener('click', () => set({ qty: Math.min(99, ln.qty + 1) }));
+        qq.append(minus, _el('b', null, String(ln.qty)), plus);
+        q.appendChild(qq);
+        body.appendChild(q);
+        card.appendChild(body);
+      }
+      box.appendChild(card);
+    });
+    updateHead();
+  }
+  // строки для сервера (POST /api/orders → services[]) и для сводки
+  window.owServicesPayload = () => lines.filter(l => PRICES[l.key]).map(l => ({ service_key: l.key, type_key: (resolve(l).cur || {}).type_key || '', qty: l.qty }));
+  window.owFirstService = () => (lines[0] ? lines[0].key : '');
+
+  // ---------- шаги ----------
+  function updateHead(){
+    const steps = t('ow.steps');
+    $('owTitle').textContent = Array.isArray(steps) ? steps[step] : '';
+    $('owCount').textContent = tFmt('ow.stepOf', { n: step + 1, total: N });
+    $('owBar').querySelectorAll('i').forEach((el, i) => el.classList.toggle('on', i <= step));
+    $('owBack').hidden = step === 0;
+    $('owNext').hidden = step === N - 1;
+    $('owSubmit').hidden = step !== N - 1;
+  }
+  function fitMaps(){
+    setTimeout(() => {
+      if (step === 1 && typeof ymaps !== 'undefined') {
+        if (!yandexMap) ymaps.ready(() => { if (!yandexMap) initYandexMap(); restorePoints(); });
+        else { try { yandexMap.container.fitToViewport(); } catch(_){} }
+      }
+      if (step === 2 && deliveryYandexMap) { try { deliveryYandexMap.container.fitToViewport(); } catch(_){} }
+      if (step === 2 && $('dDeliveryAddrDiffers').checked && !deliveryYandexMap && typeof ymaps !== 'undefined') {
+        ymaps.ready(() => { if (!deliveryYandexMap) initDeliveryYandexMap(); restorePoints(); });
+      }
+      if (typeof ymaps === 'undefined' && step === 1) window._ymapsWaiting = true;
+    }, 60);
+  }
+  function go(n){
+    const dir = n > step ? '' : ' back';
+    step = Math.max(0, Math.min(N - 1, n));
+    form.querySelectorAll('.ow-step').forEach(el => { el.className = 'ow-step' + (+el.dataset.ow === step ? ' on' + dir : ''); });
+    if (step === 0) renderServices();
+    if (step === 2) renderSame();
+    if (step === 4) renderSummary();
+    updateHead();
+    fitMaps();
+    const box = form.closest('.modal-box'); if (box) box.scrollTop = 0;
+    save();
+  }
+  function stepOk(){
+    if (step === 0 && !owServicesPayload().length) return t('ow.needService');
+    if (step === 1 && !selectedBranch) return t('order.chooseBranch');
+    if (step === 1 && !$('dAddress').value.trim()) return t('ow.needAddress');
+    if (step === 2 && $('dDeliveryAddrDiffers').checked && !$('dDeliveryAddress').value.trim()) return t('ow.needDropAddress');
+    if (step === 3) {
+      if (!selectedDateValue) return t('order.choosePickupDate');
+      if (!selectedTimeOpt) return t('order.choosePickupTime');
+    }
+    return '';
+  }
+  $('owNext').addEventListener('click', () => { const err = stepOk(); if (err) { showOrderAlert(err); return; } go(step + 1); });
+  $('owBack').addEventListener('click', () => go(step - 1));
+  // Enter в поле не отправляет заявку раньше времени
+  form.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT' && step < N - 1) { e.preventDefault(); $('owNext').click(); }
+  });
+
+  // ---------- шаг 3: тот же / другой адрес ----------
+  function renderSame(){
+    const other = $('dDeliveryAddrDiffers').checked;
+    $('owDropGroup').querySelectorAll('.pill-btn').forEach(b => b.classList.toggle('active', (b.dataset.drop === 'other') === other));
+    const card = $('owSameCard');
+    card.style.display = other ? 'none' : '';
+    card.textContent = '';
+    card.appendChild(document.createTextNode([branchLabel(), $('dAddress').value.trim()].filter(Boolean).join(', ')));
+    card.appendChild(_el('small', null, t('ow.sameNote')));
+  }
+  $('owDropGroup').querySelectorAll('.pill-btn').forEach(b => b.addEventListener('click', () => {
+    const cb = $('dDeliveryAddrDiffers');
+    const want = b.dataset.drop === 'other';
+    if (cb.checked !== want) { cb.checked = want; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+    renderSame(); save();
+  }));
+
+  // ---------- шаг 5: сводка ----------
+  function timeText(){
+    if (selectedTimeOpt === 'custom') return `${$('timeFrom').value} — ${$('timeTo').value}`;
+    return selectedTimeOpt ? t(selectedTimeOpt === 'morning' ? 'order.timeMorning' : 'order.timeEvening') : '';
+  }
+  function renderSummary(){
+    const box = $('owSummary');
+    box.textContent = '';
+    const svc = lines.filter(l => PRICES[l.key]).map(l => {
+      const s = (SVC_LIST || []).find(x => x.key === l.key);
+      const v = variantName(resolve(l));
+      return `${s ? _svcDbLabel(s) : l.key} ×${l.qty}${v ? ` (${v})` : ''}`;
+    }).join('\n');
+    const other = $('dDeliveryAddrDiffers').checked;
+    const pick = [branchLabel(), $('dAddress').value.trim()].filter(Boolean).join(', ');
+    const rows = [
+      ['ow.sumServices', svc, 0],
+      ['ow.sumPickup', pick + ((yandexMarker || (pendingPts && pendingPts.pick)) ? `\n${t('ow.point')}` : ''), 1],
+      ['ow.sumDrop', other ? $('dDeliveryAddress').value.trim() + ((deliveryYandexMarker || (pendingPts && pendingPts.drop)) ? `\n${t('ow.point')}` : '') : t('ow.sameAddr'), 2],
+      ['ow.sumWhen', [selectedDateValue, timeText()].filter(Boolean).join(', '), 3],
+    ];
+    rows.forEach(([k, val, st]) => {
+      const r = _el('div', 'ow-sum-row');
+      const d = _el('div');
+      d.append(_el('small', null, t(k)), _el('p', null, val || '—'));
+      const b = _el('button', null, t('ow.edit')); b.type = 'button';
+      b.addEventListener('click', () => go(st));
+      r.append(d, b);
+      box.appendChild(r);
+    });
+  }
+
+  // ---------- черновик ----------
+  function pt(m){ try { const c = m && m.geometry.getCoordinates(); return c ? [c[0], c[1]] : null; } catch(_) { return null; } }
+  let pendingPts = null;
+  function save(){
+    if (restoring) return;
+    const d = {
+      v: 1, saved: Date.now(), step, lines,
+      branch: selectedBranch, address: $('dAddress').value,
+      pick: pt(typeof yandexMarker !== 'undefined' ? yandexMarker : null) || (pendingPts && pendingPts.pick) || null,
+      other: $('dDeliveryAddrDiffers').checked, dAddress: $('dDeliveryAddress').value,
+      drop: pt(deliveryYandexMarker) || (pendingPts && pendingPts.drop) || null,
+      dateOpt: selectedDateOpt, date: selectedDateValue, timeOpt: selectedTimeOpt,
+      timeFrom: $('timeFrom').value, timeTo: $('timeTo').value,
+      name: $('dName').value, phone: $('dPhone').value, phone2: $('dPhone2').value,
+    };
+    try { sessionStorage.setItem(KEY, JSON.stringify(d)); } catch(_) {}
+  }
+  function restorePoints(){
+    if (!pendingPts) return;
+    const p = pendingPts;
+    setTimeout(() => {
+      if (p.pick && typeof yandexMarker !== 'undefined' && yandexMarker) { yandexMarker.geometry.setCoordinates(p.pick); yandexMap.setCenter(p.pick, 16); p.pick = null; }
+      if (p.drop && deliveryYandexMarker) { deliveryYandexMarker.geometry.setCoordinates(p.drop); deliveryYandexMap.setCenter(p.drop, 16); p.drop = null; }
+    }, 900); // после фоновой геолокации карты (она двигает метку к пользователю)
+  }
+  const dmyToday = () => formatDateDMY(new Date());
+  function dmyPast(dmy){
+    const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(dmy || ''); if (!m) return true;
+    const d = new Date(+m[3], +m[2] - 1, +m[1]); const t0 = new Date(); t0.setHours(0,0,0,0);
+    return d < t0;
+  }
+  function restore(){
+    let d = null;
+    try { d = JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch(_) {}
+    if (!d || d.v !== 1 || Date.now() - d.saved > 3 * 86400000) return false;
+    restoring = true;
+    try {
+      lines = Array.isArray(d.lines) ? d.lines : [];
+      if (d.branch) { const b = document.querySelector(`#branchGroup .pill-btn[data-branch="${CSS.escape(String(d.branch))}"]`); if (b) b.click(); else pendingBranch = String(d.branch); }
+      $('dAddress').value = d.address || '';
+      if (d.other) { const cb = $('dDeliveryAddrDiffers'); if (!cb.checked) { cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true })); } }
+      $('dDeliveryAddress').value = d.dAddress || '';
+      if (d.date && !dmyPast(d.date)) {
+        const opt = d.date === dmyToday() ? 'today' : (d.dateOpt === 'pick' ? 'pick' : (d.dateOpt === 'tomorrow' ? 'tomorrow' : 'pick'));
+        const b = document.querySelector(`#dateGroup .pill-btn[data-date-opt="${opt}"]`);
+        if (b) b.click();
+        if (opt === 'pick') { selectedDateValue = d.date; renderMiniCal(); }
+      }
+      if (d.timeOpt) { const b = document.querySelector(`#timeGroup .pill-btn[data-time-opt="${d.timeOpt}"]`); if (b) b.click(); }
+      if (d.timeFrom) $('timeFrom').value = d.timeFrom;
+      if (d.timeTo) $('timeTo').value = d.timeTo;
+      if (d.name) $('dName').value = d.name;
+      if (d.phone) $('dPhone').value = d.phone;
+      $('dPhone2').value = d.phone2 || '';
+      pendingPts = { pick: d.pick, drop: d.drop };
+      step = Math.max(0, Math.min(N - 1, d.step | 0));
+    } finally { restoring = false; }
+    return lines.length > 0 || step > 0;
+  }
+  window.owClearDraft = () => { try { sessionStorage.removeItem(KEY); } catch(_) {} lines = []; pendingPts = null; step = 0; };
+
+  form.addEventListener('input', save);
+  form.addEventListener('change', save);
+  form.addEventListener('click', () => setTimeout(save, 0));
+
+  // открытие окна заявки: старый код сбрасывает дату/время — после него возвращаем черновик
+  const origOpen = window.openOrderModal;
+  window.openOrderModal = function(){
+    origOpen.apply(this, arguments);
+    const had = restore();
+    if (!had) {
+      lines = [];
+      const calcSvc = $('svcSelect') && $('svcSelect').value;   // префилл из калькулятора
+      if (calcSvc && PRICES[calcSvc]) {
+        const tk = (typeof _calcTypeKey === 'function') ? _calcTypeKey() : '';
+        const tp = (SVC_TYPES[calcSvc] || []).find(x => x.type_key === tk);
+        lines = [{ key: calcSvc, qty: 1, speed: tp ? (tp.speed_key || 'standard') : 'standard', size: tp ? tp.size_key : null }];
+      }
+      step = 0;
+    }
+    // черновик есть и он не на первом шаге — сразу показываем пошаговую заявку
+    if (had && step > 0) $('tabDetailed').click();
+    go(step);
+  };
+  // смена языка — перерисовать подписи шагов, список и сводку
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-lang-btn]')) setTimeout(() => go(step), 50); });
+  // каталог мог догрузиться после открытия окна
+  let tries = 0;
+  const iv = setInterval(() => { if (svcVisible().length || ++tries > 40) { clearInterval(iv); if (step === 0) renderServices(); } }, 250);
+  // филиалы компании могут догрузиться позже — выбрать сохранённый в черновике, когда появятся кнопки
+  setInterval(() => {
+    if (!pendingBranch) return;
+    const b = document.querySelector(`#branchGroup .pill-btn[data-branch="${CSS.escape(pendingBranch)}"]`);
+    if (b) { pendingBranch = null; b.click(); }
+  }, 500);
+  // для SaaS-API без services[]: вариант первой услуги + остальные услуги текстом (уйдёт в комментарий лида)
+  window.owServiceTypeText = () => {
+    const ls = lines.filter(l => PRICES[l.key]);
+    if (!ls.length) return '';
+    const name = (l) => { const s = (SVC_LIST || []).find(x => x.key === l.key); return s ? (s.name_ru || s.key) : l.key; };
+    const variant = (l) => { const r = resolve(l); return r.cur ? (r.cur.name_ru || r.cur.type_key) : ''; };
+    const first = [variant(ls[0]), ls[0].qty > 1 ? `×${ls[0].qty}` : ''].filter(Boolean).join(' ');
+    const rest = ls.slice(1).map(l => `${name(l)} ×${l.qty}${variant(l) ? ` (${variant(l)})` : ''}`);
+    return [first, rest.length ? `+ ${rest.join(', ')}` : ''].filter(Boolean).join(' · ');
+  };
+  restoring = true; go(0); restoring = false;   // начальный вид без записи пустого черновика
+})();
+</script>
 
 <!-- ══════════════════════════════
      OVERLAY + CABINET DRAWER
@@ -3959,11 +4737,17 @@
       <div class="settings-title" data-i18n="dr.settings.title">Смена пароля</div>
       <div class="field">
         <label data-i18n="dr.settings.oldPass">Текущий пароль</label>
-        <input type="password" id="drOldPass" placeholder="••••••••">
+        <div class="pwd-eye-wrap">
+          <input type="password" id="drOldPass" placeholder="••••••••">
+          <button type="button" class="pwd-eye" onclick="togglePwd('drOldPass',this)" tabindex="-1" aria-label="Показать пароль">👁</button>
+        </div>
       </div>
       <div class="field">
         <label data-i18n="dr.settings.newPass">Новый пароль</label>
-        <input type="password" id="drNewPass" data-i18n-placeholder="dr.settings.newPassPh" placeholder="Минимум 6 символов">
+        <div class="pwd-eye-wrap">
+          <input type="password" id="drNewPass" data-i18n-placeholder="dr.settings.newPassPh" placeholder="Минимум 6 символов">
+          <button type="button" class="pwd-eye" onclick="togglePwd('drNewPass',this)" tabindex="-1" aria-label="Показать пароль">👁</button>
+        </div>
       </div>
       <div id="drPassAlert" class="form-alert" style="display:none"></div>
       <button class="btn btn-amber" id="drSavePassBtn" style="width:100%;margin-top:6px" data-i18n="dr.settings.save">Изменить пароль</button>
@@ -4157,5 +4941,452 @@
   </button>
 </div>
 
+<!-- Нижняя панель вкладок (только телефон, см. #mAppCss) -->
+<nav class="m-only" id="mTabbar" aria-label="Разделы">
+  <button type="button" data-mtab-btn="home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span data-mt="tabHome"></span></button>
+  <button type="button" data-mtab-btn="orders"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span data-mt="tabOrders"></span></button>
+  <button type="button" data-mtab-btn="prices"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10.5h18M7 15h4"/></svg><span data-mt="tabPrices"></span></button>
+  <button type="button" data-mtab-btn="cabinet"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span data-mt="tabCabinet"></span></button>
+</nav>
+
+<script>
+// =====================================================================
+//  mApp — мобильный сайт «как приложение» (<768px). 15.11.2026
+//  Использует глобальные данные основного скрипта (lang, currentUser,
+//  lastOrders, PRICES, SVC_LIST, _pricesFromApi) и оборачивает его функции
+//  (loadDashboard, renderDashboardOrders, doLogout, setLang, …), чтобы
+//  перерисовываться. На компьютере ничего не делает.
+//  Данные клиента — только через textContent (не innerHTML/onclick).
+// =====================================================================
+(function mApp(){
+  const MQ = window.matchMedia('(max-width: 767px)');
+  const B = document.body;
+  const $ = id => document.getElementById(id);
+  const S = {
+    ru: {
+      tabHome:'Главная', tabOrders:'Заказы', tabPrices:'Цены', tabCabinet:'Кабинет',
+      heroTitle:'Заберём ковёр из дома и вернём чистым',
+      cta:'Вызвать курьера', hi0:'Доброе утро,', hi1:'Добрый день,', hi2:'Добрый вечер,',
+      curOrders:'Текущие заказы', all:'Все', noActive:'Активных заказов нет. Вызовите курьера — заберём и привезём бесплатно.',
+      loginT:'Ваши заказы', loginS:'Войдите, чтобы видеть статус', loginBtn:'Войти',
+      svcTitle:'Услуги и цены', ordersTitle:'Мои заказы', pricesTitle:'Цены',
+      pricesSub:'Точную сумму считаем после замера в мастерской', cabTitle:'Кабинет', cabGuest:'Войдите или зарегистрируйтесь',
+      ordersGuest:'Войдите, чтобы видеть свои заказы', mOrders:'Мои заказы', mProfile:'Профиль и адрес',
+      mSettings:'Настройки и Face ID', mBonus:'Бонусы (ОСАГО)', mAgentJoin:'Стать агентом', mAgentCab:'Кабинет агента',
+      mLang:'Язык: Русский → O‘zbekcha', mContact:'Связаться с нами', logout:'Выйти', items:'поз.',
+    },
+    uz: {
+      tabHome:'Asosiy', tabOrders:'Buyurtmalar', tabPrices:'Narxlar', tabCabinet:'Kabinet',
+      heroTitle:'Gilamni uyingizdan olib ketamiz va toza qaytaramiz',
+      cta:'Kuryer chaqirish', hi0:'Xayrli tong,', hi1:'Xayrli kun,', hi2:'Xayrli kech,',
+      curOrders:'Joriy buyurtmalar', all:'Barchasi', noActive:'Faol buyurtmalar yo‘q. Kuryer chaqiring — bepul olib ketamiz va qaytaramiz.',
+      loginT:'Buyurtmalaringiz', loginS:'Holatini ko‘rish uchun kiring', loginBtn:'Kirish',
+      svcTitle:'Xizmatlar va narxlar', ordersTitle:'Mening buyurtmalarim', pricesTitle:'Narxlar',
+      pricesSub:'Aniq summani ustaxonada o‘lchagandan keyin hisoblaymiz', cabTitle:'Kabinet', cabGuest:'Kiring yoki ro‘yxatdan o‘ting',
+      ordersGuest:'Buyurtmalaringizni ko‘rish uchun kiring', mOrders:'Mening buyurtmalarim', mProfile:'Profil va manzil',
+      mSettings:'Sozlamalar va Face ID', mBonus:'Bonuslar (OSAGO)', mAgentJoin:'Agent bo‘lish', mAgentCab:'Agent kabineti',
+      mLang:'Til: O‘zbekcha → Ўзбекча (кирилл)', mContact:'Biz bilan bog‘lanish', logout:'Chiqish', items:'ta',
+    },
+  };
+  // «Ўзбекча» (кирилл): данные и тексты — узбекские (L() = 'uz'), на экран — через транслит.
+  const CY = () => typeof lang !== 'undefined' && lang === 'uz_cyrl' && typeof _toCyrl === 'function';
+  const L = () => (typeof lang !== 'undefined' && lang === 'uz_cyrl') ? 'uz' : (typeof lang !== 'undefined' && S[lang]) ? lang : 'ru';
+  const cy = v => (CY() && typeof v === 'string' ? _toCyrl(v) : v);
+  const tr = k => {
+    if (k === 'mLang' && CY()) return 'Тил: Ўзбекча (кирилл) → Русский';
+    return cy(S[L()][k] !== undefined ? S[L()][k] : S.ru[k]);
+  };
+  const user = () => (typeof currentUser !== 'undefined' ? currentUser : null);
+  const orders = () => (typeof lastOrders !== 'undefined' ? lastOrders : null);
+  const fmt = n => Number(n || 0).toLocaleString('ru-RU').replace(/,/g, ' ');
+  const cur = () => (L() === 'uz' ? cy('so‘m') : 'сум');
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const isOn = () => MQ.matches;
+
+  const TABS = ['home', 'orders', 'prices', 'cabinet'];
+  let tab = 'home';
+  try { const s = sessionStorage.getItem('artez_mtab'); if (TABS.includes(s)) tab = s; } catch (_) {}
+  if (new URLSearchParams(location.search).get('auth') === 'register') tab = 'cabinet';
+  const scrollPos = {};
+  let ordFilter = 'all';
+
+  // ── Этапы заказа для полоски (8 делений) ──
+  const STEPS = ['new', 'pickup', 'received', 'washing', 'packing', 'ready', 'delivery', 'delivered'];
+  const STEP_ALIAS = { confirmed: 'new', drying: 'washing' };
+  const stepIdx = s => STEPS.indexOf(STEP_ALIAS[s] || s);
+  const ACTIVE = o => !['delivered', 'cancelled'].includes(o.status);
+  const FILTERS = {
+    all: () => true,
+    new: o => o.status === 'new',
+    progress: o => ['confirmed', 'pickup', 'received', 'washing', 'drying', 'packing'].includes(o.status),
+    done: o => ['ready', 'delivery', 'delivered'].includes(o.status),
+    cancelled: o => o.status === 'cancelled',
+  };
+  const tt = (k, fb) => { try { const v = t(k); return v === k ? fb : v; } catch (_) { return fb; } };
+
+  function orderCard(o){
+    const b = el('button', 'm-card');
+    b.type = 'button';
+    b.dataset.mOrder = o.order_num;
+    const top = el('div', 'm-ord-top');
+    top.appendChild(el('span', 'm-ord-num', `№${o.order_num}`));
+    const badge = el('span', 'm-badge', (typeof statusLabel === 'function') ? statusLabel(o.status) : o.status);
+    if (o.status === 'cancelled') badge.classList.add('is-off');
+    else if (!['new', 'confirmed', 'ready', 'delivered'].includes(o.status)) badge.classList.add('is-work');
+    top.appendChild(badge);
+    b.appendChild(top);
+    if (o.status !== 'cancelled') {
+      const idx = stepIdx(o.status);
+      const prog = el('div', 'm-prog');
+      STEPS.forEach((_, i) => {
+        const seg = el('i');
+        if (o.status === 'delivered' || i < idx) seg.className = 'on';
+        else if (i === idx) seg.className = 'now';
+        prog.appendChild(seg);
+      });
+      b.appendChild(prog);
+    }
+    const meta = el('div', 'm-meta');
+    const left = [];
+    if (o.pickup_date) left.push(o.pickup_date + (o.pickup_time ? ' · ' + o.pickup_time : ''));
+    else if (o.created_at) left.push(String(o.created_at).slice(0, 10).split('-').reverse().join('.'));
+    if (o.item_count) left.push(`${o.item_count} ${tt('cabinet.items', tr('items'))}`);
+    meta.appendChild(el('span', null, left.join(' · ')));
+    if (o.total_price > 0) meta.appendChild(el('b', null, `${fmt(o.total_price)} ${cur()}`));
+    b.appendChild(meta);
+    return b;
+  }
+
+  function loginCard(textKey){
+    const c = el('div', 'm-card m-login');
+    c.appendChild(el('span', 'm-ico', '👤'));
+    const d = el('div');
+    d.appendChild(el('b', null, tr('loginT')));
+    d.appendChild(el('small', null, tr(textKey || 'loginS')));
+    c.appendChild(d);
+    const btn = el('button', 'm-btn-o', tr('loginBtn'));
+    btn.type = 'button'; btn.dataset.mgo = 'cabinet';
+    c.appendChild(btn);
+    return c;
+  }
+
+  // ── Главная ──
+  function renderHome(){
+    const u = user();
+    // SaaS: заголовок — первый слайд компании (/api/site-slides), строка ниже — её филиалы
+    const slideH = document.querySelector('#carouselTrack .slide h1');
+    $('mHeroTitle').textContent = (slideH && slideH.textContent.trim()) || tr('heroTitle');
+    const brs = (typeof _siteBranches !== 'undefined' && Array.isArray(_siteBranches)) ? _siteBranches : [];
+    const brNames = brs.map(b => (typeof _branchName === 'function' ? _branchName(b) : (b.name_ru || b.slug))).filter(Boolean);
+    $('mHeroSub').textContent = brNames.length ? brNames.join(' · ') : (window.APP_COMPANY_NAME || '');
+    $('mCtaText').textContent = tr('cta');
+    $('mHelloWrap').style.display = u ? '' : 'none';
+    if (u) {
+      const h = new Date().getHours();
+      $('mHello').textContent = tr(h < 12 ? 'hi0' : h < 18 ? 'hi1' : 'hi2');
+      $('mName').textContent = u.first_name || u.phone || '';
+    }
+    const box = $('mHomeOrders');
+    box.textContent = '';
+    if (!u) {
+      box.appendChild(loginCard());
+    } else {
+      const head = el('div', 'm-h');
+      head.appendChild(el('span', null, tr('curOrders')));
+      const all = el('button', null, tr('all')); all.type = 'button'; all.dataset.mgo = 'orders';
+      head.appendChild(all);
+      box.appendChild(head);
+      const list = el('div'); list.style.cssText = 'display:grid;gap:10px;margin-top:10px';
+      const os = orders();
+      if (!os) list.appendChild(el('div', 'm-card m-empty', tt('common.loading', '…')));
+      else {
+        const act = os.filter(ACTIVE).slice(0, 2);
+        if (!act.length) list.appendChild(el('div', 'm-card m-empty', tr('noActive')));
+        act.forEach(o => list.appendChild(orderCard(o)));
+      }
+      box.appendChild(list);
+    }
+    $('mSvcTitle').textContent = tr('svcTitle');
+    $('mSvcAll').textContent = tr('all');
+    renderSvcGrid();
+  }
+
+  // Услуги «от …» — только из таблицы (/api/prices + /api/services)
+  function renderSvcGrid(){
+    const grid = $('mSvcGrid');
+    grid.textContent = '';
+    if (typeof PRICES === 'undefined' || !_pricesFromApi) return;
+    const keys = (SVC_LIST && SVC_LIST.length ? SVC_LIST.map(s => s.key) : Object.keys(PRICES))
+      .filter(k => PRICES[k] && Object.keys(PRICES[k]).length).slice(0, 4);
+    keys.forEach(k => {
+      const s = (SVC_LIST || []).find(x => x.key === k) || {};
+      const types = Object.values(PRICES[k]).filter(v => v && v.price > 0);
+      if (!types.length) return;
+      const min = types.reduce((a, v) => (v.price < a.price ? v : a), types[0]);
+      const unit = (typeof unitSymbol === 'function') ? unitSymbol(min.unit_key) : '';
+      const b = el('button', 'm-svc');
+      b.type = 'button'; b.dataset.mSvc = k;
+      b.appendChild(el('span', 'm-ico', s.emoji || '🧺'));
+      b.appendChild(el('b', null, (L() === 'uz' ? cy(s.name_uz) : s.name_ru) || s.name_ru || k));
+      const p = el('span');
+      const em = el('em', null, fmt(min.price));
+      if (L() === 'uz') { p.appendChild(em); p.appendChild(document.createTextNode(` ${cur()}/${unit} ${cy('dan')}`)); }
+      else { p.appendChild(document.createTextNode('от ')); p.appendChild(em); p.appendChild(document.createTextNode(` ${cur()}/${unit}`)); }
+      b.appendChild(p);
+      grid.appendChild(b);
+    });
+  }
+
+  // ── Заказы ──
+  function renderOrders(){
+    const chips = $('mChips'), list = $('mOrdersList');
+    chips.textContent = ''; list.textContent = '';
+    const u = user();
+    chips.style.display = u ? '' : 'none';
+    if (!u) { list.appendChild(loginCard('ordersGuest')); return; }
+    [['all', 'Все'], ['new', 'Новые'], ['progress', 'В работе'], ['done', 'Готовы'], ['cancelled', 'Отменены']].forEach(([k, fb]) => {
+      const c = el('button', ordFilter === k ? 'on' : '', tt('dr.filter.' + k, fb));
+      c.type = 'button'; c.dataset.mFilter = k;
+      chips.appendChild(c);
+    });
+    const os = orders();
+    if (!os) { list.appendChild(el('div', 'm-card m-empty', tt('common.loading', '…'))); return; }
+    const f = os.filter(FILTERS[ordFilter] || FILTERS.all);
+    if (!f.length) {
+      list.appendChild(el('div', 'm-card m-empty', os.length ? tt('cabinet.noOrdersInCategory', '—') : tt('cabinet.noOrders', '—')));
+      return;
+    }
+    f.forEach(o => list.appendChild(orderCard(o)));
+  }
+
+  function openOrder(num){
+    try {
+      if (typeof currentFilter !== 'undefined') currentFilter = 'all';
+      document.querySelectorAll('#ordersFilter .f-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
+      if (typeof renderDrawerOrders === 'function') renderDrawerOrders();
+      openDrawer('orders');
+      setTimeout(() => {
+        const card = document.getElementById('oc-' + num);
+        if (!card) return;
+        card.scrollIntoView({ block: 'start' });
+        card.classList.add('m-flash');
+        setTimeout(() => card.classList.remove('m-flash'), 1600);
+      }, 320);
+    } catch (_) {}
+  }
+
+  // ── Кабинет ──
+  const CAB_ROWS = [
+    ['orders', '📋', 'mOrders'], ['profile', '👤', 'mProfile'], ['settings', '⚙️', 'mSettings'],
+    ['bonus', '🎁', 'mBonus'], ['agent', '🤝', 'mAgentJoin'], ['lang', '🌐', 'mLang'], ['contact', '📞', 'mContact'],
+  ];
+  function renderCab(){
+    const u = user();
+    if (!u) return;
+    $('mCabName').textContent = u.first_name || u.phone || '';
+    $('mCabPhone').textContent = u.phone || '';
+    const ava = $('mCabAva');
+    ava.textContent = (u.first_name || u.phone || '?')[0].toUpperCase();
+    if (typeof avaColor !== 'undefined') ava.style.background = avaColor;
+    const menu = $('mCabMenu');
+    menu.textContent = '';
+    const agent = (typeof _isAgent !== 'undefined') && _isAgent;
+    CAB_ROWS.forEach(([act, ico, key]) => {
+      const r = el('button', 'm-row'); r.type = 'button'; r.dataset.mAct = act;
+      r.appendChild(el('span', 'm-ico', act === 'agent' && agent ? '🎯' : ico));
+      r.appendChild(el('span', 'm-row-t', tr(act === 'agent' && agent ? 'mAgentCab' : key)));
+      r.appendChild(el('i', null, '›'));
+      menu.appendChild(r);
+    });
+    $('mCabLogout').textContent = tr('logout');
+  }
+
+  function renderBar(){
+    const map = { orders: ['ordersTitle', ''], prices: ['pricesTitle', 'pricesSub'], cabinet: ['cabTitle', user() ? '' : 'cabGuest'] };
+    const [ti, sub] = map[tab] || ['', ''];
+    $('mBarTitle').textContent = ti ? tr(ti) : '';
+    $('mBarSub').textContent = sub ? tr(sub) : '';
+  }
+
+  function renderAll(){
+    if (!isOn()) return;
+    B.classList.toggle('m-guest', !user());
+    document.querySelectorAll('[data-mt]').forEach(n => { n.textContent = tr(n.dataset.mt); });
+    document.querySelectorAll('[data-mtab-btn]').forEach(b => {
+      const on = b.dataset.mtabBtn === tab;
+      b.classList.toggle('on', on);
+      if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+    renderBar();
+    try { renderHome(); } catch (e) { console.warn('mApp home', e); }
+    try { renderOrders(); } catch (e) { console.warn('mApp orders', e); }
+    try { renderCab(); } catch (e) { console.warn('mApp cab', e); }
+  }
+
+  function go(next, opts){
+    if (!TABS.includes(next)) next = 'home';
+    const drawer = $('cabinetDrawer');
+    if (drawer && drawer.classList.contains('open') && typeof closeDrawer === 'function') closeDrawer();
+    const same = next === tab;
+    scrollPos[tab] = window.scrollY;
+    tab = next;
+    B.dataset.mtab = next;
+    try { sessionStorage.setItem('artez_mtab', next); } catch (_) {}
+    renderAll();
+    if (!(opts && opts.noScroll)) window.scrollTo(0, same ? 0 : (scrollPos[next] || 0));
+  }
+
+  // ── Видео: на телефоне — карточкой на главной, а не поверх экрана ──
+  let videoHome = null;
+  function placeVideo(){
+    const v = $('siteVideoCard');
+    if (!v) return false;
+    if (!videoHome) videoHome = v.parentNode;
+    if (isOn()) { if (v.parentNode !== $('mVideoSlot')) $('mVideoSlot').appendChild(v); }
+    else if (videoHome && v.parentNode !== videoHome) videoHome.appendChild(v);
+    return true;
+  }
+  if (!placeVideo()) {
+    const mo = new MutationObserver(() => { if (placeVideo()) mo.disconnect(); });
+    mo.observe(B, { childList: true, subtree: true });
+    setTimeout(() => mo.disconnect(), 30000);
+  }
+
+  // ── Обёртки над функциями основного скрипта ──
+  function hook(name, after){
+    const f = window[name];
+    if (typeof f !== 'function') return;
+    window[name] = function(){
+      const r = f.apply(this, arguments);
+      const run = () => { try { after.apply(this, arguments); } catch (_) {} };
+      run();
+      if (r && typeof r.then === 'function') r.then(run, run);
+      return r;
+    };
+  }
+  ['loadDashboard', 'renderDashboardOrders', 'doLogout', 'setLang', '_renderCatalogFromDb', 'loadPrices', '_updateAgentHeaderBtn']
+    .forEach(n => hook(n, renderAll));
+  // Навигация по разделам из основного скрипта (промо «Войти», боковое меню)
+  const SECTION_TAB = { hero: 'home', services: 'prices', calc: 'prices', cabinet: 'cabinet', 'agent-section': 'cabinet' };
+  const _sideNavGo = window.sideNavGo;
+  window.sideNavGo = function(id){
+    if (!isOn()) return _sideNavGo && _sideNavGo(id);
+    const tb = SECTION_TAB[id];
+    if (tb) { go(tb); if (id === 'agent-section' && user()) openDrawer('agent'); return; }
+    go('home', { noScroll: true });
+    if (_sideNavGo) _sideNavGo(id);
+  };
+
+  // ── Клики ──
+  document.addEventListener('click', e => {
+    if (!isOn()) return;
+    // Якоря (#services, #calc, #cabinet…) → вкладки
+    const a = e.target.closest('a[href^="#"]');
+    if (a) {
+      const id = a.getAttribute('href').slice(1);
+      if (id && (SECTION_TAB[id] || id === 'contacts')) {
+        e.preventDefault(); e.stopPropagation();
+        window.sideNavGo(id);
+      }
+      return;
+    }
+    const tb = e.target.closest('[data-mtab-btn]');
+    if (tb) { go(tb.dataset.mtabBtn); return; }
+    const g = e.target.closest('[data-mgo]');
+    if (g) { go(g.dataset.mgo); return; }
+    if (e.target.closest('#mCallCourier')) { if (typeof openOrderModal === 'function') openOrderModal(); return; }
+    const oc = e.target.closest('[data-m-order]');
+    if (oc) { openOrder(oc.dataset.mOrder); return; }
+    const fl = e.target.closest('[data-m-filter]');
+    if (fl) { ordFilter = fl.dataset.mFilter; renderOrders(); return; }
+    const sv = e.target.closest('[data-m-svc]');
+    if (sv) {
+      const sel = $('svcSelect');
+      if (sel && [...sel.options].some(o => o.value === sv.dataset.mSvc)) {
+        sel.value = sv.dataset.mSvc;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      go('prices');
+      return;
+    }
+    const ra = e.target.closest('[data-m-act]');
+    if (ra) {
+      const act = ra.dataset.mAct;
+      if (act === 'orders') go('orders');
+      else if (act === 'lang') setLang({ ru: 'uz', uz: 'uz_cyrl', uz_cyrl: 'ru' }[lang] || 'uz');  // ru → lotin → кирилл → ru
+      else if (act === 'contact') { if (typeof toggleContactModal === 'function') toggleContactModal(); }
+      else openDrawer(act);
+      return;
+    }
+    if (e.target.closest('#mCabLogout')) { if (typeof doLogout === 'function') doLogout(); }
+  }, true);
+
+  // Прайс на странице перерисовывается основным скриптом (каталог, смена языка,
+  // свежие цены) — следим за ним и обновляем мини-сетку «от …».
+  (function watchCatalog(){
+    const grid = document.querySelector('#services .services-grid');
+    if (!grid) return;
+    let q = false;
+    new MutationObserver(() => {
+      if (q) return; q = true;
+      requestAnimationFrame(() => { q = false; if (isOn()) { try { renderSvcGrid(); } catch (_) {} } });
+    }).observe(grid, { childList: true, subtree: true, characterData: true });
+  })();
+
+  // Клавиатура: фокус в текстовом поле → прячем панель (body.m-kb). Если клавиатуру
+  // закрыли, а фокус остался (Android «назад») — visualViewport вырос обратно → показываем.
+  (function keyboardWatch(){
+    const TEXT = 'textarea, [contenteditable="true"], input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=reset]):not([type=range]):not([type=file]):not([type=color]):not([type=image]):not([type=hidden])';
+    const vv = window.visualViewport;
+    let fullH = vv ? vv.height : window.innerHeight, shrunk = false;
+    const textFocused = () => { const a = document.activeElement; return !!(a && a.matches && a.matches(TEXT)); };
+    const set = on => B.classList.toggle('m-kb', !!on);
+    document.addEventListener('focusin', e => { if (e.target.matches && e.target.matches(TEXT)) { shrunk = false; set(true); } });
+    document.addEventListener('focusout', () => setTimeout(() => { if (!textFocused()) { shrunk = false; set(false); } }, 120));
+    if (vv) vv.addEventListener('resize', () => {
+      if (!textFocused()) { fullH = vv.height; return set(false); }
+      if (vv.height < fullH - 120) { shrunk = true; set(true); }
+      else if (shrunk) { shrunk = false; set(false); }
+    });
+    window.addEventListener('orientationchange', () => setTimeout(() => { fullH = vv ? vv.height : window.innerHeight; }, 400));
+  })();
+
+  // 💬 прячется, пока листают вниз (не перекрывает карточки), и возвращается при прокрутке вверх
+  (function scrollWatch(){
+    let lastY = window.scrollY, ticking = false;
+    window.addEventListener('scroll', () => {
+      if (ticking) return; ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        const y = window.scrollY, d = y - lastY;
+        if (Math.abs(d) < 8) return;
+        B.classList.toggle('m-scroll-down', d > 0 && y > 120);
+        lastY = y;
+      });
+    }, { passive: true });
+  })();
+
+  // SaaS: слайды и филиалы компании грузятся асинхронно — обновить героя, когда придут
+  (function watchCompany(){
+    const tr0 = $('carouselTrack');
+    if (tr0) new MutationObserver(() => { if (isOn()) { try { renderHome(); } catch (_) {} } }).observe(tr0, { childList: true });
+    if (window._siteBranchesPromise && window._siteBranchesPromise.then) window._siteBranchesPromise.then(() => renderAll(), () => {});
+  })();
+
+  function apply(){
+    if (isOn()) {
+      B.classList.add('m-app');
+      B.dataset.mtab = tab;
+      renderAll();
+    } else {
+      B.classList.remove('m-app', 'm-guest');
+    }
+    placeVideo();
+  }
+  if (MQ.addEventListener) MQ.addEventListener('change', apply); else MQ.addListener(apply);
+  apply();
+  window.addEventListener('load', renderAll);
+})();
+</script>
 </body>
 </html>

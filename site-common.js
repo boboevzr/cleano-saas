@@ -613,14 +613,9 @@
     kg:  { symbol_ru: 'кг', symbol_uz: 'kg' },
   };
 
-  // Дефолтные цены (показываются до загрузки из API)
-  let PRICES = {
-    carpet:       { standard: { price: 13000, unit_key: 'm2', min_order: 10 }, express: { price: 18000, unit_key: 'm2', min_order: 10 } },
-    carpet_home:  { standard: { price: 15000, unit_key: 'm2', min_order: 10 }, express: { price: 20000, unit_key: 'm2', min_order: 10 } },
-    sofa:         { standard: { price: 100000, unit_key: 'm2', min_order: null }, express: { price: 150000, unit_key: 'm2', min_order: null } },
-    mattress:     { standard: { price: 30000, unit_key: 'm2', min_order: null }, express: { price: 40000, unit_key: 'm2', min_order: null } },
-    curtains:     { standard: { price: 5000,  unit_key: 'm2', min_order: null }, express: { price: 8000,  unit_key: 'm2', min_order: null } },
-  };
+  // Цены — только из таблицы прайса компании (GET /api/prices). Запасные цены убраны 2026-11-15:
+  // без прайса калькулятор ничего не считает, а не показывает чужую/неверную сумму.
+  let PRICES = {};
 
   function unitSymbol(unitKey){
     const u = UNITS[unitKey] || UNITS.m2;
@@ -741,6 +736,17 @@
     if (!SVC_LIST || !SVC_LIST.length || !_pricesFromApi) return;  // нет данных API — остаётся статика
     const visible = SVC_LIST.filter(s => PRICES[s.key] && Object.keys(PRICES[s.key]).length);
     if (!visible.length) return;
+    // Футер «Услуги» — тот же список, что в прайсе компании (раньше 5 зашитых строк)
+    const fcol = document.querySelector('.footer-col h4[data-i18n="nav.services"]')?.parentElement;
+    if (fcol) {
+      fcol.querySelectorAll('a').forEach(a => a.remove());
+      visible.forEach(s => {
+        const a = document.createElement('a');
+        a.textContent = (lang === 'uz' ? s.name_uz : s.name_ru) || s.name_ru || s.key;
+        a.href = '#services';
+        fcol.appendChild(a);
+      });
+    }
     const cur = lang === 'uz' ? "so'm" : 'сум';
     const typeOrder = svc => {
       const fromTypes = (SVC_TYPES[svc] || []).map(tp => tp.type_key).filter(tp => PRICES[svc][tp]);
@@ -848,7 +854,8 @@
     let area = parseFloat(areaInput.value);
     if (isNaN(area) || area < 0) area = 0;
     const unitSym = unitSymbol(priceInfo.unit_key);
-    const minOrder = priceInfo.min_order;
+    // Минимум: по позиции (min_order) и по заказу (min_order_total, «не менее N м²» из правил)
+    const minOrder = Math.max(Number(priceInfo.min_order) || 0, Number(priceInfo.min_order_total) || 0) || null;
     const billedArea = minOrder ? Math.max(area, minOrder) : area;
     const total = priceInfo.price * billedArea;
     lastCalcTotal = total;
@@ -1021,6 +1028,9 @@
     btn.textContent = inp.type === 'password' ? '👁' : '🙈';
   }
   window.togglePwd = togglePwd;
+  // Нажатие на 👁 не уводит фокус из поля: иначе меню-точки справа (прячется, пока печатают)
+  // успевает вернуться и «перехватывает» отпускание кнопки — пароль не показывался.
+  document.addEventListener('mousedown', e => { if (e.target.closest('.pwd-eye')) e.preventDefault(); }, true);
   // Оставляет только цифры и ведущий '+' — убирает пробелы/тире/скобки по мере ввода
   function _fpCleanPhoneInput(v) {
     v = v || '';
@@ -2119,13 +2129,18 @@
     }
   };
 
+  function _ocdUnit(it){ return it.unit_key === 'pcs' ? t('unit.pcs') : t('unit.m2'); }
+
   function _ocdItemMeta(it){
     const dims = (it.width_cm && it.length_cm) ? `${it.width_cm}×${it.length_cm} ${t('unit.cm')} · ` : '';
-    const sqm = it.sqm > 0 ? `${dims}${Number(it.sqm).toFixed(2)} ${t('unit.m2')}` : '';
-    const price = it.price_per_sqm > 0 ? `${sqm ? ' · ' : ''}${formatSum(it.price_per_sqm)} ${t('unit.sum')}/${t('unit.m2')}` : '';
+    // Единица позиции — из прайса (unit_key): диван, подушка — «шт», ковёр — «м²»
+    const u = _ocdUnit(it);
+    const qty = it.unit_key === 'pcs' ? String(Number(it.sqm)) : Number(it.sqm).toFixed(2);
+    const sqm = it.sqm > 0 ? `${dims}${qty} ${u}` : '';
+    const price = it.price_per_sqm > 0 ? `${sqm ? ' · ' : ''}${formatSum(it.price_per_sqm)} ${t('unit.sum')}/${u}` : '';
     // Минимум по позиции показываем ВСЕГДА, когда он задан в прайсе (не только в момент,
     // когда он реально сработал) — клиент видит правило целиком, а не только исключение.
-    const min = it.pos_min ? ` · ${t('cabinet.minLabel')} ${Number(it.pos_min).toFixed(2)} ${t('unit.m2')}` : '';
+    const min = it.pos_min ? ` · ${t('cabinet.minLabel')} ${Number(it.pos_min).toFixed(2)} ${u}` : '';
     return sqm + price + min;
   }
 
@@ -2142,7 +2157,7 @@
     const unit = t('unit.m2');
     const rows = items.map((it,i) => {
       const itemNote = it.pos_clamped
-        ? `<div style="font-size:11px;color:#b45309;margin-top:2px">${tFmt('cabinet.itemMinNote', {min:Number(it.pos_min).toFixed(2), raw:Number(it.sqm).toFixed(2), unit})}</div>`
+        ? `<div style="font-size:11px;color:#b45309;margin-top:2px">${tFmt('cabinet.itemMinNote', {min:Number(it.pos_min).toFixed(2), raw:Number(it.sqm).toFixed(2), unit:_ocdUnit(it)})}</div>`
         : '';
       const amount = it.billed_total ?? it.total_sum;
       return `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)">
@@ -3359,11 +3374,15 @@
       delivery_location_address: document.getElementById('dDeliveryAddrDiffers').checked
         ? (_deliveryMapLocationAddress || '')
         : '',
-      service: serviceName(document.getElementById('dService').value),
-      service_type: serviceTypeName(selectedServiceType),
+      // пошаговая заявка (перенос из ARTEZ 15.11.2026): несколько услуг; service — первая,
+      // service_type — её вариант + остальные услуги текстом (SaaS-API пока не принимает services[])
+      services: (typeof owServicesPayload === 'function') ? owServicesPayload() : [],
+      service: (typeof owFirstService === 'function' && owFirstService()) ? serviceName(owFirstService()) : serviceName(document.getElementById('dService').value),
+      service_type: (typeof owServiceTypeText === 'function' && owServiceTypeText()) ? owServiceTypeText() : serviceTypeName(selectedServiceType),
       pickup_date: selectedDateValue,
       pickup_time: timeValue,
-      total_price: lastCalcTotal > 0 ? Math.round(lastCalcTotal) : null,
+      // сумма калькулятора относится к одной услуге — при нескольких не передаём
+      total_price: (lastCalcTotal > 0 && !(typeof owServicesPayload === 'function' && owServicesPayload().length > 1)) ? Math.round(lastCalcTotal) : null,
     };
 
     if (!payload.first_name || !payload.phone || !payload.address){
@@ -3372,6 +3391,8 @@
     }
 
     await submitOrder(payload, btn, t('order.submit'));
+    // заявка принята — черновик пошаговой формы больше не нужен
+    if (orderSuccess.style.display !== 'none' && typeof owClearDraft === 'function') owClearDraft();
   });
 
   // ===== REFRESH DYNAMIC UI ON LANGUAGE CHANGE =====
