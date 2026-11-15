@@ -1442,7 +1442,8 @@
     <div class="topbar-right">
       <div class="lang-switch" id="adminLangSwitch" style="display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:3px;gap:2px">
         <button type="button" data-lang-btn="ru" onclick="_setAdminLang('ru')" style="border:none;background:transparent;color:var(--text2);padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;line-height:1.2">RU</button>
-        <button type="button" data-lang-btn="uz" onclick="_setAdminLang('uz')" style="border:none;background:transparent;color:var(--text2);padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;line-height:1.2">UZ</button>
+        <button type="button" data-lang-btn="uz" onclick="_setAdminLang('uz')" title="Oʻzbekcha (lotin)" style="border:none;background:transparent;color:var(--text2);padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;line-height:1.2">UZ</button>
+        <button type="button" data-lang-btn="uz_cyrl" onclick="_setAdminLang('uz_cyrl')" title="🇺🇿 Ўзбекча (кирилл)" style="border:none;background:transparent;color:var(--text2);padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;line-height:1.2">ЎЗ</button>
       </div>
       <div class="profile-btn" id="profileBtn" onclick="toggleProfileMenu()">
         <div class="profile-avatar" id="profileAvatar">А</div>
@@ -6917,9 +6918,9 @@ async function _loadSvcTypesCache(force) {
 }
 function _typeNameAdmin(svcKey, typeKey) {
   const t = (_svcTypesCache?.[svcKey] || []).find(x => x.type_key === typeKey);
-  const uz = typeof _adminLang !== 'undefined' && _adminLang === 'uz';
-  if (t) return (uz && t.name_uz) ? t.name_uz : t.name_ru;
-  return (uz ? TYPE_NAMES_UZ[typeKey] : TYPE_NAMES[typeKey]) || typeKey;
+  const uz = typeof _adminLang !== 'undefined' && _admUz();
+  if (t) return (uz && t.name_uz) ? _uzs(t.name_uz) : t.name_ru;
+  return (uz ? _uzs(TYPE_NAMES_UZ[typeKey]) : TYPE_NAMES[typeKey]) || typeKey;
 }
 const STATUS_NAMES = {
   new: 'Новый', confirmed: 'Подтверждён', pickup: 'Вывоз',
@@ -6937,10 +6938,71 @@ let _adminMe = null;
 let _adminMePromise = Promise.resolve();
 
 // ── I18N ──
+// ── Ўзбекча (кирилл), 15.11.2026: латиница → кириллица (те же правила, что artez_bot/translit.py,
+// artez-app/src/lib/translit.ts). Не трогаем {переменные}, HTML-теги, ссылки, домены, номера заказов, бренды.
+const _CYR_FIX = { yanvar:'январь', fevral:'февраль', aprel:'апрель', iyun:'июнь', iyul:'июль', sentabr:'сентябрь', sentyabr:'сентябрь',
+  oktabr:'октябрь', oktyabr:'октябрь', noyabr:'ноябрь', dekabr:'декабрь', kalkulyator:'калькулятор', kalkulyatori:'калькулятори',
+  obyekt:'объект', subyekt:'субъект', litsenziya:'лицензия', sertifikat:'сертификат', ya:'як', ch:'чо', sh:'ша', sex:'цех', sexi:'цехи', sexda:'цехда', sexga:'цехга' };
+const _CYR_KEEP = 'ARTEZ|Artez|Telegram|WhatsApp|Instagram|Click|Payme|Uzum|PLUM|Plum|SmartBill|Face ID|Touch ID|PIN|SMS|ID|OK|QR|GPS|Wi-Fi|Excel|PDF|Yandex|Google';
+const _CYR_PROTECT = new RegExp(/`[^`]*`|<[^>]+>|&[#\w]+;|https?:\/\/\S+|t\.me\/\S+|\b[\w.-]+\.(?:uz|com|ru|me|org|net|html)\b(?:\/\S*)?/.source
+  + /|(^|[^\w/])([@/][A-Za-z_]\w*)|\$?\{[^{}]*\}|\b[A-Z]{2,}-\d+|\b[A-Za-z]+\d\w*/.source + '|\\b(?:' + _CYR_KEEP + ')', 'g');  // бренд + окончание: Excelga → Excelга
+const _CYR_MULTI = [['Tsiya','Ция'],['tsiya','ция'],['tsiy','ций'],['ansiya','анция'],['Aksiya','Акция'],['aksiya','акция'],['Kuryer','Курьер'],['kuryer','курьер'],
+  ['shʼ','сҳ'],['Sh','Ш'],['SH','Ш'],['sh','ш'],['Ch','Ч'],['CH','Ч'],['ch','ч'],['Yoʻ','Йў'],['YOʻ','ЙЎ'],['yoʻ','йў'],['Oʻ','Ў'],['oʻ','ў'],['Gʻ','Ғ'],['gʻ','ғ'],
+  ['YO','Ё'],['Yo','Ё'],['yo','ё'],['YU','Ю'],['Yu','Ю'],['yu','ю'],['YA','Я'],['Ya','Я'],['ya','я'],['YE','Е'],['Ye','Е'],['ye','е'],['ʼ','ъ']];
+const _CYR_ONE = {}; (function(){ const a='ABDEFGHIJKLMNOPQRSTUVXYZabdefghijklmnopqrstuvxyz', b='АБДЕФГҲИЖКЛМНОПҚРСТУВХЙЗабдефгҳижклмнопқрстувхйз'; for (let i=0;i<a.length;i++) _CYR_ONE[a[i]]=b[i]; })();
+function _cyrWord(w) {
+  const f = _CYR_FIX[w.toLowerCase()];
+  if (f) return (w.length > 1 && w === w.toUpperCase()) ? f.toUpperCase() : (w[0] === w[0].toUpperCase() ? f[0].toUpperCase() + f.slice(1) : f);
+  if (w[0] === 'E' || w[0] === 'e') w = (w[0] === 'E' ? 'Э' : 'э') + w.slice(1);
+  let out = '', i = 0;
+  while (i < w.length) {
+    const hit = _CYR_MULTI.find(([l]) => w.startsWith(l, i));
+    if (hit) { out += hit[1]; i += hit[0].length; } else { out += _CYR_ONE[w[i]] || w[i]; i++; }
+  }
+  return out;
+}
+function _cyrPlain(s) {
+  s = s.replace(/([OoGg])['’‘`ʼʻ]/g, '$1ʻ').replace(/([A-Za-z])['’‘`ʼ](?=[A-Za-z])/g, '$1ʼ');
+  return s.replace(/[A-Za-zʻʼ]+/g, _cyrWord);
+}
+function _toCyrl(s) {
+  if (!s || typeof s !== 'string') return s;
+  let out = '', pos = 0;
+  for (const m of s.matchAll(_CYR_PROTECT)) {
+    out += _cyrPlain(s.slice(pos, m.index)) + (m[2] !== undefined ? (m[1] || '') + m[2] : m[0]);
+    pos = m.index + m[0].length;
+  }
+  return out + _cyrPlain(s.slice(pos));
+}
+
+// Языки: ru, uz (латиница), uz_cyrl (Ўзбекча, кирилл — словарь uz через _toCyrl; перенос из ARTEZ 15.11.2026).
+// В данные (БД, файлы, причины штрафов, шаблон CSV) кириллица не уходит — только на экран.
+const _ADMIN_LANGS = ['ru', 'uz', 'uz_cyrl'];
 let _adminLang = localStorage.getItem('admin_lang') || 'ru';
-function _t(k) { return (_adminI18n[_adminLang]||{})[k] || (_adminI18n.ru||{})[k] || k; }
+if (!_ADMIN_LANGS.includes(_adminLang)) _adminLang = 'ru';
+const _admCyrCache = {};
+/** Узбекский интерфейс (латиница или кириллица). */
+function _admUz() { return ['uz', 'uz_cyrl'].includes(_adminLang); }
+/** Узбекский текст на выбранной письменности (для uz_cyrl — кириллица). */
+function _uzs(v) { return _adminLang === 'uz_cyrl' && typeof v === 'string' ? _toCyrl(v) : v; }
+/** То же для массивов/объектов (месяцы, дни недели, названия разделов). */
+function _uzsDeep(v) {
+  if (_adminLang !== 'uz_cyrl') return v;
+  if (typeof v === 'string') return _toCyrl(v);
+  if (Array.isArray(v)) return v.map(_uzsDeep);
+  if (v && typeof v === 'object') { const o = {}; for (const k in v) o[k] = _uzsDeep(v[k]); return o; }
+  return v;
+}
+function _t(k) {
+  if (_adminLang === 'uz_cyrl') {
+    const v = (_adminI18n.uz || {})[k];
+    if (v) return (_admCyrCache[k] ??= _toCyrl(v));
+    return (_adminI18n.ru || {})[k] || k;
+  }
+  return (_adminI18n[_adminLang]||{})[k] || (_adminI18n.ru||{})[k] || k;
+}
 function _setAdminLang(lang) {
-  if (lang !== 'ru' && lang !== 'uz') return;
+  if (!_ADMIN_LANGS.includes(lang)) return;
   _adminLang = lang;
   localStorage.setItem('admin_lang', _adminLang);
   _applyAdminI18n();
@@ -8555,7 +8617,7 @@ function _applyAdminI18n() {
     b.style.background = active ? 'var(--accent)' : 'transparent';
     b.style.color = active ? '#1A0E00' : 'var(--text2)';
   });
-  const tr = _adminNavTr[_adminLang] || _adminNavTr.ru;
+  const tr = _adminLang === 'uz_cyrl' ? _uzsDeep(_adminNavTr.uz || _adminNavTr.ru) : (_adminNavTr[_adminLang] || _adminNavTr.ru);
   // Nav: regular items
   document.querySelectorAll('.nav-item[data-page]').forEach(el => {
     const label = tr[el.dataset.page];
@@ -8621,7 +8683,7 @@ function _applyAdminI18n() {
     'sms-reports':'📊 SMS · Hisobotlar','sms-pricing':'💰 SMS tariflari',
     'sms-settings':'⚙️ SMS sozlamalari',
   };
-  const pageTitles = _adminLang === 'uz' ? _pUz : _pRu;
+  const pageTitles = _admUz() ? _uzsDeep(_pUz) : _pRu;
   Object.entries(pageTitles).forEach(([page, title]) => {
     const el = document.querySelector(`#page-${page} h2`);
     if (el) el.textContent = title;
@@ -8821,7 +8883,7 @@ function _esc(s) {
 function branchName(slug) {
   const b = (window._BRANCHES || []).find(b => b.slug === slug);
   if (!b) return slug || '—';
-  return (_adminLang === 'uz' && b.name_uz) ? b.name_uz : b.name_ru;
+  return (_admUz() && b.name_uz) ? _uzs(b.name_uz) : b.name_ru;
 }
 
 function renderBranchOptions(selectEl, addAll = false) {
@@ -8832,7 +8894,7 @@ function renderBranchOptions(selectEl, addAll = false) {
   for (const b of (window._BRANCHES || [])) {
     const opt = document.createElement('option');
     opt.value = b.slug;
-    opt.textContent = (_adminLang === 'uz' && b.name_uz) ? b.name_uz : b.name_ru;
+    opt.textContent = (_admUz() && b.name_uz) ? _uzs(b.name_uz) : b.name_ru;
     selectEl.appendChild(opt);
   }
   if (cur) selectEl.value = cur;
@@ -8845,7 +8907,7 @@ function initBranchSelects() {
 }
 
 function getSalBranchLabels() {
-  return Object.fromEntries((window._BRANCHES || []).map(b => [b.slug, (_adminLang === 'uz' && b.name_uz) ? b.name_uz : b.name_ru]));
+  return Object.fromEntries((window._BRANCHES || []).map(b => [b.slug, (_admUz() && b.name_uz) ? _uzs(b.name_uz) : b.name_ru]));
 }
 
 function _getAoeBranchCenter(slug) {
@@ -8864,7 +8926,7 @@ function renderRtBranchPills() {
   const wrap = document.getElementById('rtBranchPills');
   if (!wrap) return;
   wrap.innerHTML = (window._BRANCHES || []).map(b =>
-    `<button data-v="${_escAttr(b.slug)}" class="rt-pill" onclick="rtSetBranch('${_esc(b.slug)}')">🏢 ${_esc((_adminLang === 'uz' && b.name_uz) ? b.name_uz : b.name_ru)}</button>`
+    `<button data-v="${_escAttr(b.slug)}" class="rt-pill" onclick="rtSetBranch('${_esc(b.slug)}')">🏢 ${_esc((_admUz() && b.name_uz) ? _uzs(b.name_uz) : b.name_ru)}</button>`
   ).join('');
 }
 
@@ -9839,7 +9901,7 @@ function botWelcomeVideoFilePicked(lang) {
 // Порядок слов в подтверждении удаления видео различается в RU/UZ — строится по _adminLang, а не через _t()
 function _tgVideoDeleteConfirmMsg(lang) {
   const L = lang.toUpperCase();
-  return _adminLang === 'uz' ? `Videoni (${L}) oʻchirasizmi?` : `Удалить видео (${L})?`;
+  return _admUz() ? _uzs(`Videoni (${L}) oʻchirasizmi?`) : `Удалить видео (${L})?`;
 }
 
 async function uploadBotWelcomeVideo(lang, btn) {
@@ -11307,7 +11369,7 @@ async function loadPrices() {
   const tbody = document.getElementById('priceRows');
   tbody.innerHTML = '';
   const order = services.length > 0 ? services.map(s => s.key) : ['carpet','carpet_home','sofa','mattress','curtains'];
-  const isUz     = _adminLang === 'uz';
+  const isUz     = _admUz();
   const currency = _t('lbl.sum');
   // Строка цены одного варианта (svc, tp — ключи из БД: латиница/цифры/_, генерируются
   // сервером; подписи — только через _esc)
@@ -13247,7 +13309,7 @@ function populateSelects() {
 
 function populateStaffPositionSelect(selectedName, filterDeptId=null) {
   const el = document.getElementById('sf_position_name'); if (!el) return;
-  const deptMap = Object.fromEntries(departments.map(d => [d.id, (_adminLang==='uz'&&d.name_uz)?d.name_uz:d.name]));
+  const deptMap = Object.fromEntries(departments.map(d => [d.id, (_admUz() && d.name_uz) ? _uzs(d.name_uz) :d.name]));
   el.innerHTML = `<option value="">${_t('sf.opt.no.pos')}</option>`;
   const filtered = filterDeptId ? positions.filter(p => p.dept_id == filterDeptId) : positions;
   const byDept = {};
@@ -13261,7 +13323,7 @@ function populateStaffPositionSelect(selectedName, filterDeptId=null) {
     list.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.name;
-      opt.textContent = (_adminLang==='uz'&&p.name_uz) ? p.name_uz : p.name;
+      opt.textContent = (_admUz() && p.name_uz) ? _uzs(p.name_uz) : p.name;
       if (p.name === selectedName) opt.selected = true;
       grp.appendChild(opt);
     });
@@ -13995,7 +14057,7 @@ async function openStaffModal(id=null) {
   const deptEl = document.getElementById('sf_dept');
   if (deptEl) {
     deptEl.innerHTML = `<option value="">${_t('sf.opt.all.depts')}</option>`;
-    departments.forEach(d => deptEl.innerHTML += `<option value="${d.id}">${_esc((_adminLang==='uz'&&d.name_uz)?d.name_uz:d.name)}</option>`);
+    departments.forEach(d => deptEl.innerHTML += `<option value="${d.id}">${_esc((_admUz() && d.name_uz) ? _uzs(d.name_uz) :d.name)}</option>`);
   }
   const rdEl = document.getElementById('sf_role_display');
   if (rdEl) rdEl.textContent = _t('sf.role.auto');
@@ -14352,8 +14414,8 @@ async function renderDepts() {
   tbody.innerHTML = departments.map((d,i) => `
     <tr>
       <td>${i+1}</td>
-      <td><strong>${escHtml((_adminLang==='uz'&&d.name_uz)||d.name)}</strong></td>
-      <td style="color:var(--text2);font-size:13px">${escHtml((_adminLang==='uz'&&d.description_uz)||d.description||'')}</td>
+      <td><strong>${escHtml((_admUz()&&_uzs(d.name_uz))||d.name)}</strong></td>
+      <td style="color:var(--text2);font-size:13px">${escHtml((_admUz()&&_uzs(d.description_uz))||d.description||'')}</td>
       <td>—</td>
       <td>
         <button class="btn btn-ghost btn-sm" onclick="openDeptModal(${d.id})">✏️</button>
@@ -14404,7 +14466,7 @@ async function deleteDept(id) {
 async function renderPositions() {
   await loadDepartments();
   await loadPositions();
-  const deptMap = Object.fromEntries(departments.map(d=>[d.id, (_adminLang==='uz'&&d.name_uz)||d.name]));
+  const deptMap = Object.fromEntries(departments.map(d=>[d.id, (_admUz()&&_uzs(d.name_uz))||d.name]));
   const tbody = document.getElementById('posTable');
   const empty = document.getElementById('posEmpty');
   if (!positions.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
@@ -14412,7 +14474,7 @@ async function renderPositions() {
   tbody.innerHTML = positions.map((p,i) => `
     <tr>
       <td>${i+1}</td>
-      <td><strong>${escHtml((_adminLang==='uz'&&p.name_uz)||p.name)}</strong></td>
+      <td><strong>${escHtml((_admUz()&&_uzs(p.name_uz))||p.name)}</strong></td>
       <td style="font-size:13px">${escHtml(deptMap[p.dept_id]||'—')}</td>
       <td style="font-size:12px">${_t('role.' + p.role) || escHtml(p.role||'—')}</td>
       <td style="font-size:13px">${SALARY_LABELS[p.salary_type]||'—'}</td>
@@ -14437,7 +14499,7 @@ async function openPosModal(id=null) {
   await loadDepartments();
   const dEl = document.getElementById('pos_dept');
   dEl.innerHTML = `<option value="">${_t('opt.choose')}</option>`;
-  departments.forEach(d => dEl.innerHTML += `<option value="${d.id}">${escHtml((_adminLang==='uz'&&d.name_uz)||d.name)}</option>`);
+  departments.forEach(d => dEl.innerHTML += `<option value="${d.id}">${escHtml((_admUz()&&_uzs(d.name_uz))||d.name)}</option>`);
   if (id) {
     const p = positions.find(x=>x.id===id);
     if (p) {
@@ -14495,10 +14557,10 @@ const TS_LABELS = { work:'Рабочий', overtime:'Сверхурочный', 
 const TS_CHIPS  = { work:'chip-green', overtime:'chip-red', sick:'chip-amber', vacation:'chip-blue', dayoff:'chip-gray' };
 const _DAY_NAMES_RU = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
 const _DAY_NAMES_UZ = ['Ya','Du','Se','Ch','Pe','Ju','Sh'];
-function _dayName(dow) { return (_adminLang === 'uz' ? _DAY_NAMES_UZ : _DAY_NAMES_RU)[dow]; }
+function _dayName(dow) { return (_admUz() ? _uzsDeep(_DAY_NAMES_UZ) : _DAY_NAMES_RU)[dow]; }
 const _MON_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const _MON_UZ = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
-function _getMonNames() { return _adminLang === 'uz' ? _MON_UZ : _MON_RU; }
+function _getMonNames() { return _admUz() ? _uzsDeep(_MON_UZ) : _MON_RU; }
 function _fillMonthSelects() {
   const mn = _getMonNames();
   document.querySelectorAll('[data-month-select]').forEach(sel => {
@@ -14511,7 +14573,7 @@ function _fillMonthSelects() {
   });
 }
 function _getFineReasons() {
-  if (_adminLang === 'uz') return [
+  if (_admUz()) return [
     'Kechikish','Erta ketish','Ogohlantirishsiz yoʻqlik',
     'Sifatsiz ish','Ishdagi xato',
     'Intizom buzilishi','Mijoz shikoyati',
@@ -14529,7 +14591,7 @@ function _getFineReasons() {
 const MON_NAMES = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 // "X дн из Y" — порядок слов различается в RU/UZ, поэтому строится по _adminLang, а не через _t()
 function _salDaysOfLine(wd, nd) {
-  return _adminLang === 'uz' ? `${wd} kun / ${nd} kun` : `${wd} дн из ${nd}`;
+  return _admUz() ? _uzs(`${wd} kun / ${nd} kun`) : `${wd} дн из ${nd}`;
 }
 
 // ═══ ЗАРПЛАТА ЗА МЕСЯЦ ═══════════════════════════════════════════════════════
@@ -14621,7 +14683,7 @@ function salCalcRender() {
         const lbl = _PCT_ROLE_LABEL[role] || role;
         const cntHtml = (d.count || 0) > 0 ? `${d.count} ${_t('sal.unit.count')} × ` : '';
         const baseHtml = `<span style="color:var(--text2)">${Math.round(d.base).toLocaleString('ru-RU')}</span>`;
-        const pctOfHtml = _adminLang === 'uz' ? `${baseHtml} dan ${d.pct}%` : `${d.pct}% от ${baseHtml}`;
+        const pctOfHtml = _admUz() ? _uzs(`${baseHtml} dan ${d.pct}%`) : `${d.pct}% от ${baseHtml}`;
         return `<div>${lbl}: ${cntHtml}${pctOfHtml} = <b>${Math.round(d.earn).toLocaleString('ru-RU')}</b> ${_t('pay.currency')}</div>`;
       });
     }
@@ -14915,8 +14977,8 @@ async function salLedgerDel(id) {
 
 // Порядок слов в подтверждении удаления различается в RU/UZ — строится по _adminLang, а не через _t()
 function _salDelAccrualsConfirmMsg(monthLabel, year, staffName) {
-  return _adminLang === 'uz'
-    ? `${staffName} uchun ${monthLabel} ${year} davridagi barcha «Hisoblash» yozuvlarini oʻchirasizmi?\n\nBu amalni ortga qaytarib boʻlmaydi.`
+  return _admUz()
+    ? _uzs(`${staffName} uchun ${monthLabel} ${year} davridagi barcha «Hisoblash» yozuvlarini oʻchirasizmi?\n\nBu amalni ortga qaytarib boʻlmaydi.`)
     : `Удалить все записи типа «Начисление» за ${monthLabel} ${year} для ${staffName}?\n\nЭто действие необратимо.`;
 }
 
@@ -15660,8 +15722,8 @@ async function tcDoDelete() {
 
 // Порядок слов в результате рассылки различается в RU/UZ — строится по _adminLang, а не через _t()
 function _tgBroadcastResultMsg(sent, failed, total) {
-  return _adminLang === 'uz'
-    ? `✓ Yuborildi: ${sent}, yetkazilmadi: ${failed}, jami: ${total} ta`
+  return _admUz()
+    ? _uzs(`✓ Yuborildi: ${sent}, yetkazilmadi: ${failed}, jami: ${total} ta`)
     : `✓ Отправлено: ${sent}, не доставлено: ${failed} из ${total}`;
 }
 async function botBroadcastRestart() {
@@ -16482,7 +16544,7 @@ function renderOrderItems(items) {
     // Скидка: цена по договору ниже цены по прайсу (снимок позиции, см. resolve_price_snapshot)
     const hasDisc = it.list_price != null && parseFloat(it.price_per_sqm || 0) > 0 && parseFloat(it.price_per_sqm) < parseFloat(it.list_price);
     const discPrice = hasDisc ? `<div style="font-size:10px;color:#b45309">прайс ${Number(it.list_price).toLocaleString('ru')}</div>` : '';
-    const discNote  = hasDisc ? `<div style="font-size:11px;color:#b45309;margin-top:2px">🏷 скидка ${(Number(it.list_price) - Number(it.price_per_sqm)).toLocaleString('ru')} сум/м²${it.discount_note ? ' · ' + _esc(it.discount_note) : ''}</div>` : '';
+    const discNote  = hasDisc ? `<div style="font-size:11px;color:#b45309;margin-top:2px">🏷 скидка ${(Number(it.list_price) - Number(it.price_per_sqm)).toLocaleString('ru')} сум/${_unitAdmin({unit_key: it.unit_key_snap})}${it.discount_note ? ' · ' + _esc(it.discount_note) : ''}</div>` : '';
     const msIcon = it.measure_status === 'confirmed' ? ' <span style="color:#22c55e;font-size:11px">✓</span>'
                  : it.measure_status === 'corrected'  ? ' <span style="color:#f59e0b;font-size:11px">⚠</span>'
                  : it.measure_status === 'pending'    ? ' <span style="color:#94a3b8;font-size:11px">○</span>' : '';
@@ -16523,11 +16585,31 @@ function renderOrderItems(items) {
 
 // ── ФОРМА ПОЗИЦИИ (отдельная модалка) ────────────────────────────────────────
 
-const SVC_ORDER = ['carpet','carpet_home','sofa','mattress','curtains'];
+// Услуги и их названия — из таблицы услуг компании (GET /admin/services, порядок order_idx), а не
+// зашитый список из 5 штук (перенос из ARTEZ 2026-11-15: у каждой компании свой каталог).
+let _svcPublicList = null;
+async function _loadSvcPublicList() {
+  if (_svcPublicList) return _svcPublicList;
+  const d = await apiGet('/admin/services');
+  _svcPublicList = (d?.services || []).filter(x => x.active !== false)
+    .slice().sort((a, b) => (a.order_idx || 0) - (b.order_idx || 0));
+  return _svcPublicList;
+}
+function _svcLabelAdmin(k, withEmoji) {
+  const s = (_svcPublicList || []).find(x => x.key === k) || _svcData[k];
+  if (s) {
+    const nm = (_adminLang !== 'ru' && s.name_uz) ? s.name_uz : s.name_ru;
+    return withEmoji ? `${s.emoji || ''} ${nm}`.trim() : nm;
+  }
+  const fb = SVC_NAMES[k] || k;
+  return withEmoji ? fb : fb.replace(/^[^\s]+\s/, '');
+}
+function _unitAdmin(info) { return (info && info.unit_key === 'pcs') ? 'шт' : 'м²'; }
 
 async function openOrderItemForm(itemId) {
   _orderItemEdit = itemId || null;
   const prices   = await _loadPricesCache();
+  const svcList  = await _loadSvcPublicList().catch(() => []);
 
   document.getElementById('oif_title').textContent    = itemId ? '✏️ Изменить позицию' : '+ Новая позиция';
   document.getElementById('oif_save_btn').textContent = itemId ? '💾 Сохранить' : '💾 Добавить';
@@ -16535,8 +16617,8 @@ async function openOrderItemForm(itemId) {
   // Заполнить первый select услугами из прайса
   const svcSel = document.getElementById('oif_svc_select');
   svcSel.innerHTML = '<option value="">— Выберите услугу —</option>';
-  SVC_ORDER.forEach(k => {
-    if (prices[k]) svcSel.innerHTML += `<option value="${k}">${SVC_NAMES[k] || k}</option>`;
+  (svcList.length ? svcList.map(sv => sv.key) : Object.keys(prices)).forEach(k => {
+    if (prices[k]) svcSel.innerHTML += `<option value="${k}">${_esc(_svcLabelAdmin(k, true))}</option>`;
   });
 
   const typeSel = document.getElementById('oif_type_select');
@@ -16595,7 +16677,7 @@ function oifOnSvcChange() {
   Object.entries(prices[svcKey]).forEach(([typeKey, info]) => {
     const name  = _esc(_typeNameAdmin(svcKey, typeKey));
     const price = (info.price || 0).toLocaleString('ru');
-    typeSel.innerHTML += `<option value="${typeKey}" data-price="${info.price || 0}">${name} — ${price} сум/м²</option>`;
+    typeSel.innerHTML += `<option value="${typeKey}" data-price="${info.price || 0}">${name} — ${price} сум/${_unitAdmin(info)}</option>`;
   });
   typeSel.disabled = false;
   if (typeSel.options.length === 2) { typeSel.selectedIndex = 1; oifOnTypeChange(); }
@@ -16607,7 +16689,7 @@ function oifOnTypeChange() {
   const typeKey  = document.getElementById('oif_type_select').value;
   if (!svcKey || !typeKey) return;
 
-  const svcName  = (SVC_NAMES[svcKey]  || svcKey).replace(/^[^\s]+\s/, '');
+  const svcName  = _svcLabelAdmin(svcKey, false);
   const typeName = _typeNameAdmin(svcKey, typeKey);
   const price    = prices[svcKey]?.[typeKey]?.price || 0;
 
@@ -18498,7 +18580,7 @@ const _ADMIN_LEAD_STATUS_CHIPS = [
   { v:'lost',      label:'❌ Потерян' },
 ];
 function _getAdminLeadBranchChips() {
-  return [{ v:'', label: _t('lbl.all') }].concat((window._BRANCHES || []).map(b => ({ v: b.slug, label: (_adminLang === 'uz' && b.name_uz) ? b.name_uz : b.name_ru })));
+  return [{ v:'', label: _t('lbl.all') }].concat((window._BRANCHES || []).map(b => ({ v: b.slug, label: (_admUz() && b.name_uz) ? _uzs(b.name_uz) : b.name_ru })));
 }
 
 function _renderAdminLeadsFilterChips() {
@@ -18946,12 +19028,13 @@ function adminReqField(id) {
   return false;
 }
 
-const ADMIN_SVC_LIST = ['Ковры','Ковры на дому','Диваны','Матрасы','Шторы'];
+// Список услуг — из таблицы услуг компании (раньше 5 зашитых слов «Ковры, Матрасы…»; перенос из ARTEZ 2026-11-15)
 let _adminSvcTarget = null;
 
-function adminOpenSvcPicker(targetId) {
+async function adminOpenSvcPicker(targetId) {
   _adminSvcTarget = targetId;
-  document.getElementById('adminSvcPickerList').innerHTML = ADMIN_SVC_LIST.map(s =>
+  const list = (await _loadSvcPublicList().catch(() => [])).map(sv => _esc(sv.name_ru));
+  document.getElementById('adminSvcPickerList').innerHTML = list.map(s =>
     `<label style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid #2d3148;cursor:pointer;font-size:14px;color:#e2e8f0">
        <input type="checkbox" value="${s}" style="width:16px;height:16px;accent-color:#6366f1"> ${s}
      </label>`
@@ -22382,8 +22465,8 @@ async function _sfSalLoadPrices() {
 function _sfSalPriceLabel(svc, tp) {
   const sd = _svcData[svc];
   const svcN = sd
-    ? `${sd.emoji||''} ${(_adminLang==='uz'&&sd.name_uz)?sd.name_uz:sd.name_ru}`.trim()
-    : ((_adminLang==='uz'?SVC_NAMES_UZ[svc]:null) || SVC_NAMES[svc] || svc);
+    ? `${sd.emoji||''} ${(_admUz() && sd.name_uz) ? _uzs(sd.name_uz) :sd.name_ru}`.trim()
+    : ((_admUz() ? _uzsDeep(SVC_NAMES_UZ)[svc]:null) || SVC_NAMES[svc] || svc);
   const tpN = _typeNameAdmin(svc, tp);
   return `${svcN} — ${tpN}`;
 }
@@ -22941,10 +23024,10 @@ function _spRenderBP(step) {
     const yrs = Array.from({length:curY-1939},(_,i)=>curY-i);
     inner = `<div style="font-size:15px;font-weight:700;margin-bottom:16px;text-align:center">${_t('sp.pick.year')}</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-height:260px;overflow-y:auto">${yrs.map(y=>`<button onclick="_spAbpYear=${y};_spRenderBP('month')" style="padding:10px 4px;border-radius:10px;border:1.5px solid var(--border);font-size:14px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text)">${y}</button>`).join('')}</div>`;
   } else if (step==='month') {
-    inner = `<div style="font-size:15px;font-weight:700;margin-bottom:4px;text-align:center">${_t('sp.pick.month')}</div><div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px">${_spAbpYear}</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${(_adminLang==='uz'?_ADMIN_MONTHS_UZ:_ADMIN_MONTHS_RU).map((m,i)=>`<button onclick="_spAbpMonth=${i+1};_spRenderBP('day')" style="padding:12px 4px;border-radius:10px;border:1.5px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text)">${m}</button>`).join('')}</div>`;
+    inner = `<div style="font-size:15px;font-weight:700;margin-bottom:4px;text-align:center">${_t('sp.pick.month')}</div><div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px">${_spAbpYear}</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${(_admUz() ? _uzsDeep(_ADMIN_MONTHS_UZ):_ADMIN_MONTHS_RU).map((m,i)=>`<button onclick="_spAbpMonth=${i+1};_spRenderBP('day')" style="padding:12px 4px;border-radius:10px;border:1.5px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text)">${m}</button>`).join('')}</div>`;
   } else {
     const dim=new Date(_spAbpYear,_spAbpMonth,0).getDate(); const maxD=(_spAbpYear===curY&&_spAbpMonth===now.getMonth()+1)?now.getDate():dim;
-    inner = `<div style="font-size:15px;font-weight:700;margin-bottom:4px;text-align:center">${_t('sp.pick.day')}</div><div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px">${(_adminLang==='uz'?_ADMIN_MONTHS_UZ:_ADMIN_MONTHS_RU)[_spAbpMonth-1]} ${_spAbpYear}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">${Array.from({length:maxD},(_,i)=>i+1).map(d=>`<button onclick="_spSelectBD(${d})" style="padding:10px 2px;border-radius:10px;border:1.5px solid var(--border);font-size:14px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text)">${d}</button>`).join('')}</div>`;
+    inner = `<div style="font-size:15px;font-weight:700;margin-bottom:4px;text-align:center">${_t('sp.pick.day')}</div><div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px">${(_admUz() ? _uzsDeep(_ADMIN_MONTHS_UZ):_ADMIN_MONTHS_RU)[_spAbpMonth-1]} ${_spAbpYear}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">${Array.from({length:maxD},(_,i)=>i+1).map(d=>`<button onclick="_spSelectBD(${d})" style="padding:10px 2px;border-radius:10px;border:1.5px solid var(--border);font-size:14px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text)">${d}</button>`).join('')}</div>`;
   }
   ov.innerHTML = `<div style="background:var(--surface);border-radius:22px 22px 0 0;padding:24px 20px 32px;width:100%;max-width:480px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">${step!=='year'?`<button onclick="_spRenderBP('${step==='day'?'month':'year'}')" style="background:none;border:none;color:var(--accent,#163E3B);font-size:13px;font-weight:600;cursor:pointer;padding:0">${_t('bp.btn.back')}</button>`:'<span></span>'}<button onclick="document.getElementById('spBPOverlay')?.remove()" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:0">${_t('bp.btn.cancel')}</button></div>${inner}</div>`;
 }
@@ -23026,13 +23109,13 @@ function _adminRenderBP(step) {
     inner = `<div style="font-size:15px;font-weight:700;margin-bottom:4px;text-align:center;color:var(--text)">${_t('bp.pick.month')}</div>
       <div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px">${_abpYear}</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-        ${(_adminLang==='uz'?_ADMIN_MONTHS_UZ:_ADMIN_MONTHS_RU).map((m,i)=>`<button onclick="_abpMonth=${i+1};_adminRenderBP('day')" style="padding:12px 4px;border-radius:10px;border:1.5px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text)">${m}</button>`).join('')}
+        ${(_admUz() ? _uzsDeep(_ADMIN_MONTHS_UZ):_ADMIN_MONTHS_RU).map((m,i)=>`<button onclick="_abpMonth=${i+1};_adminRenderBP('day')" style="padding:12px 4px;border-radius:10px;border:1.5px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text)">${m}</button>`).join('')}
       </div>`;
   } else {
     const dim = new Date(_abpYear, _abpMonth, 0).getDate();
     const maxD = (_abpYear === curY && _abpMonth === now.getMonth()+1) ? now.getDate() : dim;
     inner = `<div style="font-size:15px;font-weight:700;margin-bottom:4px;text-align:center;color:var(--text)">${_t('bp.pick.day')}</div>
-      <div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px">${(_adminLang==='uz'?_ADMIN_MONTHS_UZ:_ADMIN_MONTHS_RU)[_abpMonth-1]} ${_abpYear}</div>
+      <div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px">${(_admUz() ? _uzsDeep(_ADMIN_MONTHS_UZ):_ADMIN_MONTHS_RU)[_abpMonth-1]} ${_abpYear}</div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
         ${Array.from({length:maxD},(_,i)=>i+1).map(d=>`<button onclick="_adminSelectBD(${d})" style="padding:10px 2px;border-radius:10px;border:1.5px solid var(--border);font-size:14px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text)">${d}</button>`).join('')}
       </div>`;
@@ -27720,7 +27803,7 @@ function smsCntImportParse() {
 
 // Порядок слов в сообщении об импорте различается в RU/UZ — строится по _adminLang, а не через _t()
 function _smsCntImportedMsg(n) {
-  return _adminLang === 'uz' ? `✅ Import qilindi: ${n} ta kontakt` : `✅ Импортировано: ${n} контактов`;
+  return _admUz() ? _uzs(`✅ Import qilindi: ${n} ta kontakt`) : `✅ Импортировано: ${n} контактов`;
 }
 
 async function smsCntImportConfirm() {
@@ -27745,9 +27828,9 @@ async function smsCntImportConfirm() {
 }
 
 function smsCntDownloadTemplate() {
-  const header = _adminLang === 'uz' ? 'Ism,Telefon' : 'Имя,Телефон';
-  const row1   = _adminLang === 'uz' ? 'Aliyev Ali,901234567' : 'Иванов Иван,901234567';
-  const row2   = _adminLang === 'uz' ? 'Valiyev Vali,998901112233' : 'Петров Пётр,998901112233';
+  const header = _admUz() ? 'Ism,Telefon' : 'Имя,Телефон';
+  const row1   = _admUz() ? 'Aliyev Ali,901234567' : 'Иванов Иван,901234567';
+  const row2   = _admUz() ? 'Valiyev Vali,998901112233' : 'Петров Пётр,998901112233';
   const csv = '﻿' + `${header}\n${row1}\n${row2}\n`;
   const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
   const a = document.createElement('a');
@@ -27876,7 +27959,7 @@ async function smsSaveSettings() {
 
 // Порядок слов в отметке времени обновления баланса различается в RU/UZ — строится по _adminLang, а не через _t()
 function _smsBalUpdatedMsg(hh, mm) {
-  return _adminLang === 'uz' ? `Yangilandi: bugun soat ${hh}:${mm}` : `Обновлено: сегодня в ${hh}:${mm}`;
+  return _admUz() ? _uzs(`Yangilandi: bugun soat ${hh}:${mm}`) : `Обновлено: сегодня в ${hh}:${mm}`;
 }
 
 async function smsRefreshBalance() {

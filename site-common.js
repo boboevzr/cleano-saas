@@ -448,7 +448,67 @@
     },
   };
 
+  // ── Ўзбекча (кирилл), 15.11.2026: латиница → кириллица (те же правила, что artez_bot/translit.py,
+  // artez-app/src/lib/translit.ts). Не трогаем {переменные}, HTML-теги, ссылки, домены, номера заказов, бренды.
+  const _CYR_FIX = { yanvar:'январь', fevral:'февраль', aprel:'апрель', iyun:'июнь', iyul:'июль', sentabr:'сентябрь', sentyabr:'сентябрь',
+    oktabr:'октябрь', oktyabr:'октябрь', noyabr:'ноябрь', dekabr:'декабрь', kalkulyator:'калькулятор', kalkulyatori:'калькулятори',
+    obyekt:'объект', subyekt:'субъект', litsenziya:'лицензия', sertifikat:'сертификат', ya:'як', ch:'чо', sh:'ша', sex:'цех', sexi:'цехи', sexda:'цехда', sexga:'цехга' };
+  const _CYR_KEEP = 'ARTEZ|Artez|Telegram|WhatsApp|Instagram|Click|Payme|Uzum|PLUM|Plum|SmartBill|Face ID|Touch ID|PIN|SMS|ID|OK|QR|GPS|Wi-Fi|Excel|PDF|Yandex|Google';
+  const _CYR_PROTECT = new RegExp(/`[^`]*`|<[^>]+>|&[#\w]+;|https?:\/\/\S+|t\.me\/\S+|\b[\w.-]+\.(?:uz|com|ru|me|org|net|html)\b(?:\/\S*)?/.source
+    + /|(^|[^\w/])([@/][A-Za-z_]\w*)|\$?\{[^{}]*\}|\b[A-Z]{2,}-\d+|\b[A-Za-z]+\d\w*/.source + '|\\b(?:' + _CYR_KEEP + ')', 'g');  // бренд + окончание: Excelga → Excelга
+  const _CYR_MULTI = [['Tsiya','Ция'],['tsiya','ция'],['tsiy','ций'],['ansiya','анция'],['Aksiya','Акция'],['aksiya','акция'],['Kuryer','Курьер'],['kuryer','курьер'],
+    ['shʼ','сҳ'],['Sh','Ш'],['SH','Ш'],['sh','ш'],['Ch','Ч'],['CH','Ч'],['ch','ч'],['Yoʻ','Йў'],['YOʻ','ЙЎ'],['yoʻ','йў'],['Oʻ','Ў'],['oʻ','ў'],['Gʻ','Ғ'],['gʻ','ғ'],
+    ['YO','Ё'],['Yo','Ё'],['yo','ё'],['YU','Ю'],['Yu','Ю'],['yu','ю'],['YA','Я'],['Ya','Я'],['ya','я'],['YE','Е'],['Ye','Е'],['ye','е'],['ʼ','ъ']];
+  const _CYR_ONE = {}; (function(){ const a='ABDEFGHIJKLMNOPQRSTUVXYZabdefghijklmnopqrstuvxyz', b='АБДЕФГҲИЖКЛМНОПҚРСТУВХЙЗабдефгҳижклмнопқрстувхйз'; for (let i=0;i<a.length;i++) _CYR_ONE[a[i]]=b[i]; })();
+  function _cyrWord(w) {
+    const f = _CYR_FIX[w.toLowerCase()];
+    if (f) return (w.length > 1 && w === w.toUpperCase()) ? f.toUpperCase() : (w[0] === w[0].toUpperCase() ? f[0].toUpperCase() + f.slice(1) : f);
+    if (w[0] === 'E' || w[0] === 'e') w = (w[0] === 'E' ? 'Э' : 'э') + w.slice(1);
+    let out = '', i = 0;
+    while (i < w.length) {
+      const hit = _CYR_MULTI.find(([l]) => w.startsWith(l, i));
+      if (hit) { out += hit[1]; i += hit[0].length; } else { out += _CYR_ONE[w[i]] || w[i]; i++; }
+    }
+    return out;
+  }
+  function _cyrPlain(s) {
+    s = s.replace(/([OoGg])['’‘`ʼʻ]/g, '$1ʻ').replace(/([A-Za-z])['’‘`ʼ](?=[A-Za-z])/g, '$1ʼ');
+    return s.replace(/[A-Za-zʻʼ]+/g, _cyrWord);
+  }
+  function _toCyrl(s) {
+    if (!s || typeof s !== 'string') return s;
+    let out = '', pos = 0;
+    for (const m of s.matchAll(_CYR_PROTECT)) {
+      out += _cyrPlain(s.slice(pos, m.index)) + (m[2] !== undefined ? (m[1] || '') + m[2] : m[0]);
+      pos = m.index + m[0].length;
+    }
+    return out + _cyrPlain(s.slice(pos));
+  }
+
+
+  // «Ўзбекча» (кирилл): зеркало I18N.uz с транслитом на лету — подхватывает и строки,
+  // которые дописываются в I18N.uz позже (order.successText, dr.bonus.note), и массивы
+  // (months, dow, cities). Кэш по исходной строке.
+  const _cyrStrCache = new Map();
+  function _cyrDeep(v) {
+    if (typeof v === 'string') { let r = _cyrStrCache.get(v); if (r === undefined) { r = _toCyrl(v); _cyrStrCache.set(v, r); } return r; }
+    if (Array.isArray(v)) return v.map(_cyrDeep);
+    if (v && typeof v === 'object') { const o = {}; for (const k in v) o[k] = _cyrDeep(v[k]); return o; }
+    return v;
+  }
+  I18N.uz_cyrl = new Proxy({}, { get: (_, k) => _cyrDeep(I18N.uz[k]), has: (_, k) => k in I18N.uz });
+  const _SITE_LANGS = ['uz', 'uz_cyrl', 'ru'];
+
   let lang = localStorage.getItem('artez_lang') || 'uz';
+  if (!_SITE_LANGS.includes(lang)) lang = 'uz';
+  /** Узбекский интерфейс (латиница или кириллица). */
+  function _isUz() { return lang === 'uz' || lang === 'uz_cyrl'; }
+  /** Узбекский текст на выбранной письменности (для uz_cyrl — кириллица). */
+  function _uzs(s) { return lang === 'uz_cyrl' ? _toCyrl(s) : s; }
+  /** Пара RU/UZ из таблицы (названия услуг, вариантов, размеров) → выбранный язык; пустой UZ → RU. */
+  function _ruUz(ru, uz) { return lang === 'ru' ? (ru || uz) : (uz ? _uzs(uz) : ru); }
+  /** Язык для API (там только ru/uz): кириллица → uz, ответы API переводит showAlert. */
+  function _apiLang() { return lang === 'ru' ? 'ru' : 'uz'; }
 
   // ===== API ===== (объявлено рано — используется в IIFE ниже, включая carousel/stats до строки, где раньше был объявлен)
   const API_BASE = (window.APP_API_URL || "https://artez-api-production.up.railway.app") + "/api";
@@ -464,7 +524,7 @@
   }
 
   function applyI18n() {
-    document.documentElement.lang = lang;
+    document.documentElement.lang = lang === 'uz_cyrl' ? 'uz-Cyrl' : lang;
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
@@ -475,7 +535,7 @@
   }
 
   function setLang(newLang) {
-    if (!I18N[newLang]) return;
+    if (!_SITE_LANGS.includes(newLang)) return;
     lang = newLang;
     localStorage.setItem('artez_lang', lang);
     applyI18n();
@@ -502,7 +562,7 @@
   let autoTimer;
 
   function _slideField(s, field) {
-    return (lang === 'uz' && s[field + '_uz']) ? s[field + '_uz'] : (s[field + '_ru'] || s[field + '_uz'] || '');
+    return (_isUz() && s[field + '_uz']) ? _uzs(s[field + '_uz']) : (s[field + '_ru'] || s[field + '_uz'] || '');
   }
 
   function renderCarousel(slidesData) {
@@ -565,10 +625,10 @@
 
   // ===== STATS STRIP (данные из /api/site-stats) =====
   function _statLabel(s) {
-    return (lang === 'uz' && s.label_uz) ? s.label_uz : (s.label_ru || s.label_uz || '');
+    return (_isUz() && s.label_uz) ? _uzs(s.label_uz) : (s.label_ru || s.label_uz || '');
   }
   function _statValue(s) {
-    return (lang === 'uz' && s.value_uz) ? s.value_uz : (s.value_ru || s.value_uz || '');
+    return (_isUz() && s.value_uz) ? _uzs(s.value_uz) : (s.value_ru || s.value_uz || '');
   }
 
   function renderStats(statsData) {
@@ -619,7 +679,7 @@
 
   function unitSymbol(unitKey){
     const u = UNITS[unitKey] || UNITS.m2;
-    return u['symbol_' + lang] || u.symbol_ru;
+    return (lang === 'ru' ? u.symbol_ru : _uzs(u.symbol_uz)) || u.symbol_ru;
   }
 
   // ===== Варианты цены и каталог услуг из базы (перенос из ARTEZ 2026-10-17) =====
@@ -658,7 +718,7 @@
     return e;
   }
   function _svcDbLabel(s) {
-    const name = (lang === 'uz' ? s.name_uz : s.name_ru) || s.name_ru || s.key;
+    const name = (lang === 'ru' ? s.name_ru : _uzs(s.name_uz)) || s.name_ru || s.key;
     return `${s.emoji || ''} ${name}`.trim();
   }
   function _sizedTypes(svc) {
@@ -669,7 +729,7 @@
   }
   function _speedLabel(speed) { return t('type.' + speed); }
   function _sizeLabel(tp) {
-    return (lang === 'uz' ? tp.size_name_uz : tp.size_name_ru) || tp.size_name_ru || tp.name_ru;
+    return (lang === 'ru' ? tp.size_name_ru : _uzs(tp.size_name_uz)) || tp.size_name_ru || tp.name_ru;
   }
   function _typeForSpeedSize(sized, speed, sizeKey) {
     return sized.find(tp => tp.speed_key === speed && tp.size_key === sizeKey)
@@ -691,7 +751,7 @@
       if (sizeField) sizeField.style.display = '';
       _rebuildSizeSelect(svcKey);
     } else {
-      types.forEach(tp => { const o = _el('option', null, tp[lang === 'uz' ? 'name_uz' : 'name_ru'] || tp.name_ru); o.value = tp.type_key; sel.appendChild(o); });
+      types.forEach(tp => { const o = _el('option', null, _ruUz(tp.name_ru, tp.name_uz)); o.value = tp.type_key; sel.appendChild(o); });
       sel.value = types.some(tp => tp.type_key === prevVal) ? prevVal : types[0].type_key;
       if (sizeField) sizeField.style.display = 'none';
     }
@@ -722,7 +782,7 @@
     const sized = _sizedTypes(svcKey);
     const items = sized.length
       ? _speedsOf(sized).map(sp => ({ key: sp, label: _speedLabel(sp) }))
-      : types.map(tp => ({ key: tp.type_key, label: tp[lang === 'uz' ? 'name_uz' : 'name_ru'] || tp.name_ru }));
+      : types.map(tp => ({ key: tp.type_key, label: _ruUz(tp.name_ru, tp.name_uz) }));
     group.innerHTML = '';
     items.forEach(it => {
       const b = _el('button', 'pill-btn', it.label);
@@ -742,12 +802,12 @@
       fcol.querySelectorAll('a').forEach(a => a.remove());
       visible.forEach(s => {
         const a = document.createElement('a');
-        a.textContent = (lang === 'uz' ? s.name_uz : s.name_ru) || s.name_ru || s.key;
+        a.textContent = (lang === 'ru' ? s.name_ru : _uzs(s.name_uz)) || s.name_ru || s.key;
         a.href = '#services';
         fcol.appendChild(a);
       });
     }
-    const cur = lang === 'uz' ? "so'm" : 'сум';
+    const cur = lang === 'ru' ? 'сум' : _uzs("so'm");
     const typeOrder = svc => {
       const fromTypes = (SVC_TYPES[svc] || []).map(tp => tp.type_key).filter(tp => PRICES[svc][tp]);
       return fromTypes.length ? fromTypes : Object.keys(PRICES[svc]);
@@ -759,7 +819,7 @@
         const card = _el('div', `service-card reveal visible reveal-d${Math.min(i + 1, 4)}`);
         card.id = `svc-card-${s.key}`;
         card.appendChild(_el('div', `service-icon service-icon-${(i % 5) + 1}`, s.emoji || '🧺'));
-        card.appendChild(_el('h3', null, (lang === 'uz' ? s.name_uz : s.name_ru) || s.name_ru));
+        card.appendChild(_el('h3', null, (lang === 'ru' ? s.name_ru : _uzs(s.name_uz)) || s.name_ru));
         const tps = typeOrder(s.key);
         card.appendChild(_el('div', 'price-unit', `${cur} / ${unitSymbol(PRICES[s.key][tps[0]].unit_key)}`));
         tps.forEach(tp => {
@@ -947,7 +1007,7 @@
 
   async function checkTgAndProceed() {
     const phone = document.getElementById('regTgPhone').value.trim();
-    if (!phone || phone.length < 7) { showAlert(lang === 'uz' ? 'Telefon raqamini kiriting' : 'Введите номер телефона'); return; }
+    if (!phone || phone.length < 7) { showAlert(_isUz() ? _uzs('Telefon raqamini kiriting') : 'Введите номер телефона'); return; }
     _regTgPhone = phone;
     const btn = document.getElementById('regTgCheckBtn');
     btn.disabled = true; btn.textContent = t('common.pleaseWait');
@@ -979,8 +1039,8 @@
         document.getElementById('regTgName').value = _regTgPhone;
         showTgSubStep('details');
       } else {
-        showAlert(lang === 'uz'
-          ? "Bot raqamingizni hali ko'rmadi. Qayta urinib ko'ring."
+        showAlert(_isUz()
+          ? _uzs("Bot raqamingizni hali ko'rmadi. Qayta urinib ko'ring.")
           : 'Бот ещё не получил ваш номер. Попробуйте ещё раз.');
       }
     } catch { showAlert(t('common.serverError')); }
@@ -995,13 +1055,13 @@
     const first_name = document.getElementById('regTgName').value.trim();
     const password   = document.getElementById('regTgPass').value;
     const btn = document.getElementById('regTgSubmitBtn');
-    if (!first_name) { showAlert(lang === 'uz' ? 'Ismingizni kiriting' : 'Введите имя'); return; }
-    if (password.length < 6) { showAlert(lang === 'uz' ? 'Parol kamida 6 ta belgi' : 'Пароль минимум 6 символов'); return; }
+    if (!first_name) { showAlert(_isUz() ? _uzs('Ismingizni kiriting') : 'Введите имя'); return; }
+    if (password.length < 6) { showAlert(_isUz() ? _uzs('Parol kamida 6 ta belgi') : 'Пароль минимум 6 символов'); return; }
     btn.disabled = true; btn.textContent = t('common.pleaseWait');
     try {
       const data = await apiFetch('/register-via-tg', {
         method: 'POST',
-        body: JSON.stringify({ phone: _regTgPhone, first_name, password, lang: lang || 'ru', company_slug: window.APP_COMPANY_SLUG }),
+        body: JSON.stringify({ phone: _regTgPhone, first_name, password, lang: _apiLang(), company_slug: window.APP_COMPANY_SLUG }),
       });
       localStorage.setItem('artez_token', data.token);
       await enterDashboardOrForcePasswordChange(data.user);
@@ -1013,6 +1073,7 @@
   });
 
   function showAlert(message, type = 'error'){
+    if (typeof message === 'string') message = _uzs(message);  // ответы API — латиницей
     formAlert.textContent = message;
     formAlert.className = `form-alert ${type}`;
     formAlert.style.display = '';
@@ -1060,7 +1121,7 @@
     try {
       await apiFetch('/forgot-password/request', {
         method: 'POST',
-        body: JSON.stringify({ phone, lang: lang || 'ru', company_slug: window.APP_COMPANY_SLUG }),
+        body: JSON.stringify({ phone, lang: _apiLang(), company_slug: window.APP_COMPANY_SLUG }),
       });
       _fpPhone = phone;
       document.getElementById('fpChannelNote').textContent = t('auth.fpChannelNote');
@@ -1091,7 +1152,7 @@
     try {
       const data = await apiFetch('/forgot-password/confirm', {
         method: 'POST',
-        body: JSON.stringify({ phone: _fpPhone, code, password: p1, lang: lang || 'ru', company_slug: window.APP_COMPANY_SLUG }),
+        body: JSON.stringify({ phone: _fpPhone, code, password: p1, lang: _apiLang(), company_slug: window.APP_COMPANY_SLUG }),
       });
       localStorage.setItem('artez_token', data.token);
       await enterDashboardOrForcePasswordChange(data.user);
@@ -1246,7 +1307,7 @@
     try {
       const data = await apiFetch('/register', {
         method: 'POST',
-        body: JSON.stringify({ phone, password, first_name, lang: lang || 'ru', company_slug: window.APP_COMPANY_SLUG }),
+        body: JSON.stringify({ phone, password, first_name, lang: _apiLang(), company_slug: window.APP_COMPANY_SLUG }),
       });
       pendingPhone = data.phone;
       pendingViaTg = false;
@@ -1433,7 +1494,7 @@
         I18N.ru['footer.copyright'] = crRu;
         I18N.uz['footer.copyright'] = crUz;
         const crEl = document.querySelector('[data-i18n="footer.copyright"]');
-        if (crEl) crEl.textContent = (lang === 'uz') ? crUz : crRu;
+        if (crEl) crEl.textContent = _isUz() ? _uzs(crUz) : crRu;
 
         // <title> и og:title — с именем компании
         const titleRu = `${d.name} — Химчистка ковров и мебели на дому`;
@@ -1442,7 +1503,7 @@
         I18N.uz['meta.title'] = titleUz;
         applyI18n();
         const ogTitle = document.getElementById('metaOgTitle');
-        if (ogTitle) ogTitle.setAttribute('content', lang === 'uz' ? titleUz : titleRu);
+        if (ogTitle) ogTitle.setAttribute('content', _isUz() ? _uzs(titleUz) : titleRu);
       }
       const safeLogo = _safeImgUrl(d.logo_url);
       if (safeLogo) {
@@ -1549,9 +1610,9 @@
       // "О компании" в футере
       const aboutEl = document.getElementById('footerAboutText');
       if (aboutEl) {
-        const about = (lang === 'uz' ? s.footer_about_uz : s.footer_about_ru) || s.footer_about_ru || s.footer_about_uz;
-        aboutEl.textContent = about || (lang === 'uz'
-          ? 'Uyga gilam, yumshoq mebel, matras va pardalarni quruq tozalash xizmati.'
+        const about = (lang === 'ru' ? s.footer_about_ru : _uzs(s.footer_about_uz)) || s.footer_about_ru || s.footer_about_uz;
+        aboutEl.textContent = about || (_isUz()
+          ? _uzs('Uyga gilam, yumshoq mebel, matras va pardalarni quruq tozalash xizmati.')
           : 'Химчистка ковров, мягкой мебели, матрасов и штор на дому.');
       }
 
@@ -1560,7 +1621,7 @@
       if (s.footer_about_uz) I18N.uz['meta.description'] = s.footer_about_uz;
       applyI18n();
       const ogDesc = document.getElementById('metaOgDescription');
-      if (ogDesc) ogDesc.setAttribute('content', (lang === 'uz' ? s.footer_about_uz : s.footer_about_ru) || s.footer_about_ru || s.footer_about_uz || ogDesc.getAttribute('content'));
+      if (ogDesc) ogDesc.setAttribute('content', (lang === 'ru' ? s.footer_about_ru : _uzs(s.footer_about_uz)) || s.footer_about_ru || s.footer_about_uz || ogDesc.getAttribute('content'));
 
       // Секция "Стать агентом" — текст правим прямо в словаре I18N, чтобы пережить переключение языка
       if (s.agent_title_ru)          I18N.ru['agent.title'] = s.agent_title_ru;
@@ -1626,7 +1687,7 @@
   let _siteVideoLoadToken = 0;
 
   function _siteVideoSrc() {
-    return `${API_BASE}/site-video/${lang}?company_slug=${encodeURIComponent(window.APP_COMPANY_SLUG || '')}&_=${Date.now()}`;
+    return `${API_BASE}/site-video/${_apiLang()}?company_slug=${encodeURIComponent(window.APP_COMPANY_SLUG || '')}&_=${Date.now()}`;
   }
 
   function _reloadSiteVideoForLang() {
@@ -2064,7 +2125,7 @@
   const OCD_PHOTO_TYPE_KEYS = {before:'cabinet.photoType.before', after:'cabinet.photoType.after', damage:'cabinet.photoType.damage'};
   const _ocdEsc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const _ocdAuthHeaders = () => ({'Authorization':`Bearer ${localStorage.getItem('artez_token')}`});
-  const _ocdSvcLabel = it => (lang === 'uz' ? it.service_uz : it.service_ru) || it.service || '';
+  const _ocdSvcLabel = it => (lang === 'ru' ? it.service_ru : _uzs(it.service_uz)) || it.service || '';
 
   function _ocdEnsureLightbox(){
     let box = document.getElementById('ocdLightbox');
@@ -2338,7 +2399,7 @@
     if (!banner) return;
     if (type === 'safari') {
       document.getElementById('clientPwaBannerSub').textContent = t('pwa.bannerSubSafari');
-      document.getElementById('clientPwaBannerBtn').textContent = lang === 'uz' ? 'Tushunarli' : 'Понятно';
+      document.getElementById('clientPwaBannerBtn').textContent = _isUz() ? _uzs('Tushunarli') : 'Понятно';
     }
     setTimeout(() => banner.classList.add('show'), force ? 0 : 2000);
   }
@@ -2551,7 +2612,7 @@
 
   function _promoLangText(field){
     if (!_promoData) return '';
-    return _promoData[field + '_' + lang] || _promoData[field + '_ru'] || '';
+    return (lang === 'ru' ? _promoData[field + '_ru'] : _uzs(_promoData[field + '_uz'])) || _promoData[field + '_ru'] || '';
   }
 
   function _promoFmtLeft(expiresAt){
@@ -2726,7 +2787,7 @@
   function serviceTypeName(key, svcKey){
     svcKey = svcKey || document.getElementById('dService')?.value;
     const t2 = (SVC_TYPES[svcKey] || []).find(x => x.type_key === key);
-    if (t2) return t2[lang === 'uz' ? 'name_uz' : 'name_ru'] || t2.name_ru;
+    if (t2) return _ruUz(t2.name_ru, t2.name_uz);
     return t('type.' + key);
   }
 
@@ -3439,7 +3500,7 @@
     return _REVIEW_PALETTE[h % _REVIEW_PALETTE.length];
   }
   function _reviewField(rv, field) {
-    return (lang === 'uz' && rv[field + '_uz']) ? rv[field + '_uz'] : (rv[field + '_ru'] || rv[field + '_uz'] || '');
+    return (_isUz() && rv[field + '_uz']) ? _uzs(rv[field + '_uz']) : (rv[field + '_ru'] || rv[field + '_uz'] || '');
   }
 
   let _reviewsCarouselCleanup = null;
@@ -3542,7 +3603,7 @@
   }
 
   function _faqField(f, field) {
-    return (lang === 'uz' && f[field + '_uz']) ? f[field + '_uz'] : (f[field + '_ru'] || f[field + '_uz'] || '');
+    return (_isUz() && f[field + '_uz']) ? _uzs(f[field + '_uz']) : (f[field + '_ru'] || f[field + '_uz'] || '');
   }
 
   function renderFaqPublic(list) {
@@ -3637,7 +3698,7 @@
   // Название филиала на текущем языке (name_ru/name_uz из /api/site-branches)
   function _branchName(c) {
     if (!c) return '';
-    return (lang === 'uz' && c.name_uz) ? c.name_uz : (c.name_ru || c.name_uz || c.slug || '');
+    return (_isUz() && c.name_uz) ? _uzs(c.name_uz) : (c.name_ru || c.name_uz || c.slug || '');
   }
 
   // Рендерит блок филиалов (произвольное число) в плавающее меню — вызывается один раз, при загрузке /api/site-branches
@@ -4253,7 +4314,7 @@
         const res = await fetch(`${API_BASE}/chat/start`, {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ client_name: name, client_phone: phone, lang: lang || 'uz', company_slug: window.APP_COMPANY_SLUG })
+          body: JSON.stringify({ client_name: name, client_phone: phone, lang: _apiLang(), company_slug: window.APP_COMPANY_SLUG })
         });
         const data = await res.json();
         if (!res.ok || !data.code) { showOrderAlert(t('chat.errStart')); return; }

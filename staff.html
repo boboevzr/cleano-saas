@@ -810,7 +810,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
       </button>
       <div class="lang-switch" id="staffLangSwitch" style="display:flex;align-items:center;background:var(--card);border:1px solid var(--sep);border-radius:999px;padding:3px;gap:2px">
         <button type="button" data-lang-btn="ru" onclick="_setLang('ru')" style="border:none;background:transparent;color:var(--text2);padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;line-height:1.2">RU</button>
-        <button type="button" data-lang-btn="uz" onclick="_setLang('uz')" style="border:none;background:transparent;color:var(--text2);padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;line-height:1.2">UZ</button>
+        <button type="button" data-lang-btn="uz" onclick="_setLang('uz')" title="Oʻzbekcha (lotin)" style="border:none;background:transparent;color:var(--text2);padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;line-height:1.2">UZ</button>
+        <button type="button" data-lang-btn="uz_cyrl" onclick="_setLang('uz_cyrl')" title="🇺🇿 Ўзбекча (кирилл)" style="border:none;background:transparent;color:var(--text2);padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;line-height:1.2">ЎЗ</button>
       </div>
       <div id="profileDropWrap"></div>
     </div>
@@ -1326,10 +1327,62 @@ let currentStaff = null;
 let currentPage = 'dashboard';
 
 // ─── i18n ──────────────────────────────────────────────
+// ── Ўзбекча (кирилл), 15.11.2026: латиница → кириллица (те же правила, что artez_bot/translit.py,
+// artez-app/src/lib/translit.ts). Не трогаем {переменные}, HTML-теги, ссылки, домены, номера заказов, бренды.
+const _CYR_FIX = { yanvar:'январь', fevral:'февраль', aprel:'апрель', iyun:'июнь', iyul:'июль', sentabr:'сентябрь', sentyabr:'сентябрь',
+  oktabr:'октябрь', oktyabr:'октябрь', noyabr:'ноябрь', dekabr:'декабрь', kalkulyator:'калькулятор', kalkulyatori:'калькулятори',
+  obyekt:'объект', subyekt:'субъект', litsenziya:'лицензия', sertifikat:'сертификат', ya:'як', ch:'чо', sh:'ша', sex:'цех', sexi:'цехи', sexda:'цехда', sexga:'цехга' };
+const _CYR_KEEP = 'ARTEZ|Artez|Telegram|WhatsApp|Instagram|Click|Payme|Uzum|PLUM|Plum|SmartBill|Face ID|Touch ID|PIN|SMS|ID|OK|QR|GPS|Wi-Fi|Excel|PDF|Yandex|Google';
+const _CYR_PROTECT = new RegExp(/`[^`]*`|<[^>]+>|&[#\w]+;|https?:\/\/\S+|t\.me\/\S+|\b[\w.-]+\.(?:uz|com|ru|me|org|net|html)\b(?:\/\S*)?/.source
+  + /|(^|[^\w/])([@/][A-Za-z_]\w*)|\$?\{[^{}]*\}|\b[A-Z]{2,}-\d+|\b[A-Za-z]+\d\w*/.source + '|\\b(?:' + _CYR_KEEP + ')', 'g');  // бренд + окончание: Excelga → Excelга
+const _CYR_MULTI = [['Tsiya','Ция'],['tsiya','ция'],['tsiy','ций'],['ansiya','анция'],['Aksiya','Акция'],['aksiya','акция'],['Kuryer','Курьер'],['kuryer','курьер'],
+  ['shʼ','сҳ'],['Sh','Ш'],['SH','Ш'],['sh','ш'],['Ch','Ч'],['CH','Ч'],['ch','ч'],['Yoʻ','Йў'],['YOʻ','ЙЎ'],['yoʻ','йў'],['Oʻ','Ў'],['oʻ','ў'],['Gʻ','Ғ'],['gʻ','ғ'],
+  ['YO','Ё'],['Yo','Ё'],['yo','ё'],['YU','Ю'],['Yu','Ю'],['yu','ю'],['YA','Я'],['Ya','Я'],['ya','я'],['YE','Е'],['Ye','Е'],['ye','е'],['ʼ','ъ']];
+const _CYR_ONE = {}; (function(){ const a='ABDEFGHIJKLMNOPQRSTUVXYZabdefghijklmnopqrstuvxyz', b='АБДЕФГҲИЖКЛМНОПҚРСТУВХЙЗабдефгҳижклмнопқрстувхйз'; for (let i=0;i<a.length;i++) _CYR_ONE[a[i]]=b[i]; })();
+function _cyrWord(w) {
+  const f = _CYR_FIX[w.toLowerCase()];
+  if (f) return (w.length > 1 && w === w.toUpperCase()) ? f.toUpperCase() : (w[0] === w[0].toUpperCase() ? f[0].toUpperCase() + f.slice(1) : f);
+  if (w[0] === 'E' || w[0] === 'e') w = (w[0] === 'E' ? 'Э' : 'э') + w.slice(1);
+  let out = '', i = 0;
+  while (i < w.length) {
+    const hit = _CYR_MULTI.find(([l]) => w.startsWith(l, i));
+    if (hit) { out += hit[1]; i += hit[0].length; } else { out += _CYR_ONE[w[i]] || w[i]; i++; }
+  }
+  return out;
+}
+function _cyrPlain(s) {
+  s = s.replace(/([OoGg])['’‘`ʼʻ]/g, '$1ʻ').replace(/([A-Za-z])['’‘`ʼ](?=[A-Za-z])/g, '$1ʼ');
+  return s.replace(/[A-Za-zʻʼ]+/g, _cyrWord);
+}
+function _toCyrl(s) {
+  if (!s || typeof s !== 'string') return s;
+  let out = '', pos = 0;
+  for (const m of s.matchAll(_CYR_PROTECT)) {
+    out += _cyrPlain(s.slice(pos, m.index)) + (m[2] !== undefined ? (m[1] || '') + m[2] : m[0]);
+    pos = m.index + m[0].length;
+  }
+  return out + _cyrPlain(s.slice(pos));
+}
+
+// Языки: ru, uz (латиница), uz_cyrl (Ўзбекча, кирилл — словарь uz через _toCyrl, кэшируется).
+const _STAFF_LANGS = ['ru', 'uz', 'uz_cyrl'];
 let _lang = localStorage.getItem('staff_lang') || 'ru';
-function t(k) { return (_i18n[_lang]||{})[k] || (_i18n.ru||{})[k] || k; }
+if (!_STAFF_LANGS.includes(_lang)) _lang = 'ru';
+const _cyrCache = {};
+/** Узбекский интерфейс (латиница или кириллица). */
+function _isUz() { return _lang === 'uz' || _lang === 'uz_cyrl'; }
+/** Узбекский текст на выбранной письменности (для uz_cyrl — кириллица). */
+function _uzs(s) { return _lang === 'uz_cyrl' ? _toCyrl(s) : s; }
+function t(k) {
+  if (_lang === 'uz_cyrl') {
+    const v = (_i18n.uz || {})[k];
+    if (v) return (_cyrCache[k] ??= _toCyrl(v));
+    return (_i18n.ru || {})[k] || k;
+  }
+  return (_i18n[_lang]||{})[k] || (_i18n.ru||{})[k] || k;
+}
 function _setLang(lang) {
-  if (lang !== 'ru' && lang !== 'uz') return;
+  if (!_STAFF_LANGS.includes(lang)) return;
   _lang = lang;
   localStorage.setItem('staff_lang', _lang);
   _updateLangSwitchUI();
@@ -1635,7 +1688,7 @@ const _i18n = {
     'so.lbl.price_raw':'Цена по факту','so.lbl.price_final':'Цена к оплате','so.lbl.save_contact':'📇 В контакты',
     'so.notif_empty':'Пока нет уведомлений','so.notif_loading':'Загрузка…',
     'svc.carpet':'Чистка ковра','svc.carpet_home':'Чистка ковра на дому','svc.sofa':'Диван, кресло','svc.mattress':'Матрас, одеяло','svc.curtains':'Шторы',
-    'svc.type.standard':'Стандарт','svc.type.express':'Экспресс',
+    'svc.type.standard':'Стандартный','svc.type.express':'Быстрый',
     'items.empty':'Нет позиций — нажмите «+ Добавить»','items.total':'Итого:','price.list':'Прайс','price.discount':'скидка','price.disc_note_ph':'Причина скидки (необязательно)','price.locked':'Цену по договору меняет менеджер','items.enter_count':'Введите количество',
     'item.empty':'не заполнено','item.i_work':'🧼 Я работаю','item.refuse':'Отказаться','item.take':'✋ Взять позицию',
     'item.change':'— изменить —','item.unassign':'Снять мойщика','item.no_washer':'⚠️ Нет мойщика','item.assign':'— Назначить мойщика —',
@@ -1964,7 +2017,7 @@ const _i18n = {
     'so.lbl.price_raw':'Amaldagi narx','so.lbl.price_final':`Toʻlanadigan narx`,'so.lbl.save_contact':'📇 Kontaktga',
     'so.notif_empty':`Hozircha bildirishnoma yoʻq`,'so.notif_loading':'Yuklanmoqda…',
     'svc.carpet':'Gilam tozalash','svc.carpet_home':'Uyda gilam tozalash','svc.sofa':'Divan, kreslo','svc.mattress':`Matras, koʻrpa`,'svc.curtains':'Pardalar',
-    'svc.type.standard':'Standart','svc.type.express':'Ekspress',
+    'svc.type.standard':'Standart','svc.type.express':'Tezkor',
     'items.empty':`Pozitsiya yoʻq — «+ Qoʻshish» tugmasini bosing`,'items.total':'Jami:','price.list':'Prays','price.discount':'chegirma','price.disc_note_ph':'Chegirma sababi (ixtiyoriy)','price.locked':'Kelishilgan narxni menejer oʻzgartiradi','items.enter_count':'Miqdorni kiriting',
     'item.empty':`toʻldirilmagan`,'item.i_work':'🧼 Men ishlamoqdaman','item.refuse':'Rad etish','item.take':`✋ Pozitsiyani olish`,
     'item.change':'— oʻzgartirish —','item.unassign':'Yuvuvchini olish','item.no_washer':`⚠️ Yuvuvchi yoʻq`,'item.assign':'— Yuvuvchi belgilash —',
@@ -2417,7 +2470,7 @@ function startApp() {
       const r = await fetch(`${API_BASE}/staff/me`, { headers: { Authorization: `Bearer ${token}` } });
       if (r.status === 401) {
         doLogout();
-        showToast(_lang === 'uz' ? 'Sessiya tugatildi — qayta kiring' : 'Сессия завершена — войдите заново', 'error');
+        showToast(_isUz() ? _uzs('Sessiya tugatildi — qayta kiring') : 'Сессия завершена — войдите заново', 'error');
         return;
       }
       if (!r.ok) return;
@@ -4070,7 +4123,7 @@ function branchLabel(slug) {
   if (!slug) return '—';
   const b = (window._BRANCHES || []).find(b => b.slug === slug || b.name_ru === slug || b.name_uz === slug);
   if (!b) return slug;
-  return _lang === 'uz' ? (b.name_uz || b.name_ru) : b.name_ru;
+  return _isUz() ? (b.name_uz ? _uzs(b.name_uz) : b.name_ru) : b.name_ru;
 }
 
 function _normBranchVal(b) {
@@ -6457,8 +6510,8 @@ function _applyLeadsFormI18n() {
   const dc = document.getElementById('ldDeliveryCourier'); if(dc) dc.textContent = t('lead.delivery_courier');
   const ds = document.getElementById('ldDeliverySelf');    if(ds) ds.textContent = t('lead.delivery_self');
   // placeholders
-  _p('ld_name', _lang==='uz'?'Alisher':'Алишер');
-  _p('ld_short_address', _lang==='uz'?'1-xonadon, 12-uy':'1-кв, 12-дом');
+  _p('ld_name', _isUz()?_uzs('Alisher'):'Алишер');
+  _p('ld_short_address', _isUz()?_uzs('1-xonadon, 12-uy'):'1-кв, 12-дом');
   _p('ld_note', t('lead.note_ph'));
   // map buttons
   _s('ldLocReadyBtn', t('lead.map_done'));
@@ -6899,8 +6952,8 @@ function _pkpSvcRowsHtml(prefix, catalog) {
   // задать его с апострофом/кавычкой), а i всегда просто число из .map(),
   // interpolate-safe без экранирования. См. [[feedback_onclick_data_interpolation_xss]].
   return catalog.map((s, i) => {
-    const label = _lang === 'uz' ? (s.name_uz || s.name_ru) : s.name_ru;
-    const size  = s.size_key ? ((_lang === 'uz' ? (s.size_name_uz || s.size_name_ru) : s.size_name_ru) || s.size_key) : '';
+    const label = _isUz() ? (s.name_uz ? _uzs(s.name_uz) : s.name_ru) : s.name_ru;
+    const size  = s.size_key ? ((_isUz() ? (s.size_name_uz ? _uzs(s.size_name_uz) : s.size_name_ru) : s.size_name_ru) || s.size_key) : '';
     return `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(128,128,128,.3)">
       <span style="font-size:13px">${_esc(s.emoji || '🏷')} ${_esc(label)}${size ? ` — 📐 ${_esc(size)}` : ''}</span>
@@ -6944,7 +6997,7 @@ async function openSvcPicker(targetId) {
   // "По услугам" при заборе; перенос из ARTEZ, запрос пользователя 2026-09-30).
   const catalog = await _pkpLoadServiceCatalog();
   list.innerHTML = catalog.map((s, i) => {
-    const label = _lang === 'uz' ? (s.name_uz || s.name_ru) : s.name_ru;
+    const label = _isUz() ? (s.name_uz ? _uzs(s.name_uz) : s.name_ru) : s.name_ru;
     return `<label style="display:flex;align-items:center;gap:12px;padding:11px 18px;cursor:pointer;background:#fff;transition:background .12s${i < catalog.length-1 ? ';border-bottom:1px solid #f5f5f5' : ''}">
        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;border:2px solid #d0d0d0;flex-shrink:0;background:#fff" id="svcIcon_${i}">
        </span>
@@ -8898,8 +8951,8 @@ function _renderRouteDetail(route) {
     </div>
     ${_drvCanManage() ? `
     <div style="display:flex;gap:8px;padding:12px 14px 0">
-      <button onclick="drvOpenAddOrders(${Number(route.id)})" style="flex:1;padding:10px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer">+ ${_lang === 'uz' ? 'Buyurtma qoʻshish' : 'Добавить заказы'}</button>
-      <button onclick="drvDeleteRoute(${Number(route.id)})" style="padding:10px 14px;border-radius:12px;border:1.5px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);color:#ef4444;font-size:14px;font-weight:700;cursor:pointer">🗑 ${_lang === 'uz' ? 'Oʻchirish' : 'Удалить'}</button>
+      <button onclick="drvOpenAddOrders(${Number(route.id)})" style="flex:1;padding:10px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer">+ ${_isUz() ? _uzs('Buyurtma qoʻshish') : 'Добавить заказы'}</button>
+      <button onclick="drvDeleteRoute(${Number(route.id)})" style="padding:10px 14px;border-radius:12px;border:1.5px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);color:#ef4444;font-size:14px;font-weight:700;cursor:pointer">🗑 ${_isUz() ? _uzs('Oʻchirish') : 'Удалить'}</button>
     </div>` : ''}
     ${_drvRouteCard(route, 0)}
     <div style="padding:16px;text-align:center">
@@ -10334,20 +10387,25 @@ document.addEventListener('click', e => {
 // ─── STAFF: ДЕТАЛИ ЗАКАЗА + ПОЗИЦИИ ────────────────────────────────────────
 
 const STAFF_SVC_NAMES  = { carpet:'Чистка ковра', carpet_home:'Чистка ковра на дому', sofa:'Диван, кресло', mattress:'Матрас, одеяло', curtains:'Шторы' };
-const STAFF_TYPE_NAMES = { standard:'Стандарт', express:'Экспресс' };
+const STAFF_TYPE_NAMES = { standard:'Стандартный', express:'Быстрый' };
 let _svcApiData = {};  // ключ → {name_ru, name_uz, emoji}
-let _svcTypeApiData = {}; // type_key → {name_ru, name_uz, speed_key, size_key…} — живой каталог вариантов цены
+let _svcTypeApiData = {}; // «услуга|вариант» и вариант → {name_ru, name_uz, speed_key, size_key…} — живой каталог вариантов цены
+// Без lang — язык интерфейса (кириллица только для показа); с явным 'uz' — латиница (уходит в БД service_uz).
 function _svcName(k, lang) {
-  lang = lang || _lang;
+  const cyr = !lang && _lang === 'uz_cyrl';
+  lang = lang || (_isUz() ? 'uz' : 'ru');
   const d = _svcApiData[k];
-  if (d) return `${d.emoji || ''} ${lang === 'uz' ? d.name_uz : d.name_ru}`.trim();
-  return (_i18n[lang]||{})['svc.'+k] || (_i18n.ru||{})['svc.'+k] || STAFF_SVC_NAMES[k] || k;
+  const name = d ? `${d.emoji || ''} ${lang === 'uz' ? d.name_uz : d.name_ru}`.trim()
+                 : ((_i18n[lang]||{})['svc.'+k] || (_i18n.ru||{})['svc.'+k] || STAFF_SVC_NAMES[k] || k);
+  return cyr ? _toCyrl(name) : name;
 }
-function _typeName(k, lang) {
-  lang = lang || _lang;
-  const d = _svcTypeApiData[k];
-  if (d) return lang === 'uz' ? (d.name_uz || d.name_ru) : d.name_ru;
-  return (_i18n[lang]||{})['svc.type.'+k] || (_i18n.ru||{})['svc.type.'+k] || STAFF_TYPE_NAMES[k] || k;
+function _typeName(k, lang, svc) {
+  const cyr = !lang && _lang === 'uz_cyrl';
+  lang = lang || (_isUz() ? 'uz' : 'ru');
+  const d = (svc && _svcTypeApiData[svc + '|' + k]) || _svcTypeApiData[k];
+  const name = d ? (lang === 'uz' ? (d.name_uz || d.name_ru) : d.name_ru)
+                 : ((_i18n[lang]||{})['svc.type.'+k] || (_i18n.ru||{})['svc.type.'+k] || STAFF_TYPE_NAMES[k] || k);
+  return cyr ? _toCyrl(name) : name;
 }
 
 let _sOrderId       = null;
@@ -10408,7 +10466,7 @@ async function _loadStaffPrices() {
     }
     if (tr?.types) {
       _svcTypeApiData = {};
-      tr.types.forEach(t => { _svcTypeApiData[t.type_key] = t; });
+      tr.types.forEach(t => { _svcTypeApiData[t.service_key + '|' + t.type_key] = t; _svcTypeApiData[t.type_key] = _svcTypeApiData[t.type_key] || t; });
     }
   } catch { _sPrices = {}; }
   return _sPrices;
@@ -12288,7 +12346,7 @@ async function _doSaveOrderEdit(newStatus, reason) {
         if (!match) return;
         const newPrice = prices[match.svcKey]?.[_newServiceType]?.price;
         if (!newPrice) return;
-        const newSvcName = `${_svcName(match.svcKey)} — ${_typeName(_newServiceType)}`;
+        const newSvcName = `${_svcName(match.svcKey)} — ${_typeName(_newServiceType, null, match.svcKey)}`;
         const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/items/${item.id}`, {
           method: 'PUT',
           headers: {'Content-Type':'application/json', Authorization:`Bearer ${token}`},
@@ -12337,7 +12395,7 @@ async function _loadOrderHistory(orderId) {
       // note может быть двуязычным "ru / uz" (см. bi() на бэкенде) — показываем только текущий язык
       let noteText = h.note || '';
       const noteParts = noteText.split(' / ');
-      if (noteParts.length === 2) noteText = _lang === 'uz' ? noteParts[1] : noteParts[0];
+      if (noteParts.length === 2) noteText = _isUz() ? _uzs(noteParts[1]) : noteParts[0];
       const note = noteText ? `<span style="color:#888;font-size:11px"> · ${noteText}</span>` : '';
       return `<div style="display:flex;align-items:baseline;gap:6px;font-size:12px;flex-wrap:wrap">
         <span style="color:#9ca3af;white-space:nowrap">${dt}</span>
@@ -12423,10 +12481,10 @@ function staffRenderItems(items, containerEl) {
   // sifFindPriceMatch, как раньше.
   const _svcLabel = it => {
     if (!it.service) return '';
-    const bilingual = _lang === 'uz' ? it.service_uz : it.service_ru;
+    const bilingual = _isUz() ? _uzs(it.service_uz) : it.service_ru;
     if (bilingual) return bilingual;
     const m = sifFindPriceMatch(it.service);
-    return m ? `${_svcName(m.svcKey)} — ${_typeName(m.typeKey)}` : it.service;
+    return m ? `${_svcName(m.svcKey)} — ${_typeName(m.typeKey, null, m.svcKey)}` : it.service;
   };
 
   // Разбивка по услугам и "Итого" — берём ГОТОВЫЕ billed_total/groups/order_total,
@@ -12934,7 +12992,7 @@ function sifOnSvcChange() {
   if (!svcKey || !prices[svcKey]) return;
 
   Object.entries(prices[svcKey]).forEach(([typeKey, info]) => {
-    typeSel.innerHTML += `<option value="${_esc(typeKey)}" data-price="${info.price||0}">${_esc(_typeName(typeKey))}</option>`;
+    typeSel.innerHTML += `<option value="${_esc(typeKey)}" data-price="${info.price||0}">${_esc(_typeName(typeKey, null, svcKey))}</option>`;
   });
   // Авто-выбор типа из заказа (пользователь менять не может). У услуги с размерами
   // базового standard/express в списке нет — берём первый размер той же скорости.
@@ -12965,13 +13023,13 @@ function _sifSyncSizePicker() {
     const d = _svcTypeApiData[o.value] || {};
     const opt = document.createElement('option');
     opt.value = o.value;
-    opt.textContent = (_lang === 'uz' ? d.size_name_uz : d.size_name_ru) || o.textContent;
+    opt.textContent = (_isUz() ? _uzs(d.size_name_uz) : d.size_name_ru) || o.textContent;
     sizeSel.appendChild(opt);
   });
   if (list.some(o => o.value === typeSel.value)) sizeSel.value = typeSel.value;
   else { sizeSel.value = list[0].value; typeSel.value = list[0].value; }
   const lbl = document.getElementById('sif_size_label');
-  if (lbl) lbl.textContent = _lang === 'uz' ? "O'lcham" : 'Размер';
+  if (lbl) lbl.textContent = _isUz() ? _uzs("O'lcham") : 'Размер';
   wrap.style.display = '';
 }
 function sifOnSizeChange() {
@@ -12988,7 +13046,7 @@ function sifOnTypeChange() {
   if (!svcKey || !typeKey) return;
 
   const svcName  = _svcName(svcKey);
-  const typeName = _typeName(typeKey);
+  const typeName = _typeName(typeKey, null, svcKey);
   const price    = prices[svcKey]?.[typeKey]?.price || 0;
 
   const n = document.getElementById('sif_service_name');
@@ -13035,8 +13093,8 @@ function sifFindPriceMatch(serviceName) {
   const prices = _sPrices || {};
   for (const [svcKey, types] of Object.entries(prices)) {
     for (const [typeKey, info] of Object.entries(types)) {
-      const nameRu = `${_svcName(svcKey,'ru')} — ${_typeName(typeKey,'ru')}`;
-      const nameUz = `${_svcName(svcKey,'uz')} — ${_typeName(typeKey,'uz')}`;
+      const nameRu = `${_svcName(svcKey,'ru')} — ${_typeName(typeKey,'ru',svcKey)}`;
+      const nameUz = `${_svcName(svcKey,'uz')} — ${_typeName(typeKey,'uz',svcKey)}`;
       if (serviceName === nameRu || serviceName === nameUz) return { svcKey, typeKey, price: info.price || 0 };
     }
   }
@@ -13839,7 +13897,7 @@ async function staffSaveItemForm() {
   if (!isCustom) {
     const _sk = document.getElementById('sif_svc_select')?.value, _tk = document.getElementById('sif_type_select')?.value;
     if (_sk && _tk) Object.assign(body, { service_key: _sk, type_key: _tk,
-      service_ru: `${_svcName(_sk,'ru')} — ${_typeName(_tk,'ru')}`, service_uz: `${_svcName(_sk,'uz')} — ${_typeName(_tk,'uz')}` });
+      service_ru: `${_svcName(_sk,'ru')} — ${_typeName(_tk,'ru',_sk)}`, service_uz: `${_svcName(_sk,'uz')} — ${_typeName(_tk,'uz',_sk)}` });
   }
   const url    = _sItemEdit
     ? `/admin/orders/${_sOrderId}/items/${_sItemEdit}`
@@ -13910,7 +13968,7 @@ function smcOnSvcChange() {
   if (!svcKey || !prices[svcKey]) return;
   Object.entries(prices[svcKey]).forEach(([typeKey, info]) => {
     const _unitLabel = (info.unit_key === 'pcs') ? t('unit.pcs') : t('unit.m2');
-    typeSel.innerHTML += `<option value="${typeKey}" data-price="${info.price||0}">${_esc(_typeName(typeKey))} — ${(info.price||0).toLocaleString('ru')} ${t('unit.sum')}/${_unitLabel}</option>`;
+    typeSel.innerHTML += `<option value="${typeKey}" data-price="${info.price||0}">${_esc(_typeName(typeKey, null, svcKey))} — ${(info.price||0).toLocaleString('ru')} ${t('unit.sum')}/${_unitLabel}</option>`;
   });
   // Авто-выбор типа из заказа (пользователь не меняет)
   const _smOrderType = _sOrderCache?.service_type || 'standard';
@@ -13926,7 +13984,7 @@ function smcOnTypeChange() {
   const typeKey = document.getElementById('smc_type_select').value;
   if (!svcKey || !typeKey) return;
   const price = prices[svcKey]?.[typeKey]?.price || 0;
-  const name  = `${_svcName(svcKey)} — ${_typeName(typeKey)}`;
+  const name  = `${_svcName(svcKey)} — ${_typeName(typeKey, null, svcKey)}`;
   const nameEl = document.getElementById('smc_service_name');
   nameEl.value = name; nameEl.style.display = '';
   const priceEl = document.getElementById('smc_price');
@@ -14010,8 +14068,8 @@ function _smcKeys() {
   if (!svcKey || !typeKey) return { service, service_ru: null, service_uz: null };
   return {
     service,
-    service_ru: `${_svcName(svcKey,'ru')} — ${_typeName(typeKey,'ru')}`,
-    service_uz: `${_svcName(svcKey,'uz')} — ${_typeName(typeKey,'uz')}`,
+    service_ru: `${_svcName(svcKey,'ru')} — ${_typeName(typeKey,'ru',svcKey)}`,
+    service_uz: `${_svcName(svcKey,'uz')} — ${_typeName(typeKey,'uz',svcKey)}`,
   };
 }
 
@@ -14191,7 +14249,8 @@ function svpOnSvcChange() {
   typeSel.innerHTML = `<option value="">${t('svc.select_type_placeholder')}</option>`;
   if (!svcKey || !prices[svcKey]) return;
   Object.entries(prices[svcKey]).forEach(([typeKey, info]) => {
-    typeSel.innerHTML += `<option value="${typeKey}">${_esc(_typeName(typeKey))} — ${(info.price||0).toLocaleString('ru')} ${t('unit.sum')}/${t('unit.m2')}</option>`;
+    const _u = info.unit_key === 'pcs' ? t('unit.pcs') : t('unit.m2');  // штучные — не «/м²»
+    typeSel.innerHTML += `<option value="${typeKey}">${_esc(_typeName(typeKey, null, svcKey))} — ${(info.price||0).toLocaleString('ru')} ${t('unit.sum')}/${_u}</option>`;
   });
   const _orderType = _sOrderCache?.service_type || 'standard';
   const _match = Array.from(typeSel.options).find(o => o.value === _orderType);
@@ -14208,9 +14267,9 @@ async function svpConfirm() {
     svcKey  = document.getElementById('svp_svc_select')?.value || '';
     typeKey = document.getElementById('svp_type_select')?.value || '';
     if (!svcKey || !typeKey) { showToast(t('svc.select_required'), 'warning'); return; }
-    service    = `${_svcName(svcKey)} — ${_typeName(typeKey)}`;
-    service_ru = `${_svcName(svcKey,'ru')} — ${_typeName(typeKey,'ru')}`;
-    service_uz = `${_svcName(svcKey,'uz')} — ${_typeName(typeKey,'uz')}`;
+    service    = `${_svcName(svcKey)} — ${_typeName(typeKey, null, svcKey)}`;
+    service_ru = `${_svcName(svcKey,'ru')} — ${_typeName(typeKey,'ru',svcKey)}`;
+    service_uz = `${_svcName(svcKey,'uz')} — ${_typeName(typeKey,'uz',svcKey)}`;
   }
   if (!service) { showToast(t('svc.select_required'), 'warning'); return; }
 
