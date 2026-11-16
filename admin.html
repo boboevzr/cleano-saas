@@ -18842,7 +18842,7 @@ function _renderAdminLeadsTable(leads) {
     return `<tr class="client-row" onclick="${clickFn}" style="cursor:pointer${sel?';outline:2px solid #163E3B;outline-offset:-1px':''}">
       ${_adminLeadsSelectMode ? `<td><input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();adminToggleLeadSelect(${l.id});this.closest('tr').style.outline=_adminSelectedLeads.has(${l.id})?'2px solid #163E3B':'';_updateAdminLeadsBulkCount()" style="accent-color:#163E3B"></td>` : ''}
       <td>${i+1}</td>
-      <td data-label="Клиент"><span style="display:inline-flex;align-items:center;gap:5px">${srcIco} <b>${name}</b></span></td>
+      <td data-label="Клиент"><span style="display:inline-flex;align-items:center;gap:5px">${srcIco} <b>${name}</b></span>${_prepayBadge(l) ? `<div style="margin-top:3px">${_prepayBadge(l)}</div>` : ''}</td>
       <td data-label="Телефон"><a href="tel:${l.client_phone}" onclick="event.stopPropagation()">${l.client_phone}</a>${l.client_phone2 ? `<br><a href="tel:${String(l.client_phone2).replace(/[^0-9+]/g,'')}" onclick="event.stopPropagation()">${_esc(l.client_phone2)}</a>` : ''}</td>
       <td data-label="Услуга">${l.service || '—'}</td>
       <td data-label="Адрес">${l.short_address || l.address || '—'}</td>
@@ -18872,6 +18872,13 @@ async function adminLoadLeads() {
   _renderAdminLeadsTable(_adminLeadsCache);
 }
 
+// 💳 Онлайн-предоплата по заявке (pay.py → поле prepaid в списке лидов). Только число — безопасно для HTML.
+function _prepayBadge(l, big) {
+  const n = Math.round(Number(l && l.prepaid) || 0);
+  if (n <= 0) return '';
+  const s = n.toLocaleString('ru-RU').replace(/,/g, ' ');
+  return `<span style="display:inline-flex;align-items:center;gap:4px;padding:${big ? '5px 12px' : '2px 8px'};border-radius:999px;background:rgba(44,198,179,.16);color:#0F766E;border:1px solid rgba(44,198,179,.55);font-size:${big ? 13 : 11}px;font-weight:800;white-space:nowrap">💳 Предоплата ${s} сум (картой)</span>`;
+}
 function renderAdminLeadsStats(leads) {
   const bar = document.getElementById('adminLeadsStats');
   if (!bar) return;
@@ -18899,6 +18906,9 @@ async function openLeadCard(id) {
   if (!l) return;
   const st = ADMIN_LEAD_STATUS[l.status] || ADMIN_LEAD_STATUS.new;
   document.getElementById('lc_code').textContent  = l.lead_code || '';
+  { let pb = document.getElementById('lc_prepay');
+    if (!pb) { pb = document.createElement('div'); pb.id = 'lc_prepay'; pb.style.margin = '2px 0 8px'; document.getElementById('lc_code').insertAdjacentElement('afterend', pb); }
+    pb.innerHTML = _prepayBadge(l, true); }
   document.getElementById('lc_name').textContent  = l.client_name || '—';
   document.getElementById('lc_phone').textContent = l.client_phone || '';
   document.getElementById('lc_phone').href        = `tel:${l.client_phone}`;

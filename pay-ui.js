@@ -51,10 +51,18 @@
     '.pay-sub{font-size:12px;color:var(--text2,#6b7280);margin-top:3px}' +
     '.pay-test{font-size:11px;margin-top:8px;padding:6px 8px;border-radius:8px;background:rgba(232,168,60,.15);color:var(--ink,#141E1B)}' +
     '.pay-ok{color:#15803d;font-weight:700}' +
-    '#payModal{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.45)}' +
+    /* окно — по центру экрана, фон размыт (16.11: просьба владельца) */
+    '#payModal{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;' +
+      'background:rgba(8,18,24,.42);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}' +
     '#payModal.on{display:flex}' +
-    '#payModal .pm-card{width:100%;max-width:440px;max-height:92vh;overflow:auto;background:var(--sand-card,#fff);color:var(--ink,#141E1B);border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}' +
-    '@media(min-width:600px){#payModal{align-items:center}#payModal .pm-card{border-radius:20px}}' +
+    '#payModal .pm-card{width:100%;max-width:440px;max-height:calc(100dvh - 32px);overflow:auto;box-sizing:border-box;background:var(--sand-card,#fff);color:var(--ink,#141E1B);' +
+      'border-radius:22px;padding:20px 18px;box-shadow:0 24px 60px rgba(0,0,0,.28);animation:pmIn .18s ease-out}' +
+    '@keyframes pmIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}' +
+    /* поле с курсором — бирюзовая рамка с мягким свечением; ошибка — красная рамка */
+    '#payModal input[type=text],#payModal input[type=tel]{transition:border-color .15s,box-shadow .15s;outline:none;border-width:2px!important}' +
+    '#payModal input[type=text]:focus,#payModal input[type=tel]:focus{border-color:#2CC6B3!important;box-shadow:0 0 0 4px rgba(44,198,179,.22),0 0 18px rgba(44,198,179,.25)}' +
+    '#payModal input.pm-bad,#payModal input.pm-bad:focus{border-color:#E5484D!important;box-shadow:0 0 0 4px rgba(229,72,77,.18)}' +
+    '#payModal #pmOtp{font-size:26px;letter-spacing:10px;text-align:center;font-weight:700}' +
     '#payModal h3{margin:0 0 4px;font-size:18px}' +
     '#payModal .pm-amt{font-size:26px;font-weight:800;margin:6px 0 14px}' +
     '#payModal label{display:block;font-size:12px;color:var(--text2,#6b7280);margin:10px 0 4px}' +
@@ -178,7 +186,12 @@
     var lo = document.getElementById('payLeadOffer');
     if (lo && lo.dataset.paid) lo.innerHTML = '<div class="pay-ok">✅ ' + L('Предоплата внесена. Спасибо!', 'Oldindan to\'lov qabul qilindi. Rahmat!') + '</div>';
   }
-  function err(msg) { var e = body().querySelector('.pm-err'); if (e) e.textContent = msg || ''; }
+  function err(msg) {
+    var e = body().querySelector('.pm-err'); if (e) e.textContent = msg || '';
+    // ошибка — красная рамка у полей ввода; снимается при следующем вводе
+    body().querySelectorAll('input[type=tel],input[type=text]').forEach(function (i) { i.classList.toggle('pm-bad', !!msg); });
+  }
+  document.addEventListener('input', function (e) { if (e.target && e.target.closest && e.target.closest('#payModal')) { e.target.classList.remove('pm-bad'); } });
   function busy(on) { body().querySelectorAll('button,input').forEach(function (b) { b.disabled = !!on; }); }
 
   function fmtCard(v) { return v.replace(/\D/g, '').slice(0, 16).replace(/(\d{4})(?=\d)/g, '$1 '); }
@@ -204,8 +217,8 @@
     });
     h += '<div class="pm-cardrow' + (ctx.card === 'new' ? ' sel' : '') + '" data-pm="pick" data-card="new">➕ ' + L('Новая карта Uzcard / Humo', 'Yangi karta Uzcard / Humo') + '</div></div>';
     if (ctx.card === 'new') {
-      h += '<label>' + L('Номер карты', 'Karta raqami') + '</label><input type="tel" inputmode="numeric" autocomplete="cc-number" id="pmNum" placeholder="8600 0000 0000 0000">' +
-        '<label>' + L('Срок (ММ/ГГ)', 'Muddati (OO/YY)') + '</label><input type="tel" inputmode="numeric" autocomplete="cc-exp" id="pmExp" placeholder="12/30" style="max-width:140px">' +
+      h += '<label>' + L('Номер карты', 'Karta raqami') + '</label><input type="tel" inputmode="numeric" autocomplete="cc-number" id="pmNum" maxlength="19" placeholder="8600 0000 0000 0000">' +
+        '<label>' + L('Срок (ММ/ГГ)', 'Muddati (OO/YY)') + '</label><input type="tel" inputmode="numeric" autocomplete="cc-exp" id="pmExp" maxlength="5" placeholder="12/30" style="max-width:140px">' +
         '<label class="pm-chk"><input type="checkbox" id="pmSave" checked> ' + L('Запомнить карту для следующих оплат', 'Kartani keyingi to\'lovlar uchun saqlash') + '</label>';
     }
     h += '<div class="pm-err"></div><div class="pay-row"><button class="pay-btn" data-pm="go">' + L('Оплатить', 'To\'lash') + ' ' + sum(ctx.amount) + '</button></div>' +
@@ -213,7 +226,12 @@
     body().innerHTML = h;
     var n = document.getElementById('pmNum'), x = document.getElementById('pmExp');
     if (n) { n.addEventListener('input', function () { n.value = fmtCard(n.value); }); setTimeout(function () { n.focus(); }, 50); }
-    if (x) x.addEventListener('input', function () { x.value = fmtExp(x.value); });
+    if (x) x.addEventListener('input', function (ev) {
+      // «/» появляется сам после двух цифр месяца; при стирании — не мешает
+      var del = ev && /^delete/.test(ev.inputType || '');
+      var d = x.value.replace(/D/g, '').slice(0, 4);
+      x.value = (!del && d.length === 2) ? d + '/' : fmtExp(x.value);
+    });
   }
 
   async function go() {
@@ -256,7 +274,7 @@
     ctx.otpKind = kind;
     body().innerHTML = '<h3>' + L('Код из SMS', 'SMS kodi') + '</h3>' +
       '<div class="pay-sub">' + L('Банк отправил код на номер', 'Bank kodni yubordi') + ' ' + esc(phone || '') + '</div>' +
-      '<label>' + L('Код', 'Kod') + '</label><input type="tel" inputmode="numeric" autocomplete="one-time-code" id="pmOtp" maxlength="8" placeholder="••••••">' +
+      '<label>' + L('Код', 'Kod') + '</label><input type="tel" inputmode="numeric" autocomplete="one-time-code" id="pmOtp" maxlength="8" pattern="[0-9]*" autofocus placeholder="••••••">' +
       '<div class="pm-err"></div><div class="pay-row"><button class="pay-btn" data-pm="otp">' + L('Подтвердить', 'Tasdiqlash') + '</button></div>' +
       (kind === 'pay' ? '<div class="pay-row"><button class="pay-btn alt" data-pm="resend" id="pmResend"></button></div>' : '');
     var o = document.getElementById('pmOtp'); setTimeout(function () { o && o.focus(); }, 50);

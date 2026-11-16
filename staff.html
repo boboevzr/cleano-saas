@@ -4027,6 +4027,13 @@ function closeSourcePersonModal() {
   if (m) m.style.display = 'none';
 }
 
+// 💳 Онлайн-предоплата по заявке (pay.py → поле prepaid в списке лидов). Только число — безопасно для HTML.
+function _prepayBadge(l, big) {
+  const n = Math.round(Number(l && l.prepaid) || 0);
+  if (n <= 0) return '';
+  const s = n.toLocaleString('ru-RU').replace(/,/g, ' ');
+  return `<span style="display:inline-flex;align-items:center;gap:4px;padding:${big ? '5px 12px' : '2px 8px'};border-radius:999px;background:rgba(44,198,179,.16);color:#0F766E;border:1px solid rgba(44,198,179,.55);font-size:${big ? 13 : 11}px;font-weight:800;white-space:nowrap">💳 Предоплата ${s} сум (картой)</span>`;
+}
 function renderLeads() {
   const el = document.getElementById('leadsList'); if (!el) return;
   const q  = (document.getElementById('leadsSearch')?.value||'').toLowerCase();
@@ -4096,7 +4103,7 @@ function renderLeads() {
         ${l.lead_code?`<span class="li-icon-code">${l.lead_code}</span>`:''}
       </div>
       <div class="li-body">
-        <div class="li-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b>${_esc(l.client_name)||t('lead.no_name')}</b> · ${_esc(l.client_phone)} ${assignBadge}${overdueBadge}</div>
+        <div class="li-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b>${_esc(l.client_name)||t('lead.no_name')}</b> · ${_esc(l.client_phone)} ${assignBadge}${overdueBadge}${_prepayBadge(l)}</div>
         ${(l.short_address || l.address) ? `<div class="li-addr">📍 ${_esc(l.short_address || l.address)}</div>` : ''}
         <div class="li-sub">${fmtLeadDate(l.created_at)} · ${branchLabel(l.branch)}${agentStr?' · '+_esc(agentStr):''}</div>
         ${_callBtns(l.client_phone, l.client_phone2)}
@@ -4686,7 +4693,8 @@ function openLeadDetail(id) {
   const branch    = branchLabel(lead.branch);
   const creator   = [lead.creator_last_name, lead.creator_first_name].filter(Boolean).join(' ');
   const creatorStr = creator ? `${creator}${lead.creator_position?' · '+lead.creator_position:''}` : '—';
-  const code      = lead.lead_code ? `<div style="font-size:26px;font-weight:900;color:var(--accent,#163E3B);letter-spacing:.02em;line-height:1;margin-bottom:4px">${lead.lead_code}</div>` : '';
+  const code      = (lead.lead_code ? `<div style="font-size:26px;font-weight:900;color:var(--accent,#163E3B);letter-spacing:.02em;line-height:1;margin-bottom:4px">${lead.lead_code}</div>` : '')
+                  + (_prepayBadge(lead, true) ? `<div style="margin:4px 0 6px">${_prepayBadge(lead, true)}</div>` : '');
 
   const isAgentRole  = currentStaff?.role === 'agent';
   const isConverted  = lead.status === 'converted';
