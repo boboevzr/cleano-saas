@@ -5180,7 +5180,8 @@
     const os = orders();
     if (!os) { list.appendChild(el('div', 'm-card m-empty', tt('common.loading', '…'))); return; }
     // заявки до оформления заказа (основной скрипт, leadNodes) — сверху, на вкладках «Все» и «Новые»
-    if ((ordFilter === 'all' || ordFilter === 'new') && typeof leadNodes === 'function') leadNodes('m').forEach(n => list.appendChild(n));
+    window._mOrdFilter = ordFilter;   // leadNodes сам решает, какие заявки видны на этой вкладке
+    if (typeof leadNodes === 'function') leadNodes('m').forEach(n => list.appendChild(n));
     const f = os.filter(FILTERS[ordFilter] || FILTERS.all);
     if (!f.length && list.childNodes.length) return;
     if (!f.length) {

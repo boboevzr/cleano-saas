@@ -2599,6 +2599,7 @@
     'lead.callback': 'Перезвоним', 'lead.callbackText': 'Оператор перезвонит вам в удобное время',
     'lead.no_answer': 'Не дозвонились', 'lead.no_answerText': 'Не смогли до вас дозвониться — позвоните нам',
     'lead.lost': 'Отменена', 'lead.lostText': 'Заявка закрыта. Если это ошибка — позвоните нам',
+    'lead.taken': 'В работе', 'lead.takenText': 'Менеджер взял вашу заявку и скоро позвонит',
     'lead.prepaid': '💳 Предоплата {sum} сум оплачена',
     'lead.prepaidBack': '💳 Предоплата {sum} сум будет возвращена',
     'lead.cancel': 'Отменить заявку', 'lead.cancelAsk': 'Отменить заявку? Предоплата, если была, вернётся полностью.',
@@ -2612,6 +2613,7 @@
     'lead.callback': 'Qayta qoʻngʻiroq', 'lead.callbackText': 'Operator sizga qulay vaqtda qoʻngʻiroq qiladi',
     'lead.no_answer': 'Bogʻlana olmadik', 'lead.no_answerText': 'Sizga qoʻngʻiroq qila olmadik — bizga qoʻngʻiroq qiling',
     'lead.lost': 'Bekor qilindi', 'lead.lostText': 'Ariza yopildi. Agar bu xato boʻlsa — bizga qoʻngʻiroq qiling',
+    'lead.taken': 'Ishda', 'lead.takenText': 'Menejer arizangizni oldi va tez orada qoʻngʻiroq qiladi',
     'lead.prepaid': '💳 {sum} soʻm oldindan toʻlandi',
     'lead.prepaidBack': '💳 {sum} soʻm oldindan toʻlov qaytariladi',
     'lead.cancel': 'Arizani bekor qilish', 'lead.cancelAsk': 'Arizani bekor qilasizmi? Oldindan toʻlov boʻlsa, toʻliq qaytariladi.',
@@ -2633,8 +2635,16 @@
   function leadNodes(kind){
     // в кабинете — не больше двух (там же заказы), в «Моих заказах» и на телефоне — все
     // отменённые — в «Моих заказах» и на телефоне (видно «предоплата будет возвращена»), в кабинете — нет
-    return (lastLeads || []).filter(l => kind !== 'dash' || l.status !== 'lost').slice(0, kind === 'dash' ? 2 : 20).map(l => {
-      const st = LEAD_ST.includes(l.status) ? l.status : 'new';
+    // вкладка фильтра: открытые заявки — «Все» и «Новые», отменённые — «Все» и «Отменены» (ARTEZ a9bd7d9)
+    const flt = kind === 'drawer' ? (typeof currentFilter !== 'undefined' ? currentFilter : 'all')
+              : kind === 'm' ? (window._mOrdFilter || 'all') : 'dash';
+    const show = (l) => l.status === 'lost'
+      ? (flt === 'all' || flt === 'cancelled')
+      : (flt === 'all' || flt === 'new' || flt === 'dash');
+    return (lastLeads || []).filter(show).slice(0, kind === 'dash' ? 2 : 20).map(l => {
+      // «Новая», но менеджер уже взял — показываем «В работе» (кто именно — клиенту не говорим)
+      const st0 = LEAD_ST.includes(l.status) ? l.status : 'new';
+      const st = (st0 === 'new' && l.taken) ? 'taken' : st0;
       const card = _leadEl('div', (kind === 'm' ? 'm-card' : kind === 'drawer' ? 'oc-full oc-active' : 'order-card') + ' lead-card lead-' + st);
       const top = _leadEl('div', kind === 'm' ? 'm-ord-top' : kind === 'drawer' ? 'oc-top' : 'order-top');
       top.appendChild(_leadEl('span', kind === 'm' ? 'm-ord-num' : kind === 'drawer' ? 'oc-num' : 'order-num', tFmt('lead.title', { code: l.lead_code || '' })));
