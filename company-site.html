@@ -4309,6 +4309,22 @@
   [data-theme="dark"] .ow-svc-emoji, [data-theme="dark"] .ow-sum-row button, [data-theme="dark"] #detailedOrderForm .ow-nav .ow-back{ background:rgba(255,255,255,.07); }
   [data-theme="dark"] .ow-qty button{ background:rgba(255,255,255,.05); color:var(--teal-soft); }
   [data-theme="dark"] .ow-sum-row button, [data-theme="dark"] #detailedOrderForm .ow-nav .ow-back{ color:var(--teal-soft); }
+  .lead-card .lead-msg{ font-size:13.5px; font-weight:600; line-height:1.4; padding:9px 11px; border-radius:11px; margin:6px 0 4px; background:#E2F2EE; color:#14665C; }
+  .lead-card.lead-no_answer .lead-msg{ background:#FCEFD6; color:#8A5A10; }
+  .lead-card.lead-lost .lead-msg{ background:#FBEAE8; color:#B42318; }
+  .lead-card .lead-badge{ background:#E2F2EE; color:#14665C; }
+  .lead-card .lead-paid{ color:var(--teal); font-weight:600; }
+  .lead-card .lead-cancel{ margin-top:8px; }
+  .lead-card .lead-cancel-btn, .lead-card .lead-cancel-ask button{ border:1px solid var(--line); background:transparent; color:#B42318; font-weight:600; font-size:13px; padding:7px 12px; border-radius:10px; cursor:pointer; }
+  .lead-card .lead-cancel-ask{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:13px; }
+  .lead-card .lead-cancel-ask[hidden], .lead-card .lead-cancel-btn[hidden]{ display:none; }
+  .lead-card .lead-cancel-ask .lead-cancel-yes{ background:#B42318; color:#fff; border-color:#B42318; }
+  .lead-card .lead-cancel-ask .lead-cancel-no{ color:var(--ink); }
+  .lead-card .lead-cancel-ask button:disabled{ opacity:.5; }
+  .cabinet-card .orders-list .lead-card .lead-msg{ background:rgba(255,255,255,.12); color:#fff; }
+  [data-theme="dark"] .lead-card .lead-msg{ background:rgba(44,198,179,.14); color:#5FE0CF; }
+  [data-theme="dark"] .lead-card.lead-no_answer .lead-msg{ background:rgba(232,168,60,.16); color:#F3C470; }
+  [data-theme="dark"] .lead-card.lead-lost .lead-msg{ background:rgba(255,107,94,.14); color:#FF8A80; }
   @media (max-width:767px){
     #detailedOrderForm .ow-nav{ margin-left:-20px; margin-right:-20px; padding-left:20px; padding-right:20px; }
   }
@@ -5163,7 +5179,10 @@
     });
     const os = orders();
     if (!os) { list.appendChild(el('div', 'm-card m-empty', tt('common.loading', '…'))); return; }
+    // заявки до оформления заказа (основной скрипт, leadNodes) — сверху, на вкладках «Все» и «Новые»
+    if ((ordFilter === 'all' || ordFilter === 'new') && typeof leadNodes === 'function') leadNodes('m').forEach(n => list.appendChild(n));
     const f = os.filter(FILTERS[ordFilter] || FILTERS.all);
+    if (!f.length && list.childNodes.length) return;
     if (!f.length) {
       list.appendChild(el('div', 'm-card m-empty', os.length ? tt('cabinet.noOrdersInCategory', '—') : tt('cabinet.noOrders', '—')));
       return;

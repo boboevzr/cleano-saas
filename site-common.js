@@ -2214,12 +2214,14 @@
     const list = document.getElementById('drOrdersList');
     if (!list) return;
     if (!lastOrders || lastOrders.length === 0){
-      list.innerHTML = `<div class="orders-empty">${t('cabinet.noOrders')}</div>`;
+      list.innerHTML = lastLeads.length ? '' : `<div class="orders-empty">${t('cabinet.noOrders')}</div>`;
+      list.prepend(...leadNodes('drawer'));
       return;
     }
     const filtered = lastOrders.filter(matchFilter);
     if (!filtered.length){
       list.innerHTML = `<div class="orders-empty">${t('cabinet.noOrdersInCategory')}</div>`;
+      list.prepend(...leadNodes('drawer'));
       return;
     }
     list.innerHTML = filtered.map(o => {
@@ -2251,6 +2253,7 @@
           </div>` : ''}
       </div>`;
     }).join('');
+    list.prepend(...leadNodes('drawer'));   // заявки до оформления — сверху
   }
 
   // ── Детали заказа: позиции / фото-видео замера / фото до-после-повреждено — раздельно ──
@@ -2430,7 +2433,10 @@
     const ccf = document.getElementById('ccf-'+num);
     try {
       const token = localStorage.getItem('artez_token');
-      await apiFetch('/orders/'+num+'/cancel', {method:'POST', headers:{'Authorization':`Bearer ${token}`}});
+      const cr = await apiFetch('/orders/'+num+'/cancel', {method:'POST', headers:{'Authorization':`Bearer ${token}`}});
+      // предоплата при отмене до выезда курьера возвращается полностью
+      const rf = (cr && cr.refund) || { auto: 0, pending: 0 };
+      if (rf.auto > 0 || rf.pending > 0) showOrderAlert(rf.auto > 0 ? tFmt('lead.refundAuto', { sum: formatSum(rf.auto) }) : tFmt('lead.refundPending', { sum: formatSum(rf.pending) }));
       // перезагружаем список с сервера
       const data = await apiFetch('/orders', {headers:{'Authorization':`Bearer ${token}`}});
       lastOrders = data.orders || [];
@@ -2582,12 +2588,117 @@
   }
   window.addEventListener('DOMContentLoaded', _updatePwaInstallBtn);
 
+  // ── Заявки клиента до оформления заказа (перенос из ARTEZ ebeee2b + 3669eec, 16.11.2026) ──
+  // GET /api/my/leads: заявка видна в кабинете сразу, со статусом понятными словами; оформленная
+  // (converted) с сервера не приходит — вместо неё в списке заказ. Данные — только через textContent.
+  var lastLeads = [];
+  Object.assign(I18N.ru, {
+    'lead.title': 'Заявка {code}',
+    'lead.new': 'Принята', 'lead.newText': 'Оператор скоро позвонит, чтобы подтвердить время',
+    'lead.contacted': 'В работе', 'lead.contactedText': 'Оператор связался с вами и работает над заявкой',
+    'lead.callback': 'Перезвоним', 'lead.callbackText': 'Оператор перезвонит вам в удобное время',
+    'lead.no_answer': 'Не дозвонились', 'lead.no_answerText': 'Не смогли до вас дозвониться — позвоните нам',
+    'lead.lost': 'Отменена', 'lead.lostText': 'Заявка закрыта. Если это ошибка — позвоните нам',
+    'lead.prepaid': '💳 Предоплата {sum} сум оплачена',
+    'lead.prepaidBack': '💳 Предоплата {sum} сум будет возвращена',
+    'lead.cancel': 'Отменить заявку', 'lead.cancelAsk': 'Отменить заявку? Предоплата, если была, вернётся полностью.',
+    'lead.cancelYes': 'Да, отменить', 'lead.cancelNo': 'Нет', 'lead.cancelled': 'Заявка отменена.',
+    'lead.refundAuto': '{sum} сум вернулись на вашу карту.', 'lead.refundPending': 'Предоплату {sum} сум вернём — менеджер свяжется с вами.',
+  });
+  Object.assign(I18N.uz, {
+    'lead.title': 'Ariza {code}',
+    'lead.new': 'Qabul qilindi', 'lead.newText': 'Operator vaqtni tasdiqlash uchun tez orada qoʻngʻiroq qiladi',
+    'lead.contacted': 'Ishda', 'lead.contactedText': 'Operator siz bilan bogʻlandi va ariza ustida ishlamoqda',
+    'lead.callback': 'Qayta qoʻngʻiroq', 'lead.callbackText': 'Operator sizga qulay vaqtda qoʻngʻiroq qiladi',
+    'lead.no_answer': 'Bogʻlana olmadik', 'lead.no_answerText': 'Sizga qoʻngʻiroq qila olmadik — bizga qoʻngʻiroq qiling',
+    'lead.lost': 'Bekor qilindi', 'lead.lostText': 'Ariza yopildi. Agar bu xato boʻlsa — bizga qoʻngʻiroq qiling',
+    'lead.prepaid': '💳 {sum} soʻm oldindan toʻlandi',
+    'lead.prepaidBack': '💳 {sum} soʻm oldindan toʻlov qaytariladi',
+    'lead.cancel': 'Arizani bekor qilish', 'lead.cancelAsk': 'Arizani bekor qilasizmi? Oldindan toʻlov boʻlsa, toʻliq qaytariladi.',
+    'lead.cancelYes': 'Ha, bekor qilish', 'lead.cancelNo': 'Yoʻq', 'lead.cancelled': 'Ariza bekor qilindi.',
+    'lead.refundAuto': '{sum} soʻm kartangizga qaytarildi.', 'lead.refundPending': '{sum} soʻm oldindan toʻlovni qaytaramiz — menejer siz bilan bogʻlanadi.',
+  });
+  const LEAD_ST = ['new', 'contacted', 'callback', 'no_answer', 'lost'];
+  const _leadRuUz = (ru, uz) => (lang === 'ru' ? ru : (uz || ru)) || ru || '';
+  function _leadEl(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function _leadSvc(l){
+    const list = Array.isArray(l.services) ? l.services : [];
+    if (!list.length) return l.service || '';
+    return list.map(s => {
+      const db = (typeof SVC_LIST !== 'undefined' ? SVC_LIST : []).find(x => x.key === s.service_key);
+      return `${db ? _leadRuUz(db.name_ru, db.name_uz) : s.name_ru} ×${s.qty}`;
+    }).join(', ');
+  }
+  /** Карточки заявок: kind 'dash' — кабинет, 'drawer' — «Мои заказы», 'm' — мобильная версия. */
+  function leadNodes(kind){
+    // в кабинете — не больше двух (там же заказы), в «Моих заказах» и на телефоне — все
+    // отменённые — в «Моих заказах» и на телефоне (видно «предоплата будет возвращена»), в кабинете — нет
+    return (lastLeads || []).filter(l => kind !== 'dash' || l.status !== 'lost').slice(0, kind === 'dash' ? 2 : 20).map(l => {
+      const st = LEAD_ST.includes(l.status) ? l.status : 'new';
+      const card = _leadEl('div', (kind === 'm' ? 'm-card' : kind === 'drawer' ? 'oc-full oc-active' : 'order-card') + ' lead-card lead-' + st);
+      const top = _leadEl('div', kind === 'm' ? 'm-ord-top' : kind === 'drawer' ? 'oc-top' : 'order-top');
+      top.appendChild(_leadEl('span', kind === 'm' ? 'm-ord-num' : kind === 'drawer' ? 'oc-num' : 'order-num', tFmt('lead.title', { code: l.lead_code || '' })));
+      top.appendChild(_leadEl('span', (kind === 'm' ? 'm-badge' : 'order-status') + ' lead-badge', t('lead.' + st)));
+      card.appendChild(top);
+      card.appendChild(_leadEl('div', 'lead-msg', t('lead.' + st + 'Text')));
+      const meta = kind === 'm' ? 'm-meta' : kind === 'drawer' ? 'oc-meta' : 'order-meta';
+      const svc = _leadSvc(l);
+      if (svc) card.appendChild(_leadEl('div', meta, '🧺 ' + svc));
+      if (kind !== 'dash' && l.address && l.address !== '—') card.appendChild(_leadEl('div', meta, '📍 ' + [l.city, l.address].filter(Boolean).join(', ')));
+      if (l.pickup_date || l.pickup_time) card.appendChild(_leadEl('div', meta, '📅 ' + [l.pickup_date, l.pickup_time].filter(Boolean).join(' · ')));
+      if (Number(l.prepaid) > 0) card.appendChild(_leadEl('div', meta + ' lead-paid', tFmt(st === 'lost' ? 'lead.prepaidBack' : 'lead.prepaid', { sum: formatSum(l.prepaid) })));
+      // клиент сам отменяет заявку (16.11.2026): предоплата возвращается полностью
+      if (kind !== 'dash' && st !== 'lost') {
+        const row = _leadEl('div', 'lead-cancel');
+        const btn = _leadEl('button', 'lead-cancel-btn', t('lead.cancel')); btn.type = 'button';
+        const ask = _leadEl('div', 'lead-cancel-ask'); ask.hidden = true;
+        ask.appendChild(_leadEl('span', null, t('lead.cancelAsk')));
+        const yes = _leadEl('button', 'lead-cancel-yes', t('lead.cancelYes')); yes.type = 'button';
+        const no = _leadEl('button', 'lead-cancel-no', t('lead.cancelNo')); no.type = 'button';
+        ask.append(yes, no);
+        btn.addEventListener('click', (e) => { e.stopPropagation(); btn.hidden = true; ask.hidden = false; });
+        no.addEventListener('click', (e) => { e.stopPropagation(); ask.hidden = true; btn.hidden = false; });
+        yes.addEventListener('click', (e) => { e.stopPropagation(); cancelLead(l.lead_code, yes); });
+        row.append(btn, ask);
+        card.appendChild(row);
+      }
+      return card;
+    });
+  }
+  async function cancelLead(code, btn){
+    const token = localStorage.getItem('artez_token');
+    if (btn) btn.disabled = true;
+    try {
+      const r = await apiFetch('/my/leads/' + encodeURIComponent(code) + '/cancel', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+      const rf = (r && r.refund) || { auto: 0, pending: 0 };
+      showOrderAlert(t('lead.cancelled') + (rf.auto > 0 ? ' ' + tFmt('lead.refundAuto', { sum: formatSum(rf.auto) }) : rf.pending > 0 ? ' ' + tFmt('lead.refundPending', { sum: formatSum(rf.pending) }) : ''));
+    } catch (e) {
+      showOrderAlert('⚠ ' + (e && e.message ? e.message : t('lead.cancel')));
+    }
+    await loadLeads();
+  }
+  async function loadLeads(){
+    const token = localStorage.getItem('artez_token');
+    if (!token || !currentUser) { lastLeads = []; return; }
+    try {
+      const data = await apiFetch('/my/leads', { headers: { 'Authorization': `Bearer ${token}` } });
+      const next = data.leads || [];
+      const changed = JSON.stringify(next) !== JSON.stringify(lastLeads);
+      lastLeads = next;
+      if (!changed) return;
+      renderDashboardOrders();   // mApp обёрнут вокруг неё — мобильная версия тоже перерисуется
+      const hasOpenSection = Array.from(document.querySelectorAll('.oc-details')).some(el => el.style.display !== 'none');
+      if (!hasOpenSection) renderDrawerOrders();
+    } catch (e) { /* нет сети / старый API — без заявок, как раньше */ }
+  }
+
   // ── Dashboard: компактный список заказов ──
   function renderDashboardOrders(){
     const ordersList = document.getElementById('ordersList');
     if (!ordersList) return;
     if (!lastOrders || lastOrders.length === 0){
-      ordersList.innerHTML = `<div class="orders-empty">${t('cabinet.noOrders')}</div>`;
+      ordersList.innerHTML = lastLeads.length ? '' : `<div class="orders-empty">${t('cabinet.noOrders')}</div>`;
+      ordersList.prepend(...leadNodes('dash'));
       return;
     }
     const recent = lastOrders.slice(0,3);
@@ -2603,6 +2714,7 @@
     `).join('') + (lastOrders.length > 3
       ? `<div class="orders-empty" style="cursor:pointer;color:var(--teal)" onclick="openDrawer('orders')">Все заказы (${lastOrders.length}) →</div>`
       : '');
+    ordersList.prepend(...leadNodes('dash'));   // заявки до оформления — сверху
   }
 
   // ── loadDashboard ──
@@ -2645,6 +2757,7 @@
       lastOrders = data.orders || [];
       renderDashboardOrders();
       renderDrawerOrders();
+      loadLeads();
     } catch(err){
       if (ordersList) ordersList.innerHTML = `<div class="orders-empty">${err.message}</div>`;
     }
@@ -2686,6 +2799,7 @@
         const data = await apiFetch('/orders', {headers:{'Authorization':`Bearer ${token}`}});
         lastOrders = data.orders || [];
         renderDashboardOrders();
+        loadLeads();
         // renderDrawerOrders() полностью перестраивает HTML списка и сворачивает
         // любые раскрытые секции (Позиции/Замер/Фото) обратно — не трогаем её,
         // пока клиент реально что-то смотрит развёрнутым, чтобы не сбивать его
