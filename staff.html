@@ -688,6 +688,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
 .sts-modal-overlay{position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
 .sts-modal-overlay.hidden{display:none}
 .sts-modal-box{background:var(--card);border-radius:20px 20px 0 0;padding:20px 20px 36px;width:100%;max-width:480px}
+
+/* ── ЧАТ НА КОМПЬЮТЕРЕ — ПАНЕЛЬ СПРАВА (16.11.2026) ──────────────────────────
+   ≥1024px: как в Intercom/Jivo — панель 400px во всю высоту справа, страница слева
+   сдвигается (body.chat-docked) и продолжает работать. На телефоне — как было
+   (снизу во весь экран). Цвета — переменные темы (--card/--text/--sep). */
+@media (min-width: 1024px) {
+  #chatPanel{
+    inset:0 0 0 auto !important;width:400px;
+    background:transparent !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+    align-items:stretch !important;justify-content:stretch !important;
+  }
+  #chatPanelInner{
+    width:100% !important;max-width:none !important;height:100% !important;max-height:none !important;
+    margin:0 !important;border-radius:0 !important;
+    background:var(--card) !important;color:var(--text);
+    border-left:1px solid var(--sep);
+    box-shadow:-12px 0 32px rgba(0,0,0,.12) !important;
+    animation:chatDockIn .22s ease-out;
+  }
+  body.chat-docked #app{padding-right:400px;transition:padding-right .22s ease-out}
+}
+@keyframes chatDockIn{from{transform:translateX(28px);opacity:0}to{transform:none;opacity:1}}
 </style>
 </head>
 <body>
@@ -16599,6 +16621,7 @@ async function openChatPanel() {
   if (!panel) return;
   _applyChatI18n();
   panel.style.display = 'flex';
+  document.body.classList.add('chat-docked');   // компьютер: панель справа, страница сдвигается
   backToChatList();
 
   const token = localStorage.getItem(TOKEN_KEY);
@@ -16656,6 +16679,7 @@ function _applyCashI18n() {
 function closeChatPanel() {
   const panel = document.getElementById('chatPanel');
   if (panel) panel.style.display = 'none';
+  document.body.classList.remove('chat-docked');
   _staffChatCode = null;
 }
 
