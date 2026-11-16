@@ -3708,6 +3708,7 @@
           </div>
           <div class="small-note" style="text-align:right;margin:-8px 0 4px"><a href="#" id="goForgotPass" data-i18n="auth.forgotPass">Забыли пароль?</a></div>
           <button type="submit" class="btn btn-amber" data-i18n="auth.loginBtn">Войти</button>
+          <button type="button" class="btn" id="passkeyLoginBtn" style="display:none;width:100%;background:transparent;border:1.5px solid var(--teal);color:var(--teal)">🙂 <span data-i18n="auth.passkeyLogin">Войти по Face ID / отпечатку</span></button>
           <div class="small-note"><span data-i18n="auth.noAccount">Нет аккаунта?</span> <a href="#" id="goRegister" data-i18n="auth.tabRegister">Зарегистрироваться</a></div>
         </form>
       </div>
@@ -4753,6 +4754,15 @@
       </div>
       <div id="drPassAlert" class="form-alert" style="display:none"></div>
       <button class="btn btn-amber" id="drSavePassBtn" style="width:100%;margin-top:6px" data-i18n="dr.settings.save">Изменить пароль</button>
+
+      <div id="pkSection" style="display:none">
+        <div class="settings-title" style="margin-top:24px" data-i18n="dr.pk.title">Вход по Face ID</div>
+        <p class="phone-note" style="margin:0 0 10px" data-i18n="dr.pk.note">Входите на сайт без пароля — по Face ID или отпечатку пальца этого телефона.</p>
+        <div id="pkList"></div>
+        <div id="pkAlert" class="form-alert" style="display:none"></div>
+        <button class="btn btn-amber" id="pkEnableBtn" style="width:100%">🙂 <span data-i18n="dr.pk.enable">Включить на этом устройстве</span></button>
+      </div>
+
 
       <div class="settings-title" style="margin-top:24px" data-i18n="dr.pwa.title">Приложение</div>
       <button class="btn btn-amber" id="drPwaInstallBtn" style="width:100%" onclick="installPwaFromCabinet()">📲 <span data-i18n="dr.pwa.install">Установить приложение</span></button>

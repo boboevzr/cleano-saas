@@ -54,6 +54,12 @@
       'auth.phone': 'Номер телефона', 'auth.password': 'Пароль', 'auth.loginBtn': 'Войти',
       'auth.noAccount': 'Нет аккаунта?',
       'auth.forgotPass': 'Забыли пароль?',
+      'auth.passkeyLogin': 'Войти по Face ID / отпечатку',
+      'dr.pk.title': 'Вход по Face ID', 'dr.pk.note': 'Входите на сайт без пароля — по Face ID или отпечатку пальца этого телефона.',
+      'dr.pk.enable': 'Включить на этом устройстве', 'dr.pk.done': 'Готово! Теперь можно входить по Face ID',
+      'dr.pk.remove': 'Отключить', 'dr.pk.removeAsk': 'Отключить вход по Face ID для этого ключа?',
+      'dr.pk.added': 'подключён', 'dr.pk.used': 'вход', 'dr.pk.cancelled': 'Отменено',
+      'dr.pk.unsupported': 'Этот браузер не поддерживает вход по Face ID',
       'auth.fpTitle': 'Восстановление пароля',
       'auth.fpPhoneSub': 'Введите номер телефона — пришлём код для сброса пароля',
       'auth.fpSendCode': 'Отправить код',
@@ -276,6 +282,12 @@
       'auth.phone': 'Telefon raqami', 'auth.password': 'Parol', 'auth.loginBtn': 'Kirish',
       'auth.noAccount': "Hisobingiz yo'qmi?",
       'auth.forgotPass': "Parolni unutdingizmi?",
+      'auth.passkeyLogin': "Face ID / barmoq izi bilan kirish",
+      'dr.pk.title': "Face ID bilan kirish", 'dr.pk.note': "Saytga parolsiz kiring — shu telefonning Face ID yoki barmoq izi bilan.",
+      'dr.pk.enable': "Shu qurilmada yoqish", 'dr.pk.done': "Tayyor! Endi Face ID bilan kirishingiz mumkin",
+      'dr.pk.remove': "O'chirish", 'dr.pk.removeAsk': "Bu kalit uchun Face ID bilan kirishni o'chirasizmi?",
+      'dr.pk.added': "ulangan", 'dr.pk.used': "kirish", 'dr.pk.cancelled': "Bekor qilindi",
+      'dr.pk.unsupported': "Bu brauzer Face ID bilan kirishni qo'llab-quvvatlamaydi",
       'auth.fpTitle': 'Parolni tiklash',
       'auth.fpPhoneSub': "Telefon raqamingizni kiriting — parolni tiklash uchun kod yuboramiz",
       'auth.fpSendCode': 'Kodni yuborish',
@@ -1403,6 +1415,126 @@
     }
   });
 
+  // ── ВХОД ПО FACE ID / ОТПЕЧАТКУ (passkey) — перенос из ARTEZ 7259e7a, 16.11.2026 ──
+  // SaaS: ключ привязан к сайту компании — RP = {slug}.cleano.uz (у artez — artez.uz). На чужом домене
+  // (cleano.uz?company_slug=…, превью в админке) WebAuthn упадёт — кнопки там не показываем.
+  // Вход: в /passkey/login/* обязателен company_slug (без него 400), чужой компании — 401.
+  const _pkRp = (() => { const s = String(window.APP_COMPANY_SLUG || '').toLowerCase(); return s === 'artez' ? 'artez.uz' : (s ? s + '.cleano.uz' : ''); })();
+  const _pkHostOk = !!_pkRp && (location.hostname === _pkRp || location.hostname.endsWith('.' + _pkRp));
+  const _pkSupported = _pkHostOk && !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+  const _b64uToBuf = s => { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '=';
+    return Uint8Array.from(atob(s), c => c.charCodeAt(0)).buffer; };
+  const _bufToB64u = b => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  function _pkCredJson(c){
+    const r = c.response, out = { id: c.id, rawId: _bufToB64u(c.rawId), type: c.type,
+      clientExtensionResults: c.getClientExtensionResults ? c.getClientExtensionResults() : {}, response: {
+        clientDataJSON: _bufToB64u(r.clientDataJSON) } };
+    if (r.attestationObject) {
+      out.response.attestationObject = _bufToB64u(r.attestationObject);
+      if (r.getTransports) out.response.transports = r.getTransports();
+    } else {
+      out.response.authenticatorData = _bufToB64u(r.authenticatorData);
+      out.response.signature = _bufToB64u(r.signature);
+      if (r.userHandle) out.response.userHandle = _bufToB64u(r.userHandle);
+    }
+    return out;
+  }
+  function _pkCancelled(err){ return err && (err.name === 'NotAllowedError' || err.name === 'AbortError'); }
+
+  if (_pkSupported) document.getElementById('passkeyLoginBtn').style.display = '';
+  document.getElementById('passkeyLoginBtn').addEventListener('click', async (e) => {
+    hideAlert();
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      const o = await apiFetch('/passkey/login/options', { method: 'POST', body: JSON.stringify({ company_slug: window.APP_COMPANY_SLUG }) });
+      const pk = o.options;
+      const cred = await navigator.credentials.get({ publicKey: {
+        challenge: _b64uToBuf(pk.challenge), rpId: pk.rpId, timeout: pk.timeout,
+        userVerification: pk.userVerification, allowCredentials: [] } });
+      const data = await apiFetch('/passkey/login/verify', { method: 'POST',
+        body: JSON.stringify({ challenge_id: o.challenge_id, credential: _pkCredJson(cred), company_slug: window.APP_COMPANY_SLUG }) });
+      localStorage.setItem('artez_token', data.token);
+      await enterDashboardOrForcePasswordChange(data.user);
+    } catch (err){
+      if (!_pkCancelled(err)) showAlert(err.message);
+    } finally { btn.disabled = false; }
+  });
+
+  function _pkAlert(text, type){
+    const el = document.getElementById('pkAlert');
+    el.className = 'form-alert ' + (type || 'error'); el.textContent = text; el.style.display = text ? '' : 'none';
+  }
+  async function loadPasskeys(){
+    const sec = document.getElementById('pkSection');
+    if (!sec) return;
+    if (!_pkHostOk) { sec.style.display = 'none'; return; }
+    sec.style.display = '';
+    const btn = document.getElementById('pkEnableBtn');
+    if (!_pkSupported){ btn.style.display = 'none'; _pkAlert(t('dr.pk.unsupported'), 'error'); return; }
+    const token = localStorage.getItem('artez_token');
+    const list = document.getElementById('pkList');
+    try {
+      const d = await apiFetch('/passkey/list', { headers: { 'Authorization': `Bearer ${token}` } });
+      list.textContent = '';
+      (d.passkeys || []).forEach(p => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:10px;background:#F6F1E8;border-radius:10px;padding:10px 12px;margin-bottom:8px';
+        const info = document.createElement('div');
+        info.style.cssText = 'flex:1;min-width:0;font-size:13px';
+        const nm = document.createElement('div');
+        nm.style.fontWeight = '700';
+        nm.textContent = '🙂 ' + (p.name || 'Face ID');
+        const dt = document.createElement('div');
+        dt.style.color = 'var(--ink-soft)';
+        const fmt = s => new Date(s).toLocaleDateString('ru-RU');
+        dt.textContent = t('dr.pk.added') + ' ' + fmt(p.created_at) + (p.last_used_at ? ' · ' + t('dr.pk.used') + ' ' + fmt(p.last_used_at) : '');
+        info.append(nm, dt);
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.textContent = t('dr.pk.remove');
+        del.style.cssText = 'border:0;background:none;color:#B42318;font-weight:700;cursor:pointer;font-size:13px';
+        del.addEventListener('click', async () => {
+          if (!confirm(t('dr.pk.removeAsk'))) return;
+          try {
+            await apiFetch(`/passkey/${p.id}/delete`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+            loadPasskeys();
+          } catch (err){ _pkAlert(err.message); }
+        });
+        row.append(info, del);
+        list.appendChild(row);
+      });
+    } catch (_){ /* список не критичен */ }
+  }
+  // Разметка кабинета ниже этого скрипта — обработчик через документ (как у drSavePassBtn).
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('#pkEnableBtn');
+    if (!btn) return;
+    _pkAlert('');
+    btn.disabled = true;
+    const token = localStorage.getItem('artez_token');
+    const auth = { 'Authorization': `Bearer ${token}` };
+    try {
+      const o = await apiFetch('/passkey/register/options', { method: 'POST', headers: auth, body: '{}' });
+      const pk = o.options;
+      const cred = await navigator.credentials.create({ publicKey: {
+        challenge: _b64uToBuf(pk.challenge), rp: pk.rp, timeout: pk.timeout,
+        user: { id: _b64uToBuf(pk.user.id), name: pk.user.name, displayName: pk.user.displayName },
+        pubKeyCredParams: pk.pubKeyCredParams, authenticatorSelection: pk.authenticatorSelection,
+        attestation: pk.attestation || 'none',
+        excludeCredentials: (pk.excludeCredentials || []).map(c => ({ type: c.type, id: _b64uToBuf(c.id) })) } });
+      const ua = navigator.userAgent;
+      const name = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android'
+                 : /Mac/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : '';
+      await apiFetch('/passkey/register/verify', { method: 'POST', headers: auth,
+        body: JSON.stringify({ challenge_id: o.challenge_id, credential: _pkCredJson(cred), name }) });
+      _pkAlert(t('dr.pk.done'), 'success');
+      loadPasskeys();
+    } catch (err){
+      _pkAlert(_pkCancelled(err) ? t('dr.pk.cancelled') : err.message);
+    } finally { btn.disabled = false; }
+  });
+
   // ── ЛИЧНЫЙ КАБИНЕТ ──
   function statusLabel(status){
     return t('status.' + status) !== ('status.' + status) ? t('status.' + status) : status;
@@ -1847,6 +1979,7 @@
       const el = document.getElementById(id);
       if (el) el.classList.toggle('active', k === tab);
     });
+    if (tab === 'settings') loadPasskeys();
   }
   document.addEventListener('click', e => {
     const tab = e.target.closest('.dr-tab');
