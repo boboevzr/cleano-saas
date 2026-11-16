@@ -6046,7 +6046,7 @@
           <label style="display:contents;cursor:pointer">
             <input type="checkbox" id="sf_can_refund_prepay" style="opacity:0;width:0;height:0;position:absolute" onchange="sfToggleStyle('sf_can_refund_prepay')">
             <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center">↩️</div>
-            <div style="flex:1"><div class="sf-perm-title">Возврат предоплаты</div><div class="sf-perm-desc">В staff: кнопка «Вернуть предоплату» в заявке и заказе — на карту (в день оплаты) или «вернули вручную»</div></div>
+            <div style="flex:1"><div class="sf-perm-title">Возвраты на карту</div><div class="sf-perm-desc">Кнопка «↩️ Вернуть на карту» у онлайн-оплат (предоплата и расчёт) в заказе и заявке — банком в день оплаты или «вернули вручную»</div></div>
             <div class="sf-track" id="sf_can_refund_prepay_track" onclick="event.stopPropagation();document.getElementById('sf_can_refund_prepay').click()"><div class="sf-thumb" id="sf_can_refund_prepay_thumb"></div></div>
           </label>
         </div>
@@ -17493,7 +17493,8 @@ async function loadPaymentModal() {
         <div style="background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:8px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
             <span style="font-weight:700;font-size:14px">${_PM_P_LABEL[p.purpose]||'Оплата'} <span style="font-size:11px;font-weight:400;color:var(--text2)">№${idx+1} #${p.id}</span></span>
-            ${!isLocked ? `<button onclick="deletePayment(${p.id})" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0;line-height:1">✕</button>` : ''}
+            <span style="display:flex;gap:6px;align-items:center">${(String(p.method||'').startsWith('online') && Number(p.amount) > 0) ? `<button onclick="payRefundOpen('order', ${Number(_orderModalId)})" style="font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid rgba(44,198,179,.6);background:rgba(44,198,179,.12);color:#0F766E;font-weight:800;cursor:pointer" title="Вернуть на карту">↩️ Вернуть на карту</button>` : ''}
+            ${(!isLocked && !String(p.method||'').startsWith('online')) ? `<button onclick="deletePayment(${p.id})" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0;line-height:1">✕</button>` : ''}</span>
           </div>
           <div style="font-size:15px;font-weight:700;margin-bottom:3px">${fmt(p.amount)} сум &nbsp;<span style="font-size:13px;font-weight:500;color:var(--text2)">${_PM_M_LABEL[p.method]||p.method}</span></div>
           <div style="font-size:12px;color:var(--text2)">🕐 ${dt}${p.created_by ? ' · 👤 ' + p.created_by : ''}</div>
@@ -28731,5 +28732,6 @@ async function adDoTest() {
 <!-- Печать маршрута (printRouteSheet) — наполняется только перед window.print() -->
 <div id="rtPrintArea" style="display:none"></div>
 <script src="admin-pay.js?v=2.1"></script><!-- 💳 онлайн-оплаты (перенос Э3) -->
+<script src="staff-pay.js?v=2.2.1"></script><!-- ↩️ возврат онлайн-оплат (окно «Вернуть на карту») -->
 </body>
 </html>

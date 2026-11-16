@@ -1,4 +1,4 @@
-/* Cleano SaaS staff (перенос из ARTEZ) · «↩️ Вернуть предоплату» (онлайн-предоплата PLUM) — 16.11.2026.
+/* Cleano SaaS staff (перенос из ARTEZ) · «↩️ Вернуть на карту» (онлайн-оплаты PLUM) — 16.11.2026.
    Кнопка видна админу и сотрудникам с правом «Возврат предоплаты» (admin.html → карточка сотрудника).
    - карточка заявки: кнопка ставится из шаблона (payRefundOpen('lead', id));
    - заказ → оплаты: этот файл сам добавляет кнопку над списком оплат, если там есть онлайн-предоплата.
@@ -7,9 +7,11 @@
 (function () {
   'use strict';
   var BASE = (typeof API_BASE !== 'undefined' ? API_BASE : ((window.APP_API_URL || 'https://web-production-eef2a.up.railway.app') + '/api'));
-  function tok() { try { return localStorage.getItem('artez_staff_token') || ''; } catch (e) { return ''; } }
+  // токен той страницы, где открыто окно: staff.html — artez_staff_token, admin.html — artez_admin_token (TOKEN_KEY страницы)
+  function tok() { try { return localStorage.getItem(typeof TOKEN_KEY !== 'undefined' ? TOKEN_KEY : 'artez_staff_token') || ''; } catch (e) { return ''; } }
   function me() { try { return (typeof currentStaff !== 'undefined' && currentStaff) || null; } catch (e) { return null; } }
-  function allowed() { var s = me(); return !!(s && (s.role === 'admin' || s.can_refund_prepay)); }
+  // staff.html — по правам сотрудника; admin.html (нет currentStaff) — показываем, сервер проверит права сам
+  function allowed() { var s = me(); if (!s) return typeof currentStaff === 'undefined'; return !!(s.role === 'admin' || s.can_refund_prepay); }
   function sum(v) { return Number(v || 0).toLocaleString('ru-RU').replace(/,/g, ' '); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   async function api(path, opts) {
@@ -47,16 +49,16 @@
   function close() { if (M) M.classList.remove('on'); }
 
   async function load() {
-    body().innerHTML = '<h3>↩️ Вернуть предоплату</h3><div class="sp-note">Загрузка…</div>';
+    body().innerHTML = '<h3>↩️ Вернуть оплату</h3><div class="sp-note">Загрузка…</div>';
     try {
       var q = ctx.kind === 'lead' ? 'lead_id=' + Number(ctx.id) : 'order_id=' + Number(ctx.id);
       var r = await api('/pay/staff/prepay?' + q);
       var list = (r.tx || []).filter(function (t) { return t.left > 0; });
-      if (!list.length) { body().innerHTML = '<h3>↩️ Вернуть предоплату</h3><div class="sp-note">Возвращать нечего — предоплата уже возвращена или её нет.</div>'; return; }
-      body().innerHTML = '<h3>↩️ Вернуть предоплату</h3><div class="sp-note">Оплачено картой онлайн. «На карту» — банк вернёт всю сумму (только в день оплаты). Иначе верните через кассу и нажмите «Вернули вручную».</div>' +
+      if (!list.length) { body().innerHTML = '<h3>↩️ Вернуть оплату</h3><div class="sp-note">Возвращать нечего — онлайн-оплата уже возвращена или её нет.</div>'; return; }
+      body().innerHTML = '<h3>↩️ Вернуть оплату</h3><div class="sp-note">Оплачено картой онлайн. «На карту» — банк вернёт всю сумму (только в день оплаты). Иначе верните через кассу и нажмите «Вернули вручную».</div>' +
         list.map(function (t) {
           var d = new Date(t.created_at).toLocaleString('ru-RU', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent'});
-          return '<div class="sp-tx"><b>' + sum(t.amount) + ' сум</b> · ' + esc(t.card_mask || '') + (t.is_test ? ' · 🧪 тест' : '') +
+          return '<div class="sp-tx"><b>' + sum(t.amount) + ' сум</b> · ' + (t.purpose === 'prepay' ? 'предоплата' : 'оплата') + ' · ' + esc(t.card_mask || '') + (t.is_test ? ' · 🧪 тест' : '') +
             '<div class="sp-note">Оплачено ' + esc(d) + (t.left < t.amount ? ' · осталось вернуть ' + sum(t.left) : '') + '</div>' +
             (t.can_reverse ? '<button class="sp-btn" data-sp="rev" data-id="' + Number(t.id) + '" data-amt="' + Number(t.amount) + '">💳 Вернуть на карту ' + sum(t.amount) + ' сум</button>'
                            : '<div class="sp-note">На карту вернуть нельзя (оплата не сегодня или часть уже возвращена) — только вручную.</div>') +
@@ -64,13 +66,14 @@
             '<input type="text" id="spNote' + Number(t.id) + '" maxlength="200" placeholder="Как вернули: наличными в офисе, переводом…">' +
             '<button class="sp-btn alt" data-sp="man" data-id="' + Number(t.id) + '" data-max="' + Number(t.left) + '">✋ Вернули вручную</button></div>';
         }).join('') + '<div class="sp-err" id="spErr"></div>';
-    } catch (e) { body().innerHTML = '<h3>↩️ Вернуть предоплату</h3><div class="sp-err">' + esc(e.message) + '</div>'; }
+    } catch (e) { body().innerHTML = '<h3>↩️ Вернуть оплату</h3><div class="sp-err">' + esc(e.message) + '</div>'; }
   }
 
   function done(msg) {
     close();
     try { if (typeof showToast === 'function') showToast(msg, 'success'); else alert(msg); } catch (e) { alert(msg); }
     try { if (ctx && ctx.kind === 'order' && typeof sLoadPaymentModal === 'function') sLoadPaymentModal(); } catch (e) {}
+    try { if (ctx && ctx.kind === 'order' && typeof loadPaymentModal === 'function') loadPaymentModal(); } catch (e) {}
     try { if (ctx && ctx.kind === 'lead' && typeof loadLeads === 'function') loadLeads(); } catch (e) {}
   }
 
@@ -91,7 +94,7 @@
         if (!confirm('Вернуть ' + sum(b.dataset.amt) + ' сум на карту клиента через банк?')) return;
         b.disabled = true;
         await api('/pay/staff/tx/' + id + '/reverse', {method: 'POST'});
-        return done('✅ Предоплата возвращена на карту');
+        return done('✅ Деньги возвращены на карту');
       }
       if (k === 'man') {
         var amt = Number(String((document.getElementById('spAmt' + id) || {}).value || '').replace(/\s/g, ''));
@@ -108,6 +111,8 @@
 
   /* Заказ → оплаты: кнопка над списком, если в оплатах есть онлайн-предоплата */
   function decoratePayments() {
+    var old0 = document.getElementById('spOrderBtn'); if (old0) old0.remove();
+    return;  // 16.11: «↩️ Вернуть на карту» — в строке каждой онлайн-оплаты
     var list = document.getElementById('s_pm_list');
     if (!list || !allowed()) return;
     var map = window._sPmPaymentsMap || {};

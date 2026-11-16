@@ -10,7 +10,13 @@
 
   function token() { try { return localStorage.getItem('artez_token') || ''; } catch (e) { return ''; } }
   function lang() { var l = 'uz'; try { l = localStorage.getItem('artez_lang') || 'uz'; } catch (e) {} return l === 'ru' ? 'ru' : 'uz'; }
-  function L(ru, uz) { return lang() === 'ru' ? ru : uz; }
+  function L(ru, uz) {
+    if (lang() === 'ru') return ru;
+    // «ЎЗ» (узбекская кириллица): тот же узбекский текст через _toCyrl сайта (index.html), если она доступна
+    var raw = ''; try { raw = localStorage.getItem('artez_lang') || ''; } catch (e) {}
+    if (raw === 'uz_cyrl' && typeof _toCyrl === 'function') { try { return _toCyrl(uz); } catch (e) {} }
+    return uz;
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function sum(v) { return Number(v || 0).toLocaleString('ru-RU').replace(/,/g, ' '); }
   function safeNum(n) { return /^[\w#-]{1,40}$/.test(n || '') ? n : null; }
