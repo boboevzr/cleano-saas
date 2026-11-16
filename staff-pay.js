@@ -123,9 +123,33 @@
     btn.addEventListener('click', function () { window.payRefundOpen('order', oid); });
     list.parentNode.insertBefore(btn, list);
   }
+  /* Переплата (16.11): если после правки позиций/скидок итог стал меньше внесённого — заметное предупреждение.
+     Числа берём из карточки заказа staff.html (_sPmOrderNet — итог к оплате, _sPmCachedPaid — внесено). */
+  function overpayWarn() {
+    var debtEl = document.getElementById('so_debt_display');
+    if (!debtEl) return;
+    var net = 0, paid = 0;
+    try { net = Number(_sPmOrderNet) || 0; paid = Number(_sPmCachedPaid) || 0; } catch (e) { return; }
+    var box = document.getElementById('spOverWarn');
+    var over = paid - net;
+    if (!(net > 0 && over >= 1000)) { if (box) box.remove(); return; }
+    var host = debtEl.closest('div[style*="grid"]') || debtEl.parentNode.parentNode;
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'spOverWarn';
+      box.style.cssText = 'margin:10px 0;padding:10px 12px;border-radius:12px;background:#FEF2F2;border:1.5px solid #FCA5A5;color:#991B1B;font-size:13px;font-weight:700;line-height:1.4';
+      host.parentNode.insertBefore(box, host.nextSibling);
+    }
+    box.textContent = '⚠️ Клиент уже оплатил ' + sum(paid) + ' сум, а итог теперь ' + sum(net) + ' — переплата ' + sum(over) +
+      ' сум. Её нужно вернуть клиенту' + (allowed() ? ' (кнопка «↩️ Вернуть предоплату» в оплатах или админка → 💳 Оплаты → «Кому вернуть»).' : ' — сообщите администратору.');
+  }
   function hook() {
     var list = document.getElementById('s_pm_list');
     if (list) new MutationObserver(decoratePayments).observe(list, {childList: true});
+    ['so_net_display', 'so_paid_display'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) new MutationObserver(overpayWarn).observe(el, {childList: true, characterData: true, subtree: true});
+    });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hook); else hook();
 })();

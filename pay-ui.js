@@ -73,7 +73,11 @@
     '#payModal .pm-del{margin-left:auto;background:none;border:0;color:var(--text2,#6b7280);font-size:18px;cursor:pointer}' +
     '#payModal .pm-err{color:#dc2626;font-size:13px;margin-top:10px;min-height:16px}' +
     '#payModal .pm-x{float:right;background:none;border:0;font-size:22px;color:inherit;cursor:pointer}' +
-    '#payModal .pm-chk{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:12px;color:inherit}';
+    '#payModal .pm-chk{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:12px;color:inherit}' +
+    '#payModal .pm-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}' +
+    '#payModal .pm-chip{padding:8px 12px;border-radius:999px;border:1px solid var(--line,#e5e7eb);background:transparent;color:inherit;font-weight:700;font-size:14px;cursor:pointer}' +
+    '#payModal .pm-chip.on{border-color:#2CC6B3;background:rgba(44,198,179,.14);color:var(--teal,#1A5C54)}' +
+    '#payModal #pmAmt{font-size:20px;font-weight:800}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
   /* ── блок в карточке заказа ── */
@@ -197,8 +201,9 @@
   function fmtCard(v) { return v.replace(/\D/g, '').slice(0, 16).replace(/(\d{4})(?=\d)/g, '$1 '); }
   function fmtExp(v) { var d = v.replace(/\D/g, '').slice(0, 4); return d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d; }
 
-  async function startFlow(kind, num, amount) {
-    ctx = {kind: kind, num: kind === 'lead' ? null : num, code: kind === 'lead' ? num : null, purpose: kind === 'prepay' ? 'prepay' : 'balance', amount: amount, card: null};
+  async function startFlow(kind, num, amount, lim) {
+    ctx = {kind: kind, num: kind === 'lead' ? null : num, code: kind === 'lead' ? num : null, purpose: (kind === 'prepay' || kind === 'lead') ? 'prepay' : 'balance', amount: amount, card: null,
+      min: lim && lim.prepay_min, max: lim && lim.prepay_max};
     var cards = [];
     try { cards = (await api('/pay/cards')).cards || []; } catch (e) {}
     ctx.card = cards.length ? cards[0].id : 'new';
@@ -209,7 +214,7 @@
   function renderChoose(cards) {
     var title = ctx.purpose === 'prepay' ? L('Предоплата', 'Oldindan to\'lov') : L('Оплата заказа', 'Buyurtma to\'lovi');
     var h = '<h3>' + title + (ctx.num ? ' · ' + esc(ctx.num) : '') + '</h3>' +
-      '<div class="pm-amt">' + sum(ctx.amount) + ' ' + L('сум', 'so\'m') + '</div><div class="pm-cards">';
+      '<div class="pm-amt" id="pmAmtShow">' + sum(ctx.amount) + ' ' + L('сум', 'so\'m') + '</div>' + amountPicker() + '<div class="pm-cards">';
     cards.forEach(function (k) {
       h += '<div class="pm-cardrow' + (ctx.card === k.id ? ' sel' : '') + '" data-pm="pick" data-card="' + Number(k.id) + '">💳 <b>' + esc(k.mask) + '</b>' +
         '<span class="pay-sub" style="margin:0">' + (k.type === 'humo' ? 'Humo' : 'Uzcard') + '</span>' +
@@ -221,20 +226,58 @@
         '<label>' + L('Срок (ММ/ГГ)', 'Muddati (OO/YY)') + '</label><input type="tel" inputmode="numeric" autocomplete="cc-exp" id="pmExp" maxlength="5" placeholder="12/30" style="max-width:140px">' +
         '<label class="pm-chk"><input type="checkbox" id="pmSave" checked> ' + L('Запомнить карту для следующих оплат', 'Kartani keyingi to\'lovlar uchun saqlash') + '</label>';
     }
-    h += '<div class="pm-err"></div><div class="pay-row"><button class="pay-btn" data-pm="go">' + L('Оплатить', 'To\'lash') + ' ' + sum(ctx.amount) + '</button></div>' +
+    h += '<div class="pm-err"></div><div class="pay-row"><button class="pay-btn" data-pm="go" id="pmGo">' + L('Оплатить', 'To\'lash') + ' ' + sum(ctx.amount) + '</button></div>' +
       '<div class="pay-sub" style="margin-top:10px">🔒 ' + L('Оплата через PLUM (Uzcard/Humo). Номер карты мы не храним.', 'To\'lov PLUM orqali (Uzcard/Humo). Karta raqamini saqlamaymiz.') + '</div>';
     body().innerHTML = h;
+    bindAmount();
     var n = document.getElementById('pmNum'), x = document.getElementById('pmExp');
     if (n) { n.addEventListener('input', function () { n.value = fmtCard(n.value); }); setTimeout(function () { n.focus(); }, 50); }
     if (x) x.addEventListener('input', function (ev) {
       // «/» появляется сам после двух цифр месяца; при стирании — не мешает
       var del = ev && /^delete/.test(ev.inputType || '');
-      var d = x.value.replace(/D/g, '').slice(0, 4);
+      var d = x.value.replace(/\D/g, '').slice(0, 4);
       x.value = (!del && d.length === 2) ? d + '/' : fmtExp(x.value);
     });
   }
 
+  /* Предоплата — сумму выбирает клиент (16.11): быстрые суммы + своё число, в пределах с сервера */
+  function amountPicker() {
+    if (ctx.purpose !== 'prepay' || !ctx.min || !ctx.max) return '';
+    var chips = [50000, 100000, 150000, 200000].filter(function (v) { return v >= ctx.min && v <= ctx.max; });
+    return '<label>' + L('Сумма предоплаты', 'Oldindan to\'lov summasi') + '</label>' +
+      '<div class="pm-chips">' + chips.map(function (v) {
+        return '<button type="button" class="pm-chip' + (v === ctx.amount ? ' on' : '') + '" data-pm="amt" data-v="' + v + '">' + sum(v) + '</button>';
+      }).join('') + '</div>' +
+      '<input type="tel" inputmode="numeric" id="pmAmt" value="' + sum(ctx.amount) + '" aria-label="amount">' +
+      '<div class="pay-sub">' + L('Своя сумма: от ', 'O\'z summangiz: ') + sum(ctx.min) + L(' до ', ' dan ') + sum(ctx.max) + L(' сум', ' so\'mgacha') + '</div>';
+  }
+  function setAmount(v, fromInput) {
+    ctx.amount = v;
+    var show = document.getElementById('pmAmtShow'), btn = document.getElementById('pmGo'), inp = document.getElementById('pmAmt');
+    if (show) show.textContent = sum(v) + ' ' + L('сум', 'so\'m');
+    if (btn) btn.textContent = L('Оплатить', 'To\'lash') + ' ' + sum(v);
+    if (inp && !fromInput) inp.value = sum(v);
+    body().querySelectorAll('.pm-chip').forEach(function (c) { c.classList.toggle('on', Number(c.dataset.v) === v); });
+  }
+  function bindAmount() {
+    var inp = document.getElementById('pmAmt');
+    if (!inp) return;
+    inp.addEventListener('input', function () {
+      var d = Number(inp.value.replace(/\D/g, '').slice(0, 9)) || 0;
+      inp.value = d ? sum(d) : '';
+      setAmount(d, true);
+    });
+  }
+  function amountOk() {
+    if (ctx.purpose !== 'prepay' || !ctx.min) return true;
+    var v = Number(ctx.amount) || 0;
+    if (v < ctx.min || v > ctx.max) { err(L('Сумма предоплаты — от ', 'Oldindan to\'lov — ') + sum(ctx.min) + L(' до ', ' dan ') + sum(ctx.max) + L(' сум', ' so\'mgacha')); return false; }
+    if (v % 1000) { setAmount(v - v % 1000); }
+    return true;
+  }
+
   async function go() {
+    if (!amountOk()) return;
     err(''); busy(true);
     try {
       var payBody = {lang: lang()};
@@ -256,7 +299,7 @@
   }
 
   async function doPay(payBody) {
-    if (ctx.purpose === 'prepay') payBody.purpose = 'prepay';
+    if (ctx.purpose === 'prepay') { payBody.purpose = 'prepay'; payBody.amount = ctx.amount; }
     var path = ctx.code ? '/pay/lead/' + encodeURIComponent(ctx.code) + '/pay' : '/pay/orders/' + encodeURIComponent(ctx.num) + '/pay';
     var r = await api(path, {method: 'POST', body: payBody});
     handleTx(r);
@@ -359,12 +402,12 @@
       e.preventDefault();
       var act = a.dataset.payAct, num = safeNum(a.dataset.num), info = num && infoCache[num];
       if (act === 'pay' && info) startFlow('balance', num, info.due);
-      else if (act === 'prepay' && info) startFlow('prepay', num, info.prepay_amount);
+      else if (act === 'prepay' && info) startFlow('prepay', num, info.prepay_amount, info);
       else if (act === 'inst' && num) installment(num);
       else if (act === 'resume' && num) { ctx = {num: num, tx: Number(a.dataset.tx), amount: info && info.open_tx ? info.open_tx.amount : 0}; renderOtp('', 'pay', 0); open(); }
       else if (act === 'leadpay') {
         var lo = document.getElementById('payLeadOffer'), c = await getCfg();
-        if (lo && safeNum(lo.dataset.code)) startFlow('lead', lo.dataset.code, c ? c.prepay_amount : 0);
+        if (lo && safeNum(lo.dataset.code)) startFlow('lead', lo.dataset.code, c ? c.prepay_amount : 0, c);
       }
       return;
     }
@@ -382,7 +425,8 @@
       ctx.card = p.dataset.card === 'new' ? 'new' : Number(p.dataset.card);
       var cs = []; try { cs = (await api('/pay/cards')).cards || []; } catch (er) {}
       renderChoose(cs);
-    } else if (k === 'go') go();
+    } else if (k === 'amt') { setAmount(Number(p.dataset.v)); err(''); }
+    else if (k === 'go') go();
     else if (k === 'otp') confirmOtp();
     else if (k === 'resend') {
       try { var r = await api('/pay/tx/' + Number(ctx.tx) + '/resend', {method: 'POST'}); tickResend(r.resend_in || 120); err(''); }

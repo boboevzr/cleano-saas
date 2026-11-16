@@ -28,6 +28,7 @@
     '.pp-host .pp-btn{padding:7px 12px;border-radius:9px;border:1px solid var(--border,#2e3250);background:var(--surface2,#222536);color:var(--text,#e8eaf0);cursor:pointer;font-size:13px}' +
     '.pp-host .pp-btn.pri{background:var(--accent,#f5a623);color:#111;border-color:var(--accent,#f5a623);font-weight:700}.pp-host .pp-btn.red{color:var(--red,#ef4444)}' +
     '.pp-host input,.pp-host select{padding:8px 10px;border:1px solid var(--border,#2e3250);border-radius:9px;font-size:14px;background:var(--surface2,#222536);color:var(--text,#e8eaf0)}' +
+    '.pp-host input:disabled,.pp-host select:disabled{background:transparent;border-color:transparent;opacity:1;font-weight:700;-webkit-appearance:none;appearance:none;padding-left:2px;cursor:default}' +
     '.pp-host .pp-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0}' +
     '.pp-host .pp-mode label{display:flex;gap:6px;align-items:center;padding:8px 12px;border:1px solid var(--border,#2e3250);border-radius:10px;cursor:pointer;color:var(--text,#e8eaf0)}' +
     '.pp-host .pp-note{font-size:12px;color:var(--text2,#9ca3af)}.pp-host .pp-test{display:inline-block;font-size:11px;padding:1px 6px;border-radius:6px;background:#fef3c7;color:#92400e}' +
@@ -44,13 +45,19 @@
       '<div class="pp-card" id="ppLog"><h3>🗂 Действия в разделе</h3><div class="pp-note">Загрузка…</div></div>';
   }
 
+  // ✏️ — правка: по умолчанию только просмотр (перенос ARTEZ, 16.11)
+  var editing = {settings: false, testers: false};
+  function pencil(key, can) {
+    return can ? '<button class="pp-btn pp-pencil" data-pp="edit" data-k="' + key + '">' + (editing[key] ? '✕ Отмена' : '✏️ Изменить') + '</button>' : '';
+  }
+
   async function loadSettings() {
     var el = document.getElementById('cstab-plum');
     if (!el) return;
     el.classList.add('pp-host');
     try {
-      var s = await api('/pay/admin/settings'), dis = s.can_edit ? '' : ' disabled';
-      el.innerHTML = '<div class="pp-card"><h3>💳 Онлайн-оплата картой (PLUM · Uzcard/Humo)</h3>' +
+      var s = await api('/pay/admin/settings'), ed = editing.settings && s.can_edit, dis = ed ? '' : ' disabled';
+      el.innerHTML = '<div class="pp-card"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><h3 style="margin:0">💳 Онлайн-оплата картой (PLUM · Uzcard/Humo)</h3>' + pencil('settings', s.can_edit) + '</div>' +
         '<div class="pp-note">Клиенты платят на сайте компании и в приложении: после замера — остаток, до замера — предоплата по желанию. Наличные курьеру остаются. Деньги приходят на счёт по вашему договору с PLUM.</div>' +
         '<div class="pp-row pp-mode">' +
         [['off', '⛔ Выключена'], ['testers', '🧪 Только тестировщики'], ['all', '✅ Для всех клиентов']].map(function (m) {
@@ -67,12 +74,14 @@
         '<div class="pp-row"><span style="min-width:200px">Префикс платежей</span><input id="ppPrefix" value="' + esc(s.prefix === s.prefix_default ? '' : s.prefix) + '" placeholder="' + esc(s.prefix_default) + '" style="width:120px"' + dis + '><span class="pp-note">латиница/цифры и «-» в конце; нужен, если договор PLUM общий с другим проектом</span></div>' +
         '<div class="pp-note">Пароль и ключ хранятся зашифрованно и обратно не показываются. PLUM пускает только IP из белого списка — сообщите PLUM исходящий IP сервера (или используйте посредника).</div>' +
         '<h3 style="margin-top:14px">⚙️ Правила</h3>' +
-        '<div class="pp-row"><span>Предоплата при заказе:</span><input type="number" id="ppPrepay" min="1000" step="1000" value="' + Number(s.prepay_amount) + '" style="width:140px"' + dis + '> сум</div>' +
+        '<div class="pp-row"><span>Предоплата — предлагаем клиенту:</span><input type="number" id="ppPrepay" min="1000" step="1000" value="' + Number(s.prepay_amount) + '" style="width:140px"' + dis + '> сум</div>' +
+        '<div class="pp-row"><span>Клиент может выбрать свою сумму: от</span><input type="number" id="ppPrepayMin" min="1000" step="1000" value="' + Number(s.prepay_min) + '" style="width:130px"' + dis + '>' +
+          '<span>до</span><input type="number" id="ppPrepayMax" min="1000" step="1000" value="' + Number(s.prepay_max) + '" style="width:140px"' + dis + '> сум</div>' +
         '<div class="pp-row"><span>Сохранённая карта без кода SMS — до</span><input type="number" id="ppOtpless" min="0" step="10000" value="' + Number(s.otpless_limit) + '" style="width:140px"' + dis + '> сум <span class="pp-note">(и только первая оплата за сутки)</span></div>' +
         '<div class="pp-row"><span>Уведомления об оплатах и рассрочке:</span><select id="ppNotify"' + dis + '>' +
         '<option value="group"' + (s.notify === 'group' ? ' selected' : '') + '>в группу заявок компании</option>' +
         '<option value="off"' + (s.notify === 'off' ? ' selected' : '') + '>не отправлять</option></select></div>' +
-        (s.can_edit ? '<div class="pp-row"><button class="pp-btn pri" data-pp="save">Сохранить</button><button class="pp-btn" data-pp="check">Проверить связь с PLUM</button><span class="pp-note" id="ppSaveMsg"></span></div>'
+        (s.can_edit ? '<div class="pp-row">' + (ed ? '<button class="pp-btn pri" data-pp="save">Сохранить</button>' : '') + '<button class="pp-btn" data-pp="check">Проверить связь с PLUM</button><span class="pp-note" id="ppSaveMsg"></span></div>'
                     : '<div class="pp-note">Менять настройки может только администратор.</div>') + '</div>';
     } catch (e) { el.innerHTML = '<div class="pp-card"><div class="pp-note">' + esc(e.message) + '</div></div>'; }
   }
@@ -83,14 +92,18 @@
     var m = document.getElementById('ppSaveMsg');
     var v = function (id) { return (document.getElementById(id) || {}).value || ''; };
     var ck = function (id) { return !!(document.getElementById(id) || {}).checked; };
+    var lo = Number(v('ppPrepayMin')), hi = Number(v('ppPrepayMax')), def = Number(v('ppPrepay'));
+    if (lo > hi) { m.textContent = '❌ «от» больше «до»'; return; }
+    if (def < lo || def > hi) { m.textContent = '❌ Предлагаемая сумма должна быть между «от» и «до»'; return; }
     var body = {mode: mode, base_url: v('ppBase').trim(), login: v('ppLogin').trim(), prefix: v('ppPrefix').trim(),
-      prepay_amount: v('ppPrepay'), otpless_limit: v('ppOtpless'), notify: v('ppNotify')};
+      prepay_amount: def, prepay_min: lo, prepay_max: hi, otpless_limit: v('ppOtpless'), notify: v('ppNotify')};
     if (v('ppPass')) body.password = v('ppPass');
     if (v('ppProxy')) body.proxy_key = v('ppProxy');
     if (ck('ppPassClr')) body.clear_password = true;
     if (ck('ppProxyClr')) body.clear_proxy_key = true;
     try {
       await api('/pay/admin/settings', {method: 'PUT', body: body});
+      editing.settings = false;
       await loadSettings();
       var m2 = document.getElementById('ppSaveMsg'); if (m2) m2.textContent = '✅ Сохранено';
     } catch (e) { m.textContent = '❌ ' + e.message; }
@@ -106,13 +119,14 @@
   async function loadTesters() {
     var el = document.getElementById('ppTesters');
     try {
-      var r = await api('/pay/admin/testers');
-      el.innerHTML = '<h3>🧪 Тестировщики</h3><div class="pp-note">Платят подставным банком — настоящие деньги не списываются. Тестовая карта 8600 1234 5678 9012, срок 12/30, код из SMS 111111.</div>' +
-        '<div class="pp-row"><input id="ppTPhone" placeholder="+998 90 123 45 67" style="width:170px"><input id="ppTName" placeholder="Имя" style="width:150px">' +
-        '<label class="pp-note"><input type="checkbox" id="ppTReal"> платит настоящей картой</label><button class="pp-btn pri" data-pp="taddadd">Добавить</button></div>' +
+      var r = await api('/pay/admin/testers'), ed = editing.testers;
+      el.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px"><h3 style="margin:0">🧪 Тестировщики</h3>' + pencil('testers', true) + '</div>' +
+        '<div class="pp-note">Платят подставным банком — настоящие деньги не списываются. Тестовая карта 8600 1234 5678 9012, срок 12/30, код из SMS 111111.</div>' +
+        (ed ? '<div class="pp-row"><input id="ppTPhone" placeholder="+998 90 123 45 67" style="width:170px"><input id="ppTName" placeholder="Имя" style="width:150px">' +
+          '<label class="pp-note"><input type="checkbox" id="ppTReal"> платит настоящей картой</label><button class="pp-btn pri" data-pp="taddadd">Сохранить</button></div>' : '') +
         (r.testers.length ? '<table><tr><th>Телефон</th><th>Имя</th><th>Банк</th><th></th></tr>' + r.testers.map(function (t) {
           return '<tr><td>' + esc(t.phone) + '</td><td>' + esc(t.name) + '</td><td>' + (t.real_card ? '💳 настоящий' : '🧪 подставной') + '</td>' +
-            '<td><button class="pp-btn red" data-pp="tdel" data-id="' + Number(t.id) + '">Убрать</button></td></tr>';
+            '<td>' + (ed ? '<button class="pp-btn red" data-pp="tdel" data-id="' + Number(t.id) + '">Убрать</button>' : '') + '</td></tr>';
         }).join('') + '</table>' : '<div class="pp-note">Пока никого.</div>');
     } catch (e) { el.innerHTML = '<h3>🧪 Тестировщики</h3><div class="pp-note">' + esc(e.message) + '</div>'; }
   }
@@ -187,6 +201,7 @@
     if (!b) return;
     var k = b.dataset.pp, id = Number(b.dataset.id);
     try {
+      if (k === 'edit') { var key = b.dataset.k; editing[key] = !editing[key]; return key === 'settings' ? loadSettings() : loadTesters(); }
       if (k === 'save') return saveSettings();
       if (k === 'check') return checkPlum();
       if (k === 'taddadd') {
