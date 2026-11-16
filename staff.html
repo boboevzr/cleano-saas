@@ -1354,13 +1354,13 @@ let currentPage = 'dashboard';
 const _CYR_FIX = { yanvar:'январь', fevral:'февраль', aprel:'апрель', iyun:'июнь', iyul:'июль', sentabr:'сентябрь', sentyabr:'сентябрь',
   oktabr:'октябрь', oktyabr:'октябрь', noyabr:'ноябрь', dekabr:'декабрь', kalkulyator:'калькулятор', kalkulyatori:'калькулятори',
   obyekt:'объект', subyekt:'субъект', litsenziya:'лицензия', sertifikat:'сертификат', ya:'як', ch:'чо', sh:'ша', sex:'цех', sexi:'цехи', sexda:'цехда', sexga:'цехга' };
-const _CYR_KEEP = 'ARTEZ|Artez|Telegram|WhatsApp|Instagram|Click|Payme|Uzum|PLUM|Plum|SmartBill|Face ID|Touch ID|PIN|SMS|ID|OK|QR|GPS|Wi-Fi|Excel|PDF|Yandex|Google';
+const _CYR_KEEP = 'ARTEZ|Artez|Telegram|WhatsApp|Instagram|Click|Payme|Uzum|PLUM|Plum|SmartBill|Face ID|Touch ID|PIN|SMS|ID|OK|QR|GPS|Wi-Fi|Excel|PDF|Yandex|Google|Uzcard|UzCard|UZCARD|Humo|HUMO|Visa|VISA|Mastercard|MasterCard';
 const _CYR_PROTECT = new RegExp(/`[^`]*`|<[^>]+>|&[#\w]+;|https?:\/\/\S+|t\.me\/\S+|\b[\w.-]+\.(?:uz|com|ru|me|org|net|html)\b(?:\/\S*)?/.source
   + /|(^|[^\w/])([@/][A-Za-z_]\w*)|\$?\{[^{}]*\}|\b[A-Z]{2,}-\d+|\b[A-Za-z]+\d\w*/.source + '|\\b(?:' + _CYR_KEEP + ')', 'g');  // бренд + окончание: Excelga → Excelга
 const _CYR_MULTI = [['Tsiya','Ция'],['tsiya','ция'],['tsiy','ций'],['ansiya','анция'],['Aksiya','Акция'],['aksiya','акция'],['Kuryer','Курьер'],['kuryer','курьер'],
   ['shʼ','сҳ'],['Sh','Ш'],['SH','Ш'],['sh','ш'],['Ch','Ч'],['CH','Ч'],['ch','ч'],['Yoʻ','Йў'],['YOʻ','ЙЎ'],['yoʻ','йў'],['Oʻ','Ў'],['oʻ','ў'],['Gʻ','Ғ'],['gʻ','ғ'],
   ['YO','Ё'],['Yo','Ё'],['yo','ё'],['YU','Ю'],['Yu','Ю'],['yu','ю'],['YA','Я'],['Ya','Я'],['ya','я'],['YE','Е'],['Ye','Е'],['ye','е'],['ʼ','ъ']];
-const _CYR_ONE = {}; (function(){ const a='ABDEFGHIJKLMNOPQRSTUVXYZabdefghijklmnopqrstuvxyz', b='АБДЕФГҲИЖКЛМНОПҚРСТУВХЙЗабдефгҳижклмнопқрстувхйз'; for (let i=0;i<a.length;i++) _CYR_ONE[a[i]]=b[i]; })();
+const _CYR_ONE = {}; (function(){ const a='ABDEFGHIJKLMNOPQRSTUVXYZabdefghijklmnopqrstuvxyz', b='АБДЕФГҲИЖКЛМНОПҚРСТУВХЙЗабдефгҳижклмнопқрстувхйз'; for (let i=0;i<a.length;i++) _CYR_ONE[a[i]]=b[i]; _CYR_ONE.C='К'; _CYR_ONE.c='к'; })();
 function _cyrWord(w) {
   const f = _CYR_FIX[w.toLowerCase()];
   if (f) return (w.length > 1 && w === w.toUpperCase()) ? f.toUpperCase() : (w[0] === w[0].toUpperCase() ? f[0].toUpperCase() + f.slice(1) : f);
