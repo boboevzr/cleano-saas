@@ -6044,6 +6044,14 @@
         </div>
         <div class="sf-perm-row" style="border-bottom:1px solid var(--border)">
           <label style="display:contents;cursor:pointer">
+            <input type="checkbox" id="sf_can_refund_prepay" style="opacity:0;width:0;height:0;position:absolute" onchange="sfToggleStyle('sf_can_refund_prepay')">
+            <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center">↩️</div>
+            <div style="flex:1"><div class="sf-perm-title">Возврат предоплаты</div><div class="sf-perm-desc">В staff: кнопка «Вернуть предоплату» в заявке и заказе — на карту (в день оплаты) или «вернули вручную»</div></div>
+            <div class="sf-track" id="sf_can_refund_prepay_track" onclick="event.stopPropagation();document.getElementById('sf_can_refund_prepay').click()"><div class="sf-thumb" id="sf_can_refund_prepay_thumb"></div></div>
+          </label>
+        </div>
+        <div class="sf-perm-row" style="border-bottom:1px solid var(--border)">
+          <label style="display:contents;cursor:pointer">
             <input type="checkbox" id="sf_can_approve_debt" style="opacity:0;width:0;height:0;position:absolute" onchange="sfToggleStyle('sf_can_approve_debt')">
             <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center">📋</div>
             <div style="flex:1"><div class="sf-perm-title" data-i18n="sf.perm.approve.debt">Ответственный за долги</div><div class="sf-perm-desc" data-i18n="sf.perm.approve.debt.d">Разрешает/отклоняет закрытие заказов в долг</div></div>
@@ -14116,6 +14124,7 @@ async function openStaffModal(id=null) {
     sfSetToggle('sf_can_edit_delivery',   s.can_edit_delivery === true);
     sfSetToggle('sf_can_edit_price',      s.can_edit_price === true);
     sfSetToggle('sf_can_manage_cash',     s.can_manage_cash === true);
+    sfSetToggle('sf_can_refund_prepay',   s.can_refund_prepay === true);
     sfSetToggle('sf_can_approve_debt',    !!s.can_approve_debt);
     sfSetToggle('sf_can_drive',           !!s.can_drive);
     sfSetToggle('sf_can_view_timesheet',  !!s.can_view_timesheet);
@@ -14325,6 +14334,11 @@ async function saveStaff() {
       });
       const data = await res.json();
       if (!res.ok) { showToast(data.detail || 'Ошибка', 'error'); return; }
+      await apiFetch(`${API_BASE}/pay/admin/staff/${id}/refund-perm`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: !!document.getElementById('sf_can_refund_prepay')?.checked }),
+      }).catch(() => {});
       await apiFetch(`${API_BASE}/admin/staff/${id}/permissions`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -14352,6 +14366,11 @@ async function saveStaff() {
         showToast(msg, 'error'); return;
       }
       if (data.id) {
+        await apiFetch(`${API_BASE}/pay/admin/staff/${data.id}/refund-perm`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: !!document.getElementById('sf_can_refund_prepay')?.checked }),
+        }).catch(() => {});
         await apiFetch(`${API_BASE}/admin/staff/${data.id}/permissions`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

@@ -4694,7 +4694,7 @@ function openLeadDetail(id) {
   const creator   = [lead.creator_last_name, lead.creator_first_name].filter(Boolean).join(' ');
   const creatorStr = creator ? `${creator}${lead.creator_position?' · '+lead.creator_position:''}` : '—';
   const code      = (lead.lead_code ? `<div style="font-size:26px;font-weight:900;color:var(--accent,#163E3B);letter-spacing:.02em;line-height:1;margin-bottom:4px">${lead.lead_code}</div>` : '')
-                  + (_prepayBadge(lead, true) ? `<div style="margin:4px 0 6px">${_prepayBadge(lead, true)}</div>` : '');
+                  + (_prepayBadge(lead, true) ? `<div style="margin:4px 0 6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">${_prepayBadge(lead, true)}${(currentStaff?.role === 'admin' || currentStaff?.can_refund_prepay) ? `<button type="button" class="sp-open" onclick="event.stopPropagation();payRefundOpen('lead', ${Number(lead.id)})">↩️ Вернуть предоплату</button>` : ''}</div>` : '');
 
   const isAgentRole  = currentStaff?.role === 'agent';
   const isConverted  = lead.status === 'converted';
@@ -18698,5 +18698,6 @@ function _rcConfirmNode(ancestors, node) {
 }
 </script>
 
+<script src="staff-pay.js?v=1"></script><!-- ↩️ возврат онлайн-предоплаты (pay.py) -->
 </body>
 </html>
