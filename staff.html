@@ -4741,7 +4741,8 @@ function openLeadDetail(id) {
       ${(lead.delivery_address || lead.delivery_short_address) ? `<div class="kv-row"><span class="kv-key">${t('lead.delivery_addr_lbl')}</span><span class="kv-val">${_esc(lead.delivery_address || lead.delivery_short_address)}</span></div>` : ''}
       ${lead.delivery_location ? (() => { const [dla,dlo]=lead.delivery_location.split(','); const yUrl=`https://yandex.uz/maps/?pt=${dlo.trim()},${dla.trim()}&z=16`; return `<div class="kv-row"><span class="kv-key">${t('lead.delivery_location_lbl')}</span><span class="kv-val"><a href="${yUrl}" target="_blank" style="color:var(--accent);font-weight:600">📍 ${_esc(lead.delivery_location_address||t('lead.open_map'))}</a></span></div>`; })() : ''}
       ${(() => {
-        if (isAgentRole || isConverted) return '';
+        // закрытую заявку («Потерян» — в т.ч. клиент сам отменил) не берут в работу (из ARTEZ 05fe04e)
+        if (isAgentRole || isConverted || lead.status === 'lost') return '';
         const aName  = lead.assigned_to ? ([lead.assigned_first_name,lead.assigned_last_name].filter(Boolean).join(' ')||t('lead.employee')) : null;
         const aPhone = lead.assigned_phone || null;
         const isMine = lead.assigned_to != null && Number(lead.assigned_to) === Number(myId);
@@ -4987,10 +4988,17 @@ async function changeLeadStatus(leadId, status, note, scheduledAt) {
   const body = { status };
   if (note) body.note = note;
   if (scheduledAt) body.scheduled_at = scheduledAt;
-  await fetch(`${API_BASE}/staff/leads/${leadId}/status`, {
+  const _res = await fetch(`${API_BASE}/staff/leads/${leadId}/status`, {
     method:'PATCH', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
     body: JSON.stringify(body)
   });
+  // «Потерян» по заявке с предоплатой — сервер сразу вернул деньги на карту или поставил задачу админу (из ARTEZ c0cad45)
+  try {
+    const _rf = ((await _res.json()) || {}).refund || {};
+    const _f = n => Number(n).toLocaleString('ru-RU').replace(/,/g, ' ');
+    if (_rf.auto > 0) showToast(`💳 Предоплата ${_f(_rf.auto)} сум возвращена клиенту на карту`, 'success', 6000);
+    else if (_rf.pending > 0) showToast(`💳 Предоплату ${_f(_rf.pending)} сум нужно вернуть — админ получил задачу`, 'warning', 7000);
+  } catch (_) {}
   await loadLeads();
   if (status === 'lost' || status === 'callback') {
     // Лид сменил статус (потерян/запланирован перезвон) — закрываем карточку
@@ -5123,6 +5131,13 @@ let _lostLeadId = null;
 function openLostModal(leadId) {
   _lostLeadId = leadId;
   document.getElementById('lostNote').value = '';
+  // 💳 предоплата по заявке: при закрытии возвращается клиенту полностью (из ARTEZ c0cad45)
+  const _pp = Math.round(Number((leadsData.find(l => l.id === leadId) || {}).prepaid) || 0);
+  const _ppEl = document.getElementById('lostPrepay');
+  if (_ppEl) {
+    _ppEl.style.display = _pp > 0 ? '' : 'none';
+    _ppEl.textContent = _pp > 0 ? `💳 По заявке оплачена предоплата ${_pp.toLocaleString('ru-RU').replace(/,/g, ' ')} сум. При закрытии она вернётся клиенту полностью: оплаченная сегодня — сразу на карту, раньше — админ вернёт через «Оплата → Кому вернуть деньги».` : '';
+  }
   document.getElementById('lostOverlay').style.display = 'flex';
   setTimeout(()=>document.getElementById('lostNote').focus(),100);
 }
@@ -5187,6 +5202,27 @@ function openConvertToOrderModal(leadId) {
   _fillPickupDateTime('or', lead.pickup_date || '', lead.pickup_time || '');
   _applyOrderFormI18n();
   openModal('modalOrder');
+  _orPrefillItemsFromLead(lead);   // позиции — из услуг заявки (приложение/сайт), менеджер только проверяет
+}
+
+// Услуги заявки (leads.services_json: [{service_key, type_key, qty}]) → счётчики «Кол-во позиций» (перенос из ARTEZ a9bd7d9).
+// SaaS: варианты своей компании — /staff/service-types по токену сотрудника (как в _pkpLoadItemCatalog).
+async function _orPrefillItemsFromLead(lead) {
+  let lines = lead && lead.services_json;
+  if (typeof lines === 'string') { try { lines = JSON.parse(lines); } catch { lines = null; } }
+  if (!Array.isArray(lines) || !lines.length) return;
+  await _orRenderItemRows();
+  const catalog = await _pkpLoadItemCatalog();
+  let types = [];
+  try { types = (await (await apiFetch(`/staff/service-types`)).json())?.types || []; } catch { types = []; }
+  lines.forEach(ln => {
+    const tp = types.find(x => x.service_key === ln.service_key && x.type_key === ln.type_key);
+    const size = tp && tp.size_key ? tp.size_key : null;
+    let idx = catalog.findIndex(c => c.key === ln.service_key && (c.size_key || null) === size);
+    if (idx < 0) idx = catalog.findIndex(c => c.key === ln.service_key);
+    if (idx < 0) return;
+    _pkpChangeQty('or', idx, Math.max(1, Math.min(99, parseInt(ln.qty) || 1)));
+  });
 }
 
 // ── НАПОМИНАНИЯ (polling) ────────────────────────────────────────────
@@ -6631,6 +6667,13 @@ function _resetPickup(prefix) {
 function _fillPickupDateTime(prefix, dateVal, timeVal) {
   _resetPickup(prefix);
   if (!dateVal && !timeVal) return;
+  // приложение присылает дату как 2026-11-16 и время «09:00–12:00» (короткое тире) — приводим к виду формы (16.11.2026)
+  const _iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateVal || '');
+  if (_iso) dateVal = `${_iso[3]}.${_iso[2]}.${_iso[1]}`;
+  if (timeVal && !timeVal.startsWith('⏰')) {
+    const _tm = /^\s*(\d{1,2}:\d{2})\s*[–—-]\s*(\d{1,2}:\d{2})\s*$/.exec(timeVal);
+    if (_tm) timeVal = `⏰ ${_tm[1]} — ${_tm[2]}`;
+  }
   if (dateVal) {
     const today = _fmtDateDMY(new Date());
     const tmrw  = _fmtDateDMY(new Date(Date.now()+86400000));
@@ -17338,6 +17381,7 @@ function staffChatSend() {
       <div style="font-size:18px;font-weight:700;color:#1a1a1a">Закрыть как потерянный</div>
       <div style="font-size:13px;color:#888;margin-top:4px">Укажите причину</div>
     </div>
+    <div id="lostPrepay" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:12px;background:#FEF3C7;color:#92400E;font-size:13px;font-weight:600;line-height:1.45"></div>
     <textarea id="lostNote" rows="3" placeholder="Отказался, недоступен, не тот номер…"
       style="width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;color:#374151;background:#f9fafb;resize:none;box-sizing:border-box;margin-bottom:16px;font-family:inherit"></textarea>
     <div style="display:flex;gap:10px">
