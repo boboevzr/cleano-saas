@@ -1713,7 +1713,7 @@ const _i18n = {
     'item.change':'— изменить —','item.unassign':'Снять мойщика','item.no_washer':'⚠️ Нет мойщика','item.assign':'— Назначить мойщика —',
     'msr.enter':'Ввести замер','msr.fix':'Исправить замер','msr.pending_mgr':'⏳ На проверке у менеджера',
     'msr.approved':'✅ Утверждён','msr.pending':'⏳ На проверке','msr.approved_full':'✅ Замер утверждён',
-    'msr.rejected':'❌ Отклонён','msr.take_review':'✋ Принять на проверку','msr.assign_first':'⚠️ Сначала назначьте мойщика','msr.measured_by':'Замерил','msr.skip_ask':'Перейти без замера? Это будет записано в историю заказа.','soe.saved_status_fail':'✅ Данные заказа сохранены.\n⚠️ Статус не изменён: ',
+    'msr.rejected':'❌ Отклонён','msr.take_review':'✋ Принять на проверку','msr.assign_first':'⚠️ Сначала назначьте мойщика','more.actions':'Ещё','lead.this':'этот лид','msr.measured_by':'Замерил','msr.skip_ask':'Перейти без замера? Это будет записано в историю заказа.','soe.saved_status_fail':'✅ Данные заказа сохранены.\n⚠️ Статус не изменён: ',
     'btn.view':'Просмотр',
     'pm.currency':'сум',
     'pm.cash':'💵 Нал','pm.card':'💳 Карта','pm.transfer':'📲 Перевод',
@@ -2042,7 +2042,7 @@ const _i18n = {
     'item.change':'— oʻzgartirish —','item.unassign':'Yuvuvchini olish','item.no_washer':`⚠️ Yuvuvchi yoʻq`,'item.assign':'— Yuvuvchi belgilash —',
     'msr.enter':`Oʻlchovni kiritish`,'msr.fix':`Oʻlchovni tuzatish`,'msr.pending_mgr':`⏳ Menejer tekshiruvida`,
     'msr.approved':`✅ Tasdiqlandi`,'msr.pending':'⏳ Tekshiruvda','msr.approved_full':`✅ Oʻlchov tasdiqlandi`,
-    'msr.rejected':`❌ Rad etildi`,'msr.take_review':`✋ Tekshirishga olish`,'msr.assign_first':`⚠️ Avval yuvuvchi belgilang`,'msr.measured_by':`Oʻlchagan`,'msr.skip_ask':`Oʻlchovsiz oʻtkazilsinmi? Bu buyurtma tarixiga yoziladi.`,'soe.saved_status_fail':`✅ Buyurtma maʼlumotlari saqlandi.\n⚠️ Holat oʻzgarmadi: `,
+    'msr.rejected':`❌ Rad etildi`,'msr.take_review':`✋ Tekshirishga olish`,'msr.assign_first':`⚠️ Avval yuvuvchi belgilang`,'more.actions':`Yana`,'lead.this':`bu lid`,'msr.measured_by':`Oʻlchagan`,'msr.skip_ask':`Oʻlchovsiz oʻtkazilsinmi? Bu buyurtma tarixiga yoziladi.`,'soe.saved_status_fail':`✅ Buyurtma maʼlumotlari saqlandi.\n⚠️ Holat oʻzgarmadi: `,
     'btn.view':`Koʻrish`,
     'pm.currency':`soʻm`,
     'pm.cash':'💵 Naqd','pm.card':'💳 Karta','pm.transfer':`📲 Oʻtkazma`,
@@ -4818,11 +4818,16 @@ function openLeadDetail(id) {
       <div id="callLogWrap"><div style="color:var(--text2);font-size:13px">${t('lead.log_loading')}</div></div>
     </div>
     ${!statusLocked ? `
-    <div style="padding:0 0 32px">
-      <button onclick="openDeleteLeadModal(${id},'${(lead.client_name||'этот лид').replace(/'/g,"\\'")}')\"
-        style="width:100%;padding:14px;background:none;border:1.5px solid #ff3b30;border-radius:14px;color:#ff3b30;font-size:15px;font-weight:600;cursor:pointer">
-        ${t('lead.delete')}
-      </button>
+    <div style="padding:0 0 32px;text-align:center">
+      <!-- Редкое действие — за «⋯ Ещё» (чистка 17.11); в onclick только id, имя берём по id -->
+      <button onclick="this.style.display='none';this.nextElementSibling.style.display='block'"
+        style="background:none;border:none;color:var(--text2);font-size:14px;font-weight:600;padding:8px 16px;cursor:pointer">⋯ ${t('more.actions')}</button>
+      <div style="display:none">
+        <button onclick="openDeleteLeadModal(${Number(id)}, (leadsData.find(x => x.id === ${Number(id)}) || {}).client_name || t('lead.this'))"
+          style="width:100%;padding:14px;background:none;border:1.5px solid #ff3b30;border-radius:14px;color:#ff3b30;font-size:15px;font-weight:600;cursor:pointer">
+          ${t('lead.delete')}
+        </button>
+      </div>
     </div>` : ''}`;
 
   loadLeadCalls(id);
