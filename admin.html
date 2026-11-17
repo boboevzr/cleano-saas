@@ -3853,6 +3853,23 @@
             </div>
           </div>
 
+          <!-- Этап замера (16.11.2026) -->
+          <div class="card" id="card-measure-stage" style="margin-bottom:14px">
+            <div class="cfg-title-row">
+              <h3 class="cfg-title">📐 Этап замера</h3>
+            </div>
+            <p class="cfg-hint" style="margin-bottom:12px">На каком этапе мерят позиции. Мерить можно с этого этапа и до доставки (любой сотрудник с правом замера). Дальше этапа без утверждённых замеров заказ не пройдёт — пропустить могут только админ и менеджер, это пишется в историю.</p>
+            <div class="cfg-field" style="margin-bottom:10px">
+              <select id="measureStageSelect" class="form-input" onchange="saveMeasureStage(this.value)">
+                <option value="received">📦 В мастерской</option>
+                <option value="washing">🧼 Мойка</option>
+                <option value="drying">💨 Сушка</option>
+                <option value="packing">📦 Упаковка</option>
+              </select>
+            </div>
+            <span class="s-msg" id="msg_card-measure-stage"></span>
+          </div>
+
           <!-- Касса — ТГ-канал -->
           <div class="card" id="card-tg-cash" style="margin-bottom:14px">
             <div class="cfg-title-row">
@@ -16851,11 +16868,20 @@ async function saveOrderItemForm() {
 async function changeOrderStatus() {
   const status = document.getElementById('od_status_select').value;
   if (!status || !_orderModalId) return;
-  const res = await fetch(`${API_BASE}/admin/orders/${_orderModalId}/status`, {
+  const _send = body => fetch(`${API_BASE}/admin/orders/${_orderModalId}/status`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_orderToken()}` },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(body),
   });
+  let res = await _send({ status });
+  // Этап замера (16.11.2026): дальше этапа без утверждённых замеров — только с подтверждением
+  if (res.status === 409) {
+    const d = await res.clone().json().catch(() => ({}));
+    if (d.code === 'measure_required' && d.can_skip
+        && confirm(`⚠️ ${d.detail}\n\nПерейти без замера? Это будет записано в историю заказа.`)) {
+      res = await _send({ status, skip_measure: true });
+    }
+  }
   if (!res.ok) { const e = await res.json().catch(()=>({})); showToast(e.detail || 'Ошибка', 'error'); return; }
   const d = await res.json();
   const o = d.order;
@@ -20893,11 +20919,20 @@ async function loadSiteSettings() {
       const inp = document.getElementById('measureChannelInput');
       if (inp && d) { inp.value = d.media_channel_id || ''; _measureChannelOriginal = inp.value; }
     });
+    apiGet('/admin/settings/measure-stage').then(d => {
+      const sel = document.getElementById('measureStageSelect');
+      if (sel && d?.stage) sel.value = d.stage;
+    });
     loadOrderBotStatus();
   } catch(e) { console.error('loadSiteSettings', e); }
 }
 let _cashChannelOriginal = '';
 let _measureChannelOriginal = '';
+async function saveMeasureStage(stage) {
+  const msg = document.getElementById('msg_card-measure-stage');
+  const r = await apiPut('/admin/settings/measure-stage', { stage });
+  if (msg) { msg.textContent = r?.ok ? '✅ Сохранено' : '❌ Не сохранилось'; setTimeout(() => { msg.textContent = ''; }, 2500); }
+}
 
 let _orderBotTokenOriginal = '';
 

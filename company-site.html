@@ -4257,7 +4257,7 @@
   </div>
 </div>
 
-<script src="site-common.js?v=26"></script>
+<script src="site-common.js?v=27"></script>
 <script src="pay-ui.js?v=2.4" defer></script><!-- 💳 онлайн-оплата PLUM и рассрочка в кабинете (перенос Э3 ARTEZ) -->
 <!-- ══ owWizard: «Подробная заявка» по шагам (перенос из ARTEZ 74469a3, 15.11.2026) ══ -->
 <style id="owCss">
@@ -5079,6 +5079,7 @@
     if (o.pickup_date) left.push(o.pickup_date + (o.pickup_time ? ' · ' + o.pickup_time : ''));
     else if (o.created_at) left.push(String(o.created_at).slice(0, 10).split('-').reverse().join('.'));
     if (o.item_count) left.push(`${o.item_count} ${tt('cabinet.items', tr('items'))}`);
+    if (o.measure_done) left.push(tt('cabinet.measureDone', '📐 Замер проведён'));
     meta.appendChild(el('span', null, left.join(' · ')));
     if (o.total_price > 0) meta.appendChild(el('b', null, `${fmt(o.total_price)} ${cur()}`));
     b.appendChild(meta);

@@ -36,6 +36,7 @@
       'cabinet.noOrdersInCategory': 'Нет заказов в этой категории',
       'cabinet.btn.positions': '📦 Позиции',
       'cabinet.btn.measureMedia': '📐 Фото/видео замера',
+      'cabinet.measureDone': '📐 Замер проведён',
       'cabinet.btn.photos': '📷 До/После/Повреждено',
       'cabinet.noPositions': 'Нет позиций',
       'cabinet.minLabel': 'мин.',
@@ -264,6 +265,7 @@
       'cabinet.noOrdersInCategory': "Bu turkumda buyurtmalar yo'q",
       'cabinet.btn.positions': '📦 Pozitsiyalar',
       'cabinet.btn.measureMedia': "📐 O'lchov fotosi/videosi",
+      'cabinet.measureDone': "📐 O'lchov o'tkazildi",
       'cabinet.btn.photos': '📷 Oldin/Keyin/Shikastlangan',
       'cabinet.noPositions': "Pozitsiya yo'q",
       'cabinet.minLabel': 'min.',
@@ -2235,6 +2237,7 @@
         ${o.address ? `<div class="oc-meta">📍 ${o.address}</div>` : ''}
         ${o.pickup_date ? `<div class="oc-meta">📅 ${o.pickup_date}${o.pickup_time ? ' · ' + o.pickup_time : ''}</div>` : ''}
         ${(o.item_count || o.total_price > 0) ? `<div class="oc-meta">${o.item_count ? '📦 ' + o.item_count + ' ' + t('cabinet.items') : ''}${(o.item_count && o.total_price > 0) ? ' · ' : ''}${o.total_price > 0 ? '💰 ' + formatSum(o.total_price) + ' сум' : ''}</div>` : ''}
+        ${o.measure_done ? `<div class="oc-meta" style="color:#16a34a;font-weight:600">${t('cabinet.measureDone')}</div>` : ''}
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
           <button class="btn-cancel ocd-sec-btn" id="ocdbtn-items-${o.order_num}" style="background:var(--sand-card);color:var(--ink);border:1px solid var(--line);width:auto;flex:1" onclick="toggleOrderSection('${o.order_num}','items')">${t('cabinet.btn.positions')}</button>
           <button class="btn-cancel ocd-sec-btn" id="ocdbtn-media-${o.order_num}" style="background:var(--sand-card);color:var(--ink);border:1px solid var(--line);width:auto;flex:1" onclick="toggleOrderSection('${o.order_num}','media')">${t('cabinet.btn.measureMedia')}</button>
@@ -2720,6 +2723,7 @@
         </div>
         <div class="order-meta">${o.service || ''}${o.branch ? ' · ' + o.branch : ''}</div>
         ${(o.item_count || o.total_price > 0) ? `<div class="order-meta">${o.item_count ? o.item_count + ' ' + t('cabinet.items') : ''}${(o.item_count && o.total_price > 0) ? ' · ' : ''}${o.total_price > 0 ? formatSum(o.total_price) + ' сум' : ''}</div>` : ''}
+        ${o.measure_done ? `<div class="order-meta" style="color:#16a34a;font-weight:600">${t('cabinet.measureDone')}</div>` : ''}
       </div>
     `).join('') + (lastOrders.length > 3
       ? `<div class="orders-empty" style="cursor:pointer;color:var(--teal)" onclick="openDrawer('orders')">Все заказы (${lastOrders.length}) →</div>`

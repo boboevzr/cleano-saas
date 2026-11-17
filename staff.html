@@ -1716,7 +1716,7 @@ const _i18n = {
     'item.change':'— изменить —','item.unassign':'Снять мойщика','item.no_washer':'⚠️ Нет мойщика','item.assign':'— Назначить мойщика —',
     'msr.enter':'Ввести замер','msr.fix':'Исправить замер','msr.pending_mgr':'⏳ На проверке у менеджера',
     'msr.approved':'✅ Утверждён','msr.pending':'⏳ На проверке','msr.approved_full':'✅ Замер утверждён',
-    'msr.rejected':'❌ Отклонён','msr.take_review':'✋ Принять на проверку','msr.assign_first':'⚠️ Сначала назначьте мойщика',
+    'msr.rejected':'❌ Отклонён','msr.take_review':'✋ Принять на проверку','msr.assign_first':'⚠️ Сначала назначьте мойщика','msr.measured_by':'Замерил','msr.skip_ask':'Перейти без замера? Это будет записано в историю заказа.','soe.saved_status_fail':'✅ Данные заказа сохранены.\n⚠️ Статус не изменён: ',
     'btn.view':'Просмотр',
     'pm.currency':'сум',
     'pm.cash':'💵 Нал','pm.card':'💳 Карта','pm.transfer':'📲 Перевод',
@@ -2045,7 +2045,7 @@ const _i18n = {
     'item.change':'— oʻzgartirish —','item.unassign':'Yuvuvchini olish','item.no_washer':`⚠️ Yuvuvchi yoʻq`,'item.assign':'— Yuvuvchi belgilash —',
     'msr.enter':`Oʻlchovni kiritish`,'msr.fix':`Oʻlchovni tuzatish`,'msr.pending_mgr':`⏳ Menejer tekshiruvida`,
     'msr.approved':`✅ Tasdiqlandi`,'msr.pending':'⏳ Tekshiruvda','msr.approved_full':`✅ Oʻlchov tasdiqlandi`,
-    'msr.rejected':`❌ Rad etildi`,'msr.take_review':`✋ Tekshirishga olish`,'msr.assign_first':`⚠️ Avval yuvuvchi belgilang`,
+    'msr.rejected':`❌ Rad etildi`,'msr.take_review':`✋ Tekshirishga olish`,'msr.assign_first':`⚠️ Avval yuvuvchi belgilang`,'msr.measured_by':`Oʻlchagan`,'msr.skip_ask':`Oʻlchovsiz oʻtkazilsinmi? Bu buyurtma tarixiga yoziladi.`,'soe.saved_status_fail':`✅ Buyurtma maʼlumotlari saqlandi.\n⚠️ Holat oʻzgarmadi: `,
     'btn.view':`Koʻrish`,
     'pm.currency':`soʻm`,
     'pm.cash':'💵 Naqd','pm.card':'💳 Karta','pm.transfer':`📲 Oʻtkazma`,
@@ -10719,6 +10719,44 @@ async function soRecalcAutoDiscounts() {
 
 let _activeOrderModal = 'staff'; // 'staff' | 'washer'
 
+// ── Этап замера (16.11.2026) — из настроек компании: received / washing / drying / packing.
+// Мерить можно от этапа до доставки; дальше этапа без утверждённых замеров сервер не пускает
+// (409 measure_required) — админ/менеджер могут пропустить с подтверждением.
+let _measureStage = 'washing';
+const _MSR_FLOW = ['new','confirmed','pickup','received','washing','drying','packing','ready','delivery','delivered'];
+function _inMeasureWindow(st) {
+  const i = _MSR_FLOW.indexOf(st);
+  // менеджер мерит уже с «В мастерской» — независимо от этапа замера (перенос из ARTEZ 17.11)
+  let from = _MSR_FLOW.indexOf(_measureStage);
+  if (currentStaff?.role === 'manager') from = Math.min(from, _MSR_FLOW.indexOf('received'));
+  return i >= 0 && i >= from && i < _MSR_FLOW.indexOf('delivery');
+}
+// SaaS: этап — настройка компании, читаем по токену сотрудника (до входа токена нет —
+// повторяем при открытии заказа, см. staffOpenOrder).
+let _measureStageLoaded = false;
+async function _loadMeasureStage() {
+  if (_measureStageLoaded || !_staffToken()) return;
+  try {
+    const d = await fetch(`${API_BASE}/staff/settings/measure-stage`, { headers: { Authorization: `Bearer ${_staffToken()}` } }).then(r => r.json());
+    if (d?.stage) { _measureStage = d.stage; _measureStageLoaded = true; }
+  } catch (e) {}
+}
+_loadMeasureStage();
+// Смена статуса заказа: на 409 «не все замеры утверждены» админ/менеджер подтверждает пропуск.
+async function _patchOrderStatus(orderId, body, ask = true) {
+  const send = b => fetch(`${API_BASE}/admin/orders/${orderId}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_staffToken()}` },
+    body: JSON.stringify(b),
+  });
+  const res = await send(body);
+  if (res.status !== 409 || !ask) return res;
+  const d = await res.clone().json().catch(() => ({}));
+  if (d.code !== 'measure_required' || !d.can_skip) return res;
+  if (!confirm(`⚠️ ${d.detail}\n\n${t('msr.skip_ask')}`)) return res;
+  return send({ ...body, skip_measure: true });
+}
+
 let _washersList = [];
 async function _loadWashers() {
   if (_washersList.length) return _washersList;
@@ -10746,6 +10784,7 @@ async function staffSetItemWasher(itemId, login) {
 }
 
 async function staffOpenOrder(orderId) {
+  await _loadMeasureStage();
   if (currentStaff?.role === 'washer') {
     return washerOpenOrder(orderId);
   }
@@ -10894,7 +10933,9 @@ async function staffOpenOrder(orderId) {
   const _isAdminOpening = currentStaff?.role === 'admin';
   const _noAddAfterWash = _isAdminOpening
     ? ['delivered','cancelled'].includes(o.status)
-    : ['drying','packing','ready','delivery','delivered','cancelled'].includes(o.status);
+    : currentStaff?.role === 'manager'
+      ? _MANAGER_ITEM_EDIT_LOCKED_STATUSES.has(o.status)
+      : ['drying','packing','ready','delivery','delivered','cancelled'].includes(o.status);
   const _soAddRow  = document.getElementById('so_add_btn_row');
   const _soBulkRow = document.getElementById('so_bulk_row');
   if (_soAddRow)  _soAddRow.style.display  = _noAddAfterWash ? 'none' : '';
@@ -12392,16 +12433,15 @@ async function _doSaveOrderEdit(newStatus, reason) {
         }).catch(() => {});
       }
     }
-    // Если нужно сменить статус — делаем отдельным запросом с примечанием
+    // Если нужно сменить статус — отдельным запросом с примечанием. Данные заказа к этому
+    // моменту уже сохранены: если статус сменить нельзя, правки НЕ теряем — доводим
+    // сохранение до конца и отдельно говорим, почему статус не изменился (16.11.2026).
+    let _statusFailMsg = '';
     if (newStatus) {
-      const sRes = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/status`, {
-        method:'PATCH', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
-        body: JSON.stringify({ status: newStatus, note: reason || '' })
-      });
+      const sRes = await _patchOrderStatus(_sOrderId, { status: newStatus, note: reason || '' });
       if (!sRes.ok) {
         const sErr = await sRes.json().catch(()=>({}));
-        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t('soe.save'); }
-        showToast(sErr.detail || t('soe.status_error'), 'error'); return;
+        _statusFailMsg = sErr.detail || t('soe.status_error');
       }
     }
     // Если тип изменился — обновить цены всех позиций из прайса
@@ -12438,8 +12478,9 @@ async function _doSaveOrderEdit(newStatus, reason) {
     staffCloseOrderEdit();
     staffCloseOrder();
     const _savedId = _sOrderId;
+    if (_statusFailMsg) alert(t('soe.saved_status_fail') + _statusFailMsg);
     // Переключить фильтр на вкладку нового статуса, обновить список, подсветить и открыть карточку
-    if (newStatus) {
+    if (newStatus && !_statusFailMsg) {
       setOrdersFilter(newStatus);
       await loadOrders();
       setTimeout(() => { _highlightOrderInList(_savedId); staffOpenOrder(_savedId); }, 150);
@@ -12510,6 +12551,13 @@ function _doOpenMap(type) {
 // модалки замера), иначе они расходятся: список правильно скрывает ✏️, а
 // модалка замера всё равно даёт редактировать/удалять фото через 👁.
 const _NONADMIN_ITEM_EDIT_LOCKED_STATUSES = new Set(['packing','ready','delivery','delivered','cancelled']);
+// 17.11.2026 (владелец): менеджер после мойки тоже добавляет/правит позиции и мерит — до доставки.
+const _MANAGER_ITEM_EDIT_LOCKED_STATUSES = new Set(['delivery','delivered','cancelled']);
+function _itemEditLocked(st) {
+  if (currentStaff?.role === 'admin' || currentStaff?.can_edit_price === true) return ['delivered','cancelled'].includes(st);
+  if (currentStaff?.role === 'manager') return _MANAGER_ITEM_EDIT_LOCKED_STATUSES.has(st);
+  return _NONADMIN_ITEM_EDIT_LOCKED_STATUSES.has(st);
+}
 
 function staffRenderItems(items, containerEl) {
   const el = containerEl || document.getElementById('so_items');
@@ -12540,17 +12588,16 @@ function staffRenderItems(items, containerEl) {
   // Право can_edit_price расширяет доступ до уровня админа (Упаковка/Готов/Доставка) —
   // перенос из прод, см. запрос пользователя 2026-09-16.
   const _canBypassItemLock = _isAdminItems || currentStaff?.can_edit_price === true;
-  const _editLockedByStatus = _canBypassItemLock
-    ? ['delivered','cancelled'].includes(_sOrderStatus)
-    : _NONADMIN_ITEM_EDIT_LOCKED_STATUSES.has(_sOrderStatus);
+  const _editLockedByStatus = _itemEditLocked(_sOrderStatus);
   const canEdit           = !_editLockedByStatus && currentStaff?.can_edit_items !== false;
   const canMeasure        = !!currentStaff?.can_measure;
   const canApproveMeasure = !!currentStaff?.can_approve_measure;
   const isWashingPhase    = _sOrderStatus === 'washing';
+  const isMeasurePhase    = _inMeasureWindow(_sOrderStatus);   // этап замера (настройка) … до доставки
   // Назначать/менять мойщика можно и до статуса «Мойка» (например замер провёл
   // менеджер на приёмке) — иначе некому исправить назначение и перейти в «Мойка».
   const canManageWasher   = !['delivered','cancelled'].includes(_sOrderStatus);
-  const needsMeasure      = (canMeasure || canApproveMeasure) && isWashingPhase;
+  const needsMeasure      = (canMeasure || canApproveMeasure) && isMeasurePhase;
 
   // Название услуги на текущем языке интерфейса. Новые позиции хранят готовые service_ru/
   // service_uz (заполняются при сохранении из справочника — см. smcGetServiceBilingual) —
@@ -12682,7 +12729,8 @@ function staffRenderItems(items, containerEl) {
       }
     }
 
-    const _editFn = (isWashingPhase || _isAdminItems || currentStaff?.can_override_measure) ? `staffOpenMeasure(${it.id})` : `staffOpenItemForm(${it.id})`;
+    const _mgrItemForm = currentStaff?.role === 'manager' && !currentStaff?.can_override_measure && ms === 'approved';
+    const _editFn = (!_mgrItemForm && (isMeasurePhase || _isAdminItems || currentStaff?.can_override_measure)) ? `staffOpenMeasure(${it.id})` : `staffOpenItemForm(${it.id})`;
     const editBtns = !isWasher && canEdit
       ? `<button onclick="${_editFn}" style="background:none;border:none;cursor:pointer;font-size:15px;padding:2px">✏️</button>
          <button onclick="staffDeleteItem(${it.id})" style="background:rgba(239,68,68,.1);border:none;cursor:pointer;font-size:13px;padding:3px 6px;border-radius:6px;color:#ef4444">✕</button>`
@@ -12710,16 +12758,15 @@ function staffRenderItems(items, containerEl) {
         ${(it.service && parseFloat(it.sqm||0) > 0)
           ? `<div style="font-size:12px;color:#888;margin-top:2px">${hasDims ? it.width_cm+'×'+it.length_cm+' '+t('unit.cm')+' · ' : ''}${_posUnitKey === 'pcs' ? parseFloat(it.sqm).toFixed(0)+' '+t('unit.pcs') : parseFloat(it.sqm).toFixed(2)+' '+t('unit.m2')}</div>`
           : ''}
-        ${measureBlock}${washerBadge}${managerWasherRow}
-        ${!isWasher && canApproveMeasure && isWashingPhase && ms === 'submitted'
-          ? it.washer_login
-            ? `<button onclick="_claimAndOpenMeasure(${_sOrderId},${it.id},this)"
+        ${measureBlock}
+        ${it.measured_by_name && ms !== 'pending'
+          ? `<div style="margin-top:2px;font-size:11px;color:#6b7280">📐 ${t('msr.measured_by')}: ${_esc(it.measured_by_name)}</div>`
+          : ''}${washerBadge}${managerWasherRow}
+        ${!isWasher && canApproveMeasure && isMeasurePhase && ms === 'submitted'
+          ? `<button onclick="_claimAndOpenMeasure(${_sOrderId},${it.id},this)"
                 style="margin-top:7px;width:100%;padding:7px;background:#f59e0b;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">
                 ${t('msr.take_review')}
                </button>`
-            : `<div style="margin-top:6px;padding:5px 10px;background:#fef3c7;border:1px solid #fde047;border-radius:8px;font-size:11px;color:#92400e;font-weight:600">
-                ${t('msr.assign_first')}
-               </div>`
           : ''}
       </div>
       <div style="text-align:right;flex-shrink:0">
@@ -13442,11 +13489,7 @@ async function staffChangeStatus(newStatus, packerLogin) {
   if (packerLogin) body.packer_login = packerLogin;
   let res;
   try {
-    res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type':'application/json', Authorization:`Bearer ${_staffToken()}` },
-      body: JSON.stringify(body),
-    });
+    res = await _patchOrderStatus(_sOrderId, body);
   } catch(e) {
     if (btn) { btn.disabled = false; btn.textContent = _origLabel; }
     showToast('Нет соединения', 'error'); return;
@@ -13893,11 +13936,7 @@ function staffPrepareDrying() {
     showToast(`${noWasher.length} позиц${noWasher.length === 1 ? 'ия не закреплена' : 'ии не закреплены'} за мойщиком — назначьте мойщика перед передачей на сушку`, 'warning');
     return;
   }
-  const notApproved = items.filter(i => (i.measure_status || 'pending') !== 'approved');
-  if (notApproved.length > 0) {
-    showToast(`Не все позиции проверены: ${notApproved.length} из ${items.length} не утверждено`, 'warning');
-    return;
-  }
+  // Замеры проверяет сервер по этапу замера из настроек (409 → админ/менеджер может пропустить)
   staffChangeStatus('drying');
 }
 
@@ -14426,9 +14465,9 @@ async function staffOpenMeasure(itemId) {
   const myLogin = currentStaff?.login || '';
   const isWasherRole = currentStaff?.role === 'washer';
   const isMyItem = !!item.washer_login && item.washer_login === myLogin;
-  // Автоклейм для любого с can_measure в статусе Мойка (мойщики и менеджеры с полным замером).
-  // Если позиция свободна или уже за этим сотрудником — re-claim идемпотентен.
-  if (canMeasure && _sOrderStatus === 'washing' && (ms === 'pending' || ms === 'rejected')) {
+  // Автоклейм — только МОЙЩИКУ в статусе Мойка (washer_login = его ЗП за мойку). Менеджер и
+  // другие с правом замера мерят без закрепления: «Замерил» пишется отдельно (16.11.2026).
+  if (canMeasure && isWasherRole && _sOrderStatus === 'washing' && (ms === 'pending' || ms === 'rejected')) {
     if (!item.washer_login || item.washer_login === myLogin) {
       const claimed = await staffClaimItem(itemId, true);
       if (claimed === false) return; // позиция удалена — _reloadItemsOnNotFound уже обновил список
@@ -14437,9 +14476,11 @@ async function staffOpenMeasure(itemId) {
   }
   const isAdminMeasure     = currentStaff?.role === 'admin';
   const _adminCanEdit      = isAdminMeasure && !['delivered','cancelled'].includes(_sOrderStatus);
-  const _overrideMeasure   = !isAdminMeasure && !!currentStaff?.can_override_measure && !_NONADMIN_ITEM_EDIT_LOCKED_STATUSES.has(_sOrderStatus);
-  const _canEnterMeasure   = canMeasure && item.washer_login === myLogin;
-  _smCanEdit     = _adminCanEdit || _overrideMeasure || (_canEnterMeasure && _sOrderStatus === 'washing' && (ms === 'pending' || ms === 'rejected'));
+  const _overrideMeasure   = !isAdminMeasure && !!currentStaff?.can_override_measure
+    && !(currentStaff?.role === 'manager' ? _itemEditLocked(_sOrderStatus) : _NONADMIN_ITEM_EDIT_LOCKED_STATUSES.has(_sOrderStatus));
+  // Мойщик мерит свободную или свою позицию; остальные с правом замера — любую.
+  const _canEnterMeasure   = canMeasure && (!isWasherRole || !item.washer_login || item.washer_login === myLogin);
+  _smCanEdit     = _adminCanEdit || _overrideMeasure || (_canEnterMeasure && _inMeasureWindow(_sOrderStatus) && (ms === 'pending' || ms === 'rejected'));
   _smIsAdminEdit = _adminCanEdit || _overrideMeasure;
   _smFullMeasure = !isAdminMeasure && canMeasure && canApproveMeasure;
 
