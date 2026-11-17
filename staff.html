@@ -8497,13 +8497,8 @@ function pageProfile() {
         <span class="ir-icon">🔑</span>
         <div><div class="ir-label">${t('prof.login')}</div><div class="ir-val">${s.login}</div></div>
       </div>
-      <div class="info-row">
-        <span class="ir-icon">🎭</span>
-        <div><div class="ir-label">${t('prof.role')}</div><div class="ir-val">${_roleLabel(s.role)}</div></div>
-      </div>
       ${s.phone?`<div class="info-row"><span class="ir-icon">📞</span><div><div class="ir-label">${t('prof.phone')}</div><div class="ir-val"><a href="tel:${s.phone}">${s.phone}</a></div></div></div>`:''}
-      ${s.branch?`<div class="info-row"><span class="ir-icon">📍</span><div><div class="ir-label">${t('prof.branch')}</div><div class="ir-val">${branchLabel(s.branch)}</div></div></div>`:''}
-      ${s.birth_date?`<div class="info-row"><span class="ir-icon">🎂</span><div><div class="ir-label">${t('prof.birth')}</div><div class="ir-val">${new Date(s.birth_date).toLocaleDateString('ru-RU',{day:'2-digit',month:'long'})}</div></div></div>`:''}
+      ${s.birth_date && s.role!=='agent'?`<div class="info-row"><span class="ir-icon">🎂</span><div><div class="ir-label">${t('prof.birth')}</div><div class="ir-val">${new Date(s.birth_date).toLocaleDateString('ru-RU',{day:'2-digit',month:'long'})}</div></div></div>`:''}
     </div>
     ${s.role==='agent'?`
     <div style="margin-top:16px;background:var(--card-bg,var(--surface,#1a1d27));border-radius:18px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
