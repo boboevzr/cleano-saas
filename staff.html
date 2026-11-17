@@ -12616,7 +12616,7 @@ function staffRenderItems(items, containerEl) {
     const _hasMsrBtn = needsMeasure && (ms === 'pending' || ms === 'rejected');
     const editBtns = !isWasher && canEdit
       ? `${_hasMsrBtn ? '' : `<button onclick="${_editFn}" style="background:none;border:none;cursor:pointer;font-size:15px;padding:2px">✏️</button>`}
-         <button onclick="staffDeleteItem(${it.id})" style="background:rgba(239,68,68,.1);border:none;cursor:pointer;font-size:13px;padding:3px 6px;border-radius:6px;color:#ef4444">✕</button>`
+         ${['admin','manager'].includes(currentStaff?.role) ? `<button onclick="staffDeleteItem(${it.id})" style="background:rgba(239,68,68,.1);border:none;cursor:pointer;font-size:13px;padding:3px 6px;border-radius:6px;color:#ef4444">✕</button>` : ''}`
       : (!isWasher && _editLockedByStatus
           ? `<button onclick="staffOpenMeasure(${it.id})" style="background:none;border:none;cursor:pointer;font-size:15px;padding:2px" title="${t('btn.view')}">👁</button>`
           : '');
