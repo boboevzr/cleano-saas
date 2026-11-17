@@ -3560,7 +3560,9 @@ function getGreeting() {
 
 // ─── ПОСЕЩАЕМОСТЬ (WorkOn) ─────────────────────────────
 function _attendanceEligible() {
-  return !!currentStaff && (currentStaff.salary_type === 'fixed' || currentStaff.salary_type === 'fixed_percent');
+  // 17.11.2026 (владелец): отмечаются все сотрудники, кроме агентов — на ЗП не влияет
+  // (у сдельных/процентных отметки только для учёта, оклад — по табелю, как раньше)
+  return !!currentStaff && currentStaff.role !== 'agent';
 }
 function _fmtHM(iso) {
   if (!iso) return '';
