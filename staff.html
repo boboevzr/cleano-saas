@@ -12531,7 +12531,10 @@ function staffRenderItems(items, containerEl) {
 
     // Блок замера
     let measureBlock = '';
-    const dimInfo = _posUnitKey === 'pcs'
+    // Размеры уже показаны строкой под названием (когда есть услуга и площадь/кол-во) —
+    // в статусе замера их не повторяем (чистка 17.11)
+    const _dimsLineShown = !!(it.service && parseFloat(it.sqm||0) > 0);
+    const dimInfo = _dimsLineShown ? '' : _posUnitKey === 'pcs'
       ? (it.sqm ? `${parseFloat(it.sqm).toFixed(0)} ${t('unit.pcs')}` : '')
       : (hasDims ? `${it.width_cm}×${it.length_cm} ${t('unit.cm')} → ${parseFloat(it.sqm||0).toFixed(2)} ${t('unit.m2')}` : (it.sqm ? `${parseFloat(it.sqm).toFixed(2)} ${t('unit.m2')}` : ''));
 
