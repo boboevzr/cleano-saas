@@ -3006,6 +3006,19 @@
               </div>
               <div id="staffMgmtList" style="margin-top:12px;font-size:14px"><div style="color:var(--text2)">Загрузка…</div></div>
             </div>
+            <!-- Отметка прихода у цеха (17.11.2026) -->
+          <div class="card" id="card-att-radius" style="margin-bottom:14px">
+            <div class="cfg-title-row">
+              <h3 class="cfg-title">📍 Приход у цеха</h3>
+            </div>
+            <p class="cfg-hint" style="margin-bottom:12px">«Пришёл» принимается, только если сотрудник не дальше этого радиуса от цеха своего филиала (точка цеха — в «Филиалах» компании; с учётом погрешности GPS). «Ушёл» — из любого места. Кому можно отмечаться где угодно — переключатель в карточке сотрудника.</p>
+            <div class="cfg-field" style="margin-bottom:10px;display:flex;gap:8px;align-items:center">
+              <input type="number" id="attRadiusInput" class="form-input" min="5" max="5000" step="5" style="max-width:140px">
+              <span style="color:var(--text2)">м</span>
+              <button class="btn btn-primary" onclick="saveAttendanceRadius()">💾 Сохранить</button>
+            </div>
+            <span class="s-msg" id="msg_card-att-radius"></span>
+          </div>
           </div>
 
           <!-- ─── Режим техработ ─── -->
@@ -6088,6 +6101,14 @@
             <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center">🙈</div>
             <div style="flex:1"><div class="sf-perm-title" data-i18n="sf.perm.hide_phone">Скрыть номер клиента</div><div class="sf-perm-desc" data-i18n="sf.perm.hide_phone.d">Не показывать телефон клиента в списке и карточке заказа</div></div>
             <div class="sf-track" id="sf_hide_client_phone_track" onclick="event.stopPropagation();document.getElementById('sf_hide_client_phone').click()"><div class="sf-thumb" id="sf_hide_client_phone_thumb"></div></div>
+          </label>
+        </div>
+        <div class="sf-perm-row">
+          <label style="display:contents;cursor:pointer">
+            <input type="checkbox" id="sf_attendance_anywhere" style="opacity:0;width:0;height:0;position:absolute" onchange="sfToggleStyle('sf_attendance_anywhere')">
+            <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center">📍</div>
+            <div style="flex:1"><div class="sf-perm-title">Отметка прихода в любом месте</div><div class="sf-perm-desc">Выключено — «Пришёл» только у цеха своего филиала (радиус — в Настройках → Сотрудники). Водители и операторы — всегда в любом месте (по роли); включите, например, тестировщикам</div></div>
+            <div class="sf-track" id="sf_attendance_anywhere_track" onclick="event.stopPropagation();document.getElementById('sf_attendance_anywhere').click()"><div class="sf-thumb" id="sf_attendance_anywhere_thumb"></div></div>
           </label>
         </div>
         <div class="sf-perm-row" style="border-top:1px solid var(--border)">
@@ -10343,6 +10364,7 @@ function _nbParseCoords(val) {
 let _smEditId = null;
 
 async function staffMgmtLoad() {
+  loadAttendanceRadius();   // «📍 Приход у цеха» в той же вкладке
   const el = document.getElementById('staffMgmtList');
   if (!el) return;
   el.innerHTML = `<div style="color:var(--text-secondary)">${_t('lbl.loading')}</div>`;
@@ -13641,7 +13663,9 @@ function _workonFmtSessions(rec) {
   const sessions = Array.isArray(rec.sessions) ? rec.sessions : [];
   if (!sessions.length) return '<span style="color:var(--text2)">—</span>';
   const hasOpen = sessions.some(s => !s.check_out_at);
-  const line = sessions.map(s => `${_fmtHM(s.check_in_at)}–${s.check_out_at ? _fmtHM(s.check_out_at) : '…'}`).join(', ');
+  const line = sessions.map(s => `${_fmtHM(s.check_in_at)}–${s.check_out_at ? _fmtHM(s.check_out_at) : '…'}`
+    + (s.in_distance_m != null ? ` <span style="color:var(--text2);font-size:11px">📍${s.in_distance_m} м</span>` : '')
+    + (s.auto_out ? ` <span style="color:#f59e0b;font-size:11px">уход не отмечен</span>` : '')).join(', ');
   const note = hasOpen ? `<div style="font-size:11px;color:#f59e0b">${_t('workon.now.here')}</div>` : '';
   return `<div>${line}</div>${note}`;
 }
@@ -14087,6 +14111,7 @@ async function openStaffModal(id=null) {
   sfSetToggle('sf_can_drive', false);
   sfSetToggle('sf_can_view_timesheet', false);
   sfSetToggle('sf_hide_client_phone', false);
+  sfSetToggle('sf_attendance_anywhere', false);
   // сводка доставок: у нового — по роли на сервере, пока тумблер не трогали (_sfDigestTouched)
   _sfDigestTouched = false;
   sfSetToggle('sf_notify_delivery_digest', false);
@@ -14130,6 +14155,7 @@ async function openStaffModal(id=null) {
     sfSetToggle('sf_can_view_timesheet',  !!s.can_view_timesheet);
     sfSetToggle('sf_notify_new_users',   s.notify_new_users === true);
     sfSetToggle('sf_hide_client_phone',  !!s.hide_client_phone);
+    sfSetToggle('sf_attendance_anywhere', !!s.attendance_anywhere);
     sfSetToggle('sf_notify_delivery_digest', !!s.notify_delivery_digest);
     sfSetToggle('sf_can_measure',         !!s.can_measure);
     sfSetToggle('sf_can_approve_measure', !!s.can_approve_measure);
@@ -14324,7 +14350,7 @@ async function saveStaff() {
     birth_date: document.getElementById('sf_birth_date').value || null,
   };
 
-  const permBody = { can_edit_items: canEditItems, can_measure: canMeasure, can_approve_measure: canApproveMeasure, can_override_measure: canOverrideMeasure, can_create_order: canCreateOrder, can_confirm_order: canConfirmOrder, can_edit_confirmed: canEditConfirmed, can_send_pickup: canSendPickup, can_edit_delivery: canEditDelivery, can_edit_price: canEditPrice, can_manage_cash: canManageCash, can_approve_debt: canApproveDebt, can_drive: canDrive, can_view_timesheet: canViewTimesheet, notify_new_users: notifyNewUsers, hide_client_phone: hideClientPhone, notify_delivery_digest: notifyDeliveryDigest };
+  const permBody = { can_edit_items: canEditItems, can_measure: canMeasure, can_approve_measure: canApproveMeasure, can_override_measure: canOverrideMeasure, can_create_order: canCreateOrder, can_confirm_order: canConfirmOrder, can_edit_confirmed: canEditConfirmed, can_send_pickup: canSendPickup, can_edit_delivery: canEditDelivery, can_edit_price: canEditPrice, can_manage_cash: canManageCash, can_approve_debt: canApproveDebt, can_drive: canDrive, can_view_timesheet: canViewTimesheet, notify_new_users: notifyNewUsers, hide_client_phone: hideClientPhone, notify_delivery_digest: notifyDeliveryDigest, attendance_anywhere: !!document.getElementById('sf_attendance_anywhere')?.checked };
   try {
     if (id) {
       const res = await apiFetch(`${API_BASE}/staff/${id}`, {
@@ -15488,6 +15514,21 @@ const TAB_KEYS = {
 };
 const _cfgOriginal = {};
 
+// «📍 Приход у цеха» (перенос из ARTEZ 17.11.2026): радиус — настройка компании
+function loadAttendanceRadius() {
+  apiGet('/admin/settings/attendance-radius').then(d => {
+    const inp = document.getElementById('attRadiusInput');
+    if (inp && d?.radius_m) inp.value = d.radius_m;
+  });
+}
+async function saveAttendanceRadius() {
+  const msg = document.getElementById('msg_card-att-radius');
+  const v = parseInt(document.getElementById('attRadiusInput')?.value, 10);
+  if (!(v >= 5 && v <= 5000)) { if (msg) msg.textContent = '❌ От 5 до 5000 м'; return; }
+  const r = await apiPut('/admin/settings/attendance-radius', { radius_m: v });
+  if (msg) { msg.textContent = r?.ok ? '✅ Сохранено' : '❌ Не сохранилось'; setTimeout(() => { msg.textContent = ''; }, 2500); }
+}
+
 function switchStab(btn) {
   document.querySelectorAll('.s-tab').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.s-panel').forEach(p => p.style.display = 'none');
@@ -15495,6 +15536,7 @@ function switchStab(btn) {
   const tab = btn.dataset.stab;
   const panel = document.getElementById('stab-' + tab);
   if (panel) panel.style.display = '';
+  if (tab === 'staff-mgmt') loadAttendanceRadius();   // «📍 Приход у цеха» — радиус своей компании
   if (tab === 'agents') {
     loadAgentCommissionSettings();
     // Инициализировать выбор года

@@ -3573,7 +3573,24 @@ function _fmtHM(iso) {
 function _fmtAttendanceSession(s) {
   const inHm  = _fmtHM(s.check_in_at);
   const outHm = s.check_out_at ? _fmtHM(s.check_out_at) : '…';
-  return `${inHm}–${outHm}`;
+  // «Приход только у цеха» (17.11.2026): расстояние до цеха и «уход не отмечен» (закрыто в 23:59)
+  const dist = s.in_distance_m != null ? ` 📍${s.in_distance_m} м` : '';
+  const auto = s.auto_out ? ' (уход не отмечен)' : '';
+  return `${inHm}–${outHm}${dist}${auto}`;
+}
+// Текущее место для отметки: {lat, lon, accuracy} или null (нет разрешения / нет GPS / таймаут)
+function _attendanceGeo(timeoutMs = 15000) {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      p => resolve({ lat: p.coords.latitude, lon: p.coords.longitude, accuracy: Math.round(p.coords.accuracy || 0) }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 0 });
+  });
+}
+function _attendanceErr(d, fallback) {
+  const det = d?.detail;
+  return (det && typeof det === 'object' ? det.message : det) || fallback;
 }
 function _renderAttendanceWidgetBody(att) {
   const sessions = (att && Array.isArray(att.sessions)) ? att.sessions : [];
@@ -3608,12 +3625,18 @@ async function loadAttendanceWidget() {
 async function attendanceCheckIn() {
   if (!confirm('Отметить приход?')) return;
   try {
-    const r = await apiFetch('/api/staff/attendance/checkin', { method: 'POST' });
+    // приход — только у цеха (кроме «в любом месте»): сервер сверяет расстояние до цеха филиала
+    showToast('📍 Определяем место…', 'info');
+    const geo = await _attendanceGeo();
+    const r = await apiFetch('/api/staff/attendance/checkin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(geo || {}) });
     const d = await r.json().catch(() => null);
     if (r.ok && d?.ok) {
-      showToast('✅ Приход отмечен', 'success');
+      const dm = d.attendance?.distance_m;
+      showToast('✅ Приход отмечен' + (dm != null ? ` · 📍 ${dm} м от цеха` : ''), 'success');
     } else {
-      showToast(d?.detail || 'Ошибка отметки', 'error');
+      // понятные причины: «Включите геолокацию», «выйдите к окну», «Вы в N м от цеха»
+      alert(_attendanceErr(d, 'Ошибка отметки'));
     }
     await loadAttendanceWidget();
     await _loadMyAttendanceHistory();
@@ -3622,12 +3645,15 @@ async function attendanceCheckIn() {
 async function attendanceCheckOut() {
   if (!confirm('Отметить уход?')) return;
   try {
-    const r = await apiFetch('/api/staff/attendance/checkout', { method: 'POST' });
+    // уход — из любого места; координаты, если телефон их даст быстро, только записываем
+    const geo = await _attendanceGeo(8000);
+    const r = await apiFetch('/api/staff/attendance/checkout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(geo || {}) });
     const d = await r.json().catch(() => null);
     if (r.ok && d?.ok) {
       showToast('✅ Уход отмечен', 'success');
     } else {
-      showToast(d?.detail || 'Сначала отметьте приход', 'error');
+      showToast(_attendanceErr(d, 'Сначала отметьте приход'), 'error');
     }
     await loadAttendanceWidget();
     await _loadMyAttendanceHistory();
