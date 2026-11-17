@@ -3526,7 +3526,7 @@ function pageDashboard() {
     </div>
     <div class="stats-row" id="statsRow">
       <div class="stat-tile"><div class="st-icon">📋</div><div class="st-val" id="ds_orders">—</div><div class="st-label">${t('dash.stat.orders')}</div></div>
-      <div class="stat-tile"><div class="st-icon">🎯</div><div class="st-val" id="ds_leads">—</div><div class="st-label">${t('dash.stat.leads')}</div></div>
+      ${hasPermission('leads') ? `<div class="stat-tile"><div class="st-icon">🎯</div><div class="st-val" id="ds_leads">—</div><div class="st-label">${t('dash.stat.leads')}</div></div>` : ''}
     </div>
     <div class="section-title">${t('dash.title')}</div>
     <div class="action-grid" style="margin-bottom:20px">
