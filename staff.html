@@ -4859,30 +4859,6 @@ async function loadLeadCalls(leadId) {
   }
 }
 
-async function convertLeadToOrder(leadId) {
-  const btn = document.getElementById('convertLeadBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Создаём заказ…'; }
-  const token = localStorage.getItem(TOKEN_KEY);
-  try {
-    const res = await fetch(`${API_BASE}/staff/leads/${leadId}/convert`, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({})
-    });
-    const d = await res.json();
-    if (res.ok && d.ok) {
-      await loadLeads();
-      gotoPage('orders');
-      alert(`✅ Заказ ${d.order_num} создан!`);
-    } else {
-      if (btn) { btn.disabled = false; btn.textContent = '📦 Создать заказ из лида'; }
-      alert(d.detail || 'Ошибка конвертации');
-    }
-  } catch(e) {
-    if (btn) { btn.disabled = false; btn.textContent = '📦 Создать заказ из лида'; }
-    alert('Ошибка: ' + e.message);
-  }
-}
 
 function openLeadEdit(id) {
   const lead = leadsData.find(l=>l.id===id); if (!lead) return;
@@ -5270,17 +5246,6 @@ function showToast(msg, type = 'default', duration) {
 let _cbAlertTimer = null;
 let _measureAlertTimer = null;
 
-function _startMeasureAlerts() {
-  _playMeasureSound();
-  if (navigator.vibrate) navigator.vibrate([400,150,400,150,400]);
-  let elapsed = 0;
-  _measureAlertTimer = setInterval(() => {
-    elapsed += 2;
-    if (elapsed >= 10) { clearInterval(_measureAlertTimer); _measureAlertTimer = null; return; }
-    _playMeasureSound();
-    if (navigator.vibrate) navigator.vibrate([300,100,300]);
-  }, 2000);
-}
 
 function _stopMeasureAlerts() {
   if (_measureAlertTimer) { clearInterval(_measureAlertTimer); _measureAlertTimer = null; }
@@ -5997,30 +5962,7 @@ async function submitDebtReject() {
 // ── Добавить кнопку «Принимаю на проверку» в модалку замера ─────────────────
 let _measureReviewClaimed = false;
 
-function smShowClaimButton(orderId, itemId) {
-  const footer = document.getElementById('sm_footer');
-  if (!footer || _measureReviewClaimed) return;
-  const claimBtn = `<button id="smClaimBtn" onclick="smClaimReview(${orderId},${itemId})"
-    style="flex:1;padding:14px;background:#f59e0b;color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer">
-    ✋ Принять на проверку
-  </button>`;
-  footer.innerHTML = claimBtn + footer.innerHTML;
-}
 
-async function smClaimReview(orderId, itemId) {
-  const btn = document.getElementById('smClaimBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳…'; }
-  try {
-    const token = localStorage.getItem(TOKEN_KEY);
-    await fetch(`${API_BASE}/admin/orders/${orderId}/items/${itemId}/measure/claim`, {
-      method: 'POST', headers: { Authorization: `Bearer ${token}` }
-    });
-    _measureReviewClaimed = true;
-    _measureAlertShown.add(itemId);
-    if (btn) btn.remove();
-    showToast('Вы приняли замер на проверку', 'success');
-  } catch(e) { showToast('Ошибка', 'error'); }
-}
 
 function initReminderPolling() {
   // Бейдж уведомлений
@@ -6301,40 +6243,6 @@ async function loadAgentOptions() {
 }
 const loadAgents = loadAgentOptions;
 
-let _acAgentTimer, _acAgentMatches = [];
-function acAgentInput(el) {
-  const q = el.value.trim().toLowerCase();
-  clearTimeout(_acAgentTimer);
-  const drop = document.getElementById('ac_ld_agent');
-  if (!drop) return;
-  if (!q) { drop.style.display='none'; document.getElementById('ld_agent_id').value=''; return; }
-  _acAgentTimer = setTimeout(() => {
-    _acAgentMatches = _allAgents.filter(a =>
-      (a.first_name||'').toLowerCase().includes(q) ||
-      (a.last_name||'').toLowerCase().includes(q) ||
-      (a.phone||'').includes(q) ||
-      (a.login||'').includes(q)
-    ).slice(0, 8);
-    if (!_acAgentMatches.length) { drop.style.display='none'; return; }
-    _acPlace(drop);
-    drop.innerHTML = _acAgentMatches.map((a, i) => {
-      const name = [a.first_name, a.last_name].filter(Boolean).join(' ') || '—';
-      return `<div class="ac-item" ontouchstart="" onclick="acAgentSelect(${i})">
-        <div class="ac-name">🤝 ${name}</div>
-        <div class="ac-sub">${a.phone || a.login || ''}</div>
-      </div>`;
-    }).join('');
-    drop.style.display = 'block';
-  }, 200);
-}
-function acAgentSelect(idx) {
-  const a = _acAgentMatches[idx];
-  if (!a) return;
-  document.getElementById('ac_ld_agent').style.display = 'none';
-  const name = [a.first_name, a.last_name].filter(Boolean).join(' ');
-  document.getElementById('ld_agent_search').value = name + (a.phone||a.login ? ' · '+(a.phone||a.login) : '');
-  document.getElementById('ld_agent_id').value = a.id;
-}
 
 function openAgentPicker() {
   loadAgents();
@@ -10612,10 +10520,6 @@ function _sTogglePhotoSection() {
   }
 }
 
-function _sOpenPhotoSection() {
-  const body = document.getElementById('so-tab-photo');
-  if (body && body.style.display === 'none') _sTogglePhotoSection();
-}
 
 async function _sFetchActivity() {
   if (_sActivityCache) return _sActivityCache;
@@ -11461,10 +11365,6 @@ async function soSaveManualDiscount() {
   });
 }
 
-function sOpenPaymentModal() {
-  soSwitchTab('payment');
-  sLoadPaymentModal();
-}
 
 let _editingPaymentId = null;
 
@@ -11552,19 +11452,6 @@ async function sLoadCashiers() {
   sRenderCashierOptions();
 }
 
-async function sUploadReceipt(paymentId, input) {
-  const file = input.files[0];
-  if (!file) return;
-  const token = localStorage.getItem(TOKEN_KEY);
-  const form = new FormData();
-  form.append('file', file);
-  showToast('Загружаем чек…', 'info');
-  const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/payments/${paymentId}/receipt`, {
-    method: 'POST', headers:{ Authorization:`Bearer ${token}` }, body: form,
-  });
-  if (res.ok) { showToast('Чек загружен и отправлен в ТГ канал', 'success'); await sLoadPaymentModal(); }
-  else showToast('Ошибка загрузки', 'error');
-}
 
 function _cashierLabel(c) {
   const icon = c.role === 'admin' ? '👑' : '💰';
@@ -11588,9 +11475,6 @@ function sRenderCashierOptions() {
   if (cur) sel.value = cur;
 }
 
-function sClosePaymentModal() {
-  // no-op: payment is now a tab
-}
 
 function sPmSelectPurpose(p) {
   _sPmPurpose = p;
@@ -11865,8 +11749,6 @@ async function staffLoadOrderPhotos(orderId) {
   if (btn) btn.textContent = `${t('so.tab.photo')}${_sPhotoModalPhotos.length ? ' ('+_sPhotoModalPhotos.length+')' : ''}`;
 }
 
-function staffOpenPhotoModal() { soSwitchTab('items'); _sOpenPhotoSection(); }
-function staffClosePhotoModal() {}
 
 function staffRenderPhotoGrid() {
   const list = _sPhotoActiveType === 'all'
@@ -12798,11 +12680,6 @@ function staffRenderItems(items, containerEl) {
   }
 }
 
-async function smConfirmDirect(itemId) {
-  _measureItemId = itemId;
-  await smConfirm();
-  _measureItemId = null;
-}
 
 async function _soBulkToggle(forceOpen) {
   const box = document.getElementById('so_bulk_svc'), act = document.getElementById('so_bulk_actions');
@@ -13210,8 +13087,6 @@ function sifSwitchTab(tab) {
   }
 }
 
-function sifCustomService() { sifSwitchTab('custom'); }
-function sifFromPrice()      { sifSwitchTab('price');  }
 
 function sifFindPriceMatch(serviceName) {
   const prices = _sPrices || {};
@@ -15142,11 +15017,6 @@ function _playPayReviewSound() {
     ctx.state === 'suspended' ? ctx.resume().then(play) : play();
   } catch(e) {}
 }
-function _openOrderPaymentsFromBanner(orderId) {
-  closePayReviewBanner();
-  gotoPage('orders');
-  setTimeout(() => { staffOpenOrder(orderId); setTimeout(() => soSwitchTab('payments'), 600); }, 400);
-}
 async function _claimPosRequest(orderId) {
   closePosReqBanner();
   try {
@@ -15514,8 +15384,6 @@ async function smReject() {
 }
 
 // Legacy stubs (кнопки больше не используются, оставлены для совместимости)
-async function smConfirm() { await smSubmit(); }
-async function smSaveCorrect() { await smSubmit(); }
 
 document.addEventListener('input', e => {
   if (e.target.id === 'sif_sqm' || e.target.id === 'sif_price') sifUpdatePreview();
@@ -16838,7 +16706,6 @@ function _staffChatAppendMsg(msg) {
   box.scrollTop = box.scrollHeight;
 }
 
-function _updateActiveChatHeader() {}
 
 function backToChatList() {
   _staffChatCode = null;
