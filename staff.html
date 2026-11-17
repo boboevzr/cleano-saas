@@ -9144,7 +9144,6 @@ function _drvStopCard(stop, si, route) {
     <div style="display:flex;gap:6px;margin-top:8px">
       <button onclick="drvOpenItems(${ordId})" style="${_drvBtnStyle2()}">${t('drv.btn.positions')}</button>
       <button onclick="drvOpenHistory(${ordId})" style="${_drvBtnStyle2()}">${t('drv.btn.history')}</button>
-      <button onclick="loadDelivery(true)" style="${_drvBtnStyle2()}">${t('drv.btn.refresh')}</button>
       ${_drvCanManage() ? `<button onclick="drvRemoveStop(${Number(route.id)},${Number(ordId)})" title="Убрать из маршрута" style="${_drvBtnStyle2()};flex:0 0 auto;color:#ef4444">✕</button>` : ''}
     </div>`;
 
