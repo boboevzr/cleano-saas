@@ -7652,12 +7652,15 @@ function pageClients() {
         <input id="clientsSearch" placeholder="${t('cl.search_ph')}"
                oninput="clientSearchDebounce()" style="flex:1;border:none;background:transparent;font-size:16px;outline:none">
       </div>
+      <!-- Excel (выгрузка/загрузка/шаблон) — редкое, за «⋯» (чистка 17.11) -->
+      <button onclick="const r=document.getElementById('clientsXlsRow');r.style.display=r.style.display==='none'?'flex':'none'" title="Excel"
+              style="flex-shrink:0;width:42px;height:42px;background:var(--bg);color:var(--text2);border:1.5px solid var(--sep);border-radius:var(--radius-sm);font-size:20px;font-weight:700;cursor:pointer;line-height:1">⋯</button>
       <button onclick="openNewClientModal()"
               style="flex-shrink:0;width:42px;height:42px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:22px;font-weight:400;cursor:pointer;line-height:1">
         +
       </button>
     </div>
-    <div style="display:flex;gap:8px;padding:0 16px 10px">
+    <div id="clientsXlsRow" style="display:none;gap:8px;padding:0 16px 10px">
       <button onclick="exportClientsExcel()" style="flex:1;padding:9px;background:var(--green-bg);color:var(--green);border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer">${t('cl.export')}</button>
       <label style="flex:1;padding:9px;background:var(--accent-bg);color:var(--accent);border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;text-align:center;display:block">
         ${t('cl.import')}
