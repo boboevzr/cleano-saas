@@ -264,7 +264,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
   .desk-nav-item:hover{background:var(--bg);color:var(--text)}
   .desk-nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:600;}
   .desk-nav-item .dni{font-size:18px;width:24px;text-align:center;flex-shrink:0;}
-  .desk-sidebar-bottom{padding:12px;border-top:1px solid var(--sep);}
 
   /* Основная часть (топбар + контент) */
   .desk-main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;min-height:0;}
@@ -293,7 +292,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
   .desk-sidebar.nav-collapsed .desk-nav-item{padding:11px 0;justify-content:center;margin:1px 6px}
   .desk-sidebar.nav-collapsed .desk-nav-item .nav-label{display:none}
   .desk-sidebar.nav-collapsed .desk-nav-item .dni{width:auto;font-size:20px}
-  .desk-sidebar.nav-collapsed .desk-sidebar-bottom{display:none}
 }
 
 /* ── СТРАНИЦА: ДАШБОРД ── */
@@ -811,7 +809,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-s
       <div class="desk-company-slug" id="deskCompanySlug"></div>
     </div>
     <div class="desk-nav" id="deskNav"></div>
-    <div class="desk-sidebar-bottom" id="deskSidebarBottom"></div>
   </div>
 
   <!-- Main column -->
@@ -1716,7 +1713,7 @@ const _i18n = {
     'item.change':'— изменить —','item.unassign':'Снять мойщика','item.no_washer':'⚠️ Нет мойщика','item.assign':'— Назначить мойщика —',
     'msr.enter':'Ввести замер','msr.fix':'Исправить замер','msr.pending_mgr':'⏳ На проверке у менеджера',
     'msr.approved':'✅ Утверждён','msr.pending':'⏳ На проверке','msr.approved_full':'✅ Замер утверждён',
-    'msr.rejected':'❌ Отклонён','msr.take_review':'✋ Принять на проверку','msr.assign_first':'⚠️ Сначала назначьте мойщика',
+    'msr.rejected':'❌ Отклонён','msr.take_review':'✋ Принять на проверку','msr.assign_first':'⚠️ Сначала назначьте мойщика','more.actions':'Ещё','lead.this':'этот лид','msr.measured_by':'Замерил','msr.skip_ask':'Перейти без замера? Это будет записано в историю заказа.','soe.saved_status_fail':'✅ Данные заказа сохранены.\n⚠️ Статус не изменён: ',
     'btn.view':'Просмотр',
     'pm.currency':'сум',
     'pm.cash':'💵 Нал','pm.card':'💳 Карта','pm.transfer':'📲 Перевод',
@@ -2045,7 +2042,7 @@ const _i18n = {
     'item.change':'— oʻzgartirish —','item.unassign':'Yuvuvchini olish','item.no_washer':`⚠️ Yuvuvchi yoʻq`,'item.assign':'— Yuvuvchi belgilash —',
     'msr.enter':`Oʻlchovni kiritish`,'msr.fix':`Oʻlchovni tuzatish`,'msr.pending_mgr':`⏳ Menejer tekshiruvida`,
     'msr.approved':`✅ Tasdiqlandi`,'msr.pending':'⏳ Tekshiruvda','msr.approved_full':`✅ Oʻlchov tasdiqlandi`,
-    'msr.rejected':`❌ Rad etildi`,'msr.take_review':`✋ Tekshirishga olish`,'msr.assign_first':`⚠️ Avval yuvuvchi belgilang`,
+    'msr.rejected':`❌ Rad etildi`,'msr.take_review':`✋ Tekshirishga olish`,'msr.assign_first':`⚠️ Avval yuvuvchi belgilang`,'more.actions':`Yana`,'lead.this':`bu lid`,'msr.measured_by':`Oʻlchagan`,'msr.skip_ask':`Oʻlchovsiz oʻtkazilsinmi? Bu buyurtma tarixiga yoziladi.`,'soe.saved_status_fail':`✅ Buyurtma maʼlumotlari saqlandi.\n⚠️ Holat oʻzgarmadi: `,
     'btn.view':`Koʻrish`,
     'pm.currency':`soʻm`,
     'pm.cash':'💵 Naqd','pm.card':'💳 Karta','pm.transfer':`📲 Oʻtkazma`,
@@ -3526,7 +3523,7 @@ function pageDashboard() {
     </div>
     <div class="stats-row" id="statsRow">
       <div class="stat-tile"><div class="st-icon">📋</div><div class="st-val" id="ds_orders">—</div><div class="st-label">${t('dash.stat.orders')}</div></div>
-      <div class="stat-tile"><div class="st-icon">🎯</div><div class="st-val" id="ds_leads">—</div><div class="st-label">${t('dash.stat.leads')}</div></div>
+      ${hasPermission('leads') ? `<div class="stat-tile"><div class="st-icon">🎯</div><div class="st-val" id="ds_leads">—</div><div class="st-label">${t('dash.stat.leads')}</div></div>` : ''}
     </div>
     <div class="section-title">${t('dash.title')}</div>
     <div class="action-grid" style="margin-bottom:20px">
@@ -4153,7 +4150,7 @@ function renderLeads() {
         ${l.lead_code?`<span class="li-icon-code">${l.lead_code}</span>`:''}
       </div>
       <div class="li-body">
-        <div class="li-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b>${_esc(l.client_name)||t('lead.no_name')}</b> · ${_esc(l.client_phone)} ${assignBadge}${overdueBadge}${_prepayBadge(l)}</div>
+        <div class="li-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b>${_esc(l.client_name)||t('lead.no_name')}</b> ${assignBadge}${overdueBadge}${_prepayBadge(l)}</div>
         ${(l.short_address || l.address) ? `<div class="li-addr">📍 ${_esc(l.short_address || l.address)}</div>` : ''}
         <div class="li-sub">${fmtLeadDate(l.created_at)} · ${branchLabel(l.branch)}${agentStr?' · '+_esc(agentStr):''}</div>
         ${_callBtns(l.client_phone, l.client_phone2)}
@@ -4849,11 +4846,16 @@ function openLeadDetail(id) {
       <div id="callLogWrap"><div style="color:var(--text2);font-size:13px">${t('lead.log_loading')}</div></div>
     </div>
     ${!statusLocked ? `
-    <div style="padding:0 0 32px">
-      <button onclick="openDeleteLeadModal(${id},'${(lead.client_name||'этот лид').replace(/'/g,"\\'")}')\"
-        style="width:100%;padding:14px;background:none;border:1.5px solid #ff3b30;border-radius:14px;color:#ff3b30;font-size:15px;font-weight:600;cursor:pointer">
-        ${t('lead.delete')}
-      </button>
+    <div style="padding:0 0 32px;text-align:center">
+      <!-- Редкое действие — за «⋯ Ещё» (чистка 17.11); в onclick только id, имя берём по id -->
+      <button onclick="this.style.display='none';this.nextElementSibling.style.display='block'"
+        style="background:none;border:none;color:var(--text2);font-size:14px;font-weight:600;padding:8px 16px;cursor:pointer">⋯ ${t('more.actions')}</button>
+      <div style="display:none">
+        <button onclick="openDeleteLeadModal(${Number(id)}, (leadsData.find(x => x.id === ${Number(id)}) || {}).client_name || t('lead.this'))"
+          style="width:100%;padding:14px;background:none;border:1.5px solid #ff3b30;border-radius:14px;color:#ff3b30;font-size:15px;font-weight:600;cursor:pointer">
+          ${t('lead.delete')}
+        </button>
+      </div>
     </div>` : ''}`;
 
   loadLeadCalls(id);
@@ -4887,30 +4889,6 @@ async function loadLeadCalls(leadId) {
   }
 }
 
-async function convertLeadToOrder(leadId) {
-  const btn = document.getElementById('convertLeadBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Создаём заказ…'; }
-  const token = localStorage.getItem(TOKEN_KEY);
-  try {
-    const res = await fetch(`${API_BASE}/staff/leads/${leadId}/convert`, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({})
-    });
-    const d = await res.json();
-    if (res.ok && d.ok) {
-      await loadLeads();
-      gotoPage('orders');
-      alert(`✅ Заказ ${d.order_num} создан!`);
-    } else {
-      if (btn) { btn.disabled = false; btn.textContent = '📦 Создать заказ из лида'; }
-      alert(d.detail || 'Ошибка конвертации');
-    }
-  } catch(e) {
-    if (btn) { btn.disabled = false; btn.textContent = '📦 Создать заказ из лида'; }
-    alert('Ошибка: ' + e.message);
-  }
-}
 
 function openLeadEdit(id) {
   const lead = leadsData.find(l=>l.id===id); if (!lead) return;
@@ -5298,17 +5276,6 @@ function showToast(msg, type = 'default', duration) {
 let _cbAlertTimer = null;
 let _measureAlertTimer = null;
 
-function _startMeasureAlerts() {
-  _playMeasureSound();
-  if (navigator.vibrate) navigator.vibrate([400,150,400,150,400]);
-  let elapsed = 0;
-  _measureAlertTimer = setInterval(() => {
-    elapsed += 2;
-    if (elapsed >= 10) { clearInterval(_measureAlertTimer); _measureAlertTimer = null; return; }
-    _playMeasureSound();
-    if (navigator.vibrate) navigator.vibrate([300,100,300]);
-  }, 2000);
-}
 
 function _stopMeasureAlerts() {
   if (_measureAlertTimer) { clearInterval(_measureAlertTimer); _measureAlertTimer = null; }
@@ -6025,30 +5992,7 @@ async function submitDebtReject() {
 // ── Добавить кнопку «Принимаю на проверку» в модалку замера ─────────────────
 let _measureReviewClaimed = false;
 
-function smShowClaimButton(orderId, itemId) {
-  const footer = document.getElementById('sm_footer');
-  if (!footer || _measureReviewClaimed) return;
-  const claimBtn = `<button id="smClaimBtn" onclick="smClaimReview(${orderId},${itemId})"
-    style="flex:1;padding:14px;background:#f59e0b;color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer">
-    ✋ Принять на проверку
-  </button>`;
-  footer.innerHTML = claimBtn + footer.innerHTML;
-}
 
-async function smClaimReview(orderId, itemId) {
-  const btn = document.getElementById('smClaimBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳…'; }
-  try {
-    const token = localStorage.getItem(TOKEN_KEY);
-    await fetch(`${API_BASE}/admin/orders/${orderId}/items/${itemId}/measure/claim`, {
-      method: 'POST', headers: { Authorization: `Bearer ${token}` }
-    });
-    _measureReviewClaimed = true;
-    _measureAlertShown.add(itemId);
-    if (btn) btn.remove();
-    showToast('Вы приняли замер на проверку', 'success');
-  } catch(e) { showToast('Ошибка', 'error'); }
-}
 
 function initReminderPolling() {
   // Бейдж уведомлений
@@ -6329,40 +6273,6 @@ async function loadAgentOptions() {
 }
 const loadAgents = loadAgentOptions;
 
-let _acAgentTimer, _acAgentMatches = [];
-function acAgentInput(el) {
-  const q = el.value.trim().toLowerCase();
-  clearTimeout(_acAgentTimer);
-  const drop = document.getElementById('ac_ld_agent');
-  if (!drop) return;
-  if (!q) { drop.style.display='none'; document.getElementById('ld_agent_id').value=''; return; }
-  _acAgentTimer = setTimeout(() => {
-    _acAgentMatches = _allAgents.filter(a =>
-      (a.first_name||'').toLowerCase().includes(q) ||
-      (a.last_name||'').toLowerCase().includes(q) ||
-      (a.phone||'').includes(q) ||
-      (a.login||'').includes(q)
-    ).slice(0, 8);
-    if (!_acAgentMatches.length) { drop.style.display='none'; return; }
-    _acPlace(drop);
-    drop.innerHTML = _acAgentMatches.map((a, i) => {
-      const name = [a.first_name, a.last_name].filter(Boolean).join(' ') || '—';
-      return `<div class="ac-item" ontouchstart="" onclick="acAgentSelect(${i})">
-        <div class="ac-name">🤝 ${name}</div>
-        <div class="ac-sub">${a.phone || a.login || ''}</div>
-      </div>`;
-    }).join('');
-    drop.style.display = 'block';
-  }, 200);
-}
-function acAgentSelect(idx) {
-  const a = _acAgentMatches[idx];
-  if (!a) return;
-  document.getElementById('ac_ld_agent').style.display = 'none';
-  const name = [a.first_name, a.last_name].filter(Boolean).join(' ');
-  document.getElementById('ld_agent_search').value = name + (a.phone||a.login ? ' · '+(a.phone||a.login) : '');
-  document.getElementById('ld_agent_id').value = a.id;
-}
 
 function openAgentPicker() {
   loadAgents();
@@ -7738,7 +7648,7 @@ function renderOrders() {
       ${_ordersSelectMode ? `<input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();toggleOrderSelect(${o.id},this.closest('.list-item'))" style="width:20px;height:20px;flex-shrink:0;accent-color:#163E3B">` : `<div class="li-icon" style="background:${isExpress?'#fef3c7':'var(--green-bg)'}">${isExpress?'⚡':'📦'}</div>`}
       <div class="li-body">
         <div class="li-name">${sourceIcon(o.source)} #${(o.order_num||'').replace(/^[A-Z0-9]+-/,'')}${o.item_count > 0 ? `<span style="color:#888">/${o.item_count}</span>` : ''}${o.corrected_count > 0 ? `<span style="color:#f97316;font-size:11px;margin-left:5px">⚠️${o.corrected_count}</span>` : ''}${hasMeasure ? `<span style="background:#163E3B;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px">📐${measureCnt}</span>` : ''} ${_esc(o.client_first_name||'')} ${_esc(o.client_last_name||'')}</div>
-        <div class="li-sub">${o.client_phone ? `📞 ${_esc(o.client_phone)} · ` : ''}${_esc(o.service||'')}</div>
+        <div class="li-sub">${_esc(o.service||'')}</div>
         ${(o.short_address || o.address) ? `<div class="li-addr" title="${_esc(o.short_address || o.address || '').replace(/"/g, '&quot;')}">📍 ${_esc(o.short_address || o.address)}</div>` : ''}
         ${_dslotBadge(o) ? `<div style="margin-top:3px">${_dslotBadge(o)}${o.delivery_note ? ` <span style="font-size:11px;color:var(--text2)">📝 ${_esc(o.delivery_note)}</span>` : ''}</div>` : ''}
         ${_callBtns(o.client_phone, o.client_phone2)}
@@ -7772,12 +7682,15 @@ function pageClients() {
         <input id="clientsSearch" placeholder="${t('cl.search_ph')}"
                oninput="clientSearchDebounce()" style="flex:1;border:none;background:transparent;font-size:16px;outline:none">
       </div>
+      <!-- Excel (выгрузка/загрузка/шаблон) — редкое, за «⋯» (чистка 17.11) -->
+      <button onclick="const r=document.getElementById('clientsXlsRow');r.style.display=r.style.display==='none'?'flex':'none'" title="Excel"
+              style="flex-shrink:0;width:42px;height:42px;background:var(--bg);color:var(--text2);border:1.5px solid var(--sep);border-radius:var(--radius-sm);font-size:20px;font-weight:700;cursor:pointer;line-height:1">⋯</button>
       <button onclick="openNewClientModal()"
               style="flex-shrink:0;width:42px;height:42px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:22px;font-weight:400;cursor:pointer;line-height:1">
         +
       </button>
     </div>
-    <div style="display:flex;gap:8px;padding:0 16px 10px">
+    <div id="clientsXlsRow" style="display:none;gap:8px;padding:0 16px 10px">
       <button onclick="exportClientsExcel()" style="flex:1;padding:9px;background:var(--green-bg);color:var(--green);border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer">${t('cl.export')}</button>
       <label style="flex:1;padding:9px;background:var(--accent-bg);color:var(--accent);border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;text-align:center;display:block">
         ${t('cl.import')}
@@ -8617,13 +8530,8 @@ function pageProfile() {
         <span class="ir-icon">🔑</span>
         <div><div class="ir-label">${t('prof.login')}</div><div class="ir-val">${s.login}</div></div>
       </div>
-      <div class="info-row">
-        <span class="ir-icon">🎭</span>
-        <div><div class="ir-label">${t('prof.role')}</div><div class="ir-val">${_roleLabel(s.role)}</div></div>
-      </div>
       ${s.phone?`<div class="info-row"><span class="ir-icon">📞</span><div><div class="ir-label">${t('prof.phone')}</div><div class="ir-val"><a href="tel:${s.phone}">${s.phone}</a></div></div></div>`:''}
-      ${s.branch?`<div class="info-row"><span class="ir-icon">📍</span><div><div class="ir-label">${t('prof.branch')}</div><div class="ir-val">${branchLabel(s.branch)}</div></div></div>`:''}
-      ${s.birth_date?`<div class="info-row"><span class="ir-icon">🎂</span><div><div class="ir-label">${t('prof.birth')}</div><div class="ir-val">${new Date(s.birth_date).toLocaleDateString('ru-RU',{day:'2-digit',month:'long'})}</div></div></div>`:''}
+      ${s.birth_date && s.role!=='agent'?`<div class="info-row"><span class="ir-icon">🎂</span><div><div class="ir-label">${t('prof.birth')}</div><div class="ir-val">${new Date(s.birth_date).toLocaleDateString('ru-RU',{day:'2-digit',month:'long'})}</div></div></div>`:''}
     </div>
     ${s.role==='agent'?`
     <div style="margin-top:16px;background:var(--card-bg,var(--surface,#1a1d27));border-radius:18px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
@@ -9264,7 +9172,6 @@ function _drvStopCard(stop, si, route) {
     <div style="display:flex;gap:6px;margin-top:8px">
       <button onclick="drvOpenItems(${ordId})" style="${_drvBtnStyle2()}">${t('drv.btn.positions')}</button>
       <button onclick="drvOpenHistory(${ordId})" style="${_drvBtnStyle2()}">${t('drv.btn.history')}</button>
-      <button onclick="loadDelivery(true)" style="${_drvBtnStyle2()}">${t('drv.btn.refresh')}</button>
       ${_drvCanManage() ? `<button onclick="drvRemoveStop(${Number(route.id)},${Number(ordId)})" title="Убрать из маршрута" style="${_drvBtnStyle2()};flex:0 0 auto;color:#ef4444">✕</button>` : ''}
     </div>`;
 
@@ -10047,7 +9954,6 @@ document.addEventListener('click', e => {
         <div>
           <div id="soLblCreated" style="font-size:11px;color:#888;margin-bottom:2px">Создан</div>
           <div id="so_service" style="font-weight:600;font-size:13px;color:#1a1a1a"></div>
-          <div id="so_date" style="font-size:12px;color:#888"></div>
           <div id="so_deadline_wrap" style="display:none;margin-top:4px">
             <span id="soLblDeadline" style="font-size:11px;color:#888">Дедлайн: </span>
             <span id="so_deadline" style="font-size:12px;font-weight:600"></span>
@@ -10640,10 +10546,6 @@ function _sTogglePhotoSection() {
   }
 }
 
-function _sOpenPhotoSection() {
-  const body = document.getElementById('so-tab-photo');
-  if (body && body.style.display === 'none') _sTogglePhotoSection();
-}
 
 async function _sFetchActivity() {
   if (_sActivityCache) return _sActivityCache;
@@ -10747,6 +10649,44 @@ async function soRecalcAutoDiscounts() {
 
 let _activeOrderModal = 'staff'; // 'staff' | 'washer'
 
+// ── Этап замера (16.11.2026) — из настроек компании: received / washing / drying / packing.
+// Мерить можно от этапа до доставки; дальше этапа без утверждённых замеров сервер не пускает
+// (409 measure_required) — админ/менеджер могут пропустить с подтверждением.
+let _measureStage = 'washing';
+const _MSR_FLOW = ['new','confirmed','pickup','received','washing','drying','packing','ready','delivery','delivered'];
+function _inMeasureWindow(st) {
+  const i = _MSR_FLOW.indexOf(st);
+  // менеджер мерит уже с «В мастерской» — независимо от этапа замера (перенос из ARTEZ 17.11)
+  let from = _MSR_FLOW.indexOf(_measureStage);
+  if (currentStaff?.role === 'manager') from = Math.min(from, _MSR_FLOW.indexOf('received'));
+  return i >= 0 && i >= from && i < _MSR_FLOW.indexOf('delivery');
+}
+// SaaS: этап — настройка компании, читаем по токену сотрудника (до входа токена нет —
+// повторяем при открытии заказа, см. staffOpenOrder).
+let _measureStageLoaded = false;
+async function _loadMeasureStage() {
+  if (_measureStageLoaded || !_staffToken()) return;
+  try {
+    const d = await fetch(`${API_BASE}/staff/settings/measure-stage`, { headers: { Authorization: `Bearer ${_staffToken()}` } }).then(r => r.json());
+    if (d?.stage) { _measureStage = d.stage; _measureStageLoaded = true; }
+  } catch (e) {}
+}
+_loadMeasureStage();
+// Смена статуса заказа: на 409 «не все замеры утверждены» админ/менеджер подтверждает пропуск.
+async function _patchOrderStatus(orderId, body, ask = true) {
+  const send = b => fetch(`${API_BASE}/admin/orders/${orderId}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_staffToken()}` },
+    body: JSON.stringify(b),
+  });
+  const res = await send(body);
+  if (res.status !== 409 || !ask) return res;
+  const d = await res.clone().json().catch(() => ({}));
+  if (d.code !== 'measure_required' || !d.can_skip) return res;
+  if (!confirm(`⚠️ ${d.detail}\n\n${t('msr.skip_ask')}`)) return res;
+  return send({ ...body, skip_measure: true });
+}
+
 let _washersList = [];
 async function _loadWashers() {
   if (_washersList.length) return _washersList;
@@ -10774,6 +10714,7 @@ async function staffSetItemWasher(itemId, login) {
 }
 
 async function staffOpenOrder(orderId) {
+  await _loadMeasureStage();
   if (currentStaff?.role === 'washer') {
     return washerOpenOrder(orderId);
   }
@@ -10797,7 +10738,6 @@ async function staffOpenOrder(orderId) {
   document.getElementById('so_summary_address').textContent = '';
   document.getElementById('so_phone').textContent        = '';
   document.getElementById('so_service').textContent      = '';
-  document.getElementById('so_date').textContent         = '';
   document.getElementById('so_short_address').textContent= '';
   document.getElementById('so_address').textContent      = '';
   document.getElementById('so_total').textContent        = '—';
@@ -10867,7 +10807,6 @@ async function staffOpenOrder(orderId) {
   if (_newOrdBtn) _newOrdBtn.style.display = hasPermission('orders') ? '' : 'none';
   const soCreatedAt = o.created_at ? (_parseUTC(o.created_at)||new Date()).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:_TZ}) : '—';
   document.getElementById('so_service').textContent= soCreatedAt;
-  document.getElementById('so_date').textContent   = '';
   document.getElementById('so_short_address').textContent = o.short_address || '—';
   document.getElementById('so_address').textContent= o.address || '';
   const soSvcRow = document.getElementById('so_service_row');
@@ -10922,7 +10861,9 @@ async function staffOpenOrder(orderId) {
   const _isAdminOpening = currentStaff?.role === 'admin';
   const _noAddAfterWash = _isAdminOpening
     ? ['delivered','cancelled'].includes(o.status)
-    : ['drying','packing','ready','delivery','delivered','cancelled'].includes(o.status);
+    : currentStaff?.role === 'manager'
+      ? _MANAGER_ITEM_EDIT_LOCKED_STATUSES.has(o.status)
+      : ['drying','packing','ready','delivery','delivered','cancelled'].includes(o.status);
   const _soAddRow  = document.getElementById('so_add_btn_row');
   const _soBulkRow = document.getElementById('so_bulk_row');
   if (_soAddRow)  _soAddRow.style.display  = _noAddAfterWash ? 'none' : '';
@@ -11448,10 +11389,6 @@ async function soSaveManualDiscount() {
   });
 }
 
-function sOpenPaymentModal() {
-  soSwitchTab('payment');
-  sLoadPaymentModal();
-}
 
 let _editingPaymentId = null;
 
@@ -11539,19 +11476,6 @@ async function sLoadCashiers() {
   sRenderCashierOptions();
 }
 
-async function sUploadReceipt(paymentId, input) {
-  const file = input.files[0];
-  if (!file) return;
-  const token = localStorage.getItem(TOKEN_KEY);
-  const form = new FormData();
-  form.append('file', file);
-  showToast('Загружаем чек…', 'info');
-  const res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/payments/${paymentId}/receipt`, {
-    method: 'POST', headers:{ Authorization:`Bearer ${token}` }, body: form,
-  });
-  if (res.ok) { showToast('Чек загружен и отправлен в ТГ канал', 'success'); await sLoadPaymentModal(); }
-  else showToast('Ошибка загрузки', 'error');
-}
 
 function _cashierLabel(c) {
   const icon = c.role === 'admin' ? '👑' : '💰';
@@ -11575,9 +11499,6 @@ function sRenderCashierOptions() {
   if (cur) sel.value = cur;
 }
 
-function sClosePaymentModal() {
-  // no-op: payment is now a tab
-}
 
 function sPmSelectPurpose(p) {
   _sPmPurpose = p;
@@ -11852,8 +11773,6 @@ async function staffLoadOrderPhotos(orderId) {
   if (btn) btn.textContent = `${t('so.tab.photo')}${_sPhotoModalPhotos.length ? ' ('+_sPhotoModalPhotos.length+')' : ''}`;
 }
 
-function staffOpenPhotoModal() { soSwitchTab('items'); _sOpenPhotoSection(); }
-function staffClosePhotoModal() {}
 
 function staffRenderPhotoGrid() {
   const list = _sPhotoActiveType === 'all'
@@ -12420,16 +12339,15 @@ async function _doSaveOrderEdit(newStatus, reason) {
         }).catch(() => {});
       }
     }
-    // Если нужно сменить статус — делаем отдельным запросом с примечанием
+    // Если нужно сменить статус — отдельным запросом с примечанием. Данные заказа к этому
+    // моменту уже сохранены: если статус сменить нельзя, правки НЕ теряем — доводим
+    // сохранение до конца и отдельно говорим, почему статус не изменился (16.11.2026).
+    let _statusFailMsg = '';
     if (newStatus) {
-      const sRes = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/status`, {
-        method:'PATCH', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
-        body: JSON.stringify({ status: newStatus, note: reason || '' })
-      });
+      const sRes = await _patchOrderStatus(_sOrderId, { status: newStatus, note: reason || '' });
       if (!sRes.ok) {
         const sErr = await sRes.json().catch(()=>({}));
-        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = t('soe.save'); }
-        showToast(sErr.detail || t('soe.status_error'), 'error'); return;
+        _statusFailMsg = sErr.detail || t('soe.status_error');
       }
     }
     // Если тип изменился — обновить цены всех позиций из прайса
@@ -12466,8 +12384,9 @@ async function _doSaveOrderEdit(newStatus, reason) {
     staffCloseOrderEdit();
     staffCloseOrder();
     const _savedId = _sOrderId;
+    if (_statusFailMsg) alert(t('soe.saved_status_fail') + _statusFailMsg);
     // Переключить фильтр на вкладку нового статуса, обновить список, подсветить и открыть карточку
-    if (newStatus) {
+    if (newStatus && !_statusFailMsg) {
       setOrdersFilter(newStatus);
       await loadOrders();
       setTimeout(() => { _highlightOrderInList(_savedId); staffOpenOrder(_savedId); }, 150);
@@ -12538,6 +12457,13 @@ function _doOpenMap(type) {
 // модалки замера), иначе они расходятся: список правильно скрывает ✏️, а
 // модалка замера всё равно даёт редактировать/удалять фото через 👁.
 const _NONADMIN_ITEM_EDIT_LOCKED_STATUSES = new Set(['packing','ready','delivery','delivered','cancelled']);
+// 17.11.2026 (владелец): менеджер после мойки тоже добавляет/правит позиции и мерит — до доставки.
+const _MANAGER_ITEM_EDIT_LOCKED_STATUSES = new Set(['delivery','delivered','cancelled']);
+function _itemEditLocked(st) {
+  if (currentStaff?.role === 'admin' || currentStaff?.can_edit_price === true) return ['delivered','cancelled'].includes(st);
+  if (currentStaff?.role === 'manager') return _MANAGER_ITEM_EDIT_LOCKED_STATUSES.has(st);
+  return _NONADMIN_ITEM_EDIT_LOCKED_STATUSES.has(st);
+}
 
 function staffRenderItems(items, containerEl) {
   const el = containerEl || document.getElementById('so_items');
@@ -12568,17 +12494,16 @@ function staffRenderItems(items, containerEl) {
   // Право can_edit_price расширяет доступ до уровня админа (Упаковка/Готов/Доставка) —
   // перенос из прод, см. запрос пользователя 2026-09-16.
   const _canBypassItemLock = _isAdminItems || currentStaff?.can_edit_price === true;
-  const _editLockedByStatus = _canBypassItemLock
-    ? ['delivered','cancelled'].includes(_sOrderStatus)
-    : _NONADMIN_ITEM_EDIT_LOCKED_STATUSES.has(_sOrderStatus);
+  const _editLockedByStatus = _itemEditLocked(_sOrderStatus);
   const canEdit           = !_editLockedByStatus && currentStaff?.can_edit_items !== false;
   const canMeasure        = !!currentStaff?.can_measure;
   const canApproveMeasure = !!currentStaff?.can_approve_measure;
   const isWashingPhase    = _sOrderStatus === 'washing';
+  const isMeasurePhase    = _inMeasureWindow(_sOrderStatus);   // этап замера (настройка) … до доставки
   // Назначать/менять мойщика можно и до статуса «Мойка» (например замер провёл
   // менеджер на приёмке) — иначе некому исправить назначение и перейти в «Мойка».
   const canManageWasher   = !['delivered','cancelled'].includes(_sOrderStatus);
-  const needsMeasure      = (canMeasure || canApproveMeasure) && isWashingPhase;
+  const needsMeasure      = (canMeasure || canApproveMeasure) && isMeasurePhase;
 
   // Название услуги на текущем языке интерфейса. Новые позиции хранят готовые service_ru/
   // service_uz (заполняются при сохранении из справочника — см. smcGetServiceBilingual) —
@@ -12633,7 +12558,10 @@ function staffRenderItems(items, containerEl) {
 
     // Блок замера
     let measureBlock = '';
-    const dimInfo = _posUnitKey === 'pcs'
+    // Размеры уже показаны строкой под названием (когда есть услуга и площадь/кол-во) —
+    // в статусе замера их не повторяем (чистка 17.11)
+    const _dimsLineShown = !!(it.service && parseFloat(it.sqm||0) > 0);
+    const dimInfo = _dimsLineShown ? '' : _posUnitKey === 'pcs'
       ? (it.sqm ? `${parseFloat(it.sqm).toFixed(0)} ${t('unit.pcs')}` : '')
       : (hasDims ? `${it.width_cm}×${it.length_cm} ${t('unit.cm')} → ${parseFloat(it.sqm||0).toFixed(2)} ${t('unit.m2')}` : (it.sqm ? `${parseFloat(it.sqm).toFixed(2)} ${t('unit.m2')}` : ''));
 
@@ -12710,10 +12638,13 @@ function staffRenderItems(items, containerEl) {
       }
     }
 
-    const _editFn = (isWashingPhase || _isAdminItems || currentStaff?.can_override_measure) ? `staffOpenMeasure(${it.id})` : `staffOpenItemForm(${it.id})`;
+    const _mgrItemForm = currentStaff?.role === 'manager' && !currentStaff?.can_override_measure && ms === 'approved';
+    const _editFn = (!_mgrItemForm && (isMeasurePhase || _isAdminItems || currentStaff?.can_override_measure)) ? `staffOpenMeasure(${it.id})` : `staffOpenItemForm(${it.id})`;
+    // Есть большая кнопка «📐 Ввести/Исправить замер» — ✏️ открывал бы то же окно, не дублируем (чистка 17.11)
+    const _hasMsrBtn = needsMeasure && (ms === 'pending' || ms === 'rejected');
     const editBtns = !isWasher && canEdit
-      ? `<button onclick="${_editFn}" style="background:none;border:none;cursor:pointer;font-size:15px;padding:2px">✏️</button>
-         <button onclick="staffDeleteItem(${it.id})" style="background:rgba(239,68,68,.1);border:none;cursor:pointer;font-size:13px;padding:3px 6px;border-radius:6px;color:#ef4444">✕</button>`
+      ? `${_hasMsrBtn ? '' : `<button onclick="${_editFn}" style="background:none;border:none;cursor:pointer;font-size:15px;padding:2px">✏️</button>`}
+         ${['admin','manager'].includes(currentStaff?.role) ? `<button onclick="staffDeleteItem(${it.id})" style="background:rgba(239,68,68,.1);border:none;cursor:pointer;font-size:13px;padding:3px 6px;border-radius:6px;color:#ef4444">✕</button>` : ''}`
       : (!isWasher && _editLockedByStatus
           ? `<button onclick="staffOpenMeasure(${it.id})" style="background:none;border:none;cursor:pointer;font-size:15px;padding:2px" title="${t('btn.view')}">👁</button>`
           : '');
@@ -12738,16 +12669,15 @@ function staffRenderItems(items, containerEl) {
         ${(it.service && parseFloat(it.sqm||0) > 0)
           ? `<div style="font-size:12px;color:#888;margin-top:2px">${hasDims ? it.width_cm+'×'+it.length_cm+' '+t('unit.cm')+' · ' : ''}${_posUnitKey === 'pcs' ? parseFloat(it.sqm).toFixed(0)+' '+t('unit.pcs') : parseFloat(it.sqm).toFixed(2)+' '+t('unit.m2')}</div>`
           : ''}
-        ${measureBlock}${washerBadge}${managerWasherRow}
-        ${!isWasher && canApproveMeasure && isWashingPhase && ms === 'submitted'
-          ? it.washer_login
-            ? `<button onclick="_claimAndOpenMeasure(${_sOrderId},${it.id},this)"
+        ${measureBlock}
+        ${it.measured_by_name && ms !== 'pending'
+          ? `<div style="margin-top:2px;font-size:11px;color:#6b7280">📐 ${t('msr.measured_by')}: ${_esc(it.measured_by_name)}</div>`
+          : ''}${washerBadge}${managerWasherRow}
+        ${!isWasher && canApproveMeasure && isMeasurePhase && ms === 'submitted'
+          ? `<button onclick="_claimAndOpenMeasure(${_sOrderId},${it.id},this)"
                 style="margin-top:7px;width:100%;padding:7px;background:#f59e0b;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">
                 ${t('msr.take_review')}
                </button>`
-            : `<div style="margin-top:6px;padding:5px 10px;background:#fef3c7;border:1px solid #fde047;border-radius:8px;font-size:11px;color:#92400e;font-weight:600">
-                ${t('msr.assign_first')}
-               </div>`
           : ''}
       </div>
       <div style="text-align:right;flex-shrink:0">
@@ -12779,11 +12709,6 @@ function staffRenderItems(items, containerEl) {
   }
 }
 
-async function smConfirmDirect(itemId) {
-  _measureItemId = itemId;
-  await smConfirm();
-  _measureItemId = null;
-}
 
 async function _soBulkToggle(forceOpen) {
   const box = document.getElementById('so_bulk_svc'), act = document.getElementById('so_bulk_actions');
@@ -13191,8 +13116,6 @@ function sifSwitchTab(tab) {
   }
 }
 
-function sifCustomService() { sifSwitchTab('custom'); }
-function sifFromPrice()      { sifSwitchTab('price');  }
 
 function sifFindPriceMatch(serviceName) {
   const prices = _sPrices || {};
@@ -13470,11 +13393,7 @@ async function staffChangeStatus(newStatus, packerLogin) {
   if (packerLogin) body.packer_login = packerLogin;
   let res;
   try {
-    res = await fetch(`${API_BASE}/admin/orders/${_sOrderId}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type':'application/json', Authorization:`Bearer ${_staffToken()}` },
-      body: JSON.stringify(body),
-    });
+    res = await _patchOrderStatus(_sOrderId, body);
   } catch(e) {
     if (btn) { btn.disabled = false; btn.textContent = _origLabel; }
     showToast('Нет соединения', 'error'); return;
@@ -13921,11 +13840,7 @@ function staffPrepareDrying() {
     showToast(`${noWasher.length} позиц${noWasher.length === 1 ? 'ия не закреплена' : 'ии не закреплены'} за мойщиком — назначьте мойщика перед передачей на сушку`, 'warning');
     return;
   }
-  const notApproved = items.filter(i => (i.measure_status || 'pending') !== 'approved');
-  if (notApproved.length > 0) {
-    showToast(`Не все позиции проверены: ${notApproved.length} из ${items.length} не утверждено`, 'warning');
-    return;
-  }
+  // Замеры проверяет сервер по этапу замера из настроек (409 → админ/менеджер может пропустить)
   staffChangeStatus('drying');
 }
 
@@ -14454,9 +14369,9 @@ async function staffOpenMeasure(itemId) {
   const myLogin = currentStaff?.login || '';
   const isWasherRole = currentStaff?.role === 'washer';
   const isMyItem = !!item.washer_login && item.washer_login === myLogin;
-  // Автоклейм для любого с can_measure в статусе Мойка (мойщики и менеджеры с полным замером).
-  // Если позиция свободна или уже за этим сотрудником — re-claim идемпотентен.
-  if (canMeasure && _sOrderStatus === 'washing' && (ms === 'pending' || ms === 'rejected')) {
+  // Автоклейм — только МОЙЩИКУ в статусе Мойка (washer_login = его ЗП за мойку). Менеджер и
+  // другие с правом замера мерят без закрепления: «Замерил» пишется отдельно (16.11.2026).
+  if (canMeasure && isWasherRole && _sOrderStatus === 'washing' && (ms === 'pending' || ms === 'rejected')) {
     if (!item.washer_login || item.washer_login === myLogin) {
       const claimed = await staffClaimItem(itemId, true);
       if (claimed === false) return; // позиция удалена — _reloadItemsOnNotFound уже обновил список
@@ -14465,9 +14380,11 @@ async function staffOpenMeasure(itemId) {
   }
   const isAdminMeasure     = currentStaff?.role === 'admin';
   const _adminCanEdit      = isAdminMeasure && !['delivered','cancelled'].includes(_sOrderStatus);
-  const _overrideMeasure   = !isAdminMeasure && !!currentStaff?.can_override_measure && !_NONADMIN_ITEM_EDIT_LOCKED_STATUSES.has(_sOrderStatus);
-  const _canEnterMeasure   = canMeasure && item.washer_login === myLogin;
-  _smCanEdit     = _adminCanEdit || _overrideMeasure || (_canEnterMeasure && _sOrderStatus === 'washing' && (ms === 'pending' || ms === 'rejected'));
+  const _overrideMeasure   = !isAdminMeasure && !!currentStaff?.can_override_measure
+    && !(currentStaff?.role === 'manager' ? _itemEditLocked(_sOrderStatus) : _NONADMIN_ITEM_EDIT_LOCKED_STATUSES.has(_sOrderStatus));
+  // Мойщик мерит свободную или свою позицию; остальные с правом замера — любую.
+  const _canEnterMeasure   = canMeasure && (!isWasherRole || !item.washer_login || item.washer_login === myLogin);
+  _smCanEdit     = _adminCanEdit || _overrideMeasure || (_canEnterMeasure && _inMeasureWindow(_sOrderStatus) && (ms === 'pending' || ms === 'rejected'));
   _smIsAdminEdit = _adminCanEdit || _overrideMeasure;
   _smFullMeasure = !isAdminMeasure && canMeasure && canApproveMeasure;
 
@@ -15129,11 +15046,6 @@ function _playPayReviewSound() {
     ctx.state === 'suspended' ? ctx.resume().then(play) : play();
   } catch(e) {}
 }
-function _openOrderPaymentsFromBanner(orderId) {
-  closePayReviewBanner();
-  gotoPage('orders');
-  setTimeout(() => { staffOpenOrder(orderId); setTimeout(() => soSwitchTab('payments'), 600); }, 400);
-}
 async function _claimPosRequest(orderId) {
   closePosReqBanner();
   try {
@@ -15501,8 +15413,6 @@ async function smReject() {
 }
 
 // Legacy stubs (кнопки больше не используются, оставлены для совместимости)
-async function smConfirm() { await smSubmit(); }
-async function smSaveCorrect() { await smSubmit(); }
 
 document.addEventListener('input', e => {
   if (e.target.id === 'sif_sqm' || e.target.id === 'sif_price') sifUpdatePreview();
@@ -16825,7 +16735,6 @@ function _staffChatAppendMsg(msg) {
   box.scrollTop = box.scrollHeight;
 }
 
-function _updateActiveChatHeader() {}
 
 function backToChatList() {
   _staffChatCode = null;
@@ -17476,26 +17385,9 @@ function staffChatSend() {
   </div>
 </div>
 
-<!-- ОВЕРЛЕЙ: ВЫБОР ГЕОЛОКАЦИИ (для редактирования заказа) -->
-<div id="soeLocOverlay" style="display:none;position:fixed;inset:0;z-index:1600;flex-direction:column;background:#fff">
-  <div style="display:flex;align-items:center;padding:16px;gap:12px;border-bottom:1px solid #e5e7eb;flex-shrink:0">
-    <button onclick="closeSoeLocPicker()" style="background:none;border:none;font-size:22px;color:#6b7280;cursor:pointer">✕</button>
-    <div style="font-size:16px;font-weight:700;flex:1">📍 Выбор локации</div>
-    <button onclick="confirmSoeLocation()" style="padding:9px 18px;border:none;border-radius:10px;background:#163E3B;color:#fff;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation">Готово</button>
-  </div>
-  <div id="soe_map_wrap" style="flex:1;position:relative">
-    <div id="soe_map" style="width:100%;height:100%"></div>
-    <div style="position:absolute;bottom:50px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;font-size:12px;padding:5px 14px;border-radius:20px;pointer-events:none;z-index:999;white-space:nowrap">Перетащите метку на нужное место</div>
-  </div>
-  <div id="soe_loc_addr_bar" style="padding:12px 16px;background:#f9fafb;border-top:1px solid #e5e7eb;font-size:13px;color:#374151;flex-shrink:0;min-height:44px">Определяем адрес…</div>
-</div>
-
-<!-- МОДАЛКА: РЕДАКТИРОВАНИЕ ДАННЫХ ЗАКАЗА (стиль = Новая заявка) -->
-<!-- МОДАЛКА: ВЫБОР КАРТЫ -->
 <!-- TOAST BOX -->
 <div id="staffToastBox"></div>
 
-<!-- CALLBACK BANNER -->
 <!-- PHOTO VIEWER (staff) -->
 <div id="sPhotoViewerOverlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.95);align-items:center;justify-content:center;flex-direction:column">
   <button onclick="closeSPhotoViewer()" style="position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:30px;cursor:pointer">✕</button>
