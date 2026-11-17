@@ -4581,7 +4581,8 @@ async function _printSelectedOrdersImpl() {
       // Суммы — каждая отдельной строкой (одна строка текста на div — требование
       // термопринтера, см. выше; 2026-10-21): «Итого» = сумма заказа + скидка (если есть),
       // «Оплачено/К оплате» = оплачено (если есть) + к оплате (всегда).
-      else if (b.id === 'total')       content = [`Сумма заказа: ${fmtMoney(gross)}`, printDisc > 0 ? `Скидка: −${fmtMoney(printDisc)}` : ''];
+      else if (b.id === 'total')       content = [`Сумма заказа: ${fmtMoney(gross)}`, printDisc > 0 ? `Скидка: −${fmtMoney(printDisc)}` : '',
+                                                  (o.manual_discount_pct != null && Number(o.manual_discount) > 0) ? `в т.ч. скидка ${_fmtPct(o.manual_discount_pct)} % — ${fmtMoney(Number(o.manual_discount))}` : ''];
       else if (b.id === 'payment')     content = [paid > 0 ? `Оплачено: ${fmtMoney(paid)}` : '', `К оплате: ${fmtMoney(due)}`];
       if (Array.isArray(content)) content = content.filter(Boolean);
       if (!content || !content.length) return '';
@@ -10193,13 +10194,20 @@ document.addEventListener('click', e => {
         </div>
         <!-- Скидка (ручная) -->
         <div id="so_manual_disc_box" style="background:#f3f4f6;border-radius:10px;padding:10px 12px">
-          <div id="soLblDiscount" style="font-size:11px;color:#888;margin-bottom:4px">Скидка</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:4px">
+            <div id="soLblDiscount" style="font-size:11px;color:#888">Скидка</div>
+            <div id="soMdMode" style="display:inline-flex;border:1px solid #d1d5db;border-radius:999px;overflow:hidden;flex-shrink:0"><!-- сум / % (16.11.2026) -->
+              <button type="button" data-md="sum" onclick="soSetManualMode('sum')" style="border:none;padding:1px 7px;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit">сум</button>
+              <button type="button" data-md="pct" onclick="soSetManualMode('pct')" style="border:none;padding:1px 7px;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit">%</button>
+            </div>
+          </div>
           <div style="display:flex;align-items:baseline;gap:3px">
-            <input type="number" id="so_manual_disc_input" min="0" step="100" inputmode="numeric"
+            <input type="text" id="so_manual_disc_input" inputmode="decimal" autocomplete="off"
               style="width:100%;border:none;background:transparent;font-weight:700;font-size:15px;color:#1a1a1a;outline:none;font-family:inherit;padding:0"
               oninput="soUpdateManualDiscount()" onblur="soSaveManualDiscount()">
             <span id="soManualDiscCur" style="font-size:11px;color:#888;white-space:nowrap">сум</span>
           </div>
+          <div id="soManualDiscHint" style="display:none;font-size:11px;color:#15803d;font-weight:700;margin-top:2px"></div>
         </div>
         <!-- Оплачено -->
         <div style="background:#f0fdf4;border-radius:10px;padding:10px 12px">
@@ -11286,6 +11294,11 @@ let _sItemsTotal = 0;
 let _sDiscountSum = 0;
 let _sDeliveryDiscount = 0;
 let _sManualDiscount = 0;
+let _sManualPct = null;      // ручная скидка в % (manual_discount_pct), null — суммой (16.11.2026)
+let _sManualMode = 'sum';    // что вводит сотрудник: 'sum' | 'pct'
+// «12,52» / «12.52» → 12.52; пусто → 0; неверно → NaN
+function _parsePct(v) { const t = String(v ?? '').trim().replace(/\s/g, '').replace(',', '.'); if (!t) return 0; return /^\d+(\.\d+)?$/.test(t) ? Number(t) : NaN; }
+function _fmtPct(p) { return Number(p).toLocaleString('ru', { maximumFractionDigits: 2 }); }
 // Скидка клиента (реклама 2026-10-17): процент и тип решает сервер
 // (db.recalc_client_discount), сумму показываем от текущего итога позиций по той
 // же формуле (half-up), чтобы она сразу менялась при правке позиций.
@@ -11328,6 +11341,8 @@ async function sLoadOrderPayment(o) {
   _sDiscountSum      = parseFloat(o.discount_sum      || 0);
   _sDeliveryDiscount = parseFloat(o.delivery_discount || 0);
   _sManualDiscount   = parseFloat(o.manual_discount   || 0);
+  _sManualPct        = (o.manual_discount_pct != null && o.manual_discount_pct !== '') ? parseFloat(o.manual_discount_pct) : null;
+  _sManualMode       = _sManualPct != null ? 'pct' : 'sum';
   _sClientDiscPct    = parseFloat(o.client_discount_pct || 0);
   _sClientDiscKind   = o.client_discount_kind || null;
   _sClientDiscEnabled = o.client_discount_enabled !== false;
@@ -11396,28 +11411,92 @@ function sUpdatePaymentDisplay() {
   if (mdBox) {
     const hasDiscBoxes = true;  // блок системной скидки виден всегда
     mdBox.style.gridColumn = hasDiscBoxes ? '' : '1 / -1';
+    // перенос из ARTEZ fd1e175: ручную скидку дают админ, менеджер и те, у кого в карточке «Может давать скидку».
+    // Остальным поле не показываем; уже данная скидка видна (только чтение).
+    const canDisc = _sCanGiveDiscount();
+    mdBox.style.display = (canDisc || manualDiscount > 0) ? '' : 'none';
+    if (mdInput) mdInput.readOnly = !canDisc;
+    if (el('soMdMode')) el('soMdMode').style.display = canDisc ? '' : 'none';
   }
   if (el('so_selfpickup_disc_val'))  el('so_selfpickup_disc_val').textContent  = _sDiscountSum      > 0 ? Number(Math.round(_sDiscountSum)).toLocaleString('ru')      : '0';
   if (el('so_selfdelivery_disc_val')) el('so_selfdelivery_disc_val').textContent = _sDeliveryDiscount > 0 ? Number(Math.round(_sDeliveryDiscount)).toLocaleString('ru') : '0';
+  const isPct = _sManualMode === 'pct';
   if (el('so_manual_disc_input') && document.activeElement !== mdInput)
-    el('so_manual_disc_input').value = manualDiscount > 0 ? Math.round(manualDiscount) : '';
+    el('so_manual_disc_input').value = isPct ? (_sManualPct != null ? _fmtPct(_sManualPct) : '')
+                                             : (manualDiscount > 0 ? Math.round(manualDiscount) : '');
+  if (el('so_manual_disc_input')) el('so_manual_disc_input').placeholder = isPct ? '12,52' : '0';
+  if (el('soManualDiscCur')) el('soManualDiscCur').textContent = isPct ? '%' : t('pm.currency');
+  document.querySelectorAll('#soMdMode button').forEach(b => {
+    const on = b.dataset.md === _sManualMode;
+    b.style.background = on ? '#163E3B' : 'transparent'; b.style.color = on ? '#fff' : '#6b7280';
+  });
+  if (el('soLblDiscount')) el('soLblDiscount').textContent = (_sManualPct != null && isPct)
+    ? `${t('so.lbl.discount')} ${_fmtPct(_sManualPct)} %` : t('so.lbl.discount');
+  const hint = el('soManualDiscHint');
+  if (hint) { hint.style.display = isPct && manualDiscount > 0 ? '' : 'none';
+              hint.textContent = isPct && manualDiscount > 0 ? `= ${Number(Math.round(manualDiscount)).toLocaleString('ru')} ${t('pm.currency')}` : ''; }
+}
+
+function soSetManualMode(mode) {
+  if (mode === _sManualMode) return;
+  _sManualMode = mode;
+  const inp = document.getElementById('so_manual_disc_input');
+  if (inp) { inp.value = ''; inp.focus(); }   // новое значение — вводится заново, сохраняется по уходу с поля
+  sUpdatePaymentDisplay();
 }
 
 function soUpdateManualDiscount() {
-  const val = parseFloat(document.getElementById('so_manual_disc_input')?.value) || 0;
-  _sManualDiscount = val;
+  const raw = document.getElementById('so_manual_disc_input')?.value;
+  if (_sManualMode === 'pct') {
+    const p = _parsePct(raw);   // предпросмотр; точную сумму считает сервер
+    _sManualDiscount = (p > 0 && p <= 100) ? Math.round(_sItemsTotal * p / 100) : 0;
+  } else {
+    _sManualDiscount = parseFloat(raw) || 0;
+  }
   sUpdatePaymentDisplay();
 }
 
+function _sCanGiveDiscount() {
+  return ['admin', 'manager'].includes(currentStaff?.role) || currentStaff?.can_give_discount === true;
+}
+
 async function soSaveManualDiscount() {
-  const val = parseFloat(document.getElementById('so_manual_disc_input')?.value) || 0;
-  _sManualDiscount = val;
+  if (!_sCanGiveDiscount()) return;   // поле только для чтения — сервер всё равно не даст (403)
+  const raw = document.getElementById('so_manual_disc_input')?.value;
+  let body;
+  if (_sManualMode === 'pct') {
+    const p = _parsePct(raw);
+    if (Number.isNaN(p) || p < 0 || p > 100) { showToast('Скидка в % — от 0,01 до 100, например 12,52', 'error'); return; }
+    if (p === 0 && _sManualPct == null) {   // переключили на % и ничего не ввели — прежняя скидка суммой остаётся
+      _sManualDiscount = parseFloat(_sOrderCache?.manual_discount || 0); _sManualMode = 'sum'; sUpdatePaymentDisplay(); return;
+    }
+    body = { manual_discount_pct: p > 0 ? String(raw).trim() : null };
+  } else {
+    if (String(raw ?? '').trim() === '' && _sManualPct != null) {   // переключили на сум и ничего не ввели — % остаётся
+      _sManualDiscount = parseFloat(_sOrderCache?.manual_discount || 0); _sManualMode = 'pct'; sUpdatePaymentDisplay(); return;
+    }
+    const val = parseFloat(raw) || 0;
+    if (val < 0) { showToast('Скидка не может быть меньше 0', 'error'); return; }
+    if (_sManualPct == null && val === Math.round(_sManualDiscount) && val === Number(_sOrderCache?.manual_discount || 0)) return;
+    _sManualDiscount = val;
+    body = { manual_discount: val };
+  }
   sUpdatePaymentDisplay();
   const token = localStorage.getItem(TOKEN_KEY);
-  await fetch(`${API_BASE}/admin/orders/${_sOrderId}`, {
-    method: 'PATCH', headers: {'Content-Type':'application/json', Authorization: `Bearer ${token}`},
-    body: JSON.stringify({ manual_discount: val })
-  });
+  try {
+    const r = await fetch(`${API_BASE}/admin/orders/${_sOrderId}`, {
+      method: 'PATCH', headers: {'Content-Type':'application/json', Authorization: `Bearer ${token}`},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { showToast(d.detail || 'Не удалось сохранить скидку', 'error'); return; }
+    // сумму скидки в % считает сервер (от суммы позиций) — берём из ответа
+    const o = d.order || {};
+    _sManualDiscount = parseFloat(o.manual_discount || 0);
+    _sManualPct = (o.manual_discount_pct != null && o.manual_discount_pct !== '') ? parseFloat(o.manual_discount_pct) : null;
+    if (_sOrderCache) { _sOrderCache.manual_discount = o.manual_discount; _sOrderCache.manual_discount_pct = o.manual_discount_pct; }
+    sUpdatePaymentDisplay();
+  } catch (e) { showToast('Нет связи — скидка не сохранена', 'error'); }
 }
 
 function sOpenPaymentModal() {

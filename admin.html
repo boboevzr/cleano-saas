@@ -6052,6 +6052,14 @@
         </div>
         <div class="sf-perm-row" style="border-bottom:1px solid var(--border)">
           <label style="display:contents;cursor:pointer">
+            <input type="checkbox" id="sf_can_give_discount" style="opacity:0;width:0;height:0;position:absolute" onchange="sfToggleStyle('sf_can_give_discount')">
+            <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center">🏷</div>
+            <div style="flex:1"><div class="sf-perm-title">Может давать скидку</div><div class="sf-perm-desc">Поле «Скидка» (сумма или %) во вкладке «Оплата» заказа. Админ и менеджер — всегда; остальным — только с этим переключателем</div></div>
+            <div class="sf-track" id="sf_can_give_discount_track" onclick="event.stopPropagation();document.getElementById('sf_can_give_discount').click()"><div class="sf-thumb" id="sf_can_give_discount_thumb"></div></div>
+          </label>
+        </div>
+        <div class="sf-perm-row" style="border-bottom:1px solid var(--border)">
+          <label style="display:contents;cursor:pointer">
             <input type="checkbox" id="sf_can_approve_debt" style="opacity:0;width:0;height:0;position:absolute" onchange="sfToggleStyle('sf_can_approve_debt')">
             <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center">📋</div>
             <div style="flex:1"><div class="sf-perm-title" data-i18n="sf.perm.approve.debt">Ответственный за долги</div><div class="sf-perm-desc" data-i18n="sf.perm.approve.debt.d">Разрешает/отклоняет закрытие заказов в долг</div></div>
@@ -14085,6 +14093,7 @@ async function openStaffModal(id=null) {
   sfSetToggle('sf_can_create_order', true);
   sfSetToggle('sf_can_confirm_order', true);
   sfSetToggle('sf_can_drive', false);
+  sfSetToggle('sf_can_give_discount', false);
   sfSetToggle('sf_can_view_timesheet', false);
   sfSetToggle('sf_hide_client_phone', false);
   // сводка доставок: у нового — по роли на сервере, пока тумблер не трогали (_sfDigestTouched)
@@ -14125,6 +14134,7 @@ async function openStaffModal(id=null) {
     sfSetToggle('sf_can_edit_price',      s.can_edit_price === true);
     sfSetToggle('sf_can_manage_cash',     s.can_manage_cash === true);
     sfSetToggle('sf_can_refund_prepay',   s.can_refund_prepay === true);
+    sfSetToggle('sf_can_give_discount',   s.can_give_discount === true);
     sfSetToggle('sf_can_approve_debt',    !!s.can_approve_debt);
     sfSetToggle('sf_can_drive',           !!s.can_drive);
     sfSetToggle('sf_can_view_timesheet',  !!s.can_view_timesheet);
@@ -14339,6 +14349,11 @@ async function saveStaff() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value: !!document.getElementById('sf_can_refund_prepay')?.checked }),
       }).catch(() => {});
+      await apiFetch(`${API_BASE}/admin/staff/${id}/can-give-discount`, {   // «Может давать скидку» (перенос из ARTEZ)
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: !!document.getElementById('sf_can_give_discount')?.checked }),
+      }).catch(() => {});
       await apiFetch(`${API_BASE}/admin/staff/${id}/permissions`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -14370,6 +14385,11 @@ async function saveStaff() {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ value: !!document.getElementById('sf_can_refund_prepay')?.checked }),
+        }).catch(() => {});
+        await apiFetch(`${API_BASE}/admin/staff/${data.id}/can-give-discount`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: !!document.getElementById('sf_can_give_discount')?.checked }),
         }).catch(() => {});
         await apiFetch(`${API_BASE}/admin/staff/${data.id}/permissions`, {
           method: 'PATCH',
@@ -16512,10 +16532,11 @@ async function openOrderModal(orderId) {
   // История
   _adminLoadOrderHistory(o.id);
 
-  // Ручная скидка
+  // Ручная скидка: суммой или в % (manual_discount_pct, 16.11.2026)
   const manualDisc = parseFloat(o.manual_discount || 0);
+  _odMdMode = (o.manual_discount_pct != null && o.manual_discount_pct !== '') ? 'pct' : 'sum';
   const inp = document.getElementById('od_manual_disc_input');
-  if (inp) inp.value = manualDisc || '';
+  if (inp) inp.value = _odMdMode === 'pct' ? _odFmtPct(o.manual_discount_pct) : (manualDisc || '');
 
   _orderItemsCache = oi?.items || [];
   _odItemsMeta = {groups: oi?.groups || [], order_total: oi?.order_total ?? null};
@@ -16886,19 +16907,52 @@ async function _odRefreshClientDiscount() {
     odUpdateTotal();
   }
 }
+let _odMdMode = 'sum';   // ручная скидка: 'sum' | 'pct' (16.11.2026)
+function _odParsePct(v) { const t = String(v ?? '').trim().replace(/\s/g, '').replace(',', '.'); if (!t) return 0; return /^\d+(\.\d+)?$/.test(t) ? Number(t) : NaN; }
+function _odFmtPct(p) { return Number(p).toLocaleString('ru', { maximumFractionDigits: 2 }); }
+function odSetManualMode(mode) {
+  if (mode === _odMdMode) return;
+  _odMdMode = mode;
+  const inp = document.getElementById('od_manual_disc_input');
+  if (inp) { inp.value = ''; inp.focus(); }
+  odUpdateTotal();
+}
 function odUpdateTotal() {
   const pickupDisc   = parseFloat(_adminOrderCache?.discount_sum      || 0);
   const deliveryDisc = parseFloat(_adminOrderCache?.delivery_discount  || 0);
   const clientDisc   = _odClientDiscount(pickupDisc, deliveryDisc);
   const mdInput = document.getElementById('od_manual_disc_input');
-  let manualDisc = parseFloat(mdInput?.value || 0) || 0;
-  // Скидка не задана вручную — автоматически округляем сумму к оплате вниз до
-  // тысячи (остаток < 1000 уходит в скидку). Не трогаем, если сотрудник сейчас
-  // печатает в поле, и не трогаем, если скидка уже задана (не 0).
-  if (manualDisc === 0 && mdInput && document.activeElement !== mdInput) {
-    const beforeManual = Math.max(0, _odItemsTotal - pickupDisc - deliveryDisc - clientDisc);
-    const rounding = beforeManual % 1000;
-    if (rounding > 0) { manualDisc = rounding; mdInput.value = rounding; }
+  const _isPct = _odMdMode === 'pct';
+  let manualDisc;
+  if (_isPct) {   // предпросмотр от суммы позиций; точную сумму считает сервер (перенос из ARTEZ 7ee7ae7)
+    const p = _odParsePct(mdInput?.value);
+    manualDisc = document.activeElement !== mdInput && _adminOrderCache?.manual_discount_pct != null
+      ? parseFloat(_adminOrderCache.manual_discount || 0)               // сохранённое — сумма с сервера
+      : ((p > 0 && p <= 100) ? Math.round(_odItemsTotal * p / 100) : 0);
+  } else {
+    manualDisc = parseFloat(mdInput?.value || 0) || 0;
+    // Скидка не задана вручную — автоматически округляем сумму к оплате вниз до
+    // тысячи (остаток < 1000 уходит в скидку). Не трогаем, если сотрудник сейчас
+    // печатает в поле, и не трогаем, если скидка уже задана (не 0). В режиме «%» — не трогаем.
+    if (manualDisc === 0 && mdInput && document.activeElement !== mdInput) {
+      const beforeManual = Math.max(0, _odItemsTotal - pickupDisc - deliveryDisc - clientDisc);
+      const rounding = beforeManual % 1000;
+      if (rounding > 0) { manualDisc = rounding; mdInput.value = rounding; }
+    }
+  }
+  {
+    const cur = document.getElementById('od_manual_disc_cur'); if (cur) cur.textContent = _isPct ? '%' : 'сум';
+    if (mdInput) mdInput.placeholder = _isPct ? '12,52' : '0';
+    document.querySelectorAll('#odMdMode button').forEach(b => {
+      const on = b.dataset.md === _odMdMode;
+      b.style.background = on ? '#163E3B' : 'transparent'; b.style.color = on ? '#fff' : 'var(--text2)';
+    });
+    const pct = _adminOrderCache?.manual_discount_pct;
+    const lbl = document.getElementById('od_manual_disc_lbl');
+    if (lbl) lbl.textContent = (_isPct && pct != null && pct !== '') ? `Скидка ${_odFmtPct(pct)} %` : 'Скидка';
+    const hint = document.getElementById('od_manual_disc_hint');
+    if (hint) { hint.style.display = _isPct && manualDisc > 0 ? '' : 'none';
+                hint.textContent = _isPct && manualDisc > 0 ? `= ${Number(manualDisc).toLocaleString('ru')} сум` : ''; }
   }
   const totalDisc    = pickupDisc + deliveryDisc + manualDisc + clientDisc;
   const net  = Math.max(0, _odItemsTotal - totalDisc);
@@ -16948,14 +17002,42 @@ function odUpdateTotal() {
   }
 }
 async function odSaveManualDiscount() {
-  const val = parseFloat(document.getElementById('od_manual_disc_input')?.value) || 0;
-  if (_adminOrderCache) _adminOrderCache.manual_discount = val;
-  odUpdateTotal();
+  const inp = document.getElementById('od_manual_disc_input');
+  const raw = inp?.value;
+  const c = _adminOrderCache || {};
+  const hadPct = c.manual_discount_pct != null && c.manual_discount_pct !== '';
+  let body;
+  if (_odMdMode === 'pct') {
+    const p = _odParsePct(raw);
+    if (Number.isNaN(p) || p < 0 || p > 100) { showToast('Скидка в % — от 0,01 до 100, например 12,52', 'error'); return; }
+    if (p === 0 && !hadPct) {   // переключили на % и ничего не ввели — прежняя скидка суммой остаётся
+      _odMdMode = 'sum'; if (inp) inp.value = Number(c.manual_discount || 0) || ''; odUpdateTotal(); return;
+    }
+    body = { manual_discount_pct: p > 0 ? String(raw).trim() : null };
+  } else {
+    if (String(raw ?? '').trim() === '' && hadPct) {   // переключили на сум и ничего не ввели — % остаётся
+      _odMdMode = 'pct'; if (inp) inp.value = _odFmtPct(c.manual_discount_pct); odUpdateTotal(); return;
+    }
+    const val = parseFloat(raw) || 0;
+    if (val < 0) { showToast('Скидка не может быть меньше 0', 'error'); return; }
+    if (!hadPct && val === Number(c.manual_discount || 0)) return;
+    body = { manual_discount: val };
+  }
   const token = adminToken || localStorage.getItem(TOKEN_KEY);
-  await fetch(`${API_BASE}/admin/orders/${_orderModalId}`, {
-    method:'PATCH', headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`},
-    body: JSON.stringify({ manual_discount: val })
-  });
+  try {
+    const r = await fetch(`${API_BASE}/admin/orders/${_orderModalId}`, {
+      method:'PATCH', headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { showToast(d.detail || 'Не удалось сохранить скидку', 'error'); return; }
+    const o = d.order || {};
+    if (_adminOrderCache) { _adminOrderCache.manual_discount = o.manual_discount; _adminOrderCache.manual_discount_pct = o.manual_discount_pct; }
+    const pct = o.manual_discount_pct;
+    _odMdMode = (pct != null && pct !== '') ? 'pct' : 'sum';
+    if (inp && document.activeElement !== inp) inp.value = _odMdMode === 'pct' ? _odFmtPct(pct) : (Number(o.manual_discount || 0) || '');
+    odUpdateTotal();
+  } catch (e) { showToast('Нет связи — скидка не сохранена', 'error'); }
 }
 // ── Касса ────────────────────────────────────────────────────────────────────
 
@@ -17263,10 +17345,11 @@ async function loadCashPage() {
   const data = await res.json();
 
   // Итоги
-  const methods = { cash:_t('pay.cash'), card:_t('pay.card'), transfer:_t('pay.transfer') };
-  const totals  = { cash:0, card:0, transfer:0 };
+  // перенос из ARTEZ fd1e175: «🌐 Онлайн» — оплаты картой онлайн (PLUM) за вычетом возвратов; тестовый банк не входит
+  const methods = { cash:_t('pay.cash'), card:_t('pay.card'), transfer:_t('pay.transfer'), online:'🌐 Онлайн' };
+  const totals  = { cash:0, card:0, transfer:0, online:0 };
   (data.summary||[]).forEach(r => { if (totals[r.payment_method] !== undefined) totals[r.payment_method] += parseFloat(r.amount||0); });
-  const grand = totals.cash + totals.card + totals.transfer;
+  const grand = totals.cash + totals.card + totals.transfer + totals.online;
   const cardsEl = document.getElementById('cashSummaryCards');
   cardsEl.innerHTML = Object.entries(methods).map(([k,lbl]) => `
     <div style="background:var(--card);border:1.5px solid var(--sep);border-radius:12px;padding:14px 16px">
@@ -24817,13 +24900,20 @@ function confirmBranchLoc() {
         </div>
         <!-- Скидка ручная (редактируется) -->
         <div style="background:var(--surface2);border-radius:10px;padding:10px 12px">
-          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Скидка</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:4px">
+            <div id="od_manual_disc_lbl" style="font-size:11px;color:var(--text2)">Скидка</div>
+            <div id="odMdMode" style="display:inline-flex;border:1px solid var(--border);border-radius:999px;overflow:hidden;flex-shrink:0"><!-- сум / % (16.11.2026) -->
+              <button type="button" data-md="sum" onclick="odSetManualMode('sum')" style="border:none;padding:1px 7px;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit">сум</button>
+              <button type="button" data-md="pct" onclick="odSetManualMode('pct')" style="border:none;padding:1px 7px;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit">%</button>
+            </div>
+          </div>
           <div style="display:flex;align-items:baseline;gap:3px">
-            <input type="number" id="od_manual_disc_input" min="0" step="100" inputmode="numeric"
+            <input type="text" id="od_manual_disc_input" inputmode="decimal" autocomplete="off"
               style="width:100%;border:none;background:transparent;font-weight:700;font-size:15px;color:var(--text);outline:none;font-family:inherit;padding:0"
               oninput="odUpdateTotal()" onblur="odSaveManualDiscount()">
-            <span style="font-size:11px;color:var(--text2);white-space:nowrap">сум</span>
+            <span id="od_manual_disc_cur" style="font-size:11px;color:var(--text2);white-space:nowrap">сум</span>
           </div>
+          <div id="od_manual_disc_hint" style="display:none;font-size:11px;color:var(--green);font-weight:700;margin-top:2px"></div>
         </div>
         <!-- Оплачено -->
         <div style="background:#f0fdf4;border-radius:10px;padding:10px 12px">
