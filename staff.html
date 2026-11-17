@@ -4122,7 +4122,7 @@ function renderLeads() {
         ${l.lead_code?`<span class="li-icon-code">${l.lead_code}</span>`:''}
       </div>
       <div class="li-body">
-        <div class="li-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b>${_esc(l.client_name)||t('lead.no_name')}</b> · ${_esc(l.client_phone)} ${assignBadge}${overdueBadge}${_prepayBadge(l)}</div>
+        <div class="li-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b>${_esc(l.client_name)||t('lead.no_name')}</b> ${assignBadge}${overdueBadge}${_prepayBadge(l)}</div>
         ${(l.short_address || l.address) ? `<div class="li-addr">📍 ${_esc(l.short_address || l.address)}</div>` : ''}
         <div class="li-sub">${fmtLeadDate(l.created_at)} · ${branchLabel(l.branch)}${agentStr?' · '+_esc(agentStr):''}</div>
         ${_callBtns(l.client_phone, l.client_phone2)}
@@ -7615,7 +7615,7 @@ function renderOrders() {
       ${_ordersSelectMode ? `<input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();toggleOrderSelect(${o.id},this.closest('.list-item'))" style="width:20px;height:20px;flex-shrink:0;accent-color:#163E3B">` : `<div class="li-icon" style="background:${isExpress?'#fef3c7':'var(--green-bg)'}">${isExpress?'⚡':'📦'}</div>`}
       <div class="li-body">
         <div class="li-name">${sourceIcon(o.source)} #${(o.order_num||'').replace(/^[A-Z0-9]+-/,'')}${o.item_count > 0 ? `<span style="color:#888">/${o.item_count}</span>` : ''}${o.corrected_count > 0 ? `<span style="color:#f97316;font-size:11px;margin-left:5px">⚠️${o.corrected_count}</span>` : ''}${hasMeasure ? `<span style="background:#163E3B;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px">📐${measureCnt}</span>` : ''} ${_esc(o.client_first_name||'')} ${_esc(o.client_last_name||'')}</div>
-        <div class="li-sub">${o.client_phone ? `📞 ${_esc(o.client_phone)} · ` : ''}${_esc(o.service||'')}</div>
+        <div class="li-sub">${_esc(o.service||'')}</div>
         ${(o.short_address || o.address) ? `<div class="li-addr" title="${_esc(o.short_address || o.address || '').replace(/"/g, '&quot;')}">📍 ${_esc(o.short_address || o.address)}</div>` : ''}
         ${_dslotBadge(o) ? `<div style="margin-top:3px">${_dslotBadge(o)}${o.delivery_note ? ` <span style="font-size:11px;color:var(--text2)">📝 ${_esc(o.delivery_note)}</span>` : ''}</div>` : ''}
         ${_callBtns(o.client_phone, o.client_phone2)}
